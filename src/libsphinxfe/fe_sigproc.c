@@ -451,21 +451,20 @@ fe_mel_spec(fe_t * FE, powspec_t const *spec, powspec_t * mfspec)
 		    (int32) (FE->MEL_FB->left_apex[whichfilt] / dfreq +
 			     0.5);
 #endif				/* FIXED_POINT */
-		/* FIXME: It's not clear why this works for FIXED_POINT, since
-		 * it ought to be MIN_LOG rather than zero.  But, it does. */
-		mfspec[whichfilt] = 0;
 #ifdef FIXED_POINT
-		for (i = 0; i < FE->MEL_FB->width[whichfilt]; i++)
+		mfspec[whichfilt] = spec[start]
+			+ FE->MEL_FB->filter_coeffs[whichfilt][0];
+		for (i = 1; i < FE->MEL_FB->width[whichfilt]; i++)
 			mfspec[whichfilt] = FE_LOG_ADD(mfspec[whichfilt],
 						       spec[start + i] +
 						       FE->MEL_FB->
 						       filter_coeffs
 						       [whichfilt][i]);
 #else				/* !FIXED_POINT */
+		mfspec[whichfilt] = 0;
 		for (i = 0; i < FE->MEL_FB->width[whichfilt]; i++)
 			mfspec[whichfilt] +=
-			    spec[start +
-				 i] *
+			    spec[start + i] *
 			    FE->MEL_FB->filter_coeffs[whichfilt][i];
 #endif				/* !FIXED_POINT */
 	}
@@ -491,16 +490,18 @@ fe_mel_cep(fe_t * FE, powspec_t * mfspec, mfcc_t * mfcep)
 
 	for (i = 0; i < FE->MEL_FB->num_filters; ++i) {
 #if defined(FIXED_POINT)
-		/* Convert it to fixed-point natural log from integer S2 log */
-		if (mfspec[i] > 0)
-			mflogspec[i] = LOG_TO_FIXLN(mflogspec[i]);
-		else		/* FIXME: As above, I honestly don't know why this works. */
-			mflogspec[i] = INT_MAX;
+		/* It's already in log domain!  Don't check if it's
+		 * greater than zero... */
+		mflogspec[i] = LOG_TO_FIXLN(mflogspec[i]);
 #else				/* !FIXED_POINT */
 		if (mfspec[i] > 0)
 			mflogspec[i] = log(mfspec[i]);
-		else
-			mflogspec[i] = -1.0e+5;
+		else /* This number should be smaller than anything
+		      * else, but not too small, so as to avoid
+		      * infinities in the inverse transform (this is
+		      * the frequency-domain equivalent of
+		      * dithering) */
+			mflogspec[i] = -10;
 #endif				/* !FIXED_POINT */
 	}
 
