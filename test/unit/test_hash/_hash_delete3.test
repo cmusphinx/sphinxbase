@@ -1,0 +1,3 @@
+deletehash -svq4svq > _delete3.out 2>&1 
+diff _delete3.out _delete3.res > /dev/null 2>&1
+rm _delete3.out

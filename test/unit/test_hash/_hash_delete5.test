@@ -1,0 +1,3 @@
+deletehash -foo > _delete5.out 2>&1 
+diff _delete5.out _delete5.res > /dev/null 2>&1
+rm _delete5.out

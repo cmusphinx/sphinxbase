@@ -1,0 +1,5 @@
+2005-11-19  David Huggins-Daines  <dhd@pobox.com>
+
+	* all: Initial refactoring of SphinxTrain, Sphinx2, Sphinx3,
+	PocketSphinx into sphinx-common
+

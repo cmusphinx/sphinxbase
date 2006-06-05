@@ -1,0 +1,30 @@
+#!/bin/sh
+
+tmpout="test-sphinx_fe-logspec.out"
+
+echo "WAVE2FEAT-LOGSPEC TEST"
+sh @abs_top_builddir@/libtool --mode=execute @abs_top_builddir@/src/sphinx_fe/sphinx_fe \
+-logspec 1 \
+-srate 11025 \
+-frate 105 \
+-wlen 0.024 \
+-alpha 0.97 \
+-nfft 512 \
+-nfilt 36 \
+-upperf 5400 \
+-lowerf 130 \
+-blocksize 262500 \
+-i @abs_top_srcdir@/test/regression/chan3.raw \
+-o test-sphinx_fe-logspec.mfc.out  \
+-raw 1 > $tmpout 2>&1 
+
+sh @abs_top_builddir@/libtool --mode=execute @abs_top_builddir@/src/sphinx_cepview/sphinx_cepview \
+-i 40 \
+-d 40 \
+-f test-sphinx_fe-logspec.mfc.out \
+> test-sphinx_fe-logspec.cepview.out 2>>$tmpout
+
+if (perl @abs_top_srcdir@/test/regression/compare_table.pl test-sphinx_fe-logspec.cepview.out @abs_top_srcdir@/test/regression/chan3-logspec.cepview | grep SUCCESS > /dev/null 2>&1) ; \
+then echo "WAVE2FEAT-LOGSPEC test PASSED"; exit 0; else \
+echo "WAVE2FEAT-LOGSPEC test FAILED"; exit 1; fi
+

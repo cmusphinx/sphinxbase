@@ -1,0 +1,3 @@
+deletehash -hmmdump > _delete4.out 2>&1 
+diff _delete4.out _delete4.res > /dev/null 2>&1
+rm _delete4.out
