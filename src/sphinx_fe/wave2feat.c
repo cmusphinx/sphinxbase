@@ -528,7 +528,7 @@ fe_validate_parameters(param_t * P)
 	}
 
 	if ((P->UPPER_FILT_FREQ * 2) > P->SAMPLING_RATE) {
-		E_WARN("Upper frequency higher than Nyquist frequency");
+		E_WARN("Upper frequency higher than Nyquist frequency\n");
 	}
 
 	if (P->doublebw == ON) {
