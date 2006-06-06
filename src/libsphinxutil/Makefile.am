@@ -12,7 +12,7 @@ libsphinxutil_la_SOURCES = \
         filename.c \
 	genrand.c \
         glist.c \
-        hash.c \
+        hash_table.c \
         heap.c \
         info.c \
         pio.c \

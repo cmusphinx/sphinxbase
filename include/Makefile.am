@@ -17,7 +17,7 @@ pkginclude_HEADERS =				\
 	fixpoint.h				\
 	genrand.h				\
 	glist.h					\
-	hash.h					\
+	hash_table.h				\
 	heap.h					\
 	info.h					\
 	libutil.h				\

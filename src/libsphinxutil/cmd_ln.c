@@ -67,7 +67,7 @@
 #include "cmd_ln.h"
 #include "err.h"
 #include "ckd_alloc.h"
-#include "hash.h"
+#include "hash_table.h"
 #include "case.h"
 #include <sys/types.h>
 #include <sys/stat.h>

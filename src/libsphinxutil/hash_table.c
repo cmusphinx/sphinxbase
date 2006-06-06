@@ -88,7 +88,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include "hash.h"
+#include "hash_table.h"
 #include "err.h"
 #include "ckd_alloc.h"
 #include "case.h"
