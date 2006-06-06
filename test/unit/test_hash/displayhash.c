@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <hash.h>
+#include <hash_table.h>
 #include <err.h>
 
 /* Insert -hmmdump, -lm, -svq4svq, -beam, -lminmemory into a hash and display it. */
