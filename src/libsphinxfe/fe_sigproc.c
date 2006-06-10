@@ -397,7 +397,8 @@ fe_spec_magnitude(frame_t const *data, int32 data_len,
         frame_t *fft;
 
         fft = (frame_t *) calloc(fftsize, sizeof(frame_t));
-        memcpy(fft, data, data_len * sizeof(frame_t));
+        wrap = (data_len < fftsize) ? data_len : fftsize;
+        memcpy(fft, data, wrap * sizeof(frame_t));
         if (data_len > fftsize) /*aliasing */
                 for (wrap = 0, j = fftsize; j < data_len; wrap++, j++)
                         fft[wrap] += data[j];
