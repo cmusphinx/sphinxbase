@@ -90,28 +90,11 @@ struct param_s {
     float32 LOWER_FILT_FREQ;
     float32 UPPER_FILT_FREQ;
     float32 PRE_EMPHASIS_ALPHA;
-
-    char *wavfile;
-    char *cepfile;
-    char *ctlfile;
-    char *wavdir;
-    char *cepdir;
-    char *wavext;
-    char *cepext;
-    int32 input_format;
-    int32 is_batch;
-    int32 is_single;
-    int32 blocksize;
-    int32 verbose;
-    int32 machine_endian;
-    int32 input_endian;
-    int32 output_endian;
     int32 dither;
     int32 seed;
     int32 logspec;
     int32 doublebw;
-    int32 nchans;
-    int32 whichchan;
+    int32 verbose;
     char *warp_type;
     char *warp_params;
 };
@@ -295,5 +278,13 @@ int32 fe_float_to_mfcc(fe_t *FE,
 		       float32 **input,
 		       mfcc_t **output,
 		       int32 nframes);
+
+/**
+ * Process one frame of log spectra into MFCC (can be done in-place)
+ **/
+int32 fe_logspec_to_mfcc(fe_t *FE,  /**< A FE structure */
+			 const mfcc_t *fr_spec, /**< One frame of spectrum */
+			 mfcc_t *fr_cep /**< One frame of cepstrum*/
+        );
 
 #endif
