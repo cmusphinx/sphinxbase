@@ -474,61 +474,55 @@ fe_mel_spec(fe_t * FE, powspec_t const *spec, powspec_t * mfspec)
 void
 fe_mel_cep(fe_t * FE, powspec_t * mfspec, mfcc_t * mfcep)
 {
-        int32 i, j;
-        int32 period;
-        int32 beta;
-
-#ifdef FIXED_POINT
-        /* powspec_t is unsigned, while mfcc_t is signed.  We are going to
-         * modify mfspec in place to put it in log-domain so it's
-         * important for it to become signed here. */
-        mfcc_t *mflogspec = (mfcc_t *) mfspec;
-#else                           /* FIXED_POINT */
-        powspec_t *mflogspec = mfspec;
-#endif                          /* FIXED_POINT */
-
-        period = FE->MEL_FB->num_filters;
+        int32 i;
 
         for (i = 0; i < FE->MEL_FB->num_filters; ++i) {
 #if defined(FIXED_POINT)
                 /* It's already in log domain!  Don't check if it's
                  * greater than zero... */
-                mflogspec[i] = LOG_TO_FIXLN(mflogspec[i]);
+                mfspec[i] = LOG_TO_FIXLN(mfspec[i]);
 #else                           /* !FIXED_POINT */
                 if (mfspec[i] > 0)
-                        mflogspec[i] = log(mfspec[i]);
+                        mfspec[i] = log(mfspec[i]);
                 else /* This number should be smaller than anything
                       * else, but not too small, so as to avoid
                       * infinities in the inverse transform (this is
                       * the frequency-domain equivalent of
                       * dithering) */
-                        mflogspec[i] = -10;
+                        mfspec[i] = -10.0;
 #endif                          /* !FIXED_POINT */
         }
 
         /* If we are doing LOG_SPEC, then do nothing. */
         if (FE->LOG_SPEC) {
                 for (i = 0; i < FE->FEATURE_DIMENSION; i++) {
-                        mfcep[i] = mfspec[i];
+                        mfcep[i] = (mfcc_t)mfspec[i];
                 }
         }
-        else {
-                for (i = 0; i < FE->NUM_CEPSTRA; ++i) {
-                        mfcep[i] = 0;
-                        for (j = 0; j < FE->MEL_FB->num_filters; j++) {
-                                if (j == 0)
-                                        beta = 1;       /* 0.5 */
-                                else
-                                        beta = 2;       /* 1.0 */
-                                mfcep[i] += MFCCMUL(mflogspec[j],
-                                                    FE->MEL_FB->
-                                                    mel_cosine[i][j]) *
-                                    beta;
-                        }
-                        mfcep[i] /= (frame_t) period *2;
-                }
-        }
+        else
+		fe_idct(FE, mfspec, mfcep);
         return;
+}
+
+void
+fe_idct(fe_t *FE, powspec_t *mflogspec, mfcc_t *mfcep)
+{
+        int32 i, j, beta;
+
+	for (i = 0; i < FE->NUM_CEPSTRA; ++i) {
+		mfcep[i] = 0;
+		for (j = 0; j < FE->MEL_FB->num_filters; j++) {
+			if (j == 0)
+				beta = 1;       /* 0.5 */
+			else
+				beta = 2;       /* 1.0 */
+			mfcep[i] += MFCCMUL(mflogspec[j],
+					    FE->MEL_FB->
+					    mel_cosine[i][j]) *
+				beta;
+		}
+		mfcep[i] /= (frame_t)FE->MEL_FB->num_filters * 2;
+	}
 }
 
 int32
