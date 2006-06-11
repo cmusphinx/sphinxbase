@@ -68,6 +68,7 @@
 
 #include <stdio.h>
 #include "prim_type.h"
+#include "byteorder.h"
 
 /** \file bio.h
  * \brief Cross platform binary IO to process files in sphinx3 format. 
@@ -85,23 +86,9 @@ extern "C" {
 
 #define BYTE_ORDER_MAGIC	(0x11223344)
 
-  /** Macro to byteswap an int16 variable.  x = ptr to variable */
-#define SWAP_INT16(x)	*(x) = ((0x00ff & (*(x))>>8) | (0xff00 & (*(x))<<8))
-
-  /** Macro to byteswap an int32 variable.  x = ptr to variable */
-#define SWAP_INT32(x)	*(x) = ((0x000000ff & (*(x))>>24) | \
-				(0x0000ff00 & (*(x))>>8) | \
-				(0x00ff0000 & (*(x))<<8) | \
-				(0xff000000 & (*(x))<<24))
-
-  /** Macro to byteswap a float32 variable.  x = ptr to variable */
-#define SWAP_FLOAT32(x)	SWAP_INT32((int32 *) x)
-
-
-
-  /** "reversed senses" SWAP, ARCHAN: This is still incorporated in
-   Sphinx 3 because lm3g2dmp used it.  Don't think that I am very
-   happy with it. */
+/** "reversed senses" SWAP, ARCHAN: This is still incorporated in
+    Sphinx 3 because lm3g2dmp used it.  Don't think that I am very
+    happy with it. */
 
 #if (__BIG_ENDIAN__)
 #define REVERSE_SENSE_SWAP_INT16(x)  x = ( (((x)<<8)&0x0000ff00) | (((x)>>8)&0x00ff) )
@@ -115,8 +102,7 @@ extern "C" {
 
 
 
-
-  /**
+/**
  * Read binary file format header: has the following format
  *     s3
  *     <argument-name> <argument-value>
@@ -133,24 +119,24 @@ int32 bio_readhdr (FILE *fp,		/**< In: File to read */
 		   char ***val,		/**< Out: corresponding value strings read */
 		   int32 *swap	/**< Out: file needs byteswapping iff (*swap) */
 		   );
-  /**
+/**
  * Write a simple binary file header, containing only the version string.  Also write
  * the byte order magic word.
  * @return: 0 if successful, -1 otherwise.
  */
-  int32 bio_writehdr_version (FILE *fp,  /**< Output: File to write */
-			      char *version /**< Input: A string of version */
-			      );
+int32 bio_writehdr_version (FILE *fp,  /**< Output: File to write */
+			    char *version /**< Input: A string of version */
+	);
 
 
-  /**
+/**
  * Free name and value strings previously allocated and returned by bio_readhdr.
  */
 void bio_hdrarg_free (char **name,	/**< In: Array previously returned by bio_readhdr */
 		      char **val	/**< In: Array previously returned by bio_readhdr */
 		      );
 
-  /**
+/**
  * Like fread but perform byteswapping and accumulate checksum (the 2 extra arguments).
  * But unlike fread, returns -1 if required number of elements (n_el) not read; also,
  * no byteswapping or checksum accumulation is performed in that case.
@@ -163,7 +149,7 @@ int32 bio_fread (void *buf,
 		 uint32 *chksum	/**< In/Out: Accumulated checksum */
 		 );
 
-  /**
+/**
  * Read a 1-d array (fashioned after fread):
  *     4-byte array size (returned in n_el)
  *     memory allocated for the array and read (returned in buf)
@@ -180,7 +166,7 @@ int32 bio_fread_1d (void **buf,		/**< Out: contains array data; allocated by thi
 		    uint32 *ck	/**< In/Out: Accumulated checksum */
 		    );
 
-  /**
+/**
  * Read and verify checksum at the end of binary file.  Fails fatally if there is
  * a mismatch.
  */
