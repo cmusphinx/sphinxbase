@@ -72,19 +72,4 @@ typedef struct RIFFHeader{
 
 extern int32 g_nskip, g_runlen;
 
-param_t *fe_parse_options(int argc, char **argv);
-void fe_init_params(param_t *P);
-int32 fe_convert_files(param_t *P);
-int32 fe_build_filenames(param_t *P, char *fileroot, char **infilename, char **outfilename);
-char *fe_copystr(char *dest_str, char *src_str);
-int32 fe_count_frames(fe_t *FE, int32 nsamps, int32 count_partial_frames);
-int32 fe_readspch(param_t *P, char *infile, int16 **spdata, int32 *splen);
-int32 fe_writefeat(fe_t *FE, char *outfile, int32 nframes, mfcc_t **feat);
-int32 fe_free_param(param_t *P);
-int32 fe_openfiles(param_t *P, fe_t *FE, char *infile, int32 *fp_in, int32 *nsamps, 
-		   int32 *nframes, int32 *nblocks, char *outfile, int32 *fp_out);
-int32 fe_readblock_spch(param_t *P, int32 fp, int32 nsamps, int16 *buf);
-int32 fe_writeblock_feat(param_t *P, fe_t *FE, int32 fp, int32 nframes, mfcc_t **feat);
-int32 fe_closefiles(int32 fp_in, int32 fp_out);
-
 #endif

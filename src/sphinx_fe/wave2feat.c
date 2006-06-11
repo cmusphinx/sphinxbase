@@ -63,7 +63,44 @@
 #include "wave2feat.h"
 #include "cmd_ln_defn.h"
 
-int32 g_nskip = -1, g_runlen = -1;
+struct globals_s {
+	param_t params;
+	int32 nskip;
+	int32 runlen;
+	char *wavfile;
+	char *cepfile;
+	char *ctlfile;
+	char *wavdir;
+	char *cepdir;
+	char *wavext;
+	char *cepext;
+	int32 input_format;
+	int32 is_batch;
+	int32 is_single;
+	int32 blocksize;
+	int32 machine_endian;
+	int32 input_endian;
+	int32 output_endian;
+	int32 nchans;
+	int32 whichchan;
+	int32 idct;
+};
+typedef struct globals_s globals_t;
+
+globals_t *fe_parse_options(int argc, char **argv);
+int32 fe_convert_files(globals_t *P);
+int32 fe_build_filenames(globals_t *P, char *fileroot, char **infilename, char **outfilename);
+char *fe_copystr(char *dest_str, char *src_str);
+int32 fe_count_frames(fe_t *FE, int32 nsamps, int32 count_partial_frames);
+int32 fe_readspch(globals_t *P, char *infile, int16 **spdata, int32 *splen);
+int32 fe_writefeat(fe_t *FE, char *outfile, int32 nframes, mfcc_t **feat);
+int32 fe_free_param(globals_t *P);
+int32 fe_openfiles(globals_t *P, fe_t *FE, char *infile, int32 *fp_in, int32 *nsamps, 
+		   int32 *nframes, int32 *nblocks, char *outfile, int32 *fp_out);
+int32 fe_readblock_spch(globals_t *P, int32 fp, int32 nsamps, int16 *buf);
+int32 fe_writeblock_feat(globals_t *P, fe_t *FE, int32 fp, int32 nframes, mfcc_t **feat);
+int32 fe_closefiles(int32 fp_in, int32 fp_out);
+int32 fe_convert_logspec(globals_t *P, fe_t *FE, char *infile, char *outfile);
 
 /*       
          7-Feb-00 M. Seltzer - wrapper created for new front end -
@@ -89,20 +126,19 @@ int32 g_nskip = -1, g_runlen = -1;
 int32
 main(int32 argc, char **argv)
 {
-	param_t *P;
+	globals_t *P;
 
 	P = fe_parse_options(argc, argv);
 	if (fe_convert_files(P) != FE_SUCCESS) {
 		E_FATAL("error converting files...exiting\n");
 	}
-
-	fe_free_param(P);
+	free(P);
 	return (0);
 }
 
 
 int32
-fe_convert_files(param_t * P)
+fe_convert_files(globals_t * P)
 {
 
 	fe_t *FE;
@@ -117,14 +153,14 @@ fe_convert_files(param_t * P)
 	int32 warn_zero_energy = OFF;
 	int32 process_utt_return_value;
 
-	if ((FE = fe_init(P)) == NULL) {
+	if ((FE = fe_init(&P->params)) == NULL) {
 		E_ERROR("memory alloc failed...exiting\n");
 		return (FE_MEM_ALLOC_ERROR);
 	}
 
 	if (P->is_batch) {
-		int32 nskip = g_nskip;
-		int32 runlen = g_runlen;
+		int32 nskip = P->nskip;
+		int32 runlen = P->runlen;
 
 		if ((ctlfile = fopen(P->ctlfile, "r")) == NULL) {
 			E_ERROR("Unable to open control file %s\n",
@@ -145,9 +181,16 @@ fe_convert_files(param_t * P)
 
 			fe_build_filenames(P, fileroot, &infile, &outfile);
 
-			if (P->verbose)
+			if (P->params.verbose)
 				E_INFO("%s\n", infile);
 
+			if (P->idct) {
+				/* Special case for doing logspec to MFCC. */
+				return_value = fe_convert_logspec(P, FE, infile, outfile);
+				if (return_value != FE_SUCCESS)
+					return return_value;
+				continue;
+			}
 			return_value =
 			    fe_openfiles(P, FE, infile, &fp_in,
 					 &total_samps, &nframes, &nblocks,
@@ -268,7 +311,7 @@ fe_convert_files(param_t * P)
 					cep = NULL;
 				}
 				curr_block++;
-				if (P->logspec != ON)
+				if (P->params.logspec != ON)
 					last_frame_cep =
 					    (mfcc_t **) ckd_calloc_2d(1,
 								      FE->
@@ -329,8 +372,13 @@ fe_convert_files(param_t * P)
 	else if (P->is_single) {
 
 		fe_build_filenames(P, fileroot, &infile, &outfile);
-		if (P->verbose)
+		if (P->params.verbose)
 			printf("%s\n", infile);
+
+		if (P->idct)
+			/* Special case for doing logspec to MFCC. */
+			return fe_convert_logspec(P, FE, infile, outfile);
+
 		return_value =
 		    fe_openfiles(P, FE, infile, &fp_in, &total_samps,
 				 &nframes, &nblocks, outfile, &fp_out);
@@ -431,7 +479,7 @@ fe_convert_files(param_t * P)
 			}
 
 			curr_block++;
-			if (P->logspec != ON)
+			if (P->params.logspec != ON)
 				last_frame_cep =
 				    (mfcc_t **) ckd_calloc_2d(1,
 							      FE->
@@ -496,7 +544,7 @@ fe_convert_files(param_t * P)
 }
 
 void
-fe_validate_parameters(param_t * P)
+fe_validate_parameters(globals_t * P)
 {
 
 	if ((P->is_batch) && (P->is_single)) {
@@ -527,32 +575,33 @@ fe_validate_parameters(param_t * P)
 			P->whichchan, P->nchans);
 	}
 
-	if ((P->UPPER_FILT_FREQ * 2) > P->SAMPLING_RATE) {
+	if ((P->params.UPPER_FILT_FREQ * 2) > P->params.SAMPLING_RATE) {
 		E_WARN("Upper frequency higher than Nyquist frequency\n");
 	}
 
-	if (P->doublebw == ON) {
+	if (P->params.doublebw == ON) {
 		E_INFO("Will use double bandwidth filters\n");
 	}
 
 }
 
 
-param_t *
+globals_t *
 fe_parse_options(int32 argc, char **argv)
 {
-	param_t *P;
+	globals_t *P;
 	int32 format;
 	char *endian;
 
 	cmd_ln_parse(defn, argc, argv);
 
-	if ((P = (param_t *) malloc(sizeof(param_t))) == NULL) {
+	if ((P = (globals_t *) calloc(1, sizeof(globals_t))) == NULL) {
 		E_FATAL
 		    ("memory alloc failed in fe_parse_options()\n...exiting\n");
 	}
 
-	fe_init_params(P);
+	fe_init_params(&P->params);
+	P->nskip = P->runlen = -1;
 
 	P->wavfile = cmd_ln_str("-i");
 	if (P->wavfile != NULL) {
@@ -571,10 +620,10 @@ fe_parse_options(int32 argc, char **argv)
 		nskip = cmd_ln_str("-nskip");
 		runlen = cmd_ln_str("-runlen");
 		if (nskip != NULL) {
-			g_nskip = atoi(nskip);
+			P->nskip = atoi(nskip);
 		}
 		if (runlen != NULL) {
-			g_runlen = atoi(runlen);
+			P->runlen = atoi(runlen);
 		}
 	}
 
@@ -597,12 +646,12 @@ fe_parse_options(int32 argc, char **argv)
 
 	P->nchans = cmd_ln_int32("-nchans");
 	P->whichchan = cmd_ln_int32("-whichchan");
-	P->PRE_EMPHASIS_ALPHA = cmd_ln_float32("-alpha");
-	P->SAMPLING_RATE = cmd_ln_float32("-srate");
-	P->WINDOW_LENGTH = cmd_ln_float32("-wlen");
-	P->FRAME_RATE = cmd_ln_int32("-frate");
+	P->params.PRE_EMPHASIS_ALPHA = cmd_ln_float32("-alpha");
+	P->params.SAMPLING_RATE = cmd_ln_float32("-srate");
+	P->params.WINDOW_LENGTH = cmd_ln_float32("-wlen");
+	P->params.FRAME_RATE = cmd_ln_int32("-frate");
 	if (!strcmp(cmd_ln_str("-feat"), "sphinx")) {
-		P->FB_TYPE = MEL_SCALE;
+		P->params.FB_TYPE = MEL_SCALE;
 		P->output_endian = BIG;
 	}
 	else {
@@ -610,23 +659,23 @@ fe_parse_options(int32 argc, char **argv)
 		    ("MEL_SCALE IS CURRENTLY THE ONLY IMPLEMENTATION\n\n");
 		E_FATAL("Make sure you specify '-feat sphinx'\n");
 	}
-	P->NUM_FILTERS = cmd_ln_int32("-nfilt");
-	P->NUM_CEPSTRA = cmd_ln_int32("-ncep");
-	P->LOWER_FILT_FREQ = cmd_ln_float32("-lowerf");
-	P->UPPER_FILT_FREQ = cmd_ln_float32("-upperf");
+	P->params.NUM_FILTERS = cmd_ln_int32("-nfilt");
+	P->params.NUM_CEPSTRA = cmd_ln_int32("-ncep");
+	P->params.LOWER_FILT_FREQ = cmd_ln_float32("-lowerf");
+	P->params.UPPER_FILT_FREQ = cmd_ln_float32("-upperf");
 
-	P->warp_type = cmd_ln_str("-warp_type");
-	P->warp_params = cmd_ln_str("-warp_params");
+	P->params.warp_type = cmd_ln_str("-warp_type");
+	P->params.warp_params = cmd_ln_str("-warp_params");
 
-	P->FFT_SIZE = cmd_ln_int32("-nfft");
+	P->params.FFT_SIZE = cmd_ln_int32("-nfft");
 	if (cmd_ln_int32("-doublebw")) {
-		P->doublebw = ON;
+		P->params.doublebw = ON;
 	}
 	else {
-		P->doublebw = OFF;
+		P->params.doublebw = OFF;
 	}
 	P->blocksize = cmd_ln_int32("-blocksize");
-	P->verbose = cmd_ln_int32("-verbose");
+	P->params.verbose = cmd_ln_int32("-verbose");
 	endian = cmd_ln_str("-mach_endian");
 	if (!strcmp("big", endian)) {
 		P->machine_endian = BIG;
@@ -651,9 +700,10 @@ fe_parse_options(int32 argc, char **argv)
 			E_FATAL("Input must be big or little Endian\n");
 		}
 	}
-	P->dither = cmd_ln_int32("-dither");
-	P->seed = cmd_ln_int32("-seed");
-	P->logspec = cmd_ln_int32("-logspec");
+	P->params.dither = cmd_ln_int32("-dither");
+	P->params.seed = cmd_ln_int32("-seed");
+	P->params.logspec = cmd_ln_int32("-logspec");
+	P->idct = cmd_ln_int32("-idct");
 
 	fe_validate_parameters(P);
 
@@ -663,7 +713,7 @@ fe_parse_options(int32 argc, char **argv)
 
 
 int32
-fe_build_filenames(param_t * P, char *fileroot, char **infilename,
+fe_build_filenames(globals_t * P, char *fileroot, char **infilename,
 		   char **outfilename)
 {
 	char cbuf[MAXCHARS];
@@ -753,7 +803,7 @@ fe_count_frames(fe_t * FE, int32 nsamps, int32 count_partial_frames)
 }
 
 int32
-fe_openfiles(param_t * P, fe_t * FE, char *infile, int32 * fp_in,
+fe_openfiles(globals_t * P, fe_t * FE, char *infile, int32 * fp_in,
 	     int32 * nsamps, int32 * nframes, int32 * nblocks,
 	     char *outfile, int32 * fp_out)
 {
@@ -875,7 +925,7 @@ fe_openfiles(param_t * P, fe_t * FE, char *infile, int32 * fp_in,
 				char readChar;
 				char *dataString = "data";
 				int16 charPointer = 0;
-				printf("LENGTH: %d\n", strlen(dataString));
+				printf("LENGTH: %d\n", (int)strlen(dataString));
 				while (found != ON) {
 					if (read
 					    (fp, &readChar,
@@ -933,7 +983,7 @@ fe_openfiles(param_t * P, fe_t * FE, char *infile, int32 * fp_in,
 			len = hdr_buf->datalength / sizeof(short);
 			P->nchans = hdr_buf->numchannels;
 			/* DEBUG: Dump Info */
-			if (P->verbose) {
+			if (P->params.verbose) {
 				E_INFO("Reading MS Wav file %s:\n",
 				       infile);
 				E_INFO
@@ -971,7 +1021,7 @@ fe_openfiles(param_t * P, fe_t * FE, char *infile, int32 * fp_in,
 	else {
 		/* compute number of frames and write cepfile header */
 		numframes = fe_count_frames(FE, len, COUNT_PARTIAL);
-		if (P->logspec != ON)
+		if (P->params.logspec != ON)
 			outlen = numframes * FE->NUM_CEPSTRA;
 		else
 			outlen = numframes * FE->MEL_FB->num_filters;
@@ -993,7 +1043,7 @@ fe_openfiles(param_t * P, fe_t * FE, char *infile, int32 * fp_in,
 }
 
 int32
-fe_readblock_spch(param_t * P, int32 fp, int32 nsamps, int16 * buf)
+fe_readblock_spch(globals_t * P, int32 fp, int32 nsamps, int16 * buf)
 {
 	int32 bytes_read, cum_bytes_read, nreadbytes, actsamps, offset, i,
 	    j, k;
@@ -1119,14 +1169,14 @@ fe_readblock_spch(param_t * P, int32 fp, int32 nsamps, int16 * buf)
 }
 
 int32
-fe_writeblock_feat(param_t * P, fe_t * FE, int32 fp, int32 nframes,
+fe_writeblock_feat(globals_t * P, fe_t * FE, int32 fp, int32 nframes,
 		   mfcc_t ** feat)
 {
 
 	int32 i, length, nwritebytes;
 	float32 **ffeat;
 
-	if (P->logspec == ON)
+	if (P->params.logspec == ON)
 		length = nframes * FE->MEL_FB->num_filters;
 	else
 		length = nframes * FE->NUM_CEPSTRA;
@@ -1156,13 +1206,46 @@ fe_closefiles(int32 fp_in, int32 fp_out)
 	return 0;
 }
 
-
 int32
-fe_free_param(param_t * P)
+fe_convert_logspec(globals_t *P, fe_t *FE, char *infile, char *outfile)
 {
+	FILE *ifh, *ofh;
+	int32 ifsize, ofsize;
+	float32 *logspec;
 
-	/* but no one calls it (29/09/00) */
-	return 0;
+	if ((ifh = fopen(infile, "rb")) == NULL) {
+		E_ERROR_SYSTEM("Cannot read %s", infile);
+		return (FE_INPUT_FILE_READ_ERROR);
+	}
+	if ((ofh = fopen(outfile, "wb")) == NULL) {
+		E_ERROR_SYSTEM("Unable to open %s for writing features",
+			       outfile);
+		return (FE_OUTPUT_FILE_OPEN_ERROR);
+	}
+
+	fread(&ifsize, 4, 1, ifh);
+	ofsize = ifsize / FE->MEL_FB->num_filters * FE->NUM_CEPSTRA;
+	fwrite(&ofsize, 4, 1, ofh);
+	logspec = ckd_calloc(FE->MEL_FB->num_filters, sizeof(*logspec));
+
+	while (fread(logspec, 4, FE->MEL_FB->num_filters, ifh) == FE->MEL_FB->num_filters) {
+		fe_logspec_to_mfcc(FE, logspec, logspec);
+		if (fwrite(logspec, 4, FE->NUM_CEPSTRA, ofh) < FE->NUM_CEPSTRA) {
+			E_ERROR_SYSTEM("Failed to write %d cepstra to %s",
+				       FE->NUM_CEPSTRA, outfile);
+			free(logspec);
+			return (FE_OUTPUT_FILE_WRITE_ERROR);
+		}
+	}
+	if (!feof(ifh)) {
+		E_ERROR("Short read in input file %s\n", infile);
+		free(logspec);
+		return (FE_INPUT_FILE_READ_ERROR);
+	}
+	fclose(ifh);
+	fclose(ofh);
+
+	return FE_SUCCESS;
 }
 
 /*

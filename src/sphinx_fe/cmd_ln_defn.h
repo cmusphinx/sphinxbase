@@ -170,6 +170,11 @@ static arg_t defn[] = {
     "no",
     "Write out logspectral files instead of cepstra" },
   
+  { "-idct",
+    ARG_BOOLEAN,
+    "no",
+    "Convert logspectral input files to cepstra via inverse DCT" },
+  
   { "-feat",
     ARG_STRING,
     "sphinx",
