@@ -1078,6 +1078,7 @@ fe_readblock_spch(globals_t * P, int32 fp, int32 nsamps, int16 * buf)
 					     sizeof(int16));
 			cum_bytes_read = 0;
 			if (P->input_format == RAW
+			    || P->input_format == MSWAV
 			    || P->input_format == NIST) {
 
 				k = 0;
@@ -1117,6 +1118,7 @@ fe_readblock_spch(globals_t * P, int32 fp, int32 nsamps, int16 * buf)
 			}
 
 			if (P->input_format == RAW
+			    || P->input_format == MSWAV
 			    || P->input_format == NIST) {
 				for (i = 0; i < nchans; i++) {
 
