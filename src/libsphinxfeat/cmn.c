@@ -113,10 +113,8 @@ cmn(float32 ** mfc, int32 varnorm, int32 n_frame, int32 veclen,
     float32 *mfcp;
     float32 t;
     int32 i, f;
-    float32 *cmn_var;
 
     assert(mfc != NULL);
-    cmn_var = cmn->cmn_var;
 
     /* assert ((n_frame > 0) && (veclen > 0)); */
     /* Added by PPK to prevent this assert from aborting Sphinx 3 */
@@ -149,8 +147,8 @@ cmn(float32 ** mfc, int32 varnorm, int32 n_frame, int32 veclen,
     }
     else {
         /* Scale cep vectors to have unit variance along each dimension, and subtract means */
-        if (cmn_var == NULL)
-            cmn_var = (float32 *) ckd_calloc(veclen, sizeof(float32));
+        if (cmn->cmn_var == NULL)
+            cmn->cmn_var = (float32 *) ckd_calloc(veclen, sizeof(float32));
 
         /* If cmn->cmn_var wasn't NULL, we need to zero the contents */
         memset(cmn->cmn_var, 0, veclen * sizeof(float32));
@@ -160,16 +158,16 @@ cmn(float32 ** mfc, int32 varnorm, int32 n_frame, int32 veclen,
 
             for (i = 0; i < veclen; i++) {
                 t = mfcp[i] - cmn->cmn_mean[i];
-                cmn_var[i] += t * t;
+                cmn->cmn_var[i] += t * t;
             }
         }
         for (i = 0; i < veclen; i++)
-            cmn_var[i] = (float32) sqrt((float64) n_frame / cmn_var[i]);        /* Inverse Std. Dev, RAH added type case from sqrt */
+            cmn->cmn_var[i] = (float32) sqrt((float64) n_frame / cmn->cmn_var[i]);      /* Inverse Std. Dev, RAH added type case from sqrt */
 
         for (f = 0; f < n_frame; f++) {
             mfcp = mfc[f];
             for (i = 0; i < veclen; i++)
-                mfcp[i] = (mfcp[i] - cmn->cmn_mean[i]) * cmn_var[i];
+                mfcp[i] = (mfcp[i] - cmn->cmn_mean[i]) * cmn->cmn_var[i];
         }
     }
 }

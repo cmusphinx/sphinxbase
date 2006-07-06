@@ -189,8 +189,9 @@ feat_s2mfc_read (char *file,		/** In: Sphinx-II format MFC file to be read */
 					    Can use 0,-1 to read entire file */
 		 float32 **mfc,		/** Out: 2-D array to be filled with read data;
 					    caller must have allocated this array */
-		 int32 maxfr		/** In: #Frames of mfc array allocated; error if
+		 int32 maxfr,		/** In: #Frames of mfc array allocated; error if
 					    attempt to read more than this amount. */
+		 int32 cepsize		/** In: Length of each MFC vector. */
 	);
 
 /**
