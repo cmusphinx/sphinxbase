@@ -17,10 +17,25 @@ libsphinxutil_la_SOURCES = \
         info.c \
         pio.c \
 	linklist.c \
+	matrix.c \
 	nextword.c \
         profile.c \
         str2words.c \
 	unlimit.c
+
+if LAPACK_LITE
+libsphinxutil_la_SOURCES += \
+	slamch.c \
+	slapack_lite.c \
+	blas_lite.c \
+	f2c_lite.c
+endif
+
+EXTRA_DIST = \
+	slamch.c \
+	slapack_lite.c \
+	blas_lite.c \
+	f2c_lite.c
 
 INCLUDES = -I$(top_srcdir)/include \
            -I$(top_builddir)/include 

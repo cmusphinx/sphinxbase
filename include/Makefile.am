@@ -6,11 +6,13 @@ pkginclude_HEADERS =				\
 	byteorder.h				\
 	case.h					\
 	ckd_alloc.h				\
+	clapack_lite.h				\
 	cmd_ln.h				\
 	cmn.h					\
 	cmn_prior.h				\
 	cont_ad.h				\
 	err.h					\
+	f2c.h					\
 	feat.h					\
 	fe.h					\
 	filename.h				\
@@ -22,6 +24,7 @@ pkginclude_HEADERS =				\
 	info.h					\
 	libutil.h				\
 	linklist.h				\
+	matrix.h				\
 	misc.h					\
 	mulaw.h					\
 	nextword.h				\

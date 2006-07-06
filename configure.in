@@ -1,7 +1,7 @@
 dnl Welcome to the Sphinx automated build system.
 dnl try not to hurt yourself ;)
 
-AC_INIT(sphinxbase, 0.1)
+AC_INIT(sphinxbase, 0.0)
 AC_CONFIG_HEADERS([include/config.h include/sphinx_config.h])
 AM_INIT_AUTOMAKE([no-define dist-bzip2])
 
@@ -35,6 +35,26 @@ AC_TYPE_SIGNAL
 AC_CHECK_TYPES(long long)
 AC_CHECK_SIZEOF(long long)
 
+dnl
+dnl Check for Lapack stuff unless disabled
+dnl
+use_lapack=true
+use_internal_lapack=false
+AC_ARG_WITH(lapack,
+	AC_HELP_STRING([--without-lapack],
+		       [Disable matrix algebra support (depends on LAPACK)]),[
+if test x$withval = xno; then
+   use_lapack=false
+fi
+])
+if test x$use_lapack = xtrue; then
+   AC_CHECK_LIB(m, log)
+   AC_CHECK_LIB(g2c, r_log)
+   AC_CHECK_LIB(blas, sgemm_)
+   AC_CHECK_LIB(lapack, sgesv_,,use_internal_lapack=true)
+   AC_DEFINE(WITH_LAPACK, [], [Enable matrix algebra with LAPACK])
+fi
+AM_CONDITIONAL(LAPACK_LITE, test x$use_internal_lapack = xtrue)
 
 dnl
 dnl Allow compilation for fixed or floating-point MFCC and GMM computation

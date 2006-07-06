@@ -1,0 +1,8 @@
+sgeev
+ssyevd
+sgelsd
+sgesv
+sgetrf
+spotrf
+sgesdd
+IGNORE: slamch
