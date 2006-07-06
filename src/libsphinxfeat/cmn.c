@@ -1,3 +1,4 @@
+/* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* ====================================================================
  * Copyright (c) 1999-2004 Carnegie Mellon University.  All rights
  * reserved.
@@ -99,9 +100,9 @@
 cmn_t *
 cmn_init()
 {
-	cmn_t *cmn;
-	cmn = (cmn_t *) ckd_calloc(1, sizeof(cmn_t));
-	return cmn;
+    cmn_t *cmn;
+    cmn = (cmn_t *) ckd_calloc(1, sizeof(cmn_t));
+    return cmn;
 }
 
 
@@ -109,73 +110,68 @@ void
 cmn(float32 ** mfc, int32 varnorm, int32 n_frame, int32 veclen,
     cmn_t * cmn)
 {
-	float32 *mfcp;
-	float32 t;
-	int32 i, f;
-	float32 *cmn_var;
+    float32 *mfcp;
+    float32 t;
+    int32 i, f;
+    float32 *cmn_var;
 
-	assert(mfc != NULL);
-	cmn_var = cmn->cmn_var;
+    assert(mfc != NULL);
+    cmn_var = cmn->cmn_var;
 
-	/* assert ((n_frame > 0) && (veclen > 0)); */
-	/* Added by PPK to prevent this assert from aborting Sphinx 3 */
-	if ((n_frame <= 0) || (veclen <= 0)) {
-		return;
-	}
+    /* assert ((n_frame > 0) && (veclen > 0)); */
+    /* Added by PPK to prevent this assert from aborting Sphinx 3 */
+    if ((n_frame <= 0) || (veclen <= 0)) {
+        return;
+    }
 
-	if (cmn->cmn_mean == NULL)
-		cmn->cmn_mean =
-		    (float32 *) ckd_calloc(veclen, sizeof(float32));
+    if (cmn->cmn_mean == NULL)
+        cmn->cmn_mean = (float32 *) ckd_calloc(veclen, sizeof(float32));
 
-	/* If cmn->cmn_mean wasn't NULL, we need to zero the contents */
-	memset(cmn->cmn_mean, 0, veclen * sizeof(float32));
+    /* If cmn->cmn_mean wasn't NULL, we need to zero the contents */
+    memset(cmn->cmn_mean, 0, veclen * sizeof(float32));
 
-	/* Find mean cep vector for this utterance */
-	for (f = 0; f < n_frame; f++) {
-		mfcp = mfc[f];
-		for (i = 0; i < veclen; i++)
-			cmn->cmn_mean[i] += mfcp[i];
-	}
-	for (i = 0; i < veclen; i++)
-		cmn->cmn_mean[i] /= n_frame;
+    /* Find mean cep vector for this utterance */
+    for (f = 0; f < n_frame; f++) {
+        mfcp = mfc[f];
+        for (i = 0; i < veclen; i++)
+            cmn->cmn_mean[i] += mfcp[i];
+    }
+    for (i = 0; i < veclen; i++)
+        cmn->cmn_mean[i] /= n_frame;
 
-	if (!varnorm) {
-		/* Subtract mean from each cep vector */
-		for (f = 0; f < n_frame; f++) {
-			mfcp = mfc[f];
-			for (i = 0; i < veclen; i++)
-				mfcp[i] -= cmn->cmn_mean[i];
-		}
-	}
-	else {
-		/* Scale cep vectors to have unit variance along each dimension, and subtract means */
-		if (cmn_var == NULL)
-			cmn_var =
-			    (float32 *) ckd_calloc(veclen,
-						   sizeof(float32));
+    if (!varnorm) {
+        /* Subtract mean from each cep vector */
+        for (f = 0; f < n_frame; f++) {
+            mfcp = mfc[f];
+            for (i = 0; i < veclen; i++)
+                mfcp[i] -= cmn->cmn_mean[i];
+        }
+    }
+    else {
+        /* Scale cep vectors to have unit variance along each dimension, and subtract means */
+        if (cmn_var == NULL)
+            cmn_var = (float32 *) ckd_calloc(veclen, sizeof(float32));
 
-		/* If cmn->cmn_var wasn't NULL, we need to zero the contents */
-		memset(cmn->cmn_var, 0, veclen * sizeof(float32));
+        /* If cmn->cmn_var wasn't NULL, we need to zero the contents */
+        memset(cmn->cmn_var, 0, veclen * sizeof(float32));
 
-		for (f = 0; f < n_frame; f++) {
-			mfcp = mfc[f];
+        for (f = 0; f < n_frame; f++) {
+            mfcp = mfc[f];
 
-			for (i = 0; i < veclen; i++) {
-				t = mfcp[i] - cmn->cmn_mean[i];
-				cmn_var[i] += t * t;
-			}
-		}
-		for (i = 0; i < veclen; i++)
-			cmn_var[i] = (float32) sqrt((float64) n_frame / cmn_var[i]);	/* Inverse Std. Dev, RAH added type case from sqrt */
+            for (i = 0; i < veclen; i++) {
+                t = mfcp[i] - cmn->cmn_mean[i];
+                cmn_var[i] += t * t;
+            }
+        }
+        for (i = 0; i < veclen; i++)
+            cmn_var[i] = (float32) sqrt((float64) n_frame / cmn_var[i]);        /* Inverse Std. Dev, RAH added type case from sqrt */
 
-		for (f = 0; f < n_frame; f++) {
-			mfcp = mfc[f];
-			for (i = 0; i < veclen; i++)
-				mfcp[i] =
-				    (mfcp[i] -
-				     cmn->cmn_mean[i]) * cmn_var[i];
-		}
-	}
+        for (f = 0; f < n_frame; f++) {
+            mfcp = mfc[f];
+            for (i = 0; i < veclen; i++)
+                mfcp[i] = (mfcp[i] - cmn->cmn_mean[i]) * cmn_var[i];
+        }
+    }
 }
 
 /* 
@@ -184,16 +180,16 @@ cmn(float32 ** mfc, int32 varnorm, int32 n_frame, int32 veclen,
 void
 cmn_free(cmn_t * cmn)
 {
-	if (cmn != NULL) {
-		if (cmn->cmn_var)
-			ckd_free((void *) cmn->cmn_var);
+    if (cmn != NULL) {
+        if (cmn->cmn_var)
+            ckd_free((void *) cmn->cmn_var);
 
-		if (cmn->cmn_mean)
-			ckd_free((void *) cmn->cmn_mean);
+        if (cmn->cmn_mean)
+            ckd_free((void *) cmn->cmn_mean);
 
-		if (cmn->cur_mean)
-			ckd_free((void *) cmn->cur_mean);
+        if (cmn->cur_mean)
+            ckd_free((void *) cmn->cur_mean);
 
-		ckd_free((void *) cmn);
-	}
+        ckd_free((void *) cmn);
+    }
 }

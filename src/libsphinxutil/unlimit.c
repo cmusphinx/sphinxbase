@@ -1,3 +1,4 @@
+/* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* ====================================================================
  * Copyright (c) 1999-2004 Carnegie Mellon University.  All rights
  * reserved.
@@ -73,11 +74,11 @@ unlimit(void)
 {
 #if 0
 #if ((! WIN32) && (! _HPUX_SOURCE))
-	struct rlimit rl;
+    struct rlimit rl;
 
-	getrlimit(RLIMIT_DATA, &rl);
-	rl.rlim_cur = rl.rlim_max;
-	setrlimit(RLIMIT_DATA, &rl);
+    getrlimit(RLIMIT_DATA, &rl);
+    rl.rlim_cur = rl.rlim_max;
+    setrlimit(RLIMIT_DATA, &rl);
 #endif
 #endif
 }

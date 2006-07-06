@@ -1,3 +1,4 @@
+/* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* ====================================================================
  * Copyright (c) 1999-2004 Carnegie Mellon University.  All rights
  * reserved.
@@ -67,17 +68,17 @@
 void
 agc_max(float **mfc, int32 n_frame)
 {
-	float32 maxc0;
-	int32 i;
+    float32 maxc0;
+    int32 i;
 
-	assert(n_frame > 0);
+    assert(n_frame > 0);
 
-	maxc0 = mfc[0][0];
-	for (i = 1; i < n_frame; i++) {
-		if (mfc[i][0] > maxc0)
-			maxc0 = mfc[i][0];
-	}
+    maxc0 = mfc[0][0];
+    for (i = 1; i < n_frame; i++) {
+        if (mfc[i][0] > maxc0)
+            maxc0 = mfc[i][0];
+    }
 
-	for (i = 0; i < n_frame; i++)
-		mfc[i][0] -= maxc0;
+    for (i = 0; i < n_frame; i++)
+        mfc[i][0] -= maxc0;
 }

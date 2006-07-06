@@ -1,3 +1,4 @@
+/* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* ====================================================================
  * Copyright (c) 2006 Carnegie Mellon University.  All rights 
  * reserved.
@@ -61,201 +62,195 @@ static uint32 fid = FE_WARP_ID_NONE;
    used.
 */
 static char *__name2id[] = {
-	"inverse",
-	"linear",
-	"piecewise",
-	NULL
+    "inverse",
+    "linear",
+    "piecewise",
+    NULL
 };
 
 static char *name2id[] = {
-	"inverse_linear",
-	"affine",
-	"piecewise_linear",
-	NULL
+    "inverse_linear",
+    "affine",
+    "piecewise_linear",
+    NULL
 };
 
 static fe_warp_conf_t fe_warp_conf[FE_WARP_ID_MAX + 1] = {
-	{fe_warp_inverse_linear_set_parameters,
-	 fe_warp_inverse_linear_doc,
-	 fe_warp_inverse_linear_id,
-	 fe_warp_inverse_linear_n_param,
-	 fe_warp_inverse_linear_warped_to_unwarped,
-	 fe_warp_inverse_linear_unwarped_to_warped,
-	 fe_warp_inverse_linear_print},	/* Inverse linear warping */
-	{fe_warp_affine_set_parameters,
-	 fe_warp_affine_doc,
-	 fe_warp_affine_id,
-	 fe_warp_affine_n_param,
-	 fe_warp_affine_warped_to_unwarped,
-	 fe_warp_affine_unwarped_to_warped,
-	 fe_warp_affine_print},	/* Affine warping */
-	{fe_warp_piecewise_linear_set_parameters,
-	 fe_warp_piecewise_linear_doc,
-	 fe_warp_piecewise_linear_id,
-	 fe_warp_piecewise_linear_n_param,
-	 fe_warp_piecewise_linear_warped_to_unwarped,
-	 fe_warp_piecewise_linear_unwarped_to_warped,
-	 fe_warp_piecewise_linear_print},	/* Piecewise_Linear warping */
+    {fe_warp_inverse_linear_set_parameters,
+     fe_warp_inverse_linear_doc,
+     fe_warp_inverse_linear_id,
+     fe_warp_inverse_linear_n_param,
+     fe_warp_inverse_linear_warped_to_unwarped,
+     fe_warp_inverse_linear_unwarped_to_warped,
+     fe_warp_inverse_linear_print},     /* Inverse linear warping */
+    {fe_warp_affine_set_parameters,
+     fe_warp_affine_doc,
+     fe_warp_affine_id,
+     fe_warp_affine_n_param,
+     fe_warp_affine_warped_to_unwarped,
+     fe_warp_affine_unwarped_to_warped,
+     fe_warp_affine_print},     /* Affine warping */
+    {fe_warp_piecewise_linear_set_parameters,
+     fe_warp_piecewise_linear_doc,
+     fe_warp_piecewise_linear_id,
+     fe_warp_piecewise_linear_n_param,
+     fe_warp_piecewise_linear_warped_to_unwarped,
+     fe_warp_piecewise_linear_unwarped_to_warped,
+     fe_warp_piecewise_linear_print},   /* Piecewise_Linear warping */
 };
 
 int
 fe_warp_set(const char *id_name)
 {
-	uint32 i;
+    uint32 i;
 
-	for (i = 0; name2id[i]; i++) {
-		if (strcmp(id_name, name2id[i]) == 0) {
-			fid = i;
-			break;
-		}
-	}
+    for (i = 0; name2id[i]; i++) {
+        if (strcmp(id_name, name2id[i]) == 0) {
+            fid = i;
+            break;
+        }
+    }
 
-	if (name2id[i] == NULL) {
-		for (i = 0; __name2id[i]; i++) {
-			if (strcmp(id_name, __name2id[i]) == 0) {
-				fid = i;
-				break;
-			}
-		}
-		if (__name2id[i] == NULL) {
-			E_ERROR("Unimplemented warping function %s\n",
-				id_name);
-			E_ERROR("Implemented functions are:\n");
-			for (i = 0; name2id[i]; i++) {
-				fprintf(stderr, "\t%s\n", name2id[i]);
-			}
-			fid = FE_WARP_ID_NONE;
+    if (name2id[i] == NULL) {
+        for (i = 0; __name2id[i]; i++) {
+            if (strcmp(id_name, __name2id[i]) == 0) {
+                fid = i;
+                break;
+            }
+        }
+        if (__name2id[i] == NULL) {
+            E_ERROR("Unimplemented warping function %s\n", id_name);
+            E_ERROR("Implemented functions are:\n");
+            for (i = 0; name2id[i]; i++) {
+                fprintf(stderr, "\t%s\n", name2id[i]);
+            }
+            fid = FE_WARP_ID_NONE;
 
-			return FE_START_ERROR;
-		}
-	}
+            return FE_START_ERROR;
+        }
+    }
 
-	return FE_SUCCESS;
+    return FE_SUCCESS;
 }
 
 void
 fe_warp_set_parameters(char *param_str, float sampling_rate)
 {
-	if (fid <= FE_WARP_ID_MAX) {
-		fe_warp_conf[fid].set_parameters(param_str, sampling_rate);
-	}
-	else if (fid == FE_WARP_ID_NONE) {
-		E_FATAL("feat module must be configured w/ a valid ID\n");
-	}
-	else {
-		E_FATAL
-		    ("fe_warp module misconfigured with invalid fe_warp_id %u\n",
-		     fid);
-	}
+    if (fid <= FE_WARP_ID_MAX) {
+        fe_warp_conf[fid].set_parameters(param_str, sampling_rate);
+    }
+    else if (fid == FE_WARP_ID_NONE) {
+        E_FATAL("feat module must be configured w/ a valid ID\n");
+    }
+    else {
+        E_FATAL
+            ("fe_warp module misconfigured with invalid fe_warp_id %u\n",
+             fid);
+    }
 }
 
 const char *
 fe_warp_doc()
 {
-	if (fid <= FE_WARP_ID_MAX) {
-		return fe_warp_conf[fid].doc();
-	}
-	else if (fid == FE_WARP_ID_NONE) {
-		E_FATAL
-		    ("fe_warp module must be configured w/ a valid ID\n");
-	}
-	else {
-		E_FATAL
-		    ("fe_warp module misconfigured with invalid fe_warp_id %u\n",
-		     fid);
-	}
+    if (fid <= FE_WARP_ID_MAX) {
+        return fe_warp_conf[fid].doc();
+    }
+    else if (fid == FE_WARP_ID_NONE) {
+        E_FATAL("fe_warp module must be configured w/ a valid ID\n");
+    }
+    else {
+        E_FATAL
+            ("fe_warp module misconfigured with invalid fe_warp_id %u\n",
+             fid);
+    }
 
-	return NULL;
+    return NULL;
 }
 
 uint32
 fe_warp_id()
 {
-	if (fid <= FE_WARP_ID_MAX) {
-		assert(fid == fe_warp_conf[fid].id());
-		return fid;
-	}
-	else if (fid != FE_WARP_ID_NONE) {
-		E_FATAL
-		    ("fe_warp module misconfigured with invalid fe_warp_id %u\n",
-		     fid);
-	}
+    if (fid <= FE_WARP_ID_MAX) {
+        assert(fid == fe_warp_conf[fid].id());
+        return fid;
+    }
+    else if (fid != FE_WARP_ID_NONE) {
+        E_FATAL
+            ("fe_warp module misconfigured with invalid fe_warp_id %u\n",
+             fid);
+    }
 
-	return FE_WARP_ID_NONE;
+    return FE_WARP_ID_NONE;
 }
 
 uint32
 fe_warp_n_param()
 {
-	if (fid <= FE_WARP_ID_MAX) {
-		return fe_warp_conf[fid].n_param();
-	}
-	else if (fid == FE_WARP_ID_NONE) {
-		E_FATAL
-		    ("fe_warp module must be configured w/ a valid ID\n");
-	}
-	else {
-		E_FATAL
-		    ("fe_warp module misconfigured with invalid fe_warp_id %u\n",
-		     fid);
-	}
+    if (fid <= FE_WARP_ID_MAX) {
+        return fe_warp_conf[fid].n_param();
+    }
+    else if (fid == FE_WARP_ID_NONE) {
+        E_FATAL("fe_warp module must be configured w/ a valid ID\n");
+    }
+    else {
+        E_FATAL
+            ("fe_warp module misconfigured with invalid fe_warp_id %u\n",
+             fid);
+    }
 
-	return 0;
+    return 0;
 }
 
 float
 fe_warp_warped_to_unwarped(float nonlinear)
 {
-	if (fid <= FE_WARP_ID_MAX) {
-		return fe_warp_conf[fid].warped_to_unwarped(nonlinear);
-	}
-	else if (fid == FE_WARP_ID_NONE) {
-		E_FATAL
-		    ("fe_warp module must be configured w/ a valid ID\n");
-	}
-	else {
-		E_FATAL
-		    ("fe_warp module misconfigured with invalid fe_warp_id %u\n",
-		     fid);
-	}
+    if (fid <= FE_WARP_ID_MAX) {
+        return fe_warp_conf[fid].warped_to_unwarped(nonlinear);
+    }
+    else if (fid == FE_WARP_ID_NONE) {
+        E_FATAL("fe_warp module must be configured w/ a valid ID\n");
+    }
+    else {
+        E_FATAL
+            ("fe_warp module misconfigured with invalid fe_warp_id %u\n",
+             fid);
+    }
 
-	return 0;
+    return 0;
 }
 
 float
 fe_warp_unwarped_to_warped(float linear)
 {
-	if (fid <= FE_WARP_ID_MAX) {
-		return fe_warp_conf[fid].unwarped_to_warped(linear);
-	}
-	else if (fid == FE_WARP_ID_NONE) {
-		E_FATAL
-		    ("fe_warp module must be configured w/ a valid ID\n");
-	}
-	else {
-		E_FATAL
-		    ("fe_warp module misconfigured with invalid fe_warp_id %u\n",
-		     fid);
-	}
+    if (fid <= FE_WARP_ID_MAX) {
+        return fe_warp_conf[fid].unwarped_to_warped(linear);
+    }
+    else if (fid == FE_WARP_ID_NONE) {
+        E_FATAL("fe_warp module must be configured w/ a valid ID\n");
+    }
+    else {
+        E_FATAL
+            ("fe_warp module misconfigured with invalid fe_warp_id %u\n",
+             fid);
+    }
 
-	return 0;
+    return 0;
 }
 
 void
 fe_warp_print(const char *label)
 {
-	if (fid <= FE_WARP_ID_MAX) {
-		fe_warp_conf[fid].print(label);
-	}
-	else if (fid == FE_WARP_ID_NONE) {
-		E_FATAL
-		    ("fe_warp module must be configured w/ a valid ID\n");
-	}
-	else {
-		E_FATAL
-		    ("fe_warp module misconfigured with invalid fe_warp_id %u\n",
-		     fid);
-	}
+    if (fid <= FE_WARP_ID_MAX) {
+        fe_warp_conf[fid].print(label);
+    }
+    else if (fid == FE_WARP_ID_NONE) {
+        E_FATAL("fe_warp module must be configured w/ a valid ID\n");
+    }
+    else {
+        E_FATAL
+            ("fe_warp module misconfigured with invalid fe_warp_id %u\n",
+             fid);
+    }
 }
 
 /*

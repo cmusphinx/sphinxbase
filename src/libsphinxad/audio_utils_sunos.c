@@ -1,3 +1,4 @@
+/* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* ====================================================================
  * Copyright (c) 1999-2001 Carnegie Mellon University.  All rights
  * reserved.
@@ -70,220 +71,215 @@ static int sampleEncoding;
 int
 audioOpen(const char *dev, int rate)
 {
-	int fd;
-	int non_blocking;
+    int fd;
+    int non_blocking;
 
-	if (rate == 16000) {
-		sampleRate = 16000;
-		samplePrecision = 16;
-		sampleEncoding = AUDIO_ENCODING_LINEAR;
-	}
-	else if (rate == 8000) {
-		sampleRate = 8000;
-		samplePrecision = 8;
-		sampleEncoding = AUDIO_ENCODING_ULAW;
-	}
-	else
-		QUIT((stderr, "audioOpen: unsupported rate %d\n", rate));
+    if (rate == 16000) {
+        sampleRate = 16000;
+        samplePrecision = 16;
+        sampleEncoding = AUDIO_ENCODING_LINEAR;
+    }
+    else if (rate == 8000) {
+        sampleRate = 8000;
+        samplePrecision = 8;
+        sampleEncoding = AUDIO_ENCODING_ULAW;
+    }
+    else
+        QUIT((stderr, "audioOpen: unsupported rate %d\n", rate));
 
-	/*
-	 * Open the device for read-only access and do not block (wait) if
-	 * the device is currently busy.
-	 */
-	fd = open(dev, O_RDONLY | O_NDELAY);
-	if (fd < 0) {
-		if (errno == EBUSY)
-			fprintf(stderr,
-				"audioOpen: audio device is busy\n");
-		else
-			perror("audioOpen error");
-		exit(1);
-	}
-	audioFd = fd;
+    /*
+     * Open the device for read-only access and do not block (wait) if
+     * the device is currently busy.
+     */
+    fd = open(dev, O_RDONLY | O_NDELAY);
+    if (fd < 0) {
+        if (errno == EBUSY)
+            fprintf(stderr, "audioOpen: audio device is busy\n");
+        else
+            perror("audioOpen error");
+        exit(1);
+    }
+    audioFd = fd;
 
-	audioPause();
-	audioFlush();
-	non_blocking = 1;
-	ioctl(audioFd, FIONBIO, &non_blocking);
+    audioPause();
+    audioFlush();
+    non_blocking = 1;
+    ioctl(audioFd, FIONBIO, &non_blocking);
 
-	return fd;
+    return fd;
 }
 
 void
 audioPause(void)
 {
-	audio_info_t info;
-	int err;
+    audio_info_t info;
+    int err;
 
-	/*
-	 * Make sure that the audio device is open
-	 */
-	if (audioFd < 0)
-		QUIT((stderr,
-		      "audioPauseAndFlush: audio device not open\n"));
+    /*
+     * Make sure that the audio device is open
+     */
+    if (audioFd < 0)
+        QUIT((stderr, "audioPauseAndFlush: audio device not open\n"));
 
-	/*
-	 * Pause and flush the input stream
-	 */
-	AUDIO_INITINFO(&info);
-	info.record.pause = 1;
-	err = ioctl(audioFd, AUDIO_SETINFO, &info);
-	if (err)
-		QUIT((stderr, "pause ioctl err %d\n", err));
+    /*
+     * Pause and flush the input stream
+     */
+    AUDIO_INITINFO(&info);
+    info.record.pause = 1;
+    err = ioctl(audioFd, AUDIO_SETINFO, &info);
+    if (err)
+        QUIT((stderr, "pause ioctl err %d\n", err));
 }
 
 void
 audioFlush(void)
 {
-	audio_info_t info;
-	int err;
+    audio_info_t info;
+    int err;
 
-	/*
-	 * Make sure that the audio device is open
-	 */
-	if (audioFd < 0)
-		QUIT((stderr,
-		      "audioPauseAndFlush: audio device not open\n"));
+    /*
+     * Make sure that the audio device is open
+     */
+    if (audioFd < 0)
+        QUIT((stderr, "audioPauseAndFlush: audio device not open\n"));
 
-	/*
-	 * Flush the current input queue
-	 */
-	err = ioctl(audioFd, I_FLUSH, FLUSHR);
-	if (err)
-		QUIT((stderr, "flush ioctl err %d\n", err));
+    /*
+     * Flush the current input queue
+     */
+    err = ioctl(audioFd, I_FLUSH, FLUSHR);
+    if (err)
+        QUIT((stderr, "flush ioctl err %d\n", err));
 }
 
 void
 audioStartRecord(void)
 {
-	audio_info_t info;
-	int err;
+    audio_info_t info;
+    int err;
 
-	/*
-	 * Make sure that the audio device is open
-	 */
-	if (audioFd < 0)
-		QUIT((stderr,
-		      "audioStartRecord: audio device not open\n"));
+    /*
+     * Make sure that the audio device is open
+     */
+    if (audioFd < 0)
+        QUIT((stderr, "audioStartRecord: audio device not open\n"));
 
-	/*
-	 * Setup the input stream the way we want it and start recording.
-	 */
-	AUDIO_INITINFO(&info);
-	info.record.sample_rate = sampleRate;
-	info.record.channels = 1;
-	info.record.precision = samplePrecision;
-	info.record.encoding = sampleEncoding;
+    /*
+     * Setup the input stream the way we want it and start recording.
+     */
+    AUDIO_INITINFO(&info);
+    info.record.sample_rate = sampleRate;
+    info.record.channels = 1;
+    info.record.precision = samplePrecision;
+    info.record.encoding = sampleEncoding;
 #if 0
-	info.record.gain = AUDIO_DEF_GAIN;
-	info.record.port = AUDIO_MICROPHONE;
+    info.record.gain = AUDIO_DEF_GAIN;
+    info.record.port = AUDIO_MICROPHONE;
 #else
-	info.record.gain = 85;
-	info.record.port = AUDIO_LINE_IN;
+    info.record.gain = 85;
+    info.record.port = AUDIO_LINE_IN;
 #endif
-	info.record.samples = 0;
-	info.record.pause = 0;
-	info.record.error = 0;
+    info.record.samples = 0;
+    info.record.pause = 0;
+    info.record.error = 0;
 
-	err = ioctl(audioFd, AUDIO_SETINFO, &info);
-	if (err)
-		QUIT((stderr, "startRecord ioctl err %d\n", err));
+    err = ioctl(audioFd, AUDIO_SETINFO, &info);
+    if (err)
+        QUIT((stderr, "startRecord ioctl err %d\n", err));
 }
 
 void
 audioStopRecord(void)
 {
-	audioPause();
+    audioPause();
 }
 
 void
 audioClose(void)
 {
-	/*
-	 * Make sure that the audio device is open
-	 */
-	if (audioFd < 0)
-		QUIT((stderr, "audioRecord: audio device not open\n"));
-	close(audioFd);
-	audioFd = -1;
+    /*
+     * Make sure that the audio device is open
+     */
+    if (audioFd < 0)
+        QUIT((stderr, "audioRecord: audio device not open\n"));
+    close(audioFd);
+    audioFd = -1;
 }
 
 int
 audioSetRecordGain(int gain)
 {
-	audio_info_t info;
-	int err;
-	int currentGain;
+    audio_info_t info;
+    int err;
+    int currentGain;
 
-	/*
-	 * Make sure that the audio device is open
-	 */
-	if (audioFd < 0)
-		QUIT((stderr,
-		      "audioSetRecordGain: audio device not open\n"));
+    /*
+     * Make sure that the audio device is open
+     */
+    if (audioFd < 0)
+        QUIT((stderr, "audioSetRecordGain: audio device not open\n"));
 
-	/*
-	 * Fetch the current gain
-	 */
-	err = ioctl(audioFd, AUDIO_GETINFO, &info);
-	if (err)
-		QUIT((stderr, "audioSetRecordGain ioctl err %d\n", err));
-	currentGain = info.record.gain;
+    /*
+     * Fetch the current gain
+     */
+    err = ioctl(audioFd, AUDIO_GETINFO, &info);
+    if (err)
+        QUIT((stderr, "audioSetRecordGain ioctl err %d\n", err));
+    currentGain = info.record.gain;
 
-	/*
-	 * Make sure that desired gain is within an acceptable range
-	 */
-	if (gain < AUDIO_MIN_GAIN || gain > AUDIO_MAX_GAIN) {
-		fprintf(stderr,
-			"audioSetRecordGain: gain %d out of range %d-%d\n",
-			gain, AUDIO_MIN_GAIN, AUDIO_MAX_GAIN);
-		return currentGain;
-	}
+    /*
+     * Make sure that desired gain is within an acceptable range
+     */
+    if (gain < AUDIO_MIN_GAIN || gain > AUDIO_MAX_GAIN) {
+        fprintf(stderr,
+                "audioSetRecordGain: gain %d out of range %d-%d\n",
+                gain, AUDIO_MIN_GAIN, AUDIO_MAX_GAIN);
+        return currentGain;
+    }
 
-	/*
-	 * Setup the input stream the way we want it and start recording.
-	 */
-	AUDIO_INITINFO(&info);
-	info.record.gain = gain;
-	err = ioctl(audioFd, AUDIO_SETINFO, &info);
-	if (err)
-		QUIT((stderr, "startRecord ioctl err %d\n", err));
-	return currentGain;
+    /*
+     * Setup the input stream the way we want it and start recording.
+     */
+    AUDIO_INITINFO(&info);
+    info.record.gain = gain;
+    err = ioctl(audioFd, AUDIO_SETINFO, &info);
+    if (err)
+        QUIT((stderr, "startRecord ioctl err %d\n", err));
+    return currentGain;
 }
 
 #ifdef MAIN
 void
 main(int argc, char *argv[])
 {
-	unsigned short buf[16000];
-	int audio_fd, i, j, k;
+    unsigned short buf[16000];
+    int audio_fd, i, j, k;
 
-	audio_fd = audioOpen(16000);
-	audioStartRecord();
+    audio_fd = audioOpen(16000);
+    audioStartRecord();
 
-	for (i = 0; i < 5; i++) {
-		/* simulate compute for a while */
-		for (j = 0; j < 200000; j++);
+    for (i = 0; i < 5; i++) {
+        /* simulate compute for a while */
+        for (j = 0; j < 200000; j++);
 
-		/* read whatever accumulated data is available, upto 16k max */
-		k = read(audio_fd, buf, 16000 * sizeof(short));
+        /* read whatever accumulated data is available, upto 16k max */
+        k = read(audio_fd, buf, 16000 * sizeof(short));
 
-		/* print some of the new data */
-		printf(" %5d", k);
-		for (j = 0; j < 20; j++)
-			printf(" %04x", buf[j]);
-		printf("\n");
-		fflush(stdout);
-	}
+        /* print some of the new data */
+        printf(" %5d", k);
+        for (j = 0; j < 20; j++)
+            printf(" %04x", buf[j]);
+        printf("\n");
+        fflush(stdout);
+    }
 
-	/* simulate compute for a while and stop recording */
-	for (j = 0; j < 1000000; j++);
-	audioStopRecord();
+    /* simulate compute for a while and stop recording */
+    for (j = 0; j < 1000000; j++);
+    audioStopRecord();
 
-	/* read whatever accumulated data is available, upto 16k max */
-	k = read(audio_fd, buf, 16000 * sizeof(short));
-	printf(" %5d\n", k);
+    /* read whatever accumulated data is available, upto 16k max */
+    k = read(audio_fd, buf, 16000 * sizeof(short));
+    printf(" %5d\n", k);
 
-	audioClose();
+    audioClose();
 }
 #endif

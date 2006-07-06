@@ -1,3 +1,4 @@
+/* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* ====================================================================
  * Copyright (c) 1999-2004 Carnegie Mellon University.  All rights
  * reserved.
@@ -69,11 +70,11 @@
 void
 path2basename(char *path, char *base)
 {
-	int32 i, l;
+    int32 i, l;
 
-	l = strlen(path);
-	for (i = l - 1; (i >= 0) && (path[i] != '/'); --i);
-	strcpy(base, path + i + 1);
+    l = strlen(path);
+    for (i = l - 1; (i >= 0) && (path[i] != '/'); --i);
+    strcpy(base, path + i + 1);
 }
 
 
@@ -81,16 +82,16 @@ path2basename(char *path, char *base)
 void
 strip_fileext(char *path, char *root)
 {
-	int32 i, l;
+    int32 i, l;
 
-	assert(0);
-	l = strlen(path);
-	for (i = l - 1; (i >= 0) && (path[i] != '.'); --i);
-	if (i < 0)
-		strcpy(root, path);	/* Didn't find a . */
-	else {
-		path[i] = '\0';
-		strcpy(root, path);
-		path[i] = '.';
-	}
+    assert(0);
+    l = strlen(path);
+    for (i = l - 1; (i >= 0) && (path[i] != '.'); --i);
+    if (i < 0)
+        strcpy(root, path);     /* Didn't find a . */
+    else {
+        path[i] = '\0';
+        strcpy(root, path);
+        path[i] = '.';
+    }
 }

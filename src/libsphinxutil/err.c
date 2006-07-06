@@ -1,3 +1,4 @@
+/* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* ====================================================================
  * Copyright (c) 1999-2004 Carnegie Mellon University.  All rights
  * reserved.
@@ -77,141 +78,141 @@
 void
 _E__pr_info_header_wofn(char const *msg)
 {
-	(void) fflush(stderr);
+    (void) fflush(stderr);
 
-	/* make different format so as not to be parsed by emacs compile */
-	(void) fprintf(stderr, "%s:\t", msg);
+    /* make different format so as not to be parsed by emacs compile */
+    (void) fprintf(stderr, "%s:\t", msg);
 }
 
 void
 _E__pr_header(char const *f, long ln, char const *msg)
 {
-	(void) fflush(stderr);
-	(void) fprintf(stderr, "%s: \"%s\", line %ld: ", msg, f, ln);
+    (void) fflush(stderr);
+    (void) fprintf(stderr, "%s: \"%s\", line %ld: ", msg, f, ln);
 }
 
 void
 _E__pr_info_header(char const *f, long ln, char const *msg)
 {
-	(void) fflush(stderr);
+    (void) fflush(stderr);
 
-	/* make different format so as not to be parsed by emacs compile */
-	(void) fprintf(stderr, "%s: %s(%ld): ", msg, f, ln);
+    /* make different format so as not to be parsed by emacs compile */
+    (void) fprintf(stderr, "%s: %s(%ld): ", msg, f, ln);
 }
 
 void
 _E__pr_warn(char const *fmt, ...)
 {
-	va_list pvar;
+    va_list pvar;
 
-	va_start(pvar, fmt);
-	(void) vfprintf(stderr, fmt, pvar);
-	va_end(pvar);
+    va_start(pvar, fmt);
+    (void) vfprintf(stderr, fmt, pvar);
+    va_end(pvar);
 
-	(void) fflush(stderr);
+    (void) fflush(stderr);
 }
 
 void
 _E__pr_info(char const *fmt, ...)
 {
-	va_list pvar;
+    va_list pvar;
 
-	va_start(pvar, fmt);
-	(void) vfprintf(stderr, fmt, pvar);
-	va_end(pvar);
+    va_start(pvar, fmt);
+    (void) vfprintf(stderr, fmt, pvar);
+    va_end(pvar);
 
-	(void) fflush(stderr);
+    (void) fflush(stderr);
 }
 
 void
 _E__die_error(char const *fmt, ...)
 {
-	va_list pvar;
+    va_list pvar;
 
-	va_start(pvar, fmt);
+    va_start(pvar, fmt);
 
-	(void) vfprintf(stderr, fmt, pvar);
-	(void) fflush(stderr);
+    (void) vfprintf(stderr, fmt, pvar);
+    (void) fflush(stderr);
 
-	va_end(pvar);
+    va_end(pvar);
 
-	(void) fflush(stderr);
+    (void) fflush(stderr);
 
-	exit(-1);
+    exit(-1);
 }
 
 void
 _E__fatal_sys_error(char const *fmt, ...)
 {
-	va_list pvar;
+    va_list pvar;
 
-	va_start(pvar, fmt);
-	(void) vfprintf(stderr, fmt, pvar);
-	va_end(pvar);
+    va_start(pvar, fmt);
+    (void) vfprintf(stderr, fmt, pvar);
+    va_end(pvar);
 
-	putc(';', stderr);
-	putc(' ', stderr);
+    putc(';', stderr);
+    putc(' ', stderr);
 
-	perror("");
+    perror("");
 
-	(void) fflush(stderr);
+    (void) fflush(stderr);
 
-	exit(errno);
+    exit(errno);
 }
 
 void
 _E__sys_error(char const *fmt, ...)
 {
-	va_list pvar;
+    va_list pvar;
 
-	va_start(pvar, fmt);
-	(void) vfprintf(stderr, fmt, pvar);
-	va_end(pvar);
+    va_start(pvar, fmt);
+    (void) vfprintf(stderr, fmt, pvar);
+    va_end(pvar);
 
-	putc(';', stderr);
-	putc(' ', stderr);
+    putc(';', stderr);
+    putc(' ', stderr);
 
-	perror("");
+    perror("");
 
-	(void) fflush(stderr);
+    (void) fflush(stderr);
 }
 
 void
 _E__abort_error(char const *fmt, ...)
 {
-	va_list pvar;
+    va_list pvar;
 
-	va_start(pvar, fmt);
-	(void) vfprintf(stderr, fmt, pvar);
-	va_end(pvar);
+    va_start(pvar, fmt);
+    (void) vfprintf(stderr, fmt, pvar);
+    va_end(pvar);
 
-	(void) fflush(stderr);
+    (void) fflush(stderr);
 
-	abort();
+    abort();
 }
 
 #ifdef TEST
 main()
 {
-	char const *two = "two";
-	char const *three = "three";
-	FILE *fp;
+    char const *two = "two";
+    char const *three = "three";
+    FILE *fp;
 
-	E_WARN("this is a simple test\n");
+    E_WARN("this is a simple test\n");
 
-	E_WARN("this is a test with \"%s\" \"%s\".\n", "two", "arguments");
+    E_WARN("this is a test with \"%s\" \"%s\".\n", "two", "arguments");
 
-	E_WARN("foo %d is bar\n", 5);
+    E_WARN("foo %d is bar\n", 5);
 
-	E_WARN("bar is foo\n");
+    E_WARN("bar is foo\n");
 
-	E_WARN("one\n", two, three);
+    E_WARN("one\n", two, three);
 
-	E_INFO("Just some information you might find interesting\n");
+    E_INFO("Just some information you might find interesting\n");
 
-	fp = fopen("gondwanaland", "r");
-	if (fp == NULL) {
-		E_SYSTEM("Can't open gondwanaland for reading");
-	}
+    fp = fopen("gondwanaland", "r");
+    if (fp == NULL) {
+        E_SYSTEM("Can't open gondwanaland for reading");
+    }
 }
-#endif				/* TEST */
+#endif                          /* TEST */

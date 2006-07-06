@@ -1,3 +1,4 @@
+/* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* ====================================================================
  * Copyright (c) 1999-2001 Carnegie Mellon University.  All rights
  * reserved.
@@ -82,8 +83,8 @@
 void
 ad_mu2li(int16 * out, unsigned char *in, int32 n_samp)
 {
-	int32 i;
+    int32 i;
 
-	for (i = 0; i < n_samp; i++)
-		out[i] = muLaw[in[i]];
+    for (i = 0; i < n_samp; i++)
+        out[i] = muLaw[in[i]];
 }

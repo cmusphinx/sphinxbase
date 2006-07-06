@@ -1,3 +1,4 @@
+/* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* ====================================================================
  * Copyright (c) 1999-2004 Carnegie Mellon University.  All rights
  * reserved.
@@ -63,29 +64,29 @@
 int32
 nextword(char *line, char *delim, char **word, char *delimfound)
 {
-	char *w, *d;
+    char *w, *d;
 
-	/* Skip past any preceding delimiters */
-	for (w = line; *w; w++) {
-		for (d = delim; *d && (*d != *w); d++);
-		if (!*d)
-			break;
-	}
-	if (!*w)
-		return -1;
+    /* Skip past any preceding delimiters */
+    for (w = line; *w; w++) {
+        for (d = delim; *d && (*d != *w); d++);
+        if (!*d)
+            break;
+    }
+    if (!*w)
+        return -1;
 
-	*word = w;		/* Beginning of word */
+    *word = w;                  /* Beginning of word */
 
-	/* Skip until first delimiter char */
-	for (w++; *w; w++) {
-		for (d = delim; *d && (*d != *w); d++);
-		if (*d)
-			break;
-	}
+    /* Skip until first delimiter char */
+    for (w++; *w; w++) {
+        for (d = delim; *d && (*d != *w); d++);
+        if (*d)
+            break;
+    }
 
-	/* Replace delimiter with NULL char, but return the original first */
-	*delimfound = *w;
-	*w = '\0';
+    /* Replace delimiter with NULL char, but return the original first */
+    *delimfound = *w;
+    *w = '\0';
 
-	return (w - *word);	/* Length of word */
+    return (w - *word);         /* Length of word */
 }

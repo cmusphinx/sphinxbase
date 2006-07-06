@@ -1,3 +1,4 @@
+/* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* ====================================================================
  * Copyright (c) 1999-2004 Carnegie Mellon University.  All rights
  * reserved.
@@ -69,12 +70,12 @@
 int32
 str2words(char *line, char **ptr, int32 max_ptr)
 {
-	int32 i, n;
+    int32 i, n;
 
-	n = 0;			/* #words found so far */
-	i = 0;			/* For scanning through the input string */
-	for (;;) {
-		/* Skip whitespace before next word */
+    n = 0;                      /* #words found so far */
+    i = 0;                      /* For scanning through the input string */
+    for (;;) {
+        /* Skip whitespace before next word */
 
       /** 
 	  ARCHAN 20050713: 
@@ -86,31 +87,30 @@ str2words(char *line, char **ptr, int32 max_ptr)
 	  place. (or better unicode.)
       **/
 
-		/*      for (; line[i] && (isspace(line[i])); i++); */
-		for (; line[i] && (isspace((unsigned char) line[i])); i++);
-		if (!line[i])
-			break;
+        /*      for (; line[i] && (isspace(line[i])); i++); */
+        for (; line[i] && (isspace((unsigned char) line[i])); i++);
+        if (!line[i])
+            break;
 
-		if (n >= max_ptr) {
-			/*
-			 * Pointer array size insufficient.  Restore NULL chars inserted so far
-			 * to space chars.  Not a perfect restoration, but better than nothing.
-			 */
-			for (; i >= 0; --i)
-				if (line[i] == '\0')
-					line[i] = ' ';
+        if (n >= max_ptr) {
+            /*
+             * Pointer array size insufficient.  Restore NULL chars inserted so far
+             * to space chars.  Not a perfect restoration, but better than nothing.
+             */
+            for (; i >= 0; --i)
+                if (line[i] == '\0')
+                    line[i] = ' ';
 
-			return -1;
-		}
+            return -1;
+        }
 
-		/* Scan to end of word */
-		ptr[n++] = line + i;
-		for (; line[i] && (!isspace((unsigned char) line[i]));
-		     i++);
-		if (!line[i])
-			break;
-		line[i++] = '\0';
-	}
+        /* Scan to end of word */
+        ptr[n++] = line + i;
+        for (; line[i] && (!isspace((unsigned char) line[i])); i++);
+        if (!line[i])
+            break;
+        line[i++] = '\0';
+    }
 
-	return n;
+    return n;
 }

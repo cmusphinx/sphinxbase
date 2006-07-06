@@ -1,3 +1,4 @@
+/* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* ====================================================================
  * Copyright (c) 1999-2004 Carnegie Mellon University.  All rights
  * reserved.
@@ -69,46 +70,46 @@
 void
 lcase(register char *cp)
 {
-	if (cp) {
-		while (*cp) {
-			*cp = LOWER_CASE(*cp);
-			cp++;
-		}
-	}
+    if (cp) {
+        while (*cp) {
+            *cp = LOWER_CASE(*cp);
+            cp++;
+        }
+    }
 }
 
 void
 ucase(register char *cp)
 {
-	if (cp) {
-		while (*cp) {
-			*cp = UPPER_CASE(*cp);
-			cp++;
-		}
-	}
+    if (cp) {
+        while (*cp) {
+            *cp = UPPER_CASE(*cp);
+            cp++;
+        }
+    }
 }
 
 int32
 strcmp_nocase(const char *str1, const char *str2)
 {
-	char c1, c2;
+    char c1, c2;
 
-	if (str1 == str2)
-		return 0;
-	if (str1 && str2) {
-		for (;;) {
-			c1 = *(str1++);
-			c1 = UPPER_CASE(c1);
-			c2 = *(str2++);
-			c2 = UPPER_CASE(c2);
-			if (c1 != c2)
-				return (c1 - c2);
-			if (c1 == '\0')
-				return 0;
-		}
-	}
-	else
-		return (str1 == NULL) ? -1 : 1;
+    if (str1 == str2)
+        return 0;
+    if (str1 && str2) {
+        for (;;) {
+            c1 = *(str1++);
+            c1 = UPPER_CASE(c1);
+            c2 = *(str2++);
+            c2 = UPPER_CASE(c2);
+            if (c1 != c2)
+                return (c1 - c2);
+            if (c1 == '\0')
+                return 0;
+        }
+    }
+    else
+        return (str1 == NULL) ? -1 : 1;
 
-	return 0;
+    return 0;
 }
