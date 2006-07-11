@@ -14,6 +14,11 @@ const float32 bar[3][3] = {
 	{1, 1, 1},
 	{1, 1, 2}
 };
+const float32 baz[3][3] = {
+	{2, 2, 1},
+	{1, 2, 1},
+	{1, 1, 2}
+};
 
 int
 main(int argc, char *argv[])
@@ -65,6 +70,52 @@ main(int argc, char *argv[])
 			printf("%.2f ", vr[i][j]);
 		}
 		printf("\n");
+	}
+
+	/* Should see: */
+	/*
+	  4.30 0.70 1.00
+	  -0.68 -0.52 -0.52
+	  -0.85 0.37 0.37
+	  -0.71 0.00 0.71
+	*/
+	memcpy(a[0], baz, sizeof(float32) * 3 * 3);
+	eigenvectors(a, ur, ui, vr, vi, 3);
+	for (i = 0; i < 3; ++i)
+		printf("%.2f ", ur[i]);
+	printf("\n");
+	for (i = 0; i < 3; ++i) {
+		for (j = 0; j < 3; ++j) {
+			printf("%.2f ", vr[i][j]);
+		}
+		printf("\n");
+	}
+
+	/* Verify that they have the eigenproperty. */
+	/* i.e. a * vr[i] = u[i] * vr[i] (but note that we return the
+	 * eigenvectors as row rather than column vectors), so you
+	 * should see: */
+	/*
+	  -0.68 -0.52 -0.52
+	  -0.85 0.37 0.37
+	  -0.71 0.00 0.71
+	*/
+	for (i = 0; i < 3; ++i) {
+		float32 **b, **c;
+
+		b = (float32 **)ckd_calloc_2d(3, 1, sizeof(float32));
+		c = (float32 **)ckd_calloc_2d(3, 1, sizeof(float32));
+
+		memcpy(b[0], vr[i], sizeof(float32) * 3);
+		matrixmultiply(c, a, b, 3, 1, 3);
+		scalarmultiply(c, 1/ur[i], 3, 1);
+
+		for (j = 0; j < 3; ++j)
+			printf("%.2f ", c[j][0]);
+		printf("\n");
+
+		ckd_free_2d((void **)b);
+		ckd_free_2d((void **)c);
 	}
 
 	ckd_free_2d((void **)a);
