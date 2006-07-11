@@ -37,6 +37,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "config.h"
 #include "clapack_lite.h"
 #include "matrix.h"
 #include "err.h"
@@ -74,7 +75,7 @@ determinant(float32 ** a, int32 n)
     tmp_a = (float32 *) ckd_calloc(N * N, sizeof(float32));
     for (i = 0; i < N; i++)
         for (j = 0; j < N; j++)
-            tmp_a[j + N * i] = a[i][j];
+            tmp_a[N * j + i] = a[i][j];
 
     IPIV = (int32 *) ckd_calloc(N, sizeof(int32));
     sgetrf_(&M, &N, tmp_a, &LDA, IPIV, &INFO);
@@ -97,7 +98,7 @@ determinant(float32 ** a, int32 n)
 int32
 invert(float32 ** ainv, float32 ** a, int32 n)
 {
-    float32 *tmp_a, *tmp_i;
+    float32 *tmp_a;
     int i, j;
     int32 N, NRHS, LDA, LDB, INFO;
     int32 *IPIV;
@@ -113,28 +114,31 @@ invert(float32 ** ainv, float32 ** a, int32 n)
     tmp_a = (float32 *) ckd_calloc(N * N, sizeof(float32));
     for (i = 0; i < N; i++)
         for (j = 0; j < N; j++)
-            tmp_a[j + N * i] = a[i][j];
+            tmp_a[N * j + i] = a[i][j];
 
     /* Construct an identity matrix. */
-    tmp_i = (float32 *) ckd_calloc(N * N, sizeof(float32));
+    memset(ainv[0], 0, sizeof(float32) * N * N);
     for (i = 0; i < N; i++)
-        tmp_i[i + N * i] = 1.0;
+        ainv[i][i] = 1.0;
 
     IPIV = (int32 *) ckd_calloc(N, sizeof(int32));
 
     /* Beware! all arguments of lapack have to be a pointer */
-    sgesv_(&N, &NRHS, tmp_a, &LDA, IPIV, tmp_i, &LDB, &INFO);
+    sgesv_(&N, &NRHS, tmp_a, &LDA, IPIV, ainv[0], &LDB, &INFO);
 
     if (INFO != 0)
         return -1;
 
-    /* FIXME: We should be able to do this in place actually */
-    for (i = 0; i < n; ++i)
-        for (j = 0; j < n; ++j)
-            ainv[i][j] = tmp_i[j + N * i];
+    /* Reorder the output in place. */
+    for (i = 0; i < n; ++i) {
+        for (j = i+1; j < n; ++j) {
+	    float32 tmp = ainv[i][j];
+            ainv[i][j] = ainv[j][i];
+	    ainv[j][i] = tmp;
+	}
+    }
 
     ckd_free((void *) tmp_a);
-    ckd_free((void *) tmp_i);
     ckd_free((void *) IPIV);
 
     return 0;
