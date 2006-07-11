@@ -1,0 +1,6 @@
+#!/bin/sh
+
+set -e
+./test_eigen > _test_eigen.out
+diff _test_eigen.out _test_eigen.res >/dev/null 2>&1
+rm -f _test_eigen.out

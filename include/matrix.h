@@ -50,29 +50,34 @@
 #include "prim_type.h"
 
 /* These can be vanishingly small hence the float64 */
-float64
-determinant(float32 **a, int32 len);
+float64 determinant(float32 **a, int32 len);
 
 /* Returns -1 for a singular matrix. */
-int32
-invert(float32 **ainv, float32 **a, int32 len);
+int32 invert(float32 **out_ainv, float32 **a, int32 len);
 
-void
-outerproduct(float32 **a, float32 *x, float32 *y, int32 len);
+/* Returns -1 for a singular matrix. */
+int32 solve(float32 **a, float32 *b,
+            float32 *out_x, int32 n);
 
-void
-matrixmultiply(float32 **c, /* = */
-	       float32 **a, /* * */ float32 **b,
-	       int32 m, /**< #rows of a. */
-	       int32 n, /**< #cols of b. */
-	       int32 k  /**< #cols of a, #rows of b. */
+void outerproduct(float32 **out_a, float32 *x, float32 *y, int32 len);
+
+/* Returns >0 for failure to converge (return value is number of
+ * computed eigenvalues). */
+int32 eigenvectors(float32 **a,
+                   float32 *out_ur, float32 *out_ui,
+                   float32 **out_vr, float32 **out_vi,
+                   int32 len);
+
+void matrixmultiply(float32 **out_c, /* = */
+                    float32 **a, /* * */ float32 **b,
+                    int32 m, /**< #rows of a. */
+                    int32 n, /**< #cols of b. */
+                    int32 k  /**< #cols of a, #rows of b. */
     );
 
-void
-scalarmultiply(float32 **a, float32 x, int32 m, int32 n);
+void scalarmultiply(float32 **inout_a, float32 x, int32 m, int32 n);
 
-void
-matrixadd(float32 **a, float32 **b, int32 m, int32 n);
+void matrixadd(float32 **inout_a, float32 **b, int32 m, int32 n);
 
 #endif /* MATRIX_H */ 
 

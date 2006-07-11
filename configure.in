@@ -182,6 +182,7 @@ test/Makefile
 test/unit/Makefile
 test/unit/test_case/Makefile
 test/unit/test_hash/Makefile
+test/unit/test_matrix/Makefile
 test/regression/Makefile
 test/regression/test-cepview.sh
 test/regression/test-sphinx_fe-dither-seed.sh

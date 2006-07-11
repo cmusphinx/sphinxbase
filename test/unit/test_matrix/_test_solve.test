@@ -1,0 +1,6 @@
+#!/bin/sh
+
+set -e
+./test_solve > _test_solve.out
+diff _test_solve.out _test_solve.res >/dev/null 2>&1
+rm -f _test_solve.out

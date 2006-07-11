@@ -1,2 +1,2 @@
-SUBDIRS=test_case test_hash
+SUBDIRS=test_case test_hash test_matrix
 

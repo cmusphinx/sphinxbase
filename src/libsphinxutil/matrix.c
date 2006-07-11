@@ -94,6 +94,52 @@ determinant(float32 ** a, int32 n)
     return det;
 }
 
+/* Solve x for equations Ax=b */
+int32
+solve(float32 **a, /*Input : an n*n matrix A */
+      float32 *b,  /*Input : a n dimesion vector b */
+      float32 *out_x,  /*Output : a n dimesion vector x */
+      int32   n)
+{
+    float32 *tmp_l;
+    float32 *tmp_r;
+    int i, j;
+    int32 N, NRHS, LDA, LDB, INFO;
+    int32 *IPIV;
+
+    N=n;
+    NRHS=1;    
+    LDA=n;    
+    LDB=n;
+
+    tmp_l = (float32 *)ckd_calloc(N * N, sizeof(float32));
+
+    /* To use the f2c lapack function, row/column ordering of the
+       arrays need to be changed. */
+    for (i = 0; i < N; i++) 
+	for (j = 0; j < N; j++) 
+	    tmp_l[N * j + i] = a[i][j]; 
+
+    tmp_r = (float32*) ckd_calloc(N, sizeof(float32));
+    for (i = 0; i < N; i++) 
+	tmp_r[i] = b[i];
+
+    IPIV = (int32 *)ckd_calloc(N, sizeof(int32));
+
+    /* Beware ! all arguments of lapack have to be a pointer */
+    sgesv_(&N, &NRHS, tmp_l,&LDA,IPIV,tmp_r, &LDB, &INFO);
+
+    for(i= 0 ; i< n ; i++){
+	out_x[i] = tmp_r[i]; 
+    }
+    
+    ckd_free ((void *)tmp_l);
+    ckd_free ((void *)tmp_r);
+    ckd_free ((void *)IPIV);
+
+    return INFO;
+}
+
 /* Find inverse by solving AX=I. */
 int32
 invert(float32 ** ainv, float32 ** a, int32 n)
@@ -142,6 +188,92 @@ invert(float32 ** ainv, float32 ** a, int32 n)
     ckd_free((void *) IPIV);
 
     return 0;
+}
+
+int32
+eigenvectors(float32 **a,
+	     float32 *out_ur, float32 *out_ui,
+	     float32 **out_vr, float32 **out_vi,
+	     int32 len)
+{
+    float32 *tmp_a, *vr, *work, lwork;
+    int32 one, info, ilwork, all_real, i, j;
+    char no, yes;
+
+    /* Transpose A to FORTRAN format. */
+    tmp_a = ckd_calloc(len * len, sizeof(float32));
+    for (i = 0; i < len; i++)
+        for (j = 0; j < len; j++)
+            tmp_a[len * j + i] = a[i][j];
+
+    /* Right eigenvectors. */
+    vr = ckd_calloc(len * len, sizeof(float32));
+
+    /* Find the optimal workspace. */
+    one = 1;
+    no = 'N';
+    yes = 'V';
+    ilwork = -1;
+    sgeev_(&no, &yes, &len, tmp_a, &len, out_ur, out_ui, NULL,
+	   &one, vr, &len, &lwork, &ilwork, &info);
+    if (info != 0)
+	E_FATAL("Failed to get workspace from SGEEV: %d\n", info);
+
+    /* Allocate workspace. */
+    ilwork = (int)lwork;
+    work = ckd_calloc(ilwork, sizeof(float32));
+
+    /* Actually calculate the eigenvectors. */
+    sgeev_(&no, &yes, &len, tmp_a, &len, out_ur, out_ui, NULL,
+	   &one, vr, &len, work, &ilwork, &info);
+    ckd_free(work);
+    ckd_free(tmp_a);
+
+    /* Reconstruct the outputs. */
+    /* Check if all eigenvalues are real. */
+    all_real = 1;
+    for (i = 0; i < len; i++) {
+	if (out_ui[i] != 0.0) {
+	    all_real = 0;
+	    break;
+	}
+    }
+
+    if (all_real) {
+	/* Then all eigenvectors are real. */
+	memset(out_vi[0], 0, sizeof(float32) * len * len);
+	/* We don't need to do anything because LAPACK places the
+	 * eigenvectors in the columns in FORTRAN order, which puts
+	 * them in the rows for us. */
+	memcpy(out_vr[0], vr, sizeof(float32) * len * len);
+    }
+    else {
+	for (i = 0; i < len; ++i) {
+	    if (out_ui[i] == 0.0) {
+		for (j = 0; j < len; ++j) {
+		    /* Again, see above: FORTRAN column order. */
+		    out_vr[i][j] = vr[i * len + j];
+		}
+	    }
+	    else {
+		/* There is a complex conjugate pair here. */
+		if (i < len-1) {
+		    for (j = 0; j < len; ++j) {
+			out_vr[i][j] = vr[i * len + j];
+			out_vi[i][j] = vr[(i + 1) * len + j];
+			out_vr[i+1][j] = vr[i * len + j];
+			out_vi[i+1][j] = -vr[(i+1) * len + j];
+		    }
+		    ++i;
+		}
+		else {
+		    E_FATAL("Complex eigenvalue at final index %d?!\n", len-1);
+		}
+	    }
+	}
+    }
+    ckd_free(vr);
+    return info;
 }
 #endif /* WITH_LAPACK */
 

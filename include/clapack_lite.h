@@ -23,5 +23,10 @@
 /* Subroutine */ int sgesdd_(char *jobz, integer *m, integer *n, real *a,
 			     integer *lda, real *s, real *u, integer *ldu, real *vt, integer *ldvt,
 			     real *work, integer *lwork, integer *iwork, integer *info);
+
+/* Subroutine */ int sgeev_(char *jobvl, char *jobvr, integer * n, real * a,
+			    integer * lda, real * wr, real * wi, real * vl, integer * ldvl,
+			    real * vr, integer * ldvr, real * work, integer * lwork,
+			    integer * info);
  
 #endif /* __CLAPACK_LITE_H */
