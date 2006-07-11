@@ -1,3 +1,6 @@
-deletehash -svq4svq > _delete3.out 2>&1 
-diff _delete3.out _delete3.res > /dev/null 2>&1
-rm _delete3.out
+#!/bin/sh
+
+set -e
+./deletehash -svq4svq > _hash_delete3.out 2>&1 
+diff _hash_delete3.out _hash_delete3.res > /dev/null 2>&1
+rm -f _hash_delete3.out

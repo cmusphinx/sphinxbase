@@ -1,3 +1,6 @@
-deletehash -subvq > _delete2.out 2>&1 
-diff _delete2.out _delete2.res > /dev/null 2>&1
-rm _delete2.out
+#!/bin/sh
+
+set -e
+./deletehash -subvq > _hash_delete2.out 2>&1 
+diff _hash_delete2.out _hash_delete2.res > /dev/null 2>&1
+rm -f _hash_delete2.out
