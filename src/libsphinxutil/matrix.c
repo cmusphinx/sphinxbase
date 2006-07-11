@@ -54,7 +54,22 @@ int32
 invert(float32 **ainv, float32 **a, int32 n)
 {
     E_FATAL("No LAPACK library available, cannot compute matrix inverse (FIXME)\n");
-    return 0.0;
+    return 0;
+}
+int32
+solve(float32 **a, float32 *b, float32 *out_x, int32   n)
+{
+    E_FATAL("No LAPACK library available, cannot solve linear equations (FIXME)\n");
+    return 0;
+}
+int32
+eigenvectors(float32 **a,
+	     float32 *out_ur, float32 *out_ui,
+	     float32 **out_vr, float32 **out_vi,
+	     int32 len)
+{
+    E_FATAL("No LAPACK library available, cannot compute eigen-decomposition (FIXME)\n");
+    return 0;
 }
 #else /* WITH_LAPACK */
 /* Find determinant through LU decomposition. */
