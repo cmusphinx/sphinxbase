@@ -104,10 +104,7 @@ typedef unsigned long long uint64;
 typedef double          int64;
 typedef double          uint64;
 #endif /* !HAVE_LONG_LONG && SIZEOF_LONG_LONG == 8 */
-
-#if 1 /* This is added for sphinx 2 routine tool compilation. Currently, it is only used in the fsg routine. */
-typedef unsigned char   boolean;
-#endif
+typedef int		boolean;
 
 typedef union any4byte_type_s {
 	int32 i_32;
