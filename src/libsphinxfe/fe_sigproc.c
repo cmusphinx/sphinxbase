@@ -79,7 +79,7 @@ fe_build_melfilters(melfb_t * MEL_FB)
         (mfcc_t *) calloc(MEL_FB->num_filters, sizeof(mfcc_t));
     MEL_FB->width = (int32 *) calloc(MEL_FB->num_filters, sizeof(int32));
 
-    if (MEL_FB->doublewide == ON)
+    if (MEL_FB->doublewide)
         filt_edge =
             (float32 *) calloc(MEL_FB->num_filters + 4, sizeof(float32));
     else
@@ -98,7 +98,7 @@ fe_build_melfilters(melfb_t * MEL_FB)
     melmin = fe_mel(MEL_FB->lower_filt_freq);
     dmelbw = (melmax - melmin) / (MEL_FB->num_filters + 1);
 
-    if (MEL_FB->doublewide == ON) {
+    if (MEL_FB->doublewide) {
         melmin = melmin - dmelbw;
         melmax = melmax + dmelbw;
         if ((fe_melinv(melmin) < 0) ||
@@ -113,7 +113,7 @@ fe_build_melfilters(melfb_t * MEL_FB)
         }
     }
 
-    if (MEL_FB->doublewide == ON) {
+    if (MEL_FB->doublewide) {
         for (i = 0; i <= MEL_FB->num_filters + 3; ++i) {
             filt_edge[i] = fe_melinv(i * dmelbw + melmin);
         }
@@ -126,7 +126,7 @@ fe_build_melfilters(melfb_t * MEL_FB)
 
     for (whichfilt = 0; whichfilt < MEL_FB->num_filters; ++whichfilt) {
         /*line triangle edges up with nearest dft points... */
-        if (MEL_FB->doublewide == ON) {
+        if (MEL_FB->doublewide) {
             leftfr = (float32) ((int32)
                                 ((filt_edge[whichfilt] /
                                   dfreq) + 0.5)) * dfreq;
@@ -798,7 +798,7 @@ fe_parse_general_params(param_t const *P, fe_t * FE)
         FE->FFT_SIZE = DEFAULT_FFT_SIZE;
 
     FE->LOG_SPEC = P->logspec;
-    if (FE->LOG_SPEC == OFF)
+    if (!FE->LOG_SPEC)
         FE->FEATURE_DIMENSION = FE->NUM_CEPSTRA;
     else {
         if (P->NUM_FILTERS != 0)
@@ -879,10 +879,10 @@ fe_parse_melfb_params(param_t const *P, melfb_t * MEL)
         }
     }
 
-    if (P->doublebw == ON)
-        MEL->doublewide = ON;
+    if (P->doublebw)
+        MEL->doublewide = 1;
     else
-        MEL->doublewide = OFF;
+        MEL->doublewide = 0;
 
     if (P->warp_type == NULL) {
         MEL->warp_type = DEFAULT_WARP_TYPE;
@@ -920,7 +920,7 @@ fe_print_current(fe_t const *FE)
     else {
         E_INFO("Will not add dither to audio\n");
     }
-    if (FE->MEL_FB->doublewide == ON) {
+    if (FE->MEL_FB->doublewide) {
         E_INFO("Will use double bandwidth in mel filter\n");
     }
     else {

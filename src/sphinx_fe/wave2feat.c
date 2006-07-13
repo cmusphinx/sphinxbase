@@ -55,6 +55,7 @@
 #include <errno.h>
 #endif
 
+#include "config.h"
 #include "fe.h"
 #include "cmd_ln.h"
 #include "err.h"
@@ -158,7 +159,7 @@ fe_convert_files(globals_t * P)
     int32 fp_in, fp_out, last_blocksize = 0, curr_block, total_frames;
     mfcc_t **cep = NULL, **last_frame_cep;
     int32 return_value;
-    int32 warn_zero_energy = OFF;
+    int32 warn_zero_energy = 0;
     int32 process_utt_return_value;
 
     if ((FE = fe_init(&P->params)) == NULL) {
@@ -206,7 +207,7 @@ fe_convert_files(globals_t * P)
                 return (return_value);
             }
 
-            warn_zero_energy = OFF;
+            warn_zero_energy = 0;
 
             if (nblocks * P->blocksize >= total_samps)
                 last_blocksize =
@@ -237,7 +238,7 @@ fe_convert_files(globals_t * P)
                     if (process_utt_return_value != FE_SUCCESS) {
                         if (FE_ZERO_ENERGY_ERROR ==
                             process_utt_return_value) {
-                            warn_zero_energy = ON;
+                            warn_zero_energy = 1;
                         }
                         else {
                             return (process_utt_return_value);
@@ -281,7 +282,7 @@ fe_convert_files(globals_t * P)
                     fe_process_utt(FE, spdata, splen, &cep, &frames_proc);
                 if (process_utt_return_value != FE_SUCCESS) {
                     if (FE_ZERO_ENERGY_ERROR == process_utt_return_value) {
-                        warn_zero_energy = ON;
+                        warn_zero_energy = 1;
                     }
                     else {
                         return (process_utt_return_value);
@@ -294,7 +295,7 @@ fe_convert_files(globals_t * P)
                     cep = NULL;
                 }
                 curr_block++;
-                if (P->params.logspec != ON)
+                if (!P->params.logspec)
                     last_frame_cep =
                         (mfcc_t **) ckd_calloc_2d(1,
                                                   FE->
@@ -310,7 +311,7 @@ fe_convert_files(globals_t * P)
                 process_utt_return_value =
                     fe_end_utt(FE, last_frame_cep[0], &last_frame);
                 if (FE_ZERO_ENERGY_ERROR == process_utt_return_value) {
-                    warn_zero_energy = ON;
+                    warn_zero_energy = 1;
                 }
                 else {
                     assert(process_utt_return_value == FE_SUCCESS);
@@ -332,7 +333,7 @@ fe_convert_files(globals_t * P)
                                 last_frame_cep);
                     last_frame_cep = NULL;
                 }
-                if (ON == warn_zero_energy) {
+                if (warn_zero_energy) {
                     E_WARN
                         ("File %s has some frames with zero energy. Consider using dither\n",
                          infile);
@@ -363,7 +364,7 @@ fe_convert_files(globals_t * P)
             return (return_value);
         }
 
-        warn_zero_energy = OFF;
+        warn_zero_energy = 0;
 
         if (nblocks * P->blocksize >= total_samps)
             last_blocksize = total_samps - (nblocks - 1) * P->blocksize;
@@ -389,7 +390,7 @@ fe_convert_files(globals_t * P)
                 process_utt_return_value =
                     fe_process_utt(FE, spdata, splen, &cep, &frames_proc);
                 if (FE_ZERO_ENERGY_ERROR == process_utt_return_value) {
-                    warn_zero_energy = ON;
+                    warn_zero_energy = 1;
                 }
                 else {
                     assert(process_utt_return_value == FE_SUCCESS);
@@ -426,7 +427,7 @@ fe_convert_files(globals_t * P)
             process_utt_return_value =
                 fe_process_utt(FE, spdata, splen, &cep, &frames_proc);
             if (FE_ZERO_ENERGY_ERROR == process_utt_return_value) {
-                warn_zero_energy = ON;
+                warn_zero_energy = 1;
             }
             else {
                 assert(process_utt_return_value == FE_SUCCESS);
@@ -439,7 +440,7 @@ fe_convert_files(globals_t * P)
             }
 
             curr_block++;
-            if (P->params.logspec != ON)
+            if (!P->params.logspec)
                 last_frame_cep =
                     (mfcc_t **) ckd_calloc_2d(1,
                                               FE->
@@ -454,7 +455,7 @@ fe_convert_files(globals_t * P)
             process_utt_return_value =
                 fe_end_utt(FE, last_frame_cep[0], &last_frame);
             if (FE_ZERO_ENERGY_ERROR == process_utt_return_value) {
-                warn_zero_energy = ON;
+                warn_zero_energy = 1;
             }
             else {
                 assert(process_utt_return_value == FE_SUCCESS);
@@ -482,7 +483,7 @@ fe_convert_files(globals_t * P)
         }
 
         fe_close(FE);
-        if (ON == warn_zero_energy) {
+        if (warn_zero_energy) {
             E_WARN
                 ("File %s has some frames with zero energy. Consider using dither\n",
                  infile);
@@ -532,7 +533,7 @@ fe_validate_parameters(globals_t * P)
         E_WARN("Upper frequency higher than Nyquist frequency\n");
     }
 
-    if (P->params.doublebw == ON) {
+    if (P->params.doublebw) {
         E_INFO("Will use double bandwidth filters\n");
     }
 
@@ -557,7 +558,7 @@ fe_parse_options(int32 argc, char **argv)
 
     P->wavfile = cmd_ln_str("-i");
     if (P->wavfile != NULL) {
-        P->is_single = ON;
+        P->is_single = 1;
     }
 
     P->cepfile = cmd_ln_str("-o");
@@ -567,7 +568,7 @@ fe_parse_options(int32 argc, char **argv)
         char *nskip;
         char *runlen;
 
-        P->is_batch = ON;
+        P->is_batch = 1;
 
         nskip = cmd_ln_str("-nskip");
         runlen = cmd_ln_str("-runlen");
@@ -620,10 +621,10 @@ fe_parse_options(int32 argc, char **argv)
 
     P->params.FFT_SIZE = cmd_ln_int32("-nfft");
     if (cmd_ln_int32("-doublebw")) {
-        P->params.doublebw = ON;
+        P->params.doublebw = 1;
     }
     else {
-        P->params.doublebw = OFF;
+        P->params.doublebw = 0;
     }
     P->blocksize = cmd_ln_int32("-blocksize");
     P->params.verbose = cmd_ln_int32("-verbose");
@@ -861,12 +862,12 @@ fe_openfiles(globals_t * P, fe_t * FE, char *infile, int32 * fp_in,
                  * start of the data chunk, which begins with the string
                  * "data".
                  */
-                int16 found = OFF;
+                int16 found = 0;
                 char readChar;
                 char *dataString = "data";
                 int16 charPointer = 0;
                 printf("LENGTH: %d\n", (int) strlen(dataString));
-                while (found != ON) {
+                while (!found) {
                     if (read(fp, &readChar, sizeof(char)) != sizeof(char)) {
                         E_ERROR("Failed reading wav file.\n");
                         return (FE_INPUT_FILE_READ_ERROR);
@@ -875,7 +876,7 @@ fe_openfiles(globals_t * P, fe_t * FE, char *infile, int32 * fp_in,
                         charPointer++;
                     }
                     if (charPointer == (int) strlen(dataString)) {
-                        found = ON;
+                        found = 1;
                         strcpy(hdr_buf->datatag, dataString);
                         if (read
                             (fp,
@@ -941,7 +942,7 @@ fe_openfiles(globals_t * P, fe_t * FE, char *infile, int32 * fp_in,
     else {
         /* compute number of frames and write cepfile header */
         numframes = fe_count_frames(FE, len, COUNT_PARTIAL);
-        if (P->params.logspec != ON)
+        if (!P->params.logspec)
             outlen = numframes * FE->NUM_CEPSTRA;
         else
             outlen = numframes * FE->MEL_FB->num_filters;
@@ -1084,7 +1085,7 @@ fe_writeblock_feat(globals_t * P, fe_t * FE, int32 fp, int32 nframes,
     int32 i, length, nwritebytes;
     float32 **ffeat;
 
-    if (P->params.logspec == ON)
+    if (P->params.logspec)
         length = nframes * FE->MEL_FB->num_filters;
     else
         length = nframes * FE->NUM_CEPSTRA;

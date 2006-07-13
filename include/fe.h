@@ -162,9 +162,6 @@ enum {
 	FE_INVALID_PARAM_ERROR =  -10
 };
 
-#define ON 1
-#define OFF 0
-
 /* Default values */
 #define DEFAULT_SAMPLING_RATE 16000.0
 #define DEFAULT_FRAME_RATE 100
