@@ -28,7 +28,7 @@ sh @abs_top_builddir@/libtool --mode=execute @abs_top_builddir@/src/sphinx_cepvi
 -f test-sphinx_fe-dither-seed.mfc.out \
 > test-sphinx_fe-dither-seed.cepview.out 2>>$tmpout
 
-if (perl @abs_top_srcdir@/test/regression/compare_table.pl test-sphinx_fe-dither-seed.cepview.out @abs_top_srcdir@/test/regression/chan3-dither.cepview | grep SUCCESS > /dev/null 2>&1) ; \
+if (@PERL@ @abs_top_srcdir@/test/regression/compare_table.pl test-sphinx_fe-dither-seed.cepview.out @abs_top_srcdir@/test/regression/chan3-dither.cepview | grep SUCCESS > /dev/null 2>&1) ; \
 then echo "WAVE2FEAT-DITHER-SEED test PASSED"; exit 0; else \
 echo "WAVE2FEAT-DITHER-SEED test FAILED"; exit 1; fi
 
