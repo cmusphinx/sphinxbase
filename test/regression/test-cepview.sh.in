@@ -3,11 +3,11 @@
 echo "CEPVIEW TEST"
 tmpout="test-cepview.out"
 
-sh @abs_top_builddir@/libtool --mode=execute @abs_top_builddir@/src/sphinx_cepview/sphinx_cepview \
+sh @top_builddir@/libtool --mode=execute @top_builddir@/src/sphinx_cepview/sphinx_cepview \
 -i 13 \
 -d 13 \
--f @abs_top_srcdir@/test/regression/chan3.mfc \
+-f @top_srcdir@/test/regression/chan3.mfc \
 > $tmpout 2>test-cepview.err
-if (diff $tmpout @abs_top_srcdir@/test/regression/chan3.cepview > /dev/null 2>&1); \
+if (diff $tmpout @top_srcdir@/test/regression/chan3.cepview > /dev/null 2>&1); \
 then echo "CEPVIEW test PASSED"; exit 0; else \
 echo "CEPVIEW test FAILED"; exit 1; fi 

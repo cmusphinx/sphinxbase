@@ -5,7 +5,7 @@ tmpout="test-sphinx_fe-dither-seed.out"
 # Run sphinx_fe with dither and seed, so it is repeatable. There's
 # nothing special about the seed. Just chose it because it's pretty
 echo "WAVE2FEAT-DITHER-SEED TEST"
-sh @abs_top_builddir@/libtool --mode=execute @abs_top_builddir@/src/sphinx_fe/sphinx_fe \
+sh @top_builddir@/libtool --mode=execute @top_builddir@/src/sphinx_fe/sphinx_fe \
 -dither 1 \
 -seed 1234 \
 -srate 11025 \
@@ -18,17 +18,17 @@ sh @abs_top_builddir@/libtool --mode=execute @abs_top_builddir@/src/sphinx_fe/sp
 -upperf 5400 \
 -lowerf 130 \
 -blocksize 262500 \
--i @abs_top_srcdir@/test/regression/chan3.raw \
+-i @top_srcdir@/test/regression/chan3.raw \
 -o test-sphinx_fe-dither-seed.mfc.out  \
 -raw 1 > $tmpout 2>&1 
 
-sh @abs_top_builddir@/libtool --mode=execute @abs_top_builddir@/src/sphinx_cepview/sphinx_cepview \
+sh @top_builddir@/libtool --mode=execute @top_builddir@/src/sphinx_cepview/sphinx_cepview \
 -i 13 \
 -d 13 \
 -f test-sphinx_fe-dither-seed.mfc.out \
 > test-sphinx_fe-dither-seed.cepview.out 2>>$tmpout
 
-if (@PERL@ @abs_top_srcdir@/test/regression/compare_table.pl test-sphinx_fe-dither-seed.cepview.out @abs_top_srcdir@/test/regression/chan3-dither.cepview | grep SUCCESS > /dev/null 2>&1) ; \
+if (@PERL@ @top_srcdir@/test/regression/compare_table.pl test-sphinx_fe-dither-seed.cepview.out @top_srcdir@/test/regression/chan3-dither.cepview | grep SUCCESS > /dev/null 2>&1) ; \
 then echo "WAVE2FEAT-DITHER-SEED test PASSED"; exit 0; else \
 echo "WAVE2FEAT-DITHER-SEED test FAILED"; exit 1; fi
 
