@@ -261,6 +261,11 @@ int32 fe_process_utt(fe_t *FE,  /**< A FE structure */
 	);
 
 /**
+ * Free the output pointer returned by fe_process_utt().
+ **/
+void fe_free_2d(void *arr);
+
+/**
  * Convert a block of mfcc_t to float32 (can be done in-place)
  **/
 int32 fe_mfcc_to_float(fe_t *FE,

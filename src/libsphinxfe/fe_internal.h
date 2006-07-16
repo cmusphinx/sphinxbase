@@ -122,7 +122,6 @@ int32 fe_fft(complex const *in, complex *out, int32 N, int32 invert);
 int32 fe_fft_real(frame_t *x, int n, int m);
 void fe_short_to_frame(int16 const *in, frame_t *out, int32 len);
 void *fe_create_2d(int32 d1, int32 d2, int32 elem_size);
-void fe_free_2d(void *arr);
 void fe_print_current(fe_t const *FE);
 void fe_parse_general_params(param_t const *P, fe_t *FE);
 void fe_parse_melfb_params(param_t const *P, melfb_t *MEL);
