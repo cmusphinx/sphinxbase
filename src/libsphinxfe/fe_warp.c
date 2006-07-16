@@ -52,9 +52,9 @@
 #include "err.h"
 
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <stdlib.h>
 
 static uint32 fid = FE_WARP_ID_NONE;
 

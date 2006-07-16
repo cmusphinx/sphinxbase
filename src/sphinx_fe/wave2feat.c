@@ -36,9 +36,10 @@
  */
 #include <stdio.h>
 #include <stdlib.h>
-#if !defined(WIN32)
+#if !defined(WIN32) || defined(GNUWINCE)
 #include <unistd.h>
 #include <sys/file.h>
+#include <sys/fcntl.h>
 #if !defined(O_BINARY)
 #define O_BINARY 0
 #endif
@@ -50,7 +51,7 @@
 #include <fcntl.h>
 #include <assert.h>
 
-#if defined(WIN32)
+#if defined(WIN32) && !defined(GNUWINCE)
 #include <io.h>
 #include <errno.h>
 #endif

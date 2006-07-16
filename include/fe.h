@@ -47,7 +47,7 @@
  *
  */
 
-#if defined(WIN32)
+#if defined(WIN32) && !defined(GNUWINCE)
 #define srand48(x) srand(x)
 #define lrand48() rand()
 #endif
