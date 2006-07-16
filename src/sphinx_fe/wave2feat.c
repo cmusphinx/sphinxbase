@@ -653,10 +653,10 @@ fe_parse_options(int32 argc, char **argv)
             E_FATAL("Input must be big or little Endian\n");
         }
     }
-    P->params.dither = cmd_ln_int32("-dither");
-    P->params.seed = cmd_ln_int32("-seed");
-    P->params.logspec = cmd_ln_int32("-logspec");
-    P->idct = cmd_ln_int32("-idct");
+    P->params.dither = cmd_ln_boolean("-dither");
+    P->params.seed = cmd_ln_boolean("-seed");
+    P->params.logspec = cmd_ln_boolean("-logspec");
+    P->idct = cmd_ln_boolean("-idct");
 
     fe_validate_parameters(P);
 
@@ -1120,7 +1120,7 @@ int32
 fe_convert_logspec(globals_t * P, fe_t * FE, char *infile, char *outfile)
 {
     FILE *ifh, *ofh;
-    int32 ifsize, ofsize;
+    int32 ifsize, nfloats, swap = 0;
     float32 *logspec;
 
     if ((ifh = fopen(infile, "rb")) == NULL) {
@@ -1132,14 +1132,40 @@ fe_convert_logspec(globals_t * P, fe_t * FE, char *infile, char *outfile)
         return (FE_OUTPUT_FILE_OPEN_ERROR);
     }
 
-    fread(&ifsize, 4, 1, ifh);
-    ofsize = ifsize / FE->MEL_FB->num_filters * FE->NUM_CEPSTRA;
-    fwrite(&ofsize, 4, 1, ofh);
+    fseek(ifh, 0, SEEK_END);
+    ifsize = ftell(ifh);
+    fseek(ifh, 0, SEEK_SET);
+    fread(&nfloats, 4, 1, ifh);
+    if (nfloats != ifsize / 4 - 1) {
+        E_INFO("Will byteswap %s (%x != %x)\n",
+               infile, nfloats, ifsize / 4 - 1);
+        SWAP_INT32(&nfloats);
+        swap = 1;
+    }
+    if (nfloats != ifsize / 4 - 1) {
+        E_ERROR("Size of file doesn't match header: %d != %d\n",
+                nfloats, ifsize / 4 - 1);
+        return (FE_INPUT_FILE_READ_ERROR);
+    }
+    nfloats = nfloats / FE->MEL_FB->num_filters * FE->NUM_CEPSTRA;
+    SWAP_INT32(&nfloats);
+    fwrite(&nfloats, 4, 1, ofh);
     logspec = ckd_calloc(FE->MEL_FB->num_filters, sizeof(*logspec));
 
     while (fread(logspec, 4, FE->MEL_FB->num_filters, ifh) ==
            FE->MEL_FB->num_filters) {
+        int32 i;
+        if (swap) {
+            for (i = 0; i < FE->MEL_FB->num_filters; ++i) {
+                SWAP_FLOAT32(logspec + i);
+            }
+        }
         fe_logspec_to_mfcc(FE, logspec, logspec);
+        if (swap) {
+            for (i = 0; i < FE->NUM_CEPSTRA; ++i) {
+                SWAP_FLOAT32(logspec + i);
+            }
+        }
         if (fwrite(logspec, 4, FE->NUM_CEPSTRA, ofh) < FE->NUM_CEPSTRA) {
             E_ERROR_SYSTEM("Failed to write %d cepstra to %s",
                            FE->NUM_CEPSTRA, outfile);
