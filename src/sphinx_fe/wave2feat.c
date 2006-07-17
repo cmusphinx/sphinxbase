@@ -1161,7 +1161,8 @@ fe_convert_logspec(globals_t * P, fe_t * FE, char *infile, char *outfile)
         return (FE_INPUT_FILE_READ_ERROR);
     }
     nfloats = nfloats / FE->MEL_FB->num_filters * FE->NUM_CEPSTRA;
-    SWAP_INT32(&nfloats);
+    if (swap)
+        SWAP_INT32(&nfloats);
     fwrite(&nfloats, 4, 1, ofh);
     logspec = ckd_calloc(FE->MEL_FB->num_filters, sizeof(*logspec));
 
@@ -1230,7 +1231,8 @@ fe_convert_mfcc(globals_t * P, fe_t * FE, char *infile, char *outfile)
         return (FE_INPUT_FILE_READ_ERROR);
     }
     nfloats = nfloats / FE->NUM_CEPSTRA * FE->MEL_FB->num_filters;
-    SWAP_INT32(&nfloats);
+    if (swap)
+        SWAP_INT32(&nfloats);
     fwrite(&nfloats, 4, 1, ofh);
     logspec = ckd_calloc(FE->MEL_FB->num_filters, sizeof(*logspec));
 
