@@ -548,3 +548,21 @@ fe_logspec_to_mfcc(fe_t * FE, const mfcc_t * fr_spec, mfcc_t * fr_cep)
 #endif                          /* ! FIXED_POINT */
     return 0;
 }
+
+int32
+fe_mfcc_to_logspec(fe_t * FE, const mfcc_t * fr_cep, mfcc_t * fr_spec)
+{
+#ifdef FIXED_POINT
+    fe_dct(FE, fr_cep, fr_spec);
+#else                           /* ! FIXED_POINT */
+    powspec_t *powspec;
+    int32 i;
+
+    powspec = malloc(FE->MEL_FB->num_filters * sizeof(powspec_t));
+    fe_dct(FE, fr_cep, powspec);
+    for (i = 0; i < FE->MEL_FB->num_filters; ++i)
+        fr_spec[i] = (mfcc_t) powspec[i];
+    free(powspec);
+#endif                          /* ! FIXED_POINT */
+    return 0;
+}

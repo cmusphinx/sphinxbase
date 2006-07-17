@@ -87,6 +87,7 @@ struct globals_s {
     int32 nchans;
     int32 whichchan;
     int32 idct;
+    int32 dct;
 };
 typedef struct globals_s globals_t;
 
@@ -111,6 +112,8 @@ int32 fe_writeblock_feat(globals_t * P, fe_t * FE, int32 fp, int32 nframes,
 int32 fe_closefiles(int32 fp_in, int32 fp_out);
 int32 fe_convert_logspec(globals_t * P, fe_t * FE, char *infile,
                          char *outfile);
+int32 fe_convert_mfcc(globals_t * P, fe_t * FE, char *infile,
+                      char *outfile);
 
 /*       
          7-Feb-00 M. Seltzer - wrapper created for new front end -
@@ -196,6 +199,13 @@ fe_convert_files(globals_t * P)
             if (P->idct) {
                 /* Special case for doing logspec to MFCC. */
                 return_value = fe_convert_logspec(P, FE, infile, outfile);
+                if (return_value != FE_SUCCESS)
+                    return return_value;
+                continue;
+            }
+            else if (P->dct) {
+                /* Special case for doing MFCC to logspec. */
+                return_value = fe_convert_mfcc(P, FE, infile, outfile);
                 if (return_value != FE_SUCCESS)
                     return return_value;
                 continue;
@@ -357,6 +367,8 @@ fe_convert_files(globals_t * P)
         if (P->idct)
             /* Special case for doing logspec to MFCC. */
             return fe_convert_logspec(P, FE, infile, outfile);
+        else if (P->dct)
+            return fe_convert_mfcc(P, FE, infile, outfile);
 
         return_value =
             fe_openfiles(P, FE, infile, &fp_in, &total_samps,
@@ -657,6 +669,7 @@ fe_parse_options(int32 argc, char **argv)
     P->params.seed = cmd_ln_boolean("-seed");
     P->params.logspec = cmd_ln_boolean("-logspec");
     P->idct = cmd_ln_boolean("-idct");
+    P->dct = cmd_ln_boolean("-dct");
 
     fe_validate_parameters(P);
 
@@ -1169,6 +1182,75 @@ fe_convert_logspec(globals_t * P, fe_t * FE, char *infile, char *outfile)
         if (fwrite(logspec, 4, FE->NUM_CEPSTRA, ofh) < FE->NUM_CEPSTRA) {
             E_ERROR_SYSTEM("Failed to write %d cepstra to %s",
                            FE->NUM_CEPSTRA, outfile);
+            free(logspec);
+            return (FE_OUTPUT_FILE_WRITE_ERROR);
+        }
+    }
+    if (!feof(ifh)) {
+        E_ERROR("Short read in input file %s\n", infile);
+        free(logspec);
+        return (FE_INPUT_FILE_READ_ERROR);
+    }
+    fclose(ifh);
+    fclose(ofh);
+
+    return FE_SUCCESS;
+}
+
+
+int32
+fe_convert_mfcc(globals_t * P, fe_t * FE, char *infile, char *outfile)
+{
+    FILE *ifh, *ofh;
+    int32 ifsize, nfloats, swap = 0;
+    float32 *logspec;
+
+    if ((ifh = fopen(infile, "rb")) == NULL) {
+        E_ERROR_SYSTEM("Cannot read %s", infile);
+        return (FE_INPUT_FILE_READ_ERROR);
+    }
+    if ((ofh = fopen(outfile, "wb")) == NULL) {
+        E_ERROR_SYSTEM("Unable to open %s for writing features", outfile);
+        return (FE_OUTPUT_FILE_OPEN_ERROR);
+    }
+
+    fseek(ifh, 0, SEEK_END);
+    ifsize = ftell(ifh);
+    fseek(ifh, 0, SEEK_SET);
+    fread(&nfloats, 4, 1, ifh);
+    if (nfloats != ifsize / 4 - 1) {
+        E_INFO("Will byteswap %s (%x != %x)\n",
+               infile, nfloats, ifsize / 4 - 1);
+        SWAP_INT32(&nfloats);
+        swap = 1;
+    }
+    if (nfloats != ifsize / 4 - 1) {
+        E_ERROR("Size of file doesn't match header: %d != %d\n",
+                nfloats, ifsize / 4 - 1);
+        return (FE_INPUT_FILE_READ_ERROR);
+    }
+    nfloats = nfloats / FE->NUM_CEPSTRA * FE->MEL_FB->num_filters;
+    SWAP_INT32(&nfloats);
+    fwrite(&nfloats, 4, 1, ofh);
+    logspec = ckd_calloc(FE->MEL_FB->num_filters, sizeof(*logspec));
+
+    while (fread(logspec, 4, FE->NUM_CEPSTRA, ifh) == FE->NUM_CEPSTRA) {
+        int32 i;
+        if (swap) {
+            for (i = 0; i < FE->NUM_CEPSTRA; ++i) {
+                SWAP_FLOAT32(logspec + i);
+            }
+        }
+        fe_mfcc_to_logspec(FE, logspec, logspec);
+        if (swap) {
+            for (i = 0; i < FE->MEL_FB->num_filters; ++i) {
+                SWAP_FLOAT32(logspec + i);
+            }
+        }
+        if (fwrite(logspec, 4, FE->MEL_FB->num_filters, ofh)
+            < FE->MEL_FB->num_filters) {
+            E_ERROR_SYSTEM("Failed to write %d spectra to %s",
+                           FE->MEL_FB->num_filters, outfile);
             free(logspec);
             return (FE_OUTPUT_FILE_WRITE_ERROR);
         }

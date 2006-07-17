@@ -487,7 +487,7 @@ fe_mel_cep(fe_t * FE, powspec_t * mfspec, mfcc_t * mfcep)
 }
 
 void
-fe_idct(fe_t * FE, powspec_t * mflogspec, mfcc_t * mfcep)
+fe_idct(fe_t * FE, const powspec_t * mflogspec, mfcc_t * mfcep)
 {
     int32 i, j, beta;
 
@@ -502,6 +502,20 @@ fe_idct(fe_t * FE, powspec_t * mflogspec, mfcc_t * mfcep)
                                 FE->MEL_FB->mel_cosine[i][j]) * beta;
         }
         mfcep[i] /= (frame_t) FE->MEL_FB->num_filters * 2;
+    }
+}
+
+void
+fe_dct(fe_t * FE, const mfcc_t * mfcep, powspec_t * mflogspec)
+{
+    int32 i, j;
+
+    for (i = 0; i < FE->MEL_FB->num_filters; ++i) {
+        mflogspec[i] = 0;
+        for (j = 0; j < FE->NUM_CEPSTRA; j++) {
+            mflogspec[i] += MFCCMUL(mfcep[j],
+                                    FE->MEL_FB->mel_cosine[j][i]);
+        }
     }
 }
 

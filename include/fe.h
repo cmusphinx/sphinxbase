@@ -286,7 +286,15 @@ int32 fe_float_to_mfcc(fe_t *FE,
  **/
 int32 fe_logspec_to_mfcc(fe_t *FE,  /**< A FE structure */
 			 const mfcc_t *fr_spec, /**< One frame of spectrum */
-			 mfcc_t *fr_cep /**< One frame of cepstrum*/
+			 mfcc_t *fr_cep /**< One frame of cepstrum */
+        );
+
+/**
+ * Reconstruct one frame of logspectra from MFCC (can be done in-place)
+ **/
+int32 fe_mfcc_to_logspec(fe_t *FE,  /**< A FE structure */
+			 const mfcc_t *fr_cep, /**< One frame of cepstrum */
+			 mfcc_t *fr_spec /**< One frame of spectrum */
         );
 
 #endif

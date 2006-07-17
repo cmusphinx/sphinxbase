@@ -117,7 +117,8 @@ void fe_spec_magnitude(frame_t const *data, int32 data_len, powspec_t *spec, int
 int32 fe_frame_to_fea(fe_t *FE, frame_t *in, mfcc_t *fea);
 void fe_mel_spec(fe_t *FE, powspec_t const *spec, powspec_t *mfspec);
 void fe_mel_cep(fe_t *FE, powspec_t *mfspec, mfcc_t *mfcep);
-void fe_idct(fe_t *FE, powspec_t *mflogspec, mfcc_t *mfcep);
+void fe_idct(fe_t *FE, const powspec_t *mflogspec, mfcc_t *mfcep);
+void fe_dct(fe_t *FE, const mfcc_t *mfcep, powspec_t *mflogspec);
 int32 fe_fft(complex const *in, complex *out, int32 N, int32 invert);
 int32 fe_fft_real(frame_t *x, int n, int m);
 void fe_short_to_frame(int16 const *in, frame_t *out, int32 len);
