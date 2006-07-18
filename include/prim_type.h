@@ -89,6 +89,9 @@ extern "C" {
 #endif
 
 /* Assume P64 or LP64 (quite reasonable, really) */
+#if defined(WIN32) && !defined(GNUWINCE)
+typedef unsigned char   boolean;
+#endif
 typedef int		int32;
 typedef short		int16;
 typedef signed char	int8;
