@@ -59,7 +59,9 @@
 #define _LIBUTIL_ERR_H_
 
 #include <stdarg.h>
+#ifndef _WIN32_WCE
 #include <errno.h>
+#endif
 
 /**\file err.h
  *\brief Implementation of error checking routine with flush. 

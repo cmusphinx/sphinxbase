@@ -47,14 +47,14 @@
 #include "info.h"
 #include "err.h"
 
-#if !defined(WIN32)
+#if !(defined(WIN32) || defined(_WIN32_WCE))
 #include <unistd.h>
 #endif
 
 void
 print_appl_info(char *appl_name)
 {
-#if (! WIN32)
+#if !(defined(WIN32) || defined(_WIN32_WCE))
     {
         char host[4096], path[16384];
 

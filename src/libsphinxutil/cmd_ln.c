@@ -72,9 +72,6 @@
 #include "case.h"
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-
 
 
 /* Storage for argument values */

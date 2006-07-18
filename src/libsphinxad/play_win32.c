@@ -62,7 +62,16 @@
 #define WO_BUFSIZE	3200    /* Samples/buf */
 #define N_WO_BUF	2       /* #Playback bufs */
 
+#ifdef _WIN32_WCE
+waveout_error(char *src, int32 ret)
+{
+    TCHAR errbuf[512];
 
+    waveOutGetErrorText(ret, errbuf, sizeof(errbuf));
+	OutputDebugString(errbuf);
+ }
+
+#else
 static void
 waveout_error(char *src, int32 ret)
 {
@@ -71,6 +80,7 @@ waveout_error(char *src, int32 ret)
     waveOutGetErrorText(ret, errbuf, sizeof(errbuf));
     fprintf(stderr, "%s error %d: %s\n", src, ret, errbuf);
 }
+#endif
 
 
 static void

@@ -79,7 +79,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#if (! WIN32)
+#if !(defined(WIN32) || defined(_WIN32_WCE))
 #include <unistd.h>
 #endif
 #include <assert.h>

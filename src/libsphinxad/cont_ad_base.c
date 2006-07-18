@@ -1342,7 +1342,7 @@ cont_ad_init(ad_rec_t * a, int32(*func) (ad_rec_t *, int16 *, int32))
     cont_ad_t *r;
 
     if ((r = malloc(sizeof(*r))) == NULL) {
-        perror("allocation of cont_ad_t failed");
+		E_ERROR_SYSTEM("allocation of cont_ad_t failed");
         return NULL;
     }
 
@@ -1361,20 +1361,20 @@ cont_ad_init(ad_rec_t * a, int32(*func) (ad_rec_t *, int16 *, int32))
     r->adbufsize = CONT_AD_ADFRMSIZE * r->spf;
 
     if ((r->adbuf = malloc(r->adbufsize * sizeof(*r->adbuf))) == NULL) {
-        perror("allocation of audio buffer failed");
+        E_ERROR_SYSTEM("allocation of audio buffer failed");
         free(r);
         return NULL;
     }
     if ((r->pow_hist =
          calloc(CONT_AD_POWHISTSIZE, sizeof(*r->pow_hist))) == NULL) {
-        perror("allocation of power history buffer failed");
+        E_ERROR_SYSTEM("allocation of power history buffer failed");
         free(r->adbuf);
         free(r);
         return NULL;
     }
     if ((r->frm_pow =
          calloc(CONT_AD_ADFRMSIZE, sizeof(*r->frm_pow))) == NULL) {
-        perror("allocation of frame power buffer failed");
+        E_ERROR_SYSTEM("allocation of frame power buffer failed");
         free(r->pow_hist);
         free(r->adbuf);
         free(r);

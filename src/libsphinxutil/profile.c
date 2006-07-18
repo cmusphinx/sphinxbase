@@ -65,7 +65,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if (! WIN32) ||  defined(GNUWINCE)
+#if !(defined(WIN32) || defined(_WIN32_WCE)) || defined(GNUWINCE)
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -82,6 +82,22 @@
 extern uint32 rpcc(void);       /* On an alpha, use the RPCC instruction */
 #endif
 
+#ifdef _WIN32_WCE
+DWORD unlink(const char *filename)
+{
+	WCHAR *wfilename;
+	DWORD rv;
+	size_t len;
+
+	len = mbstowcs(NULL, filename, 0);
+	wfilename = ckd_calloc(len+1, sizeof(*wfilename));
+	mbstowcs(wfilename, filename, len);
+	rv = DeleteFile(wfilename);
+	ckd_free(wfilename);
+
+	return rv;
+}
+#endif
 
 pctr_t *
 pctr_new(char *nm)
@@ -219,6 +235,10 @@ ptmr_start(ptmr_t * tm)
     /* Unix + HP */
     gettimeofday(&e_start, 0);
     tm->start_elapsed = make_sec(&e_start);
+#elif defined(_WIN32_WCE)
+	/* No GetProcessTimes() on WinCE.  (Note CPU time will be bogus) */
+	tm->start_cpu = GetTickCount() / 1000;
+	tm->start_elapsed = (float64) clock() / CLOCKS_PER_SEC;
 #else
     HANDLE pid;
     FILETIME t_create, t_exit, kst, ust;
@@ -255,6 +275,10 @@ ptmr_stop(ptmr_t * tm)
     /* Unix + HP */
     gettimeofday(&e_stop, 0);
     dt_elapsed = (make_sec(&e_stop) - tm->start_elapsed);
+#elif defined(_WIN32_WCE)
+	/* No GetProcessTimes() on WinCE.  (Note CPU time will be bogus) */
+	dt_cpu = GetTickCount() / 1000 - tm->start_cpu;
+	dt_elapsed = ((float64) clock() / CLOCKS_PER_SEC) - tm->start_elapsed;
 #else
     HANDLE pid;
     FILETIME t_create, t_exit, kst, ust;

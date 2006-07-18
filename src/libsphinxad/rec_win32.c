@@ -70,7 +70,17 @@
                                            So that at reasonable sampling rates
                                            data is returned frequently enough.) */
 
+#ifdef _WIN32_WCE
+static void
+wavein_error(char *src, int32 ret)
+{
+    TCHAR errbuf[512];
 
+    waveInGetErrorText(ret, errbuf, sizeof(errbuf));
+	OutputDebugString(errbuf);
+}
+
+#else
 static void
 wavein_error(char *src, int32 ret)
 {
@@ -79,6 +89,7 @@ wavein_error(char *src, int32 ret)
     waveInGetErrorText(ret, errbuf, sizeof(errbuf));
     fprintf(stderr, "%s error %d: %s\n", src, ret, errbuf);
 }
+#endif
 
 
 static void

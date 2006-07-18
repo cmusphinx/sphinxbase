@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include "f2c.h"
 
 
@@ -28,7 +29,7 @@ s_rnge(char *var, int index, char *routine, int lineno)
             "array index out-of-bounds for %s[%d] in routine %s:%d\n", var,
             index, routine, lineno);
     fflush(stderr);
-    abort();
+	assert(2+2 == 5);
 }
 
 
