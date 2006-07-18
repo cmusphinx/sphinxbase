@@ -668,8 +668,8 @@ fe_parse_options(int32 argc, char **argv)
             E_FATAL("Input must be big or little Endian\n");
         }
     }
+    P->params.seed = cmd_ln_int32("-seed");
     P->params.dither = cmd_ln_boolean("-dither");
-    P->params.seed = cmd_ln_boolean("-seed");
     P->params.logspec = cmd_ln_boolean("-logspec");
     P->idct = cmd_ln_boolean("-idct");
     P->dct = cmd_ln_boolean("-dct");
