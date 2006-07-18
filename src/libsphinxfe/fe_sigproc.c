@@ -40,7 +40,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
+
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
 
 #include "prim_type.h"
 #include "fixpoint.h"

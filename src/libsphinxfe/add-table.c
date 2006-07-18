@@ -49,7 +49,10 @@
  * 		Created from Fil Alleva's original.
  */
 
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
+
 #include "prim_type.h"
 
 int16 fe_logadd_table[99042] = {

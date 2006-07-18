@@ -193,7 +193,7 @@ const void *cmd_ln_access (char *name);	/* In: Argument name whose value is soug
 #define cmd_ln_int32(name)	(*((int32 *)cmd_ln_access(name)))
 #define cmd_ln_float32(name)	(*((float32 *)cmd_ln_access(name)))
 #define cmd_ln_float64(name)	(*((float64 *)cmd_ln_access(name)))
-#define cmd_ln_boolean(name)	(*((boolean *)cmd_ln_access(name)))
+#define cmd_ln_boolean(name)	(*((int32 *)cmd_ln_access(name)) != 0)
 
 
 /**

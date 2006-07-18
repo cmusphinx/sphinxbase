@@ -183,7 +183,6 @@ arg_sort(arg_t * defn, int32 n)
     return pos;
 }
 
-/** HACK! The boolean logic is still not well defined */
 static int32
 arg_str2val(argval_t * v, argtype_t t, char *str)
 {
@@ -213,17 +212,17 @@ arg_str2val(argval_t * v, argtype_t t, char *str)
         case REQARG_BOOLEAN:
             if ((str[0] == 'y') || (str[0] == 't') ||
                 (str[0] == 'Y') || (str[0] == 'T') || (str[0] == '1')) {
-                v->val.b = TRUE;
+                v->val.i_32 = TRUE;
             }
             else if ((str[0] == 'n') || (str[0] == 'f') ||
                      (str[0] == 'N') || (str[0] == 'F') |
                      (str[0] == '0')) {
-                v->val.b = FALSE;
+                v->val.i_32 = FALSE;
             }
             else {
                 E_ERROR("Unparsed boolean value '%s'\n", str);
             }
-            v->ptr = (void *) &(v->val.b);
+            v->ptr = (void *) &(v->val.i_32);
             break;
         case ARG_STRING:
         case REQARG_STRING:
@@ -406,7 +405,7 @@ arg_dump(FILE * fp, arg_t * defn, int32 doc)
                     break;
                 case ARG_BOOLEAN:
                 case REQARG_BOOLEAN:
-                    fprintf(fp, "%s", *((boolean *) vp) ? "yes" : "no");
+                    fprintf(fp, "%s", *((int32 *) vp) ? "yes" : "no");
                     break;
                 default:
                     E_FATAL("Unknown argument type: %d\n", defn[j].type);

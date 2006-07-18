@@ -37,7 +37,10 @@
 #include <string.h>
 #include <stdlib.h>
 
+#ifdef HAVE_CONFIG_H
 #include "config.h"
+#endif
+
 #include "clapack_lite.h"
 #include "matrix.h"
 #include "err.h"

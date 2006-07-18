@@ -56,7 +56,10 @@
 #include <errno.h>
 #endif
 
-#include "config.h"
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "fe.h"
 #include "cmd_ln.h"
 #include "err.h"

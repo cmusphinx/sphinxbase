@@ -74,7 +74,9 @@
  * 22-Jul-97	M K Ravishankar (rkm@cs.cmu.edu) at Carnegie Mellon University
  * 		Created from Sunil's version.
  */
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
 
 #include "prim_type.h"
 #include "ad.h"

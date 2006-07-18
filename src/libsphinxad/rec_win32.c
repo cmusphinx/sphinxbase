@@ -60,7 +60,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <config.h>
 
 #include "prim_type.h"
 #include "ad.h"
@@ -241,7 +240,7 @@ ad_open_sps_bufsize(int32 sps, int32 bufsize_msec)
     int32 i, j;
     HWAVEIN h;
 
-    if ((h = wavein_open(WAVE_MAPPER, sps, sizeof(int16))) == NULL)
+    if ((h = wavein_open(sps, sizeof(int16))) == NULL)
         return NULL;
 
     if ((r = (ad_rec_t *) malloc(sizeof(ad_rec_t))) == NULL) {

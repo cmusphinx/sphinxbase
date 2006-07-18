@@ -73,7 +73,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
 
 #include "prim_type.h"
 #include "cmd_ln.h"

@@ -156,7 +156,10 @@
 #include <string.h>
 #include <assert.h>
 #include <math.h>
+
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
 
 #include "prim_type.h"
 #include "ad.h"

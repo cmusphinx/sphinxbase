@@ -54,7 +54,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <config.h>
 
 #include "prim_type.h"
 #include "ad.h"

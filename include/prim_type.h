@@ -104,7 +104,6 @@ typedef unsigned long long uint64;
 typedef double          int64;
 typedef double          uint64;
 #endif /* !HAVE_LONG_LONG && SIZEOF_LONG_LONG == 8 */
-typedef int		boolean;
 
 typedef union any4byte_type_s {
 	int32 i_32;
@@ -117,7 +116,6 @@ typedef union anytype_s {
 	uint32 ui_32;
 	float32 fl_32;
 	float64 fl_64;
-	boolean b;
 } anytype_t;
 
 

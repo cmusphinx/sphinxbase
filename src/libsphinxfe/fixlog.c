@@ -41,7 +41,10 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
+
 #include "prim_type.h"
 #include "fixpoint.h"
 #include "fe.h"
