@@ -161,6 +161,10 @@ SOURCE=..\..\src\libsphinxutil\profile.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\src\libsphinxutil\s3u_arraylist.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\src\libsphinxutil\slamch.c
 # End Source File
 # Begin Source File
