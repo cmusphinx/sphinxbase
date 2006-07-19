@@ -5,10 +5,15 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#if 0
+/* Fool Emacs. */
+}
+#endif
 
 #define S3U_ARRAYLIST_DEFAULT_SIZE	16
 
-/* s3u_arraylist.h - Defines a storage structure for generic, dynamic
+/** \file s3u_arraylist.h
+ * Defines a storage structure for generic, dynamic
  * sequences.  It also implements fast queue and stack operations.
  */
 
@@ -193,6 +198,9 @@ s3u_arraylist_count(s3u_arraylist_t *_arraylist);
 void **
 s3u_arraylist_to_array(s3u_arraylist_t *_arraylist);
 
+#if 0
+{ /* Fool indent. */
+#endif
 #ifdef __cplusplus
 }
 #endif
