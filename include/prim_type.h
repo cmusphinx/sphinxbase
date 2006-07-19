@@ -91,7 +91,7 @@ extern "C" {
 /* Assume P64 or LP64 (quite reasonable, really) */
 /* This type really ought to be int, but it will break binary
  * compatibility if we change it. */
-typedef char		boolean;
+typedef unsigned char	boolean;
 typedef int		int32;
 typedef short		int16;
 typedef signed char	int8;
