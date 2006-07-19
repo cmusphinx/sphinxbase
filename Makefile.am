@@ -3,7 +3,18 @@ SUBDIRS = src \
 	include \
 	test
 
-EXTRA_DIST = autogen.sh
+EXTRA_DIST = autogen.sh				\
+	sphinxbase.dsw				\
+	sphinxbase.vcw				\
+	win32/libsphinxad/libsphinxad.dsp	\
+	win32/libsphinxad/libsphinxad.vcp	\
+	win32/libsphinxfe/libsphinxfe.dsp	\
+	win32/libsphinxfe/libsphinxfe.vcp	\
+	win32/libsphinxfeat/libsphinxfeat.dsp	\
+	win32/libsphinxutil/libsphinxutil.dsp	\
+	win32/libsphinxutil/libsphinxutil.vcp	\
+	win32/sphinx_cepview/sphinx_cepview.dsp	\
+	win32/sphinx_fe/sphinx_fe.dsp
 
 etags:
 	etags `find . -name "*.[ch]"`
