@@ -150,10 +150,10 @@ fe_init(param_t const *P)
     FE->PRIOR = 0;
     FE->FRAME_COUNTER = 0;
 
-    if (FE->FRAME_SIZE > (2 * FE->FFT_SIZE)) {
+    if (FE->FRAME_SIZE > (FE->FFT_SIZE)) {
         E_WARN
             ("Number of FFT points has to be a power of 2 higher than %d\n",
-             (FE->FRAME_SIZE / 2));
+             (FE->FRAME_SIZE));
         return (NULL);
     }
 

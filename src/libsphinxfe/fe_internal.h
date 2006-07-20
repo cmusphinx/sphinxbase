@@ -122,7 +122,7 @@ void fe_mel_cep(fe_t *FE, powspec_t *mfspec, mfcc_t *mfcep);
 void fe_idct(fe_t *FE, const powspec_t *mflogspec, mfcc_t *mfcep);
 void fe_dct(fe_t *FE, const mfcc_t *mfcep, powspec_t *mflogspec);
 int32 fe_fft(complex const *in, complex *out, int32 N, int32 invert);
-int32 fe_fft_real(frame_t *x, int n, int m);
+int32 fe_fft_real(frame_t *x, int n);
 void fe_short_to_frame(int16 const *in, frame_t *out, int32 len);
 void *fe_create_2d(int32 d1, int32 d2, int32 elem_size);
 void fe_print_current(fe_t const *FE);

@@ -387,14 +387,21 @@ fe_spec_magnitude(frame_t const *data, int32 data_len,
     int32 fftorder;
     frame_t *fft;
 
-    fft = (frame_t *) calloc(fftsize, sizeof(frame_t));
+    fft = calloc(fftsize, sizeof(frame_t));
+    if (fft == NULL) {
+        E_FATAL
+            ("memory alloc failed in fe_spec_magnitude()\n...exiting\n");
+    }
     wrap = (data_len < fftsize) ? data_len : fftsize;
     memcpy(fft, data, wrap * sizeof(frame_t));
-    if (data_len > fftsize)     /*aliasing */
+    if (data_len > fftsize) {    /*aliasing */
+        E_WARN
+            ("Aliasing. Consider using fft size (%d) > buffer size (%d)\n",
+             fftsize, data_len);
         for (wrap = 0, j = fftsize; j < data_len; wrap++, j++)
             fft[wrap] += data[j];
-    for (fftorder = 0, j = fftsize; j > 1; fftorder++, j >>= 1);
-    fe_fft_real(fft, fftsize, fftorder);
+    }
+    fe_fft_real(fft, fftsize);
 
     for (j = 0; j <= fftsize / 2; j++) {
 #ifdef FIXED_POINT
@@ -639,13 +646,20 @@ fe_fft(complex const *in, complex * out, int32 N, int32 invert)
  * no.6.  Optimized to use a static array of sine/cosines.
  */
 int32
-fe_fft_real(frame_t * x, int n, int m)
+fe_fft_real(frame_t * x, int n)
 {
     int32 i, j, k, n1, n2, n4, i1, i2, i3, i4;
     frame_t t1, t2, xt, cc, ss;
     static frame_t *ccc = NULL, *sss = NULL;
     static int32 lastn = 0;
+    int m;
 
+    /* check fft size, compute fft order (log_2(n)) */
+    for (k = n, m = 0; k > 1; k >>= 1, m++) {
+        if (((k % 2) != 0) || (n <= 0)) {
+            E_FATAL("fft: number of points must be a power of 2 (is %d)\n", n);
+        }
+    }
     if (ccc == NULL || n != lastn) {
         if (ccc != NULL) {
             free(ccc);
