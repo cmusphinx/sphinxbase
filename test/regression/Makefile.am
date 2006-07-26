@@ -5,7 +5,9 @@ EXTRA_DIST =					\
 	chan3.logspec				\
 	chan3-logspec.cepview			\
 	chan3.mfc				\
-	chan3.raw
+	chan3.raw                               \
+	test-tutorial.sh                        \
+        crontab
 
 CLEANFILES =					\
 	test-cepview.err			\

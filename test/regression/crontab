@@ -1,0 +1,8 @@
+# This crontab is installed at sphinx@batman
+MAILTO=sphinx+regression@cs.cmu.edu
+0 0 * * * $HOME/script/DailyDoxygen.sh
+# Compile farm tests disabled
+# 30 0 * * * $HOME/script/DailyCF.sh
+0 1 * * * $HOME/script/run_dailySTD.sh
+0 0 * * 3,7 $HOME/script/run_PERFFULL.sh
+20 07 * * * (. $HOME/.profile; svn up $SF_ROOT/sphinxbase/test/regression/test-tutorial.sh; qsub -o $SF_ROOT/regression/tutorial.out -j oe $SF_ROOT/sphinxbase/test/regression/test-tutorial.sh)
