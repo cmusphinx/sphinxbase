@@ -29,7 +29,7 @@ pushd $temp_dir > /dev/null
 
 LOG=$temp_dir/log.txt
 echo > $LOG
-MAILLIST=egouvea
+MAILLIST=cmusphinx-results@lists.sourceforge.net
 
 # Get the data
 ${WGET} -q http://www.speech.cs.cmu.edu/databases/an4/an4_sphere.tar.gz
