@@ -6,3 +6,4 @@ MAILTO=sphinx+regression@cs.cmu.edu
 0 1 * * * $HOME/script/run_dailySTD.sh
 0 0 * * 3,7 $HOME/script/run_PERFFULL.sh
 20 07 * * * (. $HOME/.profile; svn up $SF_ROOT/sphinxbase/test/regression/test-tutorial.sh; qsub -o $SF_ROOT/regression/tutorial.out -j oe $SF_ROOT/sphinxbase/test/regression/test-tutorial.sh)
+20 05 * * * (. $HOME/.profile; svn up $SF_ROOT/sphinxbase/test/regression/launchCompileCheck.sh; $SF_ROOT/sphinxbase/test/regression/launchCompileCheck.sh)
