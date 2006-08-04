@@ -46,6 +46,9 @@ if test z${TMPMAIL} != z; then MAILX=${TMPMAIL};fi
 # Define the mailing list
 MAILLIST='cmusphinx-commits@lists.sourceforge.net'
 
+# Define SF_ROOT in the shell initialization script (~/.profile or
+# ~/.login, depending on whether you're using sh or csh), as in:
+# export SF_ROOT=${HOME}/project/SourceForge/svn
 if test x$SF_ROOT == x ; then
     echo "Please define SF_ROOT pointing to the top of your repository working copy:"
     echo "\$SF_ROOT/sphinxbase, for example, should contains sphinxbase"
@@ -69,11 +72,11 @@ mail_file=regression/mail.txt
 echo "Results in $outdir" > $mail_file
 echo "Summary:" >> $mail_file
 
-if call_test(sphinxbase); then success=1; fi
-if call_test(sphinxpocket); then success=1; fi
+if call_test sphinxbase; then success=1; fi
+if call_test sphinxpocket; then success=1; fi
 if call_test sphinx2; then success=1; fi
-if call_test(sphinx3); then success=1; fi
-if call_test(SphinxTrain); then success=1; fi
+if call_test sphinx3; then success=1; fi
+if call_test SphinxTrain; then success=1; fi
 
 # Send the message, finally
 if [ $success == 1 ] ; then
