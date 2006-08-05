@@ -109,6 +109,24 @@ int32 eigenvectors(float32 **a,
                    int32 len);
 
 /**
+ * Reshape a matrix in place.
+ * @param inout_a Address of the matrix to reshape
+ * @param m Number of rows to reshape to
+ * @param n Number of columns to reshape to
+ **/
+void reshape(float32 ***inout_a,
+             int32 m, int32 n);
+
+/**
+ * Transpose a matrix in place.
+ * @param inout_a Address of the matrix to transpose
+ * @param m Number of rows in inout_a (becomes number of columns)
+ * @param n Number of columns in inout_a (becomes number of rows)
+ **/
+void transpose(float32 ***inout_a,
+               int32 m, int32 n);
+
+/**
  * Multiply C=AB.
  * @param out_c The output matrix C.
  * @param a The input matrix A.

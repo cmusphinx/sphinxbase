@@ -18,7 +18,7 @@ const float32 bar[3][3] = {
 int
 main(int argc, char *argv[])
 {
-	float32 **a, **ainv, **ii, d;
+	float32 **a, **ainv, **ii;
 	int i, j;
 
 	a = (float32 **)ckd_calloc_2d(3, 3, sizeof(float32));

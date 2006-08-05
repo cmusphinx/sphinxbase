@@ -343,6 +343,37 @@ matrixadd(float32 ** a, float32 ** b, int32 m, int32 n)
             a[i][j] += b[i][j];
 }
 
+void
+reshape(float32 ***inout_a,
+	int32 m, int32 n)
+{
+    float32 **tmp;
+
+    tmp = (float32 **)ckd_alloc_2d_ptr(m, n, **inout_a, sizeof(float32));
+    ckd_free(*inout_a);
+    *inout_a = tmp;
+}
+
+void
+transpose(float32 ***inout_a,
+	  int32 m, int32 n)
+{
+    float32 **new_a;
+    int32 i, j;
+    
+    /* FIXME: There must be a more efficient way but I can't think of
+     * it at the moment. */
+    new_a = (float32 **)ckd_calloc_2d(n, m, sizeof(float32));
+    for (i = 0; i < n; ++i) {
+	for (j = 0; j < m; ++j) {
+	    new_a[i][j] = (*inout_a)[j][i];
+	}
+    }
+    ckd_free_2d((void **)*inout_a);
+    *inout_a = new_a;
+}
+
+
 /*
  * Log record.  Maintained by RCS.
  *

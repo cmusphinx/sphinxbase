@@ -142,6 +142,24 @@ void ***__ckd_calloc_3d__(int32 d1, int32 d2, int32 d3,	/* In: #elems in the dim
 			  int32 elemsize,		/* In: Size (#bytes) per element */
 			  const char *caller_file, int32 caller_line);	/* In */
 
+/**
+ * Layers a 2d array access structure over a preallocated storage area
+ **/
+void ** __ckd_alloc_2d_ptr(int d1, int d2,
+			   void *store,
+			   size_t elem_size,
+			   char *file,
+			   int line);
+
+/**
+ * Layers a 3d array access structure over a preallocated storage area
+ **/
+void *** __ckd_alloc_3d_ptr(int d1, int d2, int d3,
+			    void *store,
+			    size_t elem_size,
+			    char *file,
+			    int line);
+
 /** Test and free a 1-D array 
  */
 void ckd_free(void *ptr);
@@ -195,6 +213,18 @@ void ckd_free_3d(void ***ptr);
  */
 
 #define ckd_calloc_3d(d1,d2,d3,sz) __ckd_calloc_3d__((d1),(d2),(d3),(sz),__FILE__,__LINE__)
+
+/**
+ * Macro for __ckd_calloc_2d_ptr
+ */
+
+#define ckd_alloc_2d_ptr(d1, d2, bf, sz)    __ckd_alloc_2d_ptr((d1), (d2), (bf), (sz), __FILE__, __LINE__)
+
+/**
+ * Macro for __ckd_calloc_3d_ptr
+ */
+
+#define ckd_alloc_3d_ptr(d1, d2, d3, bf, sz) __ckd_alloc_3d_ptr((d1), (d2), (d3), (bf), (sz), __FILE__, __LINE__)
 
 /*#define ckd_free(ptr)		free(ptr)*/
 

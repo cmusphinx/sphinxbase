@@ -231,6 +231,54 @@ ckd_free_3d(void ***ptr)
     ckd_free(ptr);
 }
 
+/* Layers a 3d array access structure over a preallocated storage area */
+void ***
+__ckd_alloc_3d_ptr(int d1,
+		   int d2,
+		   int d3,
+		   void *store,
+		   size_t elem_size,
+		   char *file,
+		   int line)
+{
+    void **tmp1;
+    void ***out;
+    int i, j;
+    
+    tmp1 = __ckd_calloc__(d1 * d2, sizeof(void *), file, line);
+
+    out  = __ckd_calloc__(d1, sizeof(void **), file, line);
+    
+    for (i = 0, j = 0; i < d1*d2; i++, j += d3) {
+	tmp1[i] = &((char *)store)[j*elem_size];
+    }
+    
+    for (i = 0, j = 0; i < d1; i++, j += d2) {
+	out[i] = &tmp1[j];
+    }
+    
+    return out;
+}
+
+void **
+__ckd_alloc_2d_ptr(int d1,
+		   int d2,
+		   void *store,
+		   size_t elem_size,
+		   char *file,
+		   int line)
+{
+    void **out;
+    int i, j;
+    
+    out = (void **)__ckd_calloc__(d1, sizeof(void *), file, line);
+    
+    for (i = 0, j = 0; i < d1; i++, j += d2) {
+	out[i] = &((char *)store)[j*elem_size];
+    }
+
+    return out;
+}
 
 /*
  * Structures for managing linked list elements of various sizes without wasting

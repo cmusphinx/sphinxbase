@@ -1,0 +1,6 @@
+#!/bin/sh
+
+set -e
+./test_transpose > _test_transpose.out
+diff _test_transpose.out _test_transpose.res >/dev/null 2>&1
+rm -f _test_transpose.out
