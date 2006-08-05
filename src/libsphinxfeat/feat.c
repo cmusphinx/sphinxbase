@@ -833,6 +833,7 @@ feat_init(char *type, char *cmn, char *varnorm, char *agc, int32 breport)
 
     fcb->cepbuf = NULL;
     fcb->tmpcepbuf = NULL;
+    fcb->out_dim = fcb->stream_len[0];
 
     if (fcb->cepsize > 0) {
         fcb->cepbuf = (float32 **) ckd_calloc_2d(LIVEBUFBLOCKSIZE,
@@ -1170,9 +1171,15 @@ feat_s2mfc2feat_block(feat_t * fcb, float32 ** uttcep, int32 nfr,
         else {
             fcb->compute_feat(fcb, cepbuf + fcb->curpos, ofeat[i]);
         }
+
         fcb->curpos++;
         fcb->curpos %= LIVEBUFBLOCKSIZE;
     }
+
+    if (fcb->lda) {
+        feat_lda_transform(fcb, ofeat, nfr);
+    }
+
     return (nfeatvec);
 
 }
