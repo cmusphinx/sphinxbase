@@ -1,3 +1,4 @@
+/* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 
 #ifndef _S3U_ARRAYLIST_H
 #define _S3U_ARRAYLIST_H

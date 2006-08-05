@@ -1,3 +1,4 @@
+/* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 #ifndef __CLAPACK_LITE_H
 #define __CLAPACK_LITE_H
 

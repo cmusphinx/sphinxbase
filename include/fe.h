@@ -58,6 +58,7 @@
 #include "fixpoint.h"
 
 #ifdef FIXED_POINT
+/* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /** MFCC computation type. */
 typedef fixed32 mfcc_t;
 /** Internal computation type. */
