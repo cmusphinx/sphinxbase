@@ -1,3 +1,4 @@
+/* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* ====================================================================
  * Copyright (c) 1999-2004 Carnegie Mellon University.  All rights
  * reserved.
@@ -159,12 +160,45 @@ int32 bio_fread (void *buf,
  */
 int32 bio_fread_1d (void **buf,		/**< Out: contains array data; allocated by this
 					   function; can be freed using ckd_free */
-		    int32 el_sz,	/**< In: Array element size */
-		    int32 *n_el,	/**< Out: #array elements allocated/read */
+		    size_t el_sz,	/**< In: Array element size */
+		    uint32 *n_el,	/**< Out: #array elements allocated/read */
 		    FILE *fp,		/**< In: File to read */
 		    int32 sw,		/**< In: Byteswap iff (swap != 0) */
 		    uint32 *ck	/**< In/Out: Accumulated checksum */
 		    );
+
+/**
+ * Read a 2-d matrix:
+ *     4-byte # rows, # columns (returned in d1, d2, d3)
+ *     memory allocated for the array and read (returned in buf)
+ * Byteswapping and checksum accumulation performed as necessary.
+ * Fails fatally if expected data not read.
+ * Return value: #array elements allocated and read; -1 if error.
+ */
+int32 bio_fread_2d(void ***arr,
+                   size_t e_sz,
+                   uint32 *d1,
+                   uint32 *d2,
+                   FILE *fp,
+                   uint32 swap,
+                   uint32 *chksum);
+
+/**
+ * Read a 3-d array (set of matrices)
+ *     4-byte # matrices, # rows, # columns (returned in d1, d2, d3)
+ *     memory allocated for the array and read (returned in buf)
+ * Byteswapping and checksum accumulation performed as necessary.
+ * Fails fatally if expected data not read.
+ * Return value: #array elements allocated and read; -1 if error.
+ */
+int32 bio_fread_3d(void ****arr,
+                   size_t e_sz,
+                   uint32 *d1,
+                   uint32 *d2,
+                   uint32 *d3,
+                   FILE *fp,
+                   uint32 swap,
+                   uint32 *chksum);
 
 /**
  * Read and verify checksum at the end of binary file.  Fails fatally if there is

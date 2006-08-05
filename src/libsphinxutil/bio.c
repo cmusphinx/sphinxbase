@@ -62,6 +62,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <assert.h>
 
 #include "bio.h"
 #include "err.h"
@@ -283,12 +284,9 @@ bio_fread(void *buf, int32 el_sz, int32 n_el, FILE * fp, int32 swap,
 
 
 int32
-bio_fread_1d(void **buf, int32 el_sz, int32 * n_el, FILE * fp,
+bio_fread_1d(void **buf, size_t el_sz, uint32 * n_el, FILE * fp,
              int32 sw, uint32 * ck)
 {
-    if ((el_sz != 1) && (el_sz != 2) && (el_sz != 4))
-        E_FATAL("Unsupported elemsize: %d\n", el_sz);
-
     /* Read 1-d array size */
     if (bio_fread(n_el, sizeof(int32), 1, fp, sw, ck) != 1)
         E_FATAL("fread(arraysize) failed\n");
@@ -305,6 +303,113 @@ bio_fread_1d(void **buf, int32 el_sz, int32 * n_el, FILE * fp,
     return *n_el;
 }
 
+int32
+bio_fread_2d(void ***arr,
+             size_t e_sz,
+             uint32 *d1,
+             uint32 *d2,
+             FILE *fp,
+             uint32 swap,
+             uint32 *chksum)
+{
+    uint32 l_d1, l_d2;
+    uint32 n;
+    size_t ret;
+    void *raw;
+    
+    ret = bio_fread(&l_d1, sizeof(uint32), 1, fp, swap, chksum);
+    if (ret != 1) {
+	if (ret == 0) {
+	    E_ERROR_SYSTEM("Unable to read complete data");
+	}
+	else {
+	    E_ERROR_SYSTEM("OS error in bio_fread_2d");
+	}
+	return -1;
+    }
+    ret = bio_fread(&l_d2, sizeof(uint32), 1, fp, swap, chksum);
+    if (ret != 1) {
+	if (ret == 0) {
+	    E_ERROR_SYSTEM("Unable to read complete data");
+	}
+	else {
+	    E_ERROR_SYSTEM("OS error in bio_fread_2d");
+	}
+	return -1;
+    }
+    if (bio_fread_1d(&raw, e_sz, &n, fp, swap, chksum) != n)
+	return -1;
+
+    assert(n == l_d1*l_d2);
+
+    *d1 = l_d1;
+    *d2 = l_d2;
+    *arr = ckd_alloc_2d_ptr(l_d1, l_d2, raw, e_sz);
+
+    return n;
+}
+
+int32
+bio_fread_3d(void ****arr,
+             size_t e_sz,
+             uint32 *d1,
+             uint32 *d2,
+             uint32 *d3,
+             FILE *fp,
+             uint32 swap,
+             uint32 *chksum)
+{
+    uint32 l_d1;
+    uint32 l_d2;
+    uint32 l_d3;
+    uint32 n;
+    void *raw;
+    size_t ret;
+
+    ret = bio_fread(&l_d1, sizeof(uint32), 1, fp, swap, chksum);
+    if (ret != 1) {
+	if (ret == 0) {
+	    E_ERROR_SYSTEM("Unable to read complete data");
+	}
+	else {
+	    E_ERROR_SYSTEM("OS error in bio_fread_3d");
+	}
+	return -1;
+    }
+    ret = bio_fread(&l_d2, sizeof(uint32), 1, fp, swap, chksum);
+    if (ret != 1) {
+	if (ret == 0) {
+	    E_ERROR_SYSTEM("Unable to read complete data");
+	}
+	else {
+	    E_ERROR_SYSTEM("OS error in bio_fread_3d");
+	}
+	return -1;
+    }
+    ret = bio_fread(&l_d3, sizeof(uint32), 1, fp, swap, chksum);
+    if (ret != 1) {
+	if (ret == 0) {
+	    E_ERROR_SYSTEM("Unable to read complete data");
+	}
+	else {
+	    E_ERROR_SYSTEM("OS error in bio_fread_3d");
+	}
+	return -1;
+    }
+
+    if (bio_fread_1d(&raw, e_sz, &n, fp, swap, chksum) != n) {
+	return -1;
+    }
+
+    assert(n == l_d1 * l_d2 * l_d3);
+
+    *arr = ckd_alloc_3d_ptr(l_d1, l_d2, l_d3, raw, e_sz);
+    *d1 = l_d1;
+    *d2 = l_d2;
+    *d3 = l_d3;
+    
+    return n;
+}
 
 void
 bio_verify_chksum(FILE * fp, int32 byteswap, uint32 chksum)
