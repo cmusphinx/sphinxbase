@@ -1052,6 +1052,15 @@ feat_s2mfc2feat(feat_t * fcb, char *file, char *dir, char *cepext,
     feat_print(fcb, feat, nfr, stderr);
 #endif
 
+    if (fcb->lda) {
+        feat_lda_transform(fcb, feat, nfr - win * 2);
+    }
+
+#if 0
+    E_INFO("After dimensionality reduction. \n");
+    feat_print(fcb, feat, nfr, stderr);
+#endif
+
     ckd_free_2d((void **) mfc);
 
     return (nfr - win * 2);

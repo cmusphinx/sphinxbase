@@ -8,6 +8,7 @@ libsphinxfeat_la_SOURCES =			\
 	agc.c					\
 	cmn.c					\
 	cmn_prior.c				\
+	lda.c					\
 	feat.c
 
 INCLUDES = -I$(top_srcdir)/include \
