@@ -90,14 +90,12 @@ int32 invert(float32 **out_ainv, float32 **a, int32 len);
 int32 solve(float32 **a, float32 *b,
             float32 *out_x, int32 n);
 
-void outerproduct(float32 **out_a, float32 *x, float32 *y, int32 len);
-
 /**
  * Decompose a matrix into eigenvectors and eigenvalues.
  * @param a The matrix to decompose.
  * @param out_ur The real part of the eigenvalues will be stored here.
  * @param out_ur The imaginary part of the eigenvalues will be stored here.
- * @param out_vr The real part of the eigenvectors will be stored here .as row vectors.
+ * @param out_vr The real part of the eigenvectors will be stored here as row vectors.
  * @param out_vi The imaginary part of the eigenvalues will be stored here as row vectors.
  * @param len The dimension of a (and the outputs).
  * @return 0 for success, -1 for an error, or >0 for failure to
@@ -107,6 +105,16 @@ int32 eigenvectors(float32 **a,
                    float32 *out_ur, float32 *out_ui,
                    float32 **out_vr, float32 **out_vi,
                    int32 len);
+
+/**
+ * Calculate the outer product of two vectors.
+ * @param out_a A (pre-allocated) len x len array. The outer product
+ * will be stored here.
+ * @param x A vector of length len.
+ * @param y A vector of length len.
+ * @param len The length of the input vectors.
+ **/
+void outerproduct(float32 **out_a, float32 *x, float32 *y, int32 len);
 
 /**
  * Reshape a matrix in place.
