@@ -1,3 +1,4 @@
+/* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* ====================================================================
  * Copyright (c) 1999-2004 Carnegie Mellon University.  All rights
  * reserved.
@@ -143,22 +144,25 @@ void ***__ckd_calloc_3d__(int32 d1, int32 d2, int32 d3,	/* In: #elems in the dim
 			  const char *caller_file, int32 caller_line);	/* In */
 
 /**
- * Layers a 2d array access structure over a preallocated storage area
+ * Overlay a 3-D array over a previously allocated storage area.
  **/
-void ** __ckd_alloc_2d_ptr(int d1, int d2,
-			   void *store,
-			   size_t elem_size,
-			   char *file,
-			   int line);
+void *** __ckd_alloc_3d_ptr(int d1,
+                            int d2,
+                            int d3,
+                            void *store,
+                            size_t elem_size,
+                            char *caller_file,
+                            int caller_line);
 
 /**
- * Layers a 3d array access structure over a preallocated storage area
+ * Overlay a s-D array over a previously allocated storage area.
  **/
-void *** __ckd_alloc_3d_ptr(int d1, int d2, int d3,
-			    void *store,
-			    size_t elem_size,
-			    char *file,
-			    int line);
+void ** __ckd_alloc_2d_ptr(int d1,
+                           int d2,
+                           void *store,
+                           size_t elem_size,
+                           char *caller_file,
+                           int caller_line);
 
 /** Test and free a 1-D array 
  */
