@@ -99,6 +99,10 @@ SOURCE=..\..\src\libsphinxfeat\cmn_prior.c
 
 SOURCE=..\..\src\libsphinxfeat\feat.c
 # End Source File
+# Begin Source File
+
+SOURCE=..\..\src\libsphinxfeat\lda.c
+# End Source File
 # End Group
 # Begin Group "Header Files"
 
