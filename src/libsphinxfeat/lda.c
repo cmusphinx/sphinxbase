@@ -98,14 +98,13 @@ feat_read_lda(feat_t *feat, const char *ldafile, int32 dim)
 
     if (bio_fread_3d((void ****)&feat->lda, sizeof(float32),
                      &feat->n_lda, &m, &n,
-                     fh, byteswap, &chksum) != 0) {
+                     fh, byteswap, &chksum) < 0) {
         E_ERROR_SYSTEM("%s: bio_fread_3d(lda) failed\n", ldafile);
         fclose(fh);
         return -1;
     }
 
-    /* SphinxTrain stores the eigenvectors as row vectors.  We need to
-     * transpose the matrix to make it useful as a transformation. */
+    /* Note that SphinxTrain stores the eigenvectors as row vectors. */
     assert(n == feat_stream_len(feat, 0));
     feat->out_dim = dim;
 
@@ -113,7 +112,7 @@ feat_read_lda(feat_t *feat, const char *ldafile, int32 dim)
 }
 
 void
-lda_transform(feat_t *fcb, float32 ***inout_feat, uint32 nfr)
+feat_lda_transform(feat_t *fcb, float32 ***inout_feat, uint32 nfr)
 {
     float32 *tmp;
     uint32 i, j, k;

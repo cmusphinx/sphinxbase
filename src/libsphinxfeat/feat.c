@@ -714,6 +714,7 @@ feat_init(char *type, char *cmn, char *varnorm, char *agc, int32 breport)
         fcb->stream_len[1] = 24;
         fcb->stream_len[2] = 3;
         fcb->stream_len[3] = 12;
+        fcb->out_dim = 51;
         fcb->window_size = 4;
         fcb->compute_feat = feat_s2_4x_cep2feat;
     }
@@ -724,6 +725,7 @@ feat_init(char *type, char *cmn, char *varnorm, char *agc, int32 breport)
         fcb->n_stream = 1;
         fcb->stream_len = (int32 *) ckd_calloc(1, sizeof(int32));
         fcb->stream_len[0] = 39;
+        fcb->out_dim = 39;
         fcb->window_size = 3;
         fcb->compute_feat = feat_s3_1x39_cep2feat;
     }
@@ -733,6 +735,7 @@ feat_init(char *type, char *cmn, char *varnorm, char *agc, int32 breport)
         fcb->n_stream = 1;
         fcb->stream_len = (int32 *) ckd_calloc(1, sizeof(int32));
         fcb->stream_len[0] = 39;
+        fcb->out_dim = 39;
         fcb->window_size = 3;   /* FEAT_DCEP_WIN + 1 */
         fcb->compute_feat = feat_1s_c_d_dd_cep2feat;
     }
@@ -751,6 +754,7 @@ feat_init(char *type, char *cmn, char *varnorm, char *agc, int32 breport)
         fcb->n_stream = 1;
         fcb->stream_len = (int32 *) ckd_calloc(1, sizeof(int32));
         fcb->stream_len[0] = feat_cepsize_used(fcb) * 2;
+        fcb->out_dim = fcb->stream_len[0];
         fcb->window_size = 2;
         fcb->compute_feat = feat_s3_cep_dcep;
     }
@@ -769,6 +773,7 @@ feat_init(char *type, char *cmn, char *varnorm, char *agc, int32 breport)
         fcb->n_stream = 1;
         fcb->stream_len = (int32 *) ckd_calloc(1, sizeof(int32));
         fcb->stream_len[0] = feat_cepsize_used(fcb);
+        fcb->out_dim = fcb->stream_len[0];
         fcb->window_size = 0;
         fcb->compute_feat = feat_s3_cep;
     }
@@ -791,12 +796,14 @@ feat_init(char *type, char *cmn, char *varnorm, char *agc, int32 breport)
         /* Scan individual feature stream lengths */
         strp = type;
         i = 0;
+        fcb->out_dim = 0;
         while (sscanf(strp, "%s%n", wd, &l) == 1) {
             strp += l;
             if ((i >= fcb->n_stream)
                 || (sscanf(wd, "%d", &(fcb->stream_len[i])) != 1)
                 || (fcb->stream_len[i] <= 0))
                 E_FATAL("Bad feature type argument\n");
+            fcb->out_dim += fcb->stream_len[i];
             i++;
         }
         if (i != fcb->n_stream)
