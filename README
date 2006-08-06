@@ -5,3 +5,59 @@ This package contains the basic libraries shared by the CMU Sphinx
 trainer and all the Sphinx decoders (Sphinx-II, Sphinx-III, and
 PocketSphinx), as well as some common utilities for manipulating
 acoustic feature and audio files.
+
+Installation Guide: 
+
+This section contains installation for various platforms
+
+Linux/Unix installation
+
+sphinxbase is used by other modules.  The convention requires the
+physical layout of the code looks like this:
+    package/
+    sphinxbase/
+
+So if you get the file from a distribution, you might want to rename
+sphinxbase-X.X to sphinxbase by typing
+
+    > mv sphinxbase-X.X sphinxbase (where X.X being the version of sphinxbase)
+
+If you downloaded directly from the Subversion repository, you need to 
+create the "configure" file by typing
+
+    > ./autogen.sh
+
+If you downloaded a release version or if you have already run
+"autogen.sh", you can build simply by running
+
+    > ./configure
+    > make
+
+You could also check the validity of the package by typing
+
+    > make check 
+
+and then install it with 
+
+    > make install
+
+This defaults to installing Sphinx-3 under /usr/local. You may
+customize it by running ./configure with an argument, as in
+
+    >./configure --prefix=/my/own/installation/directory
+
+Windows Installation:
+^^^^^^^^^^^^^^^^^^^^^
+To compile sphinxbase in Visual C++ 6.0,
+1, unzip the file.
+2, rename the directory to sphinxbase
+3, go into the sphinxbase folder and click programs.dsw
+4, in the menu, choose Build -> Rebuild All -> Batch Build -> Build
+
+In Step 4, make sure all projects are selected, preferably the
+"Release" version of each.
+
+If you are using cygwin, the installation procedure is very similar to
+the Unix installation. However, there is no audio driver support in
+cygwin currently so one can only use the batch mode recognzier. 
+
