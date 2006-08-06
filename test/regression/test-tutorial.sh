@@ -36,10 +36,17 @@ ${WGET} -q http://www.speech.cs.cmu.edu/databases/an4/an4_sphere.tar.gz
 ${TAR} -xzf an4_sphere.tar.gz
 /bin/rm an4_sphere.tar.gz
 
+# Get sphinxbase
+if (loopUntilSuccess.sh ${SVN} co https://svn.sourceforge.net/svnroot/cmusphinx/trunk/sphinxbase > /dev/null &&
+cd sphinxbase &&
+./autogen.sh &&
+./autogen.sh &&
+make ; then
+
 # Get the trainer
 if (loopUntilSuccess.sh ${SVN} co https://svn.sourceforge.net/svnroot/cmusphinx/trunk/SphinxTrain > /dev/null &&
 cd SphinxTrain &&
-./configure && 
+./configure DISTCHECK_CONFIGURE_FLAGS=--with-sphinxbase=$temp_dir/sphinxbase && 
 ${MAKE} && 
 ${PERL} scripts_pl/setup_tutorial.pl an4) >> $LOG 2>&1 ; then
 
@@ -47,7 +54,7 @@ ${PERL} scripts_pl/setup_tutorial.pl an4) >> $LOG 2>&1 ; then
 if (loopUntilSuccess.sh ${SVN} co https://svn.sourceforge.net/svnroot/cmusphinx/trunk/sphinx3 > /dev/null &&
 cd sphinx3 &&
 ./autogen.sh &&
-./autogen.sh --prefix=`pwd`/build && 
+./autogen.sh --prefix=`pwd`/build DISTCHECK_CONFIGURE_FLAGS=--with-sphinxbase=$temp_dir/sphinxbase && 
 ${MAKE} all install && 
 ${PERL} scripts/setup_tutorial.pl an4) >> $LOG 2>&1 ; then
 
@@ -61,6 +68,8 @@ perl scripts_pl/decode/slave.pl >> $LOG 2>&1
 # end of if (sphinx3)
 fi
 # end of if (SphinxTrain)
+fi
+# end of sphinxbase
 fi
 
 # Check whether the Word Error Rate is reasonable, hardwired for now
