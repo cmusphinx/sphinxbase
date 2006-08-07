@@ -44,7 +44,7 @@ fi
 if test z${TMPMAIL} != z; then MAILX=${TMPMAIL};fi
 
 # Define the mailing list
-MAILLIST='cmusphinx-commits@lists.sourceforge.net'
+MAILLIST='cmusphinx-results@lists.sourceforge.net'
 
 # Define SF_ROOT in the shell initialization script (~/.profile or
 # ~/.login, depending on whether you're using sh or csh), as in:
