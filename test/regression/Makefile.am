@@ -6,7 +6,7 @@ EXTRA_DIST =					\
 	chan3-logspec.cepview			\
 	chan3.mfc				\
 	chan3.raw                               \
-	test-tutorial.sh                        \
+	tutorial-check.sh                       \
         crontab
 
 CLEANFILES =					\
