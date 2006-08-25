@@ -701,10 +701,14 @@ feat_copy(feat_t * fcb, float32 ** mfc, float32 ** feat)
         uint32 spos = 0;
 
         for (j = 0; j < feat_n_stream(fcb); ++j) {
-            memcpy(feat[j] + ((i + win) * feat_stream_len(fcb, j)),
+            uint32 stream_len;
+
+            /* Unscale the stream length by the window. */
+            stream_len = feat_stream_len(fcb, j) / (2 * win + 1);
+            memcpy(feat[j] + ((i + win) * stream_len),
                    mfc[i] + spos,
-                   feat_stream_len(fcb, j) * sizeof(float32));
-            spos += feat_stream_len(fcb, j);
+                   stream_len * sizeof(float32));
+            spos += stream_len;
         }
     }
 }
