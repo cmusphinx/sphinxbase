@@ -641,7 +641,7 @@ feat_s3_cep_dcep(feat_t * fcb, float32 ** mfc, float32 ** feat)
         f[i] = w[i] - _w[i];
 }
 
-void
+static void
 feat_1s_c_d_dd_cep2feat(feat_t * fcb, float32 ** mfc, float32 ** feat)
 {
     float32 *f;
@@ -686,6 +686,26 @@ feat_1s_c_d_dd_cep2feat(feat_t * fcb, float32 ** mfc, float32 ** feat)
         d2 = w_1[i] - _w_1[i];
 
         f[i] = d1 - d2;
+    }
+}
+
+static void
+feat_copy(feat_t * fcb, float32 ** mfc, float32 ** feat)
+{
+    int32 win, i, j;
+
+    win = feat_window_size(fcb);
+
+    /* Concatenate input features */
+    for (i = -win; i <= win; ++i) {
+        uint32 spos = 0;
+
+        for (j = 0; j < feat_n_stream(fcb); ++j) {
+            memcpy(feat[j] + ((i + win) * feat_stream_len(fcb, j)),
+                   mfc[i] + spos,
+                   feat_stream_len(fcb, j) * sizeof(float32));
+            spos += feat_stream_len(fcb, j);
+        }
     }
 }
 
@@ -779,16 +799,25 @@ feat_init(char *type, char *cmn, char *varnorm, char *agc, int32 breport)
     }
     else {
         /*
-         * Generic definition: Format should be %d,%d,%d,...,%d (i.e., comma separated
-         * list of feature stream widths; #items = #streams).
+         * Generic definition: Format should be %d,%d,%d,...,%d (i.e.,
+         * comma separated list of feature stream widths; #items =
+         * #streams).  An optional window size (frames will be
+         * concatenated) is also allowed, which can be specified with
+         * a colon after the list of feature streams.
          */
         l = strlen(type);
         k = 0;
-        for (i = 1; i < l - 1; i++)
+        for (i = 1; i < l - 1; i++) {
             if (type[i] == ',') {
                 type[i] = ' ';
                 k++;
             }
+            else if (type[i] == ':') {
+                type[i] = '\0';
+                fcb->window_size = atoi(type + i + 1);
+                break;
+            }
+        }
         k++;                    /* Presumably there are (#commas+1) streams */
         fcb->n_stream = k;
         fcb->stream_len = (int32 *) ckd_calloc(k, sizeof(int32));
@@ -797,12 +826,20 @@ feat_init(char *type, char *cmn, char *varnorm, char *agc, int32 breport)
         strp = type;
         i = 0;
         fcb->out_dim = 0;
+        fcb->cepsize = 0;
+        fcb->cepsize_used = 0;
         while (sscanf(strp, "%s%n", wd, &l) == 1) {
             strp += l;
             if ((i >= fcb->n_stream)
                 || (sscanf(wd, "%d", &(fcb->stream_len[i])) != 1)
                 || (fcb->stream_len[i] <= 0))
                 E_FATAL("Bad feature type argument\n");
+            /* Input size before windowing */
+            fcb->cepsize += fcb->stream_len[i];
+            fcb->cepsize_used += fcb->stream_len[i];
+            if (fcb->window_size > 0)
+                fcb->stream_len[i] *= (fcb->window_size * 2 + 1);
+            /* Output size after windowing */
             fcb->out_dim += fcb->stream_len[i];
             i++;
         }
@@ -810,10 +847,7 @@ feat_init(char *type, char *cmn, char *varnorm, char *agc, int32 breport)
             E_FATAL("Bad feature type argument\n");
 
         /* Input is already the feature stream */
-        fcb->cepsize = feat_stream_len_sum(fcb);
-        fcb->cepsize_used = feat_stream_len_sum(fcb);
-        fcb->window_size = 0;
-        fcb->compute_feat = NULL;
+        fcb->compute_feat = feat_copy;
     }
 
     fcb->cmn_struct = cmn_init();
@@ -842,24 +876,20 @@ feat_init(char *type, char *cmn, char *varnorm, char *agc, int32 breport)
     fcb->tmpcepbuf = NULL;
     fcb->out_dim = fcb->stream_len[0];
 
-    if (fcb->cepsize > 0) {
-        fcb->cepbuf = (float32 **) ckd_calloc_2d(LIVEBUFBLOCKSIZE,
-                                                 feat_cepsize(fcb),
-                                                 sizeof(float32));
-        if (!fcb->cepbuf)
-            E_FATAL("Unable to allocate cepbuf ckd_calloc_2d(%ld,%d,%d)\n",
-                    LIVEBUFBLOCKSIZE, feat_cepsize(fcb), sizeof(float32));
-    }
-    if (fcb->window_size > 0) {
-        fcb->tmpcepbuf =
-            (float32 **) ckd_calloc_2d(2 * feat_window_size(fcb) + 1,
-                                       feat_cepsize(fcb), sizeof(float32));
-        if (!fcb->tmpcepbuf)
-            E_FATAL
-                ("Unable to allocate tmpcepbuf ckd_calloc_2d(%ld,%d,%d)\n",
-                 2 * feat_window_size(fcb) + 1, feat_cepsize(fcb),
-                 sizeof(float32));
-    }
+    fcb->cepbuf = (float32 **) ckd_calloc_2d(LIVEBUFBLOCKSIZE,
+                                             feat_cepsize(fcb),
+                                             sizeof(float32));
+    if (!fcb->cepbuf)
+        E_FATAL("Unable to allocate cepbuf ckd_calloc_2d(%ld,%d,%d)\n",
+                LIVEBUFBLOCKSIZE, feat_cepsize(fcb), sizeof(float32));
+    fcb->tmpcepbuf =
+        (float32 **) ckd_calloc_2d(2 * feat_window_size(fcb) + 1,
+                                   feat_cepsize(fcb), sizeof(float32));
+    if (!fcb->tmpcepbuf)
+        E_FATAL
+            ("Unable to allocate tmpcepbuf ckd_calloc_2d(%ld,%d,%d)\n",
+             2 * feat_window_size(fcb) + 1, feat_cepsize(fcb),
+             sizeof(float32));
     return fcb;
 }
 
@@ -1045,14 +1075,8 @@ feat_s2mfc2feat(feat_t * fcb, char *file, char *dir, char *cepext,
 #endif
 
     /* Create feature vectors */
-    if (fcb->compute_feat) {
-        for (i = win; i < nfr - win; i++)
-            fcb->compute_feat(fcb, mfc + i, feat[i - win]);
-    }
-    else {
-        for (i = win; i < nfr - win; i++)
-            memcpy(feat[i - win][0], mfc[i],
-                   feat_cepsize_used(fcb) * sizeof(float32));
+    for (i = win; i < nfr - win; i++) {
+        fcb->compute_feat(fcb, mfc + i, feat[i - win]);
     }
 
 #if 0
@@ -1118,10 +1142,13 @@ feat_s2mfc2feat_block(feat_t * fcb, float32 ** uttcep, int32 nfr,
     if (beginutt) {
         /* Replicate first frame into the first win frames */
         for (i = 0; i < win; i++) {
+            /* FIXME: This makes no sense at all!!! */
+#if 0
             if (nfr >= win + 1)
                 memcpy(cepbuf[i], uttcep[0 + i + 1],
                        cepsize * sizeof(float32));
             else
+#endif
                 memcpy(cepbuf[i], uttcep[0], cepsize * sizeof(float32));
         }
         fcb->bufpos = win;
