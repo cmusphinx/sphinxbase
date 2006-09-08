@@ -50,6 +50,7 @@
 #include "fe_internal.h"
 #include "genrand.h"
 #include "err.h"
+#include "cmd_ln.h"
 
 /* 
  *   HISTORY
@@ -88,6 +89,58 @@ fe_init_params(param_t * P)
 /* Now take care of variables that do not default to zero */
     P->FB_TYPE = DEFAULT_FB_TYPE;
     P->seed = SEED;
+}
+
+/*********************************************************************
+   FUNCTION:   fe_init_auto
+   PARAMETERS: fe_t *
+   RETURNS:    nothing
+   DESCRIPTION: automatically grab front-end parameters from command
+   line arguments and initializes the front-end structure
+**********************************************************************/
+fe_t *
+fe_init_auto()
+{
+    param_t p;
+
+    fe_init_params(&p);
+
+    p.SAMPLING_RATE = cmd_ln_float32("-samprate");
+    p.FRAME_RATE = cmd_ln_int32("-frate");
+    p.WINDOW_LENGTH = cmd_ln_int32("-wlen");
+    if (strcmp("mel_scale", cmd_ln_str("-fbtype")) == 0)
+        p.FB_TYPE = MEL_SCALE;
+    else if (strcmp("log_linear", cmd_ln_str("-fbtype")) == 0)
+        p.FB_TYPE = LOG_LINEAR;
+    else {
+        E_WARN("Invalid fbtype\n");
+        return NULL;
+    }
+
+    p.NUM_CEPSTRA = cmd_ln_int32("-ncep");
+    p.NUM_FILTERS = cmd_ln_int32("-nfilt");
+    p.FFT_SIZE = cmd_ln_int32("-nfft");
+
+    p.LOWER_FILT_FREQ = cmd_ln_float32("-upperf");
+    p.UPPER_FILT_FREQ = cmd_ln_float32("lowerf");
+    p.PRE_EMPHASIS_ALPHA = cmd_ln_float32("-alpha");
+    p.dither = cmd_ln_int32("-dither");
+    p.seed = cmd_ln_int32("-seed");
+
+    /* don't really know how to initialize the following from command line 
+       parameters.  somebody fix this */
+    
+    /*
+    p.logspec;
+    p.doublebw;
+    p.verbose;
+    */
+
+    p.warp_type = cmd_ln_str("-warp_type");
+    p.warp_params = cmd_ln_str("-warp_params");
+
+    return fe_init(&p);
+
 }
 
 

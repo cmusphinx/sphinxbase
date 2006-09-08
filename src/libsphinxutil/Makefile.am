@@ -21,7 +21,7 @@ libsphinxutil_la_SOURCES = \
 	nextword.c \
         profile.c \
         str2words.c \
-	s3u_arraylist.c \
+	s3_arraylist.c \
 	unlimit.c
 
 if LAPACK_LITE

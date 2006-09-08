@@ -33,5 +33,5 @@ pkginclude_HEADERS =				\
 	profile.h				\
 	sphinx_config.h				\
 	str2words.h				\
-	s3u_arraylist.h				\
+	s3_arraylist.h				\
 	unlimit.h

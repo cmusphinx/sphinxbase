@@ -1,29 +1,23 @@
-/* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 
-#ifndef _S3U_ARRAYLIST_H
-#define _S3U_ARRAYLIST_H
+#ifndef _S3_ARRAYLIST_H
+#define _S3_ARRAYLIST_H
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-#if 0
-/* Fool Emacs. */
-}
-#endif
 
-#define S3U_ARRAYLIST_DEFAULT_SIZE	16
+#define S3_ARRAYLIST_DEFAULT_SIZE	16
 
-/** \file s3u_arraylist.h
- * Defines a storage structure for generic, dynamic
+/* s3_arraylist.h - Defines a storage structure for generic, dynamic
  * sequences.  It also implements fast queue and stack operations.
  */
 
-typedef struct {
+typedef struct s3_arraylist_s {
   void **array;
   int head;
   int count;
   int max;
-} s3u_arraylist_t;
+} s3_arraylist_t;
 
 /*----------------------------------
   | Initialization and destruction |
@@ -36,7 +30,7 @@ typedef struct {
    @param _arraylist The vector to be initialized.
  */
 void
-s3u_arraylist_init(s3u_arraylist_t *_arraylist);
+s3_arraylist_init(s3_arraylist_t *_arraylist);
 
 /**
    Initializes the vector to a certain size.  A vector must be initialized
@@ -46,7 +40,7 @@ s3u_arraylist_init(s3u_arraylist_t *_arraylist);
    @param _size The size to initialize the vector to.
  */
 void
-s3u_arraylist_init_size(s3u_arraylist_t *_arraylist, int _size);
+s3_arraylist_init_size(s3_arraylist_t *_arraylist, int _size);
 
 /**
    Close the vector and free any internally allocated memory.  The vector
@@ -56,7 +50,7 @@ s3u_arraylist_init_size(s3u_arraylist_t *_arraylist, int _size);
    @param _arraylist The vector to be closed.
  */
 void
-s3u_arraylist_close(s3u_arraylist_t *_arraylist);
+s3_arraylist_close(s3_arraylist_t *_arraylist);
 
 /**
    Clear the content of the vector and set the element count to 0.  The
@@ -66,7 +60,7 @@ s3u_arraylist_close(s3u_arraylist_t *_arraylist);
    @param _arraylist The vector to be cleared.
  */
 void
-s3u_arraylist_clear(s3u_arraylist_t *_arraylist);
+s3_arraylist_clear(s3_arraylist_t *_arraylist);
 
 /*--------------------------
   | Array style operations |
@@ -86,7 +80,7 @@ s3u_arraylist_clear(s3u_arraylist_t *_arraylist);
    @param _ptr The pointer to the new element.
  */
 void
-s3u_arraylist_set(s3u_arraylist_t *_arraylist, int _pos, void *_ptr);
+s3_arraylist_set(s3_arraylist_t *_arraylist, int _pos, void *_ptr);
 
 /**
    Get the element at a particular index.  Accessing out-of-bound indices will
@@ -97,7 +91,7 @@ s3u_arraylist_set(s3u_arraylist_t *_arraylist, int _pos, void *_ptr);
    @return The pointer to the requested element.
  */
 void *
-s3u_arraylist_get(s3u_arraylist_t *_arraylist, int _pos);
+s3_arraylist_get(s3_arraylist_t *_arraylist, int _pos);
 
 /**
    Replace the element at a particular index (and return the previous value).
@@ -109,7 +103,7 @@ s3u_arraylist_get(s3u_arraylist_t *_arraylist, int _pos);
    @return The pointer of the previous value.
  */
 void *
-s3u_arraylist_replace(s3u_arraylist_t *_arraylist, int _pos, void *_ptr);
+s3_arraylist_replace(s3_arraylist_t *_arraylist, int _pos, void *_ptr);
 
 /*-------------------------
   | List style operations |
@@ -124,7 +118,7 @@ s3u_arraylist_replace(s3u_arraylist_t *_arraylist, int _pos, void *_ptr);
    @return The pointer of the removed element.
  */
 void *
-s3u_arraylist_remove(s3u_arraylist_t *_arraylist, int _pos);
+s3_arraylist_remove(s3_arraylist_t *_arraylist, int _pos);
 
 /**
    Insert the element at a position and shift the remaining element up.  The
@@ -136,7 +130,7 @@ s3u_arraylist_remove(s3u_arraylist_t *_arraylist, int _pos);
    @param _ptr The pointer to the new element.
  */
 void
-s3u_arraylist_insert(s3u_arraylist_t *_arraylist, int _pos, void *_ptr);
+s3_arraylist_insert(s3_arraylist_t *_arraylist, int _pos, void *_ptr);
 
 /**
    Append a new element to the end of the vector.  The size of the vector will
@@ -146,7 +140,7 @@ s3u_arraylist_insert(s3u_arraylist_t *_arraylist, int _pos, void *_ptr);
    @param _ptr The pointer to the new element.
  */
 void
-s3u_arraylist_append(s3u_arraylist_t *_arraylist, void *_ptr);
+s3_arraylist_append(s3_arraylist_t *_arraylist, void *_ptr);
 
 /**
    Prepend a new element to the head of the vector.  The size of the vector
@@ -156,7 +150,7 @@ s3u_arraylist_append(s3u_arraylist_t *_arraylist, void *_ptr);
    @param _ptr The pointer to the new element.
  */
 void
-s3u_arraylist_prepend(s3u_arraylist_t *_arraylist, void *_ptr);
+s3_arraylist_prepend(s3_arraylist_t *_arraylist, void *_ptr);
 
 /**
    Remove the element at the end of the vector.
@@ -165,7 +159,7 @@ s3u_arraylist_prepend(s3u_arraylist_t *_arraylist, void *_ptr);
    @return The pointer to the removed element.
  */
 void *
-s3u_arraylist_pop(s3u_arraylist_t *_arraylist);
+s3_arraylist_pop(s3_arraylist_t *_arraylist);
 
 /**
    Remove the element at the front of the vector.
@@ -174,7 +168,7 @@ s3u_arraylist_pop(s3u_arraylist_t *_arraylist);
    @return The pointer to the removed element.
  */
 void *
-s3u_arraylist_dequeue(s3u_arraylist_t *_arraylist);
+s3_arraylist_dequeue(s3_arraylist_t *_arraylist);
 
 /*---------------------------
   | Miscellaneus operations |
@@ -187,7 +181,7 @@ s3u_arraylist_dequeue(s3u_arraylist_t *_arraylist);
    @return The size of the vector.
  */
 int
-s3u_arraylist_count(s3u_arraylist_t *_arraylist);
+s3_arraylist_count(s3_arraylist_t *_arraylist);
 
 /**
    Returns a <B>read-only</B> plain-old array of the elements in the vector.
@@ -197,11 +191,8 @@ s3u_arraylist_count(s3u_arraylist_t *_arraylist);
    @return 0 for success, -1 for failure.
  */
 void **
-s3u_arraylist_to_array(s3u_arraylist_t *_arraylist);
+s3_arraylist_to_array(s3_arraylist_t *_arraylist);
 
-#if 0
-{ /* Fool indent. */
-#endif
 #ifdef __cplusplus
 }
 #endif
