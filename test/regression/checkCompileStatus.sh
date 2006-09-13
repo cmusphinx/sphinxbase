@@ -65,13 +65,13 @@ $repeat svn co https://svn.sourceforge.net/svnroot/cmusphinx/trunk/sphinxbase
 pushd sphinxbase || echo "FAILED: sphinxbase not found"
 
 if  !(./autogen.sh && ./autogen.sh $options); then
-    echo "sphinxbase autogen FAILED"
 
 # sphinxbase is needed for everything else, so build it in-place, and don't remove it
-if ! ${GMAKE} ; then
- echo "sphinxbase compilation FAILED"
-fi
-
+    if ! ${GMAKE} ; then
+        echo "sphinxbase compilation FAILED"
+    fi
+else
+    echo "sphinxbase autogen FAILED"
 fi
 
 popd
@@ -94,9 +94,9 @@ if (./configure $options); then
 # Compile and run test, and verify if both were successful
 # Note that distcheck builds in a subdirectory so we need to give an
 # an (absolute) path to sphinxbase.
-if ! ${GMAKE} $target ; then
-    echo "$module compilation or test FAILED"
-fi
+    if ! ${GMAKE} $target ; then
+        echo "$module compilation or test FAILED"
+    fi
 
 else
     echo "$module configure FAILED"
