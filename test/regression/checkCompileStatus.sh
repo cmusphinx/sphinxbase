@@ -9,7 +9,7 @@ export PATH="/usr/local/bin:/bin:/usr/bin:/usr/ccs/bin"
 
 # Make sure we at least specify the module to test
 if test x$module == x ; then
-    echo "Usage: $0 <module to test>"
+    echo "FAILED: Usage: $0 <module to test>"
     exit 1
 fi
 
@@ -23,7 +23,7 @@ if test z"$GMAKE" == z; then
     GMAKE=`command -v make`
     if test z"$GMAKE" == z; then
 # If we failed again, bail out: we cannot make the project!
-    echo "make not found, tried gmake and make"
+    echo "FAILED: make not found, tried gmake and make"
 # Exit with non zero value
     exit 1;
     fi
@@ -65,11 +65,11 @@ $repeat svn co https://svn.sourceforge.net/svnroot/cmusphinx/trunk/sphinxbase
 pushd sphinxbase
 
 if  !(./autogen.sh && ./autogen.sh $options); then
-    echo "sphinxbase autogen failed"
+    echo "sphinxbase autogen FAILED"
 
 # sphinxbase is needed for everything else, so build it in-place, and don't remove it
 if ! ${GMAKE} ; then
- echo "sphinxbase compilation failed"
+ echo "sphinxbase compilation FAILED"
 fi
 
 fi
@@ -90,13 +90,13 @@ else
 fi
 
 if (./configure $options); then
-    echo "$module configure failed"
+    echo "$module configure FAILED"
 
 # Compile and run test, and verify if both were successful
 # Note that distcheck builds in a subdirectory so we need to give an
 # an (absolute) path to sphinxbase.
 if ! ${GMAKE} $target ; then
-    echo "$module compilation or test failed"
+    echo "$module compilation or test FAILED"
 fi
 
 fi
