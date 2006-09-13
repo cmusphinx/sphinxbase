@@ -161,7 +161,7 @@ SOURCE=..\..\src\libsphinxutil\profile.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\src\libsphinxutil\s3u_arraylist.c
+SOURCE=..\..\src\libsphinxutil\s3_arraylist.c
 # End Source File
 # Begin Source File
 

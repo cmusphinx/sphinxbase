@@ -928,14 +928,14 @@ NODEP_CPP_PROFI=\
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\src\libsphinxutil\s3u_arraylist.c
+SOURCE=..\..\src\libsphinxutil\s3_arraylist.c
 
 !IF  "$(CFG)" == "libsphinxutil - Win32 (WCE emulator) Release"
 
 DEP_CPP_S3U_A=\
 	"..\..\include\ckd_alloc.h"\
 	"..\..\include\prim_type.h"\
-	"..\..\include\s3u_arraylist.h"\
+	"..\..\include\s3_arraylist.h"\
 	
 NODEP_CPP_S3U_A=\
 	"..\..\include\dmalloc.h"\
@@ -946,7 +946,7 @@ NODEP_CPP_S3U_A=\
 DEP_CPP_S3U_A=\
 	"..\..\include\ckd_alloc.h"\
 	"..\..\include\prim_type.h"\
-	"..\..\include\s3u_arraylist.h"\
+	"..\..\include\s3_arraylist.h"\
 	
 NODEP_CPP_S3U_A=\
 	"..\..\include\dmalloc.h"\
@@ -957,7 +957,7 @@ NODEP_CPP_S3U_A=\
 DEP_CPP_S3U_A=\
 	"..\..\include\ckd_alloc.h"\
 	"..\..\include\prim_type.h"\
-	"..\..\include\s3u_arraylist.h"\
+	"..\..\include\s3_arraylist.h"\
 	
 NODEP_CPP_S3U_A=\
 	"..\..\include\dmalloc.h"\
@@ -968,7 +968,7 @@ NODEP_CPP_S3U_A=\
 DEP_CPP_S3U_A=\
 	"..\..\include\ckd_alloc.h"\
 	"..\..\include\prim_type.h"\
-	"..\..\include\s3u_arraylist.h"\
+	"..\..\include\s3_arraylist.h"\
 	
 NODEP_CPP_S3U_A=\
 	"..\..\include\dmalloc.h"\
