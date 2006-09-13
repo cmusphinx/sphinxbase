@@ -62,30 +62,33 @@ if ! (test -e $outdir) ; then
 fi
 cd $outdir
 
-success=0;
-# Fresh download of sphinxbase
-if svn co https://svn.sourceforge.net/svnroot/cmusphinx/trunk/sphinxbase/test/regression; then
-
-success=0;
-
+success=0
 mail_file=regression/mail.txt
 echo "Results in $outdir" > $mail_file
 echo "Summary:" >> $mail_file
 
-if call_test sphinxbase; then success=1; fi
-if call_test sphinxpocket; then success=1; fi
-if call_test sphinx2; then success=1; fi
-if call_test sphinx3; then success=1; fi
-if call_test SphinxTrain; then success=1; fi
+# Fresh download of sphinxbase
+if svn co https://svn.sourceforge.net/svnroot/cmusphinx/trunk/sphinxbase/test/regression; then
+
+    success=1;
+
+    if ! call_test sphinxbase; then success=0; fi
+    if ! call_test pocketsphinx; then success=0; fi
+    if ! call_test sphinx2; then success=0; fi
+    if ! call_test sphinx3; then success=0; fi
+    if ! call_test SphinxTrain; then success=0; fi
+
+fi
 
 # Send the message, finally
 if [ $success == 1 ] ; then
     ${MAILX} -s "All tests passed in `hostname`" ${MAILLIST} < $mail_file;
- else 
+else 
     ${MAILX} -s "Test FAILED in `hostname`" ${MAILLIST} < $mail_file;
 fi
+
+
 
 # Remove what we created
 /bin/rm -rf $outdir/regression
 
-fi

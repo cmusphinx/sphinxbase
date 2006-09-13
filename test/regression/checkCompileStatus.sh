@@ -62,7 +62,7 @@ chmod +x $repeat
 $repeat svn co https://svn.sourceforge.net/svnroot/cmusphinx/trunk/sphinxbase
 
 # Configure it
-pushd sphinxbase
+pushd sphinxbase || echo "FAILED: sphinxbase not found"
 
 if  !(./autogen.sh && ./autogen.sh $options); then
     echo "sphinxbase autogen FAILED"
@@ -80,7 +80,7 @@ popd
 $repeat svn co https://svn.sourceforge.net/svnroot/cmusphinx/trunk/$module
 
 # Configure it
-pushd $module
+pushd $module || echo "FAILED: $module not found"
 
 if test -e ./autogen.sh; then
     ./autogen.sh && ./autogen.sh
@@ -90,7 +90,6 @@ else
 fi
 
 if (./configure $options); then
-    echo "$module configure FAILED"
 
 # Compile and run test, and verify if both were successful
 # Note that distcheck builds in a subdirectory so we need to give an
@@ -99,6 +98,8 @@ if ! ${GMAKE} $target ; then
     echo "$module compilation or test FAILED"
 fi
 
+else
+    echo "$module configure FAILED"
 fi
 
 popd
@@ -111,6 +112,3 @@ fi
 # Remove what we created
 cd /tmp
 /bin/rm -rf $root
-
-
-
