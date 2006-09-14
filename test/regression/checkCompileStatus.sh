@@ -64,7 +64,7 @@ $repeat svn co https://svn.sourceforge.net/svnroot/cmusphinx/trunk/sphinxbase
 # Configure it
 pushd sphinxbase || echo "FAILED: sphinxbase not found"
 
-if  !(./autogen.sh && ./autogen.sh $options); then
+if  (./autogen.sh && ./autogen.sh $options); then
 
 # sphinxbase is needed for everything else, so build it in-place, and don't remove it
     if ! ${GMAKE} ; then
