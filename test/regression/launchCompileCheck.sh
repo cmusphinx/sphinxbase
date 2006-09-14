@@ -63,7 +63,7 @@ fi
 cd $outdir
 
 success=0
-mail_file=regression/mail.txt
+mail_file=$outdir/mail.txt
 echo "Results in $outdir" > $mail_file
 echo "Summary:" >> $mail_file
 
@@ -86,8 +86,6 @@ if [ $success == 1 ] ; then
 else 
     ${MAILX} -s "Test FAILED in `hostname`" ${MAILLIST} < $mail_file;
 fi
-
-
 
 # Remove what we created
 /bin/rm -rf $outdir/regression
