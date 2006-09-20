@@ -107,7 +107,7 @@ fe_init_auto()
 
     p.SAMPLING_RATE = cmd_ln_float32("-samprate");
     p.FRAME_RATE = cmd_ln_int32("-frate");
-    p.WINDOW_LENGTH = cmd_ln_int32("-wlen");
+    p.WINDOW_LENGTH = cmd_ln_float32("-wlen");
     if (strcmp("mel_scale", cmd_ln_str("-fbtype")) == 0)
         p.FB_TYPE = MEL_SCALE;
     else if (strcmp("log_linear", cmd_ln_str("-fbtype")) == 0)
@@ -121,11 +121,15 @@ fe_init_auto()
     p.NUM_FILTERS = cmd_ln_int32("-nfilt");
     p.FFT_SIZE = cmd_ln_int32("-nfft");
 
-    p.LOWER_FILT_FREQ = cmd_ln_float32("-upperf");
-    p.UPPER_FILT_FREQ = cmd_ln_float32("lowerf");
+    p.UPPER_FILT_FREQ = cmd_ln_float32("-upperf");
+    p.LOWER_FILT_FREQ = cmd_ln_float32("-lowerf");
     p.PRE_EMPHASIS_ALPHA = cmd_ln_float32("-alpha");
-    p.dither = cmd_ln_int32("-dither");
-    p.seed = cmd_ln_int32("-seed");
+    if (strcmp("yes", cmd_ln_str("-dither")) == 0) {
+        p.dither = 1;
+        p.seed = cmd_ln_int32("-seed");
+    }
+    else
+        p.dither = 0;
 
     /* don't really know how to initialize the following from command line 
        parameters.  somebody fix this */
