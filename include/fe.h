@@ -91,6 +91,7 @@ struct param_s {
     float32 LOWER_FILT_FREQ;
     float32 UPPER_FILT_FREQ;
     float32 PRE_EMPHASIS_ALPHA;
+    int32 swap;
     int32 dither;
     int32 seed;
     int32 logspec;
@@ -131,6 +132,7 @@ struct fe_s {
     int32 LOG_SPEC;
     int32 NUM_CEPSTRA;
     int32 FEATURE_DIMENSION;
+    int32 swap;
     int32 dither;
     int32 seed;
     float32 PRE_EMPHASIS_ALPHA;

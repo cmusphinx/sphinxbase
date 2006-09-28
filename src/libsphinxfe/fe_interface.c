@@ -46,6 +46,7 @@
 #endif
 
 #include "prim_type.h"
+#include "byteorder.h"
 #include "fixpoint.h"
 #include "fe_internal.h"
 #include "genrand.h"
@@ -130,6 +131,12 @@ fe_init_auto()
     }
     else
         p.dither = 0;
+
+#ifdef WORDS_BIGENDIAN
+    p.swap = strcmp("big", cmd_ln_str("-input_endian")) == 0 ? 0 : 1;
+#else        
+    p.swap = strcmp("little", cmd_ln_str("-input_endian")) == 0 ? 0 : 1;
+#endif
 
     /* don't really know how to initialize the following from command line 
        parameters.  somebody fix this */
@@ -287,7 +294,7 @@ fe_start_utt(fe_t * FE)
 int32
 fe_process_frame(fe_t * FE, int16 * spch, int32 nsamps, mfcc_t * fr_cep)
 {
-    int32 spbuf_len;
+    int32 spbuf_len, i;
     frame_t *spbuf;
     int32 return_value = FE_SUCCESS;
 
@@ -297,6 +304,11 @@ fe_process_frame(fe_t * FE, int16 * spch, int32 nsamps, mfcc_t * fr_cep)
     if ((spbuf = (frame_t *) calloc(spbuf_len, sizeof(frame_t))) == NULL) {
         E_FATAL("memory alloc failed in fe_process_frame()...exiting\n");
     }
+
+    /* Added byte-swapping for Endian-ness compatibility */
+    if (FE->swap) 
+        for (i = 0; i < nsamps; i++)
+            SWAP_INT16(&spch[i]);
 
     /* Add dither, if need. Warning: this may add dither twice to the
        samples in overlapping frames. */
@@ -343,6 +355,11 @@ fe_process_utt(fe_t * FE, int16 * spch, int32 nsamps,
     mfcc_t **cep = NULL;
     int32 return_value = FE_SUCCESS;
     int32 frame_return_value;
+
+    /* Added byte-swapping for Endian-ness compatibility */
+    if (FE->swap) 
+        for (i = 0; i < nsamps; i++)
+            SWAP_INT16(&spch[i]);
 
     /* are there enough samples to make at least 1 frame? */
     if (nsamps + FE->NUM_OVERFLOW_SAMPS >= FE->FRAME_SIZE) {

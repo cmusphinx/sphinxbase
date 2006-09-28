@@ -812,6 +812,7 @@ fe_parse_general_params(param_t const *P, fe_t * FE)
 
     FE->dither = P->dither;
     FE->seed = P->seed;
+    FE->swap = P->swap;
 
     if (P->PRE_EMPHASIS_ALPHA != 0)
         FE->PRE_EMPHASIS_ALPHA = P->PRE_EMPHASIS_ALPHA;
