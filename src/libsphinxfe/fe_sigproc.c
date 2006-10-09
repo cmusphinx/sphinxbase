@@ -217,10 +217,8 @@ int32
 fe_compute_melcosine(melfb_t * MEL_FB)
 {
 
-    float32 period, freq;
+    float64 freqstep;
     int32 i, j;
-
-    period = (float32) 2 *MEL_FB->num_filters;
 
     if ((MEL_FB->mel_cosine =
          (mfcc_t **) fe_create_2d(MEL_FB->num_cepstra,
@@ -230,13 +228,14 @@ fe_compute_melcosine(melfb_t * MEL_FB)
         return FE_MEM_ALLOC_ERROR;
     }
 
-
+    freqstep = M_PI / MEL_FB->num_filters;
+    /* NOTE: The first row vector is actually unnecessary but we leave
+     * it in to avoid confusion. */
     for (i = 0; i < MEL_FB->num_cepstra; i++) {
-        freq = 2 * (float32) M_PI *(float32) i / period;
         for (j = 0; j < MEL_FB->num_filters; j++) {
             float64 cosine;
 
-            cosine = cos((float64) (freq * (j + 0.5)));
+            cosine = cos(freqstep * i * (j + 0.5));
             MEL_FB->mel_cosine[i][j] = FLOAT2MFCC(cosine);
         }
     }
@@ -384,7 +383,6 @@ fe_spec_magnitude(frame_t const *data, int32 data_len,
                   powspec_t * spec, int32 fftsize)
 {
     int32 j, wrap;
-    int32 fftorder;
     frame_t *fft;
 
     fft = calloc(fftsize, sizeof(frame_t));
@@ -486,22 +484,37 @@ fe_mel_cep(fe_t * FE, powspec_t * mfspec, mfcc_t * mfcep)
     }
 
     /* If we are doing LOG_SPEC, then do nothing. */
-    if (FE->LOG_SPEC) {
+    if (FE->LOG_SPEC == RAW_LOG_SPEC) {
+        for (i = 0; i < FE->FEATURE_DIMENSION; i++) {
+            mfcep[i] = (mfcc_t) mfspec[i];
+        }
+    }
+    /* For smoothed spectrum, do DCT-II followed by (its inverse) DCT-III */
+    else if (FE->LOG_SPEC == SMOOTH_LOG_SPEC) {
+        fe_dct2(FE, mfspec, mfcep);
+        fe_dct3(FE, mfcep, mfspec);
         for (i = 0; i < FE->FEATURE_DIMENSION; i++) {
             mfcep[i] = (mfcc_t) mfspec[i];
         }
     }
     else
-        fe_idct(FE, mfspec, mfcep);
+        fe_spec2cep(FE, mfspec, mfcep);
     return;
 }
 
 void
-fe_idct(fe_t * FE, const powspec_t * mflogspec, mfcc_t * mfcep)
+fe_spec2cep(fe_t * FE, const powspec_t * mflogspec, mfcc_t * mfcep)
 {
     int32 i, j, beta;
 
-    for (i = 0; i < FE->NUM_CEPSTRA; ++i) {
+    /* Compute C0 separately (its basis vector is 1) to avoid
+     * costly multiplications. */
+    mfcep[0] = mflogspec[0] / 2; /* beta = 0.5 */
+    for (j = 1; j < FE->MEL_FB->num_filters; j++)
+	mfcep[0] += mflogspec[j]; /* beta = 1.0 */
+    mfcep[0] /= (frame_t) FE->MEL_FB->num_filters;
+
+    for (i = 1; i < FE->NUM_CEPSTRA; ++i) {
         mfcep[i] = 0;
         for (j = 0; j < FE->MEL_FB->num_filters; j++) {
             if (j == 0)
@@ -511,18 +524,43 @@ fe_idct(fe_t * FE, const powspec_t * mflogspec, mfcc_t * mfcep)
             mfcep[i] += MFCCMUL(mflogspec[j],
                                 FE->MEL_FB->mel_cosine[i][j]) * beta;
         }
+	/* Note that this actually normalizes by num_filters, like the
+	 * original Sphinx front-end, due to the doubled 'beta' factor
+	 * above.  */
         mfcep[i] /= (frame_t) FE->MEL_FB->num_filters * 2;
     }
 }
 
 void
-fe_dct(fe_t * FE, const mfcc_t * mfcep, powspec_t * mflogspec)
+fe_dct2(fe_t * FE, const powspec_t * mflogspec, mfcc_t * mfcep)
+{
+    int32 i, j;
+
+    /* Compute C0 separately (its basis vector is 1) to avoid
+     * costly multiplications. */
+    mfcep[0] = mflogspec[0];
+    for (j = 1; j < FE->MEL_FB->num_filters; j++)
+	mfcep[0] += mflogspec[j];
+    mfcep[0] = mfcep[0] * 2 / FE->MEL_FB->num_filters;
+
+    for (i = 1; i < FE->NUM_CEPSTRA; ++i) {
+        mfcep[i] = 0;
+        for (j = 0; j < FE->MEL_FB->num_filters; j++) {
+	    mfcep[i] += MFCCMUL(mflogspec[j],
+				FE->MEL_FB->mel_cosine[i][j]);
+        }
+        mfcep[i] = mfcep[i] * 2 / FE->MEL_FB->num_filters;
+    }
+}
+
+void
+fe_dct3(fe_t * FE, const mfcc_t * mfcep, powspec_t * mflogspec)
 {
     int32 i, j;
 
     for (i = 0; i < FE->MEL_FB->num_filters; ++i) {
-        mflogspec[i] = 0;
-        for (j = 0; j < FE->NUM_CEPSTRA; j++) {
+        mflogspec[i] = mfcep[0] / 2;
+        for (j = 1; j < FE->NUM_CEPSTRA; j++) {
             mflogspec[i] += MFCCMUL(mfcep[j],
                                     FE->MEL_FB->mel_cosine[j][i]);
         }

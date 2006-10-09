@@ -612,7 +612,7 @@ int32
 fe_logspec_to_mfcc(fe_t * FE, const mfcc_t * fr_spec, mfcc_t * fr_cep)
 {
 #ifdef FIXED_POINT
-    fe_idct(FE, fr_spec, fr_cep);
+    fe_spec2cep(FE, fr_spec, fr_cep);
 #else                           /* ! FIXED_POINT */
     powspec_t *powspec;
     int32 i;
@@ -620,23 +620,41 @@ fe_logspec_to_mfcc(fe_t * FE, const mfcc_t * fr_spec, mfcc_t * fr_cep)
     powspec = malloc(FE->MEL_FB->num_filters * sizeof(powspec_t));
     for (i = 0; i < FE->MEL_FB->num_filters; ++i)
         powspec[i] = (powspec_t) fr_spec[i];
-    fe_idct(FE, powspec, fr_cep);
+    fe_spec2cep(FE, powspec, fr_cep);
     free(powspec);
 #endif                          /* ! FIXED_POINT */
     return 0;
 }
 
 int32
-fe_mfcc_to_logspec(fe_t * FE, const mfcc_t * fr_cep, mfcc_t * fr_spec)
+fe_logspec_dct2(fe_t * FE, const mfcc_t * fr_spec, mfcc_t * fr_cep)
 {
 #ifdef FIXED_POINT
-    fe_dct(FE, fr_cep, fr_spec);
+    fe_dct2(FE, fr_spec, fr_cep);
 #else                           /* ! FIXED_POINT */
     powspec_t *powspec;
     int32 i;
 
     powspec = malloc(FE->MEL_FB->num_filters * sizeof(powspec_t));
-    fe_dct(FE, fr_cep, powspec);
+    for (i = 0; i < FE->MEL_FB->num_filters; ++i)
+        powspec[i] = (powspec_t) fr_spec[i];
+    fe_dct2(FE, powspec, fr_cep);
+    free(powspec);
+#endif                          /* ! FIXED_POINT */
+    return 0;
+}
+
+int32
+fe_mfcc_dct3(fe_t * FE, const mfcc_t * fr_cep, mfcc_t * fr_spec)
+{
+#ifdef FIXED_POINT
+    fe_dct3(FE, fr_cep, fr_spec);
+#else                           /* ! FIXED_POINT */
+    powspec_t *powspec;
+    int32 i;
+
+    powspec = malloc(FE->MEL_FB->num_filters * sizeof(powspec_t));
+    fe_dct3(FE, fr_cep, powspec);
     for (i = 0; i < FE->MEL_FB->num_filters; ++i)
         fr_spec[i] = (mfcc_t) powspec[i];
     free(powspec);

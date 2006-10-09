@@ -78,6 +78,12 @@ typedef float64 window_t;
 #define MFCCLN(x,in,out) log(x)
 #endif /* !FIXED_POINT */
 
+/* Values for the 'logspec' field. */
+enum {
+	RAW_LOG_SPEC = 1,
+	SMOOTH_LOG_SPEC = 2
+};
+
 /** Structure holding front-end parameters. */
 typedef struct param_s param_t;
 struct param_s {
@@ -291,7 +297,27 @@ int32 fe_float_to_mfcc(fe_t *FE,
 		       int32 nframes);
 
 /**
- * Process one frame of log spectra into MFCC (can be done in-place)
+ * Process one frame of log spectra into MFCC using discrete cosine
+ * transform.
+ *
+ * This uses a variant of the DCT-II where the first frequency bin is
+ * scaled by 0.5.  Unless somebody misunderstood the DCT-III equations
+ * and thought that's what they were implementing here, this is
+ * ostensibly done to account for the symmetry properties of the
+ * DCT-II versus the DFT - the first coefficient of the input is
+ * assumed to be repeated in the negative frequencies, which is not
+ * the case for the DFT.  (This begs the question, why not just use
+ * the DCT-I, since it has the appropriate symmetry properties...)
+ * Moreover, this is bogus since the mel-frequency bins on which we
+ * are doing the DCT don't extend to the edge of the DFT anyway.
+ *
+ * This also means that the matrix used in computing this DCT can not
+ * be made orthogonal, and thus inverting the transform is difficult.
+ * Therefore if you want to do cepstral smoothing or have some other
+ * reason to invert your MFCCs, use fe_logspec_dct2() and its inverse
+ * fe_logspec_dct3() instead.
+ *
+ * Also, it normalizes by nfilt/2 rather than 2/nfilt, for some reason.
  **/
 int32 fe_logspec_to_mfcc(fe_t *FE,  /**< A FE structure */
 			 const mfcc_t *fr_spec, /**< One frame of spectrum */
@@ -299,11 +325,25 @@ int32 fe_logspec_to_mfcc(fe_t *FE,  /**< A FE structure */
         );
 
 /**
- * Reconstruct one frame of logspectra from MFCC (can be done in-place)
+ * Convert log spectra to MFCC using DCT-II.
+ *
+ * This uses the canonical form of the DCT-II, with a scaling factor
+ * of 2.0/nfilt applied.
  **/
-int32 fe_mfcc_to_logspec(fe_t *FE,  /**< A FE structure */
-			 const mfcc_t *fr_cep, /**< One frame of cepstrum */
-			 mfcc_t *fr_spec /**< One frame of spectrum */
+int32 fe_logspec_dct2(fe_t *FE,  /**< A FE structure */
+		      const mfcc_t *fr_spec, /**< One frame of spectrum */
+		      mfcc_t *fr_cep /**< One frame of cepstrum */
+        );
+
+/**
+ * Convert MFCC to log spectra using DCT-III.
+ *
+ * This uses the canonical form of the DCT-III, with no scaling factor
+ * applied.
+ **/
+int32 fe_mfcc_dct3(fe_t *FE,  /**< A FE structure */
+		   const mfcc_t *fr_cep, /**< One frame of cepstrum */
+		   mfcc_t *fr_spec /**< One frame of spectrum */
         );
 
 #endif

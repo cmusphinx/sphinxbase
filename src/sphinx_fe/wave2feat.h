@@ -40,15 +40,30 @@
 #define NULL_CHAR '\0'
 #define MAXCHARS 2048
 
-#define WAV 1
-#define RAW 2
-#define NIST 3
-#define MSWAV 4
-
+/* Huh? */
 #define ONE_CHAN "1"
 
-#define LITTLE 1
-#define BIG 2
+/* Enums for wavefile types. */
+enum {
+    WAV = 1,
+    RAW = 2,
+    NIST = 3,
+    MSWAV = 4
+};
+
+/* Enums for input endianness. */
+enum {
+    LITTLE =  1,
+    BIG =  2
+};
+
+/* Enums for DCT types. */
+enum {
+    NO_DCT = 0,
+    LEGACY_DCT2 = 1,
+    DCT2 = 2,
+    DCT3 = 3
+};
 
 #define COUNT_PARTIAL 1
 #define COUNT_WHOLE 0

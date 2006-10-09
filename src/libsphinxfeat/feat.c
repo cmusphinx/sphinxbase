@@ -991,6 +991,7 @@ feat_s2mfc2feat(feat_t * fcb, char *file, char *dir, char *cepext,
 
 #if 0
     for (i = 0; i < nfr; i++) {
+        int32 j;
         for (j = 0; j < fcb->cepsize; j++) {
             fprintf(stderr, "%f ", mfc[i][j]);
         }
@@ -1016,6 +1017,7 @@ feat_s2mfc2feat(feat_t * fcb, char *file, char *dir, char *cepext,
 
 #if 0
     for (i = 0; i < nfr; i++) {
+        int32 j;
         for (j = 0; j < fcb->cepsize; j++) {
             fprintf(stderr, "%f ", mfc[i][j]);
         }
@@ -1053,8 +1055,9 @@ feat_s2mfc2feat(feat_t * fcb, char *file, char *dir, char *cepext,
     }
 
 #if 0
-    E_INFO("Before CMN. \n");
+    E_INFO("After CMN. \n");
     for (i = 0; i < nfr; i++) {
+        int32 j;
         for (j = 0; j < fcb->cepsize; j++) {
             fprintf(stderr, "%f ", mfc[i][j]);
         }
@@ -1071,6 +1074,7 @@ feat_s2mfc2feat(feat_t * fcb, char *file, char *dir, char *cepext,
 
 #if 0
     for (i = 0; i < nfr; i++) {
+        int32 j;
         for (j = 0; j < fcb->cepsize; j++) {
             fprintf(stderr, "%f ", mfc[i][j]);
         }

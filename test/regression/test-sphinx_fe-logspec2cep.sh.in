@@ -1,0 +1,21 @@
+#!/bin/sh
+
+tmpout="test-sphinx_fe-logspec2cep.out"
+
+echo "WAVE2FEAT-LOGSPEC2CEP TEST"
+sh @top_builddir@/libtool --mode=execute @top_builddir@/src/sphinx_fe/sphinx_fe \
+-logspec2cep yes \
+-nfilt 36 \
+-i @top_srcdir@/test/regression/chan3.logspec \
+-o test-sphinx_fe-logspec2cep.mfc.out  \
+> $tmpout 2>&1 
+
+sh @top_builddir@/libtool --mode=execute @top_builddir@/src/sphinx_cepview/sphinx_cepview \
+-i 13 \
+-d 13 \
+-f test-sphinx_fe-logspec2cep.mfc.out \
+> test-sphinx_fe-logspec2cep.cepview.out 2>>$tmpout
+
+if (@PERL@ @top_srcdir@/test/regression/compare_table.pl test-sphinx_fe-logspec2cep.cepview.out @top_srcdir@/test/regression/chan3.cepview | grep SUCCESS > /dev/null 2>&1) ; \
+then echo "WAVE2FEAT-LOGSPEC2CEP test PASSED"; exit 0; else \
+echo "WAVE2FEAT-LOGSPEC2CEP test FAILED"; exit 1; fi
