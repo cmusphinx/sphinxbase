@@ -53,19 +53,6 @@
 #include "genrand.h"
 #include "err.h"
 
-/*
-  31 Jan 00 mseltzer - changed rounding of filter edges to -not- use 
-                        rint() function. 
-   3 Dec 99 mseltzer - corrected inverse DCT-2 
-                        period is 1/NumFilts not 1/(2*NumFilts)
-                        added "beta" factor in summation
-                     - changed mel filter bank construction so that 
-                        left,right,center freqs are rounded to DFT 
-                        points before filter is constructed
-  
-*/
-
-
 int32
 fe_build_melfilters(melfb_t * MEL_FB)
 {
