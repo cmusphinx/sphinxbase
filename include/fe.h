@@ -317,7 +317,7 @@ int32 fe_float_to_mfcc(fe_t *FE,
  * reason to invert your MFCCs, use fe_logspec_dct2() and its inverse
  * fe_logspec_dct3() instead.
  *
- * Also, it normalizes by nfilt rather than 2/nfilt, for some reason.
+ * Also, it normalizes by 1/nfilt rather than 2/nfilt, for some reason.
  **/
 int32 fe_logspec_to_mfcc(fe_t *FE,  /**< A FE structure */
 			 const mfcc_t *fr_spec, /**< One frame of spectrum */
