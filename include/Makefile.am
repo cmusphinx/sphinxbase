@@ -9,7 +9,6 @@ pkginclude_HEADERS =				\
 	clapack_lite.h				\
 	cmd_ln.h				\
 	cmn.h					\
-	cmn_prior.h				\
 	cont_ad.h				\
 	err.h					\
 	f2c.h					\

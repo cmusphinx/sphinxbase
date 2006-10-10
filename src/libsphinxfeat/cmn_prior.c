@@ -50,16 +50,13 @@
 
 #include "ckd_alloc.h"
 #include "err.h"
-#include "cmn_prior.h"
+#include "cmn.h"
 
 void
-cmn_prior(float32 ** incep, int32 varnorm, int32 nfr, int32 ceplen,
-          int32 endutt)
+cmn_prior(float32 **incep, int32 varnorm,
+          int32 nfr, int32 ceplen,
+          int32 endutt, cmn_t *cmn)
 {
-    static float32 *cur_mean = NULL;    /* the mean subtracted from input frames */
-    static float32 *sum = NULL; /* the sum over input frames */
-    static int32 nframe;        /* the total number of input frames */
-    static int32 initialize = 1;
     float32 sf;
     int32 i, j;
 
@@ -69,17 +66,14 @@ cmn_prior(float32 ** incep, int32 varnorm, int32 nfr, int32 ceplen,
         E_FATAL
             ("Variance normalization not implemented in live mode decode\n");
 
-    if (initialize) {
-        cur_mean = (float32 *) ckd_calloc(ceplen, sizeof(float32));
-
+    /* FIXME: Why bother passing ceplen if it can't change? */
+    if (cmn->cur_mean == NULL) {
+        cmn->cur_mean = (float32 *) ckd_calloc(ceplen, sizeof(float32));
         /* A front-end dependent magic number */
-        cur_mean[0] = 12.0;
-
-        sum = (float32 *) ckd_calloc(ceplen, sizeof(float32));
-        nframe = 0;
-        initialize = 0;
-        E_INFO("mean[0]= %.2f, mean[1..%d]= 0.0\n", cur_mean[0],
-               ceplen - 1);
+        cmn->cur_mean[0] = 12.0;
+        cmn->sum = (float32 *) ckd_calloc(ceplen, sizeof(float32));
+        cmn->nframe = 0;
+        E_INFO("mean[0]= %.2f, mean[1..%d]= 0.0\n", cmn->cur_mean[0], ceplen - 1);
     }
 
     if (nfr <= 0)
@@ -87,41 +81,40 @@ cmn_prior(float32 ** incep, int32 varnorm, int32 nfr, int32 ceplen,
 
     for (i = 0; i < nfr; i++) {
         for (j = 0; j < ceplen; j++) {
-            sum[j] += incep[i][j];
-            incep[i][j] -= cur_mean[j];
+            cmn->sum[j] += incep[i][j];
+            incep[i][j] -= cmn->cur_mean[j];
         }
-        ++nframe;
+        ++cmn->nframe;
     }
 
     /* Shift buffer down if we have more than CMN_WIN_HWM frames */
-    if (nframe > CMN_WIN_HWM) {
-        sf = (float32) (1.0 / nframe);
+    if (cmn->nframe > CMN_WIN_HWM) {
+        sf = (float32) (1.0 / cmn->nframe);
         for (i = 0; i < ceplen; i++)
-            cur_mean[i] = sum[i] * sf;
+            cmn->cur_mean[i] = cmn->sum[i] * sf;
 
         /* Make the accumulation decay exponentially */
-        if (nframe >= CMN_WIN_HWM) {
+        if (cmn->nframe >= CMN_WIN_HWM) {
             sf = CMN_WIN * sf;
             for (i = 0; i < ceplen; i++)
-                sum[i] *= sf;
-            nframe = CMN_WIN;
+                cmn->sum[i] *= sf;
+            cmn->nframe = CMN_WIN;
         }
     }
 
     if (endutt) {
         /* Update mean buffer */
 
-        sf = (float32) (1.0 / nframe);
+        sf = (float32) (1.0 / cmn->nframe);
         for (i = 0; i < ceplen; i++)
-            cur_mean[i] = sum[i] * sf;
+            cmn->cur_mean[i] = cmn->sum[i] * sf;
 
         /* Make the accumulation decay exponentially */
-        if (nframe > CMN_WIN_HWM) {
+        if (cmn->nframe > CMN_WIN_HWM) {
             sf = CMN_WIN * sf;
             for (i = 0; i < ceplen; i++)
-                sum[i] *= sf;
-            nframe = CMN_WIN;
+                cmn->sum[i] *= sf;
+            cmn->nframe = CMN_WIN;
         }
-
     }
 }

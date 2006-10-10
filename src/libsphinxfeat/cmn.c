@@ -102,6 +102,7 @@ cmn_init()
 {
     cmn_t *cmn;
     cmn = (cmn_t *) ckd_calloc(1, sizeof(cmn_t));
+
     return cmn;
 }
 
@@ -187,6 +188,9 @@ cmn_free(cmn_t * cmn)
 
         if (cmn->cur_mean)
             ckd_free((void *) cmn->cur_mean);
+
+        if (cmn->sum)
+            ckd_free((void *) cmn->sum);
 
         ckd_free((void *) cmn);
     }

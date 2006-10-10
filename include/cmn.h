@@ -132,14 +132,13 @@ void cmn (float32 **mfc,	/**< In/Out: mfc[f] = mfc vector in frame f */
 #define CMN_WIN_HWM     800     /* #frames after which window shifted */
 #define CMN_WIN         500
 
-#if 0
-void cmn_prior(float32 **incep,  /* In/Out: mfc[f] = mfc vector in frame f*/
-	       int32 varnorm,    /* This flag should always be 0 for live */
-	       int32 nfr,        /* Number of incoming frames */
-	       int32 ceplen,     /* Length of the cepstral vector */
-	       int32 endutt,
-	       cmn_t *cmn);    /* Flag indicating end of utterance */
-#endif
+void cmn_prior(float32 **incep,  /**< In/Out: mfc[f] = mfc vector in frame f*/
+	       int32 varnorm,    /**< This flag should always be 0 for live */
+	       int32 nfr,        /**< Number of incoming frames */
+	       int32 ceplen,     /**< Length of the cepstral vector */
+	       int32 endutt,     /**< Flag indicating end of utterance */
+	       cmn_t *cmn        /**< In/Out: cmn normalization, which contains the cmn_mean and cmn_var) */
+    );
 
 /* RAH, free previously allocated memory */
 void cmn_free (cmn_t *cmn);
