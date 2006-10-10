@@ -80,11 +80,11 @@
 /** \file hash.h
  * \brief Hash table implementation
  *
- * This hash tables are intended for associating an integer "value" with a
- * char string "key", (e.g., an ID with a word string).  Subsequently,
- * one can retrieve the integer value by providing the string key.
- * (The reverse functionality--obtaining the string given the
- * value--is not provided with the hash table module.)  
+ * This hash tables are intended for associating a pointer/integer
+ * "value" with a char string "key", (e.g., an ID with a word string).
+ * Subsequently, one can retrieve the value by providing the string
+ * key.  (The reverse functionality--obtaining the string given the
+ * value--is not provided with the hash table module.)
  */
 
 /**
@@ -111,6 +111,13 @@
  * if(hash_enter(ht,str,id)!=id){ printf("fail to add key str %s with val id %d\n",str,id)} 
  * }
  *
+ */
+
+/**
+ * A note by dhuggins on 20061010: Changed this to use void * instead
+ * of int32 as the value type, so that arbitrary objects can be
+ * inserted into a hash table (in a way that won't crash on 64-bit
+ * machines ;)
  */
 
 #ifndef _LIBUTIL_HASH_H_
@@ -140,18 +147,19 @@ typedef struct hash_entry_s {
 	const char *key;		/** Key string, NULL if this is an empty slot.
 					    NOTE that the key must not be changed once the entry
 					    has been made. */
-	int32 len;			/** Key-length; the key string does not have to be a C-style NULL
+	size_t len;			/** Key-length; the key string does not have to be a C-style NULL
 					    terminated string; it can have arbitrary binary bytes */
-	int32 val;			/** Value associated with above key */
+	void *val;			/** Value associated with above key */
 	struct hash_entry_s *next;	/** For collision resolution */
 } hash_entry_t;
 
 typedef struct {
 	hash_entry_t *table;	/**Primary hash table, excluding entries that collide */
-	int32 size;			/** Primary hash table size, (is a prime#); NOTE: This is the
-					    number of primary entries ALLOCATED, NOT the number of valid
-					    entries in the table */
-	uint8 nocase;		/** Whether case insensitive for key comparisons */
+	int32 size;		/** Primary hash table size, (is a prime#); NOTE: This is the
+				    number of primary entries ALLOCATED, NOT the number of valid
+				    entries in the table */
+	int32 inuse;		/** Number of valid entries in the table. */
+	int32 nocase;		/** Whether case insensitive for key comparisons */
 } hash_table_t;
 
 
@@ -159,6 +167,7 @@ typedef struct {
 #define hash_entry_val(e)	((e)->val)
 #define hash_entry_key(e)	((e)->key)
 #define hash_entry_len(e)	((e)->len)
+#define hash_table_inuse(h)	((h)->inuse)
 #define hash_table_size(h)	((h)->size)
 
 
@@ -166,71 +175,85 @@ typedef struct {
  * Allocate a new hash table for a given expected size.
  * Return value: READ-ONLY handle to allocated hash table.
  */
-hash_table_t *
-hash_new (int32 size,		/**< In: Expected #entries in the table */
-	  int32 casearg  	/**< In: Whether case insensitive for key comparisons.
-				   When 1, case is insentitive, 0, case is sensitive. */
-	);
+hash_table_t * hash_table_new(int32 size,	/**< In: Expected #entries in the table */
+                              int32 casearg  	/**< In: Whether case insensitive for key
+                                                   comparisons. When 1, case is insentitive,
+                                                   0, case is sensitive. */
+    );
 
 #define HASH_CASE_YES		0
 #define HASH_CASE_NO		1
-
-#define HASH_OP_SUCCESS         1
-#define HASH_OP_FAILURE         0
-
 
 /**
  * Free the specified hash table; the caller is responsible for freeing the key strings
  * pointed to by the table entries.
  */
-void hash_free (hash_table_t *h /**< In: Handle of hash table in which to create entry */
-	);
+void hash_table_free(hash_table_t *h /**< In: Handle of hash table to free */
+    );
 
 
 /**
  * Try to add a new entry with given key and associated value to hash table h.  If key doesn't
  * already exist in hash table, the addition is successful, and the return value is val.  But
  * if key already exists, return its existing associated value.  (The hash table is unchanged;
- * it is upto the caller to resolve the conflict.)
+ * it is up to the caller to resolve the conflict.)
  */
-int32
-hash_enter (hash_table_t *h,	/**< In: Handle of hash table in which to create entry */
-	    const char *key,	/**< In: C-style NULL-terminated key string for the new entry */
-	    int32 val		/**< In: Value to be associated with above key */
-	);
+void *hash_table_enter(hash_table_t *h, /**< In: Handle of hash table in which to create entry */
+                       const char *key, /**< In: C-style NULL-terminated key string
+                                           for the new entry */
+                       void *val	  /**< In: Value to be associated with above key */
+    );
+
+/**
+ * Add a new entry with given key and value to hash table h.  If the
+ * key already exists, its value is replaced with the given value, and
+ * the previous value is returned, otherwise val is returned.
+ */
+void *hash_table_replace(hash_table_t *h, /**< In: Handle of hash table in which to create entry */
+                         const char *key, /**< In: C-style NULL-terminated key string
+                                             for the new entry */
+                         void *val	  /**< In: Value to be associated with above key */
+    );
 
 
 /**
  * Delete an entry with given key and associated value to hash table
- * h.  If the key doesn't exist, return HASH_OP_FAILURE, If the key
- * exist, return HASH_OP_SUCCESS. 
+ * h.  Return the value associated with the key (NULL if it did not exist)
  */
 
-int32 
-hash_delete(hash_table_t *h,    /**< In: Handle of hash table in which a key will be deleted */
-	    const char *key     /**< In: C-style NULL-terminated key string for the new entry */
+void *hash_table_delete(hash_table_t *h,    /**< In: Handle of hash table in
+                                               which a key will be deleted */
+                        const char *key     /**< In: C-style NULL-terminated
+                                               key string for the new entry */
 	);
+
 /**
- * Like hash_enter, but with an explicitly specified key length, instead of a NULL-terminated,
- * C-style key string.  So the key string is a binary key (or bkey).  Hash tables containing
- * such keys should be created with the HASH_CASE_YES option.  Otherwise, the results are
- * unpredictable.
+ * Delete all entries from a hash_table.
  */
-int32
-hash_enter_bkey (hash_table_t *h,	/**< In: Handle of hash table in which to create entry */
-		 const char *key,	/**< In: Key buffer */
-		 int32 len,		/**< In: Length of above key buffer */
-		 int32 val		/**< In: Value to be associated with above key */
+void hash_table_empty(hash_table_t *h    /**< In: Handle of hash table */
+    );
+
+/**
+ * Like hash_table_enter, but with an explicitly specified key length,
+ * instead of a NULL-terminated, C-style key string.  So the key
+ * string is a binary key (or bkey).  Hash tables containing such keys
+ * should be created with the HASH_CASE_YES option.  Otherwise, the
+ * results are unpredictable.
+ */
+void *hash_table_enter_bkey(hash_table_t *h,	/**< In: Handle of hash table
+                                                   in which to create entry */
+                              const char *key,	/**< In: Key buffer */
+                              size_t len,	/**< In: Length of above key buffer */
+                              void *val		/**< In: Value to be associated with above key */
 	);
 
 /*
  * Lookup hash table h for given key and return the associated value in *val.
  * Return value: 0 if key found in hash table, else -1.
  */
-int32
-hash_lookup (hash_table_t *h,	/**< In: Handle of hash table being searched */
-	     const char *key,	/**< In: C-style NULL-terminated string whose value is sought */
-	     int32 *val  	/**< Out: *val = value associated with key */
+int32 hash_table_lookup(hash_table_t *h,	/**< In: Handle of hash table being searched */
+                        const char *key,	/**< In: C-style NULL-terminated string whose value is sought */
+                        void **val	  	/**< Out: *val = value associated with key */
 	);
 
 /**
@@ -239,18 +262,17 @@ hash_lookup (hash_table_t *h,	/**< In: Handle of hash table being searched */
  * such keys should be created with the HASH_CASE_YES option.  Otherwise, the results are
  * unpredictable.
  */
-int32
-hash_lookup_bkey (hash_table_t *h,	/**< In: Handle of hash table being searched */
-		  const char *key,	/**< In: Key buffer */
-		  int32 len,		/**< In: Length of above key buffer */
-		  int32 *val		/**< Out: *val = value associated with key */
+int32 hash_table_lookup_bkey(hash_table_t *h,	/**< In: Handle of hash table being searched */
+                             const char *key,	/**< In: Key buffer */
+                             size_t len,	/**< In: Length of above key buffer */
+                             void **val		/**< Out: *val = value associated with key */
 	);
 
 /**
  * Build a glist of valid hash_entry_t pointers from the given hash table.  Return the list.
  */
-glist_t hash_tolist (hash_table_t *h,	/**< In: Hash table from which list is to be generated */
-		     int32 *count	/**< Out: #entries in the list */
+glist_t hash_table_tolist(hash_table_t *h,	/**< In: Hash table from which list is to be generated */
+                          int32 *count		/**< Out: #entries in the list */
 	);
 
 /**
@@ -258,10 +280,10 @@ glist_t hash_tolist (hash_table_t *h,	/**< In: Hash table from which list is to 
  * Currently, it will only works for situation where hash_enter was
  * used to enter the keys. 
  */
-void  hash_display(hash_table_t *h, /**< In: Hash table to display */
-		   int32 showkey    /**< In: Show the string or not,
-				       Use 0 if hash_enter_bkey was
-				       used. */
+void  hash_table_display(hash_table_t *h, /**< In: Hash table to display */
+                         int32 showkey    /**< In: Show the string or not,
+                                             Use 0 if hash_enter_bkey was
+                                             used. */
 	);
 
 #ifdef __cplusplus

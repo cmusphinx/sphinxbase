@@ -441,13 +441,13 @@ cmd_ln_parse(arg_t * defn, int32 argc, char *argv[])
     for (n = 0; defn[n].name; n++);
 
     /* Allocate memory for argument values */
-    ht = hash_new(n, 0 /* argument names are case-sensitive */ );
+    ht = hash_table_new(n, 0 /* argument names are case-sensitive */ );
     argval = (argval_t *) ckd_calloc(n, sizeof(argval_t));
 
     /* Enter argument names into hash table */
     for (i = 0; i < n; i++) {
         /* Associate argument name with index i */
-        if (hash_enter(ht, defn[i].name, i) != i) {
+        if (hash_table_enter(ht, defn[i].name, (caddr_t)i) != (caddr_t)i) {
             E_ERROR("Duplicate argument name: %s\n", defn[i].name);
             goto error;
         }
@@ -455,11 +455,14 @@ cmd_ln_parse(arg_t * defn, int32 argc, char *argv[])
 
     /* Parse command line arguments (name-value pairs); skip argv[0] if argc is odd */
     for (j = 1; j < argc; j += 2) {
-        if (hash_lookup(ht, argv[j], &i) < 0) {
+        void *val;
+
+        if (hash_table_lookup(ht, argv[j], &val) < 0) {
             cmd_ln_print_help(stderr, defn);
             E_ERROR("Unknown argument: %s\n", argv[j]);
             goto error;
         }
+        i = (int32)val;
 
         /* Check if argument has already been parsed before */
         if (argval[i].ptr) {
@@ -523,7 +526,7 @@ cmd_ln_parse(arg_t * defn, int32 argc, char *argv[])
   error:
 
     if (ht) {
-        hash_free(ht);
+        hash_table_free(ht);
     }
     if (argval) {
         ckd_free(argval);
@@ -623,14 +626,14 @@ cmd_ln_print_help(FILE * fp, arg_t * defn)
 const void *
 cmd_ln_access(char *name)
 {
-    int32 i;
+    void *val;
 
     if (!argval)
         E_FATAL("cmd_ln_access invoked before cmd_ln_parse\n");
 
-    if (hash_lookup(ht, name, &i) < 0)
+    if (hash_table_lookup(ht, name, &val) < 0)
         E_FATAL("Unknown argument: %s\n", name);
-    return (argval[i].ptr);
+    return (argval[(int32)val].ptr);
 }
 
 /* RAH, 4.17.01, free memory allocated above  */
@@ -640,7 +643,7 @@ cmd_ln_free()
     int32 i;
 
     if (ht)
-        hash_free(ht);
+        hash_table_free(ht);
 
     ht = NULL;
     ckd_free((void *) argval);

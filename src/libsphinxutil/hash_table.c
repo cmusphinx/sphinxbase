@@ -151,7 +151,7 @@ prime_size(int32 size)
 
 
 hash_table_t *
-hash_new(int32 size, int32 casearg)
+hash_table_new(int32 size, int32 casearg)
 {
     hash_table_t *h;
 
@@ -274,19 +274,17 @@ keycmp_case(hash_entry_t * entry, const char *key)
 
 
 /*
- * Lookup chained entries with hash-value hash in table h for given key and return
- * associated value in *val.
- * Return value: 0 if key found in hash table, else -1.
+ * Lookup entry with hash-value hash in table h for given key
+ * Return value: hash_entry_t for key
  */
-static int32
-lookup(hash_table_t * h, uint32 hash, const char *key,
-       int32 len, int32 * val)
+static hash_entry_t *
+lookup(hash_table_t * h, uint32 hash, const char *key, size_t len)
 {
     hash_entry_t *entry;
 
     entry = &(h->table[hash]);
     if (entry->key == NULL)
-        return -1;
+        return NULL;
 
     if (h->nocase) {
         while (entry && ((entry->len != len)
@@ -299,6 +297,21 @@ lookup(hash_table_t * h, uint32 hash, const char *key,
             entry = entry->next;
     }
 
+    return entry;
+}
+
+
+int32
+hash_table_lookup(hash_table_t * h, const char *key, void ** val)
+{
+    hash_entry_t *entry;
+    uint32 hash;
+    int32 len;
+
+    hash = key2hash(h, key);
+    len = strlen(key);
+
+    entry = lookup(h, hash, key, len);
     if (entry) {
         *val = entry->val;
         return 0;
@@ -309,21 +322,9 @@ lookup(hash_table_t * h, uint32 hash, const char *key,
 
 
 int32
-hash_lookup(hash_table_t * h, const char *key, int32 * val)
+hash_table_lookup_bkey(hash_table_t * h, const char *key, size_t len, void ** val)
 {
-    uint32 hash;
-    int32 len;
-
-    hash = key2hash(h, key);
-    len = strlen(key);
-
-    return (lookup(h, hash, key, len, val));
-}
-
-
-int32
-hash_lookup_bkey(hash_table_t * h, const char *key, int32 len, int32 * val)
-{
+    hash_entry_t *entry;
     uint32 hash;
     char *str;
 
@@ -331,19 +332,26 @@ hash_lookup_bkey(hash_table_t * h, const char *key, int32 len, int32 * val)
     hash = key2hash(h, str);
     ckd_free(str);
 
-    return (lookup(h, hash, key, len, val));
+    entry = lookup(h, hash, key, len);
+    if (entry) {
+        *val = entry->val;
+        return 0;
+    }
+    else
+        return -1;
 }
 
 
-static int32
-enter(hash_table_t * h, uint32 hash, const char *key, int32 len, int32 val)
+static void *
+enter(hash_table_t * h, uint32 hash, const char *key, size_t len, void *val, int32 replace)
 {
-    int32 old;
     hash_entry_t *cur, *new;
 
-    if (lookup(h, hash, key, len, &old) == 0) {
-        /* Key already exists */
-        return old;
+    if ((cur = lookup(h, hash, key, len)) != NULL) {
+        /* Key already exists. */
+        if (replace)
+            cur->val = val;
+        return cur->val;
     }
 
     cur = &(h->table[hash]);
@@ -366,20 +374,22 @@ enter(hash_table_t * h, uint32 hash, const char *key, int32 len, int32 val)
         new->next = cur->next;
         cur->next = new;
     }
+    ++h->inuse;
 
     return val;
 }
 
 /* 20050523 Added by ARCHAN  to delete a key from a hash table */
-static int32
-delete(hash_table_t * h, uint32 hash, const char *key, int32 len)
+static void *
+delete(hash_table_t * h, uint32 hash, const char *key, size_t len)
 {
     hash_entry_t *entry, *prev;
+    void *val;
 
     prev = NULL;
     entry = &(h->table[hash]);
     if (entry->key == NULL)
-        return HASH_OP_FAILURE;
+        return NULL;
 
     if (h->nocase) {
         while (entry && ((entry->len != len)
@@ -397,11 +407,12 @@ delete(hash_table_t * h, uint32 hash, const char *key, int32 len)
     }
 
     if (entry == NULL)
-        return HASH_OP_FAILURE;
+        return NULL;
 
     /* At this point, entry will be the one required to be deleted, prev
        will contain the previous entry
      */
+    val = entry->val;
 
     if (prev == NULL) {
         /* That is to say the entry in the hash table (not the chain) matched the key. */
@@ -429,27 +440,56 @@ delete(hash_table_t * h, uint32 hash, const char *key, int32 len)
 
     /* Do wiring and free the entry */
 
-    return HASH_OP_SUCCESS;
+    --h->inuse;
+
+    return val;
+}
+
+void
+hash_table_empty(hash_table_t *h)
+{
+    hash_entry_t *e, *e2;
+    int32 i;
+
+    for (i = 0; i < h->size; i++) {
+        /* Free collision lists. */
+        for (e = h->table[i].next; e; e = e2) {
+            e2 = e->next;
+            ckd_free((void *) e);
+        }
+        memset(&h->table[i], 0, sizeof(h->table[i]));
+    }
+    h->inuse = 0;
 }
 
 
-int32
-hash_enter(hash_table_t * h, const char *key, int32 val)
+void *
+hash_table_enter(hash_table_t * h, const char *key, void *val)
 {
     uint32 hash;
-    int32 len;
+    size_t len;
 
     hash = key2hash(h, key);
     len = strlen(key);
-    return (enter(h, hash, key, len, val));
+    return (enter(h, hash, key, len, val, 0));
 }
 
-
-int32
-hash_delete(hash_table_t * h, const char *key)
+void *
+hash_table_replace(hash_table_t * h, const char *key, void *val)
 {
     uint32 hash;
-    int32 len;
+    size_t len;
+
+    hash = key2hash(h, key);
+    len = strlen(key);
+    return (enter(h, hash, key, len, val, 1));
+}
+
+void *
+hash_table_delete(hash_table_t * h, const char *key)
+{
+    uint32 hash;
+    size_t len;
 
     hash = key2hash(h, key);
     len = strlen(key);
@@ -457,8 +497,8 @@ hash_delete(hash_table_t * h, const char *key)
     return (delete(h, hash, key, len));
 }
 
-int32
-hash_enter_bkey(hash_table_t * h, const char *key, int32 len, int32 val)
+void *
+hash_table_enter_bkey(hash_table_t * h, const char *key, size_t len, void *val)
 {
     uint32 hash;
     char *str;
@@ -467,11 +507,11 @@ hash_enter_bkey(hash_table_t * h, const char *key, int32 len, int32 val)
     hash = key2hash(h, str);
     ckd_free(str);
 
-    return (enter(h, hash, key, len, val));
+    return (enter(h, hash, key, len, val, 0));
 }
 
 void
-hash_display(hash_table_t * h, int32 showdisplay)
+hash_table_display(hash_table_t * h, int32 showdisplay)
 {
     hash_entry_t *e;
     int i, j;
@@ -511,7 +551,7 @@ hash_display(hash_table_t * h, int32 showdisplay)
 
 
 glist_t
-hash_tolist(hash_table_t * h, int32 * count)
+hash_table_tolist(hash_table_t * h, int32 * count)
 {
     glist_t g;
     hash_entry_t *e;
@@ -539,9 +579,8 @@ hash_tolist(hash_table_t * h, int32 * count)
     return g;
 }
 
-
 void
-hash_free(hash_table_t * h)
+hash_table_free(hash_table_t * h)
 {
     hash_entry_t *e, *e2;
     int32 i;

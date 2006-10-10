@@ -93,7 +93,7 @@
 #include "err.h"
 #include "filename.h"
 #include "glist.h"
-#include "hash.h"
+#include "hash_table.h"
 #include "heap.h"
 #include "pio.h"
 #include "linklist.h"
