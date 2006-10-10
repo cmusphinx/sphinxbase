@@ -86,15 +86,101 @@ extern "C" {
 }
 #endif
 
-  /**
+/**
+ * \enum agc_type_t
+ * Types of acoustic gain control to apply to the features.
+ */
+typedef enum agc_type_e {
+    AGC_NONE = 0,
+    AGC_MAX,
+    AGC_EMAX,
+    AGC_NOISE
+} agc_type_t;
+
+/** Convert string representation (from command-line) to agc_type_t */
+agc_type_t agc_type_from_str(const char *str);
+
+/** String representations of agc_type_t values. */
+extern const char *agc_type_str[];
+
+/**
+ * \struct agc_t
+ * Structure holding data for doing AGC.
+ **/
+typedef struct agc_s {
+    mfcc_t max;      /**< Estimated max for current utterance (for AGC_EMAX) */
+    mfcc_t obs_max;  /**< Observed max in current utterance */
+    int32 obs_frame; /**< Whether any data was observed after prev update */
+    int32 obs_utt;   /**< Whether any utterances have been observed */
+    mfcc_t obs_max_sum;
+    mfcc_t noise_thresh; /**< Noise threshold (for AGC_NOISE only) */
+} agc_t;
+
+/**
+ * Initialize AGC structure with default values.
+ */
+agc_t *agc_init(void);
+
+/**
+ * Free AGC structure.
+ */
+void agc_free(agc_t *agc);
+
+/**
  * Apply AGC to the given mfc vectors (normalize all C0 mfc coefficients in the given
  * input such that the max C0 value is 0, by subtracting the input max C0 from all).
  * This function operates on an entire utterance at a time.  Hence, the entire utterance
  * must be available beforehand (batchmode).
  */
-void agc_max (mfcc_t **mfc,	/**< In/Out: mfc[f] = cepstrum vector in frame f */
-	      int32 n_frame	/**< In: #frames of cepstrum vectors supplied */
-	      );
+void agc_max(agc_t *agc,	/**< In: AGC structure (not used) */
+             mfcc_t **mfc,	/**< In/Out: mfc[f] = cepstrum vector in frame f */
+             int32 n_frame	/**< In: #frames of cepstrum vectors supplied */
+    );
+
+/**
+ * Apply AGC to the given block of MFC vectors. 
+ * Unlike agc_max() this does not require the entire utterance to be
+ * available.  Call agc_emax_update() at the end of each utterance to
+ * update the AGC parameters. */
+void agc_emax(agc_t *agc,	/**< In: AGC structure */
+              mfcc_t **mfc,	/**< In/Out: mfc[f] = cepstrum vector in frame f */
+              int32 n_frame	/**< In: #frames of cepstrum vectors supplied */
+    );
+
+/**
+ * Update AGC parameters for next utterance.
+ **/
+void agc_emax_update(agc_t *agc /**< In: AGC structure */
+    );
+
+/**
+ * Get the current AGC maximum estimate.
+ **/
+float32 agc_emax_get(agc_t *agc);
+
+/**
+ * Set the current AGC maximum estimate.
+ **/
+void agc_emax_set(agc_t *agc, float32 m);
+
+/**
+ * Apply AGC using noise threshold to the given block of MFC vectors. 
+ **/
+void agc_noise(agc_t *agc,	/**< In: AGC structure */
+               mfcc_t **mfc,	/**< In/Out: mfc[f] = cepstrum vector in frame f */
+               int32 n_frame	/**< In: #frames of cepstrum vectors supplied */
+    );
+
+/**
+ * Get the current AGC noise threshold.
+ **/
+float32 agc_get_threshold(agc_t *agc);
+
+/**
+ * Set the current AGC noise threshold.
+ **/
+void agc_set_threshold(agc_t *agc, float32 threshold);
+
 
 #ifdef __cplusplus
 }

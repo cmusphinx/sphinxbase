@@ -142,10 +142,32 @@
 #endif
 
 #define FEAT_VERSION	"1.0"
-
-#define N_FEAT			1
-
 #define FEAT_DCEP_WIN		2
+
+#ifdef DUMP_FEATURES
+static void
+cep_dump_dbg(feat_t *fcb, mfcc_t **mfc, int32 nfr, const char *text)
+{
+    int32 i, j;
+
+    E_INFO("%s\n", text);
+    for (i = 0; i < nfr; i++) {
+        for (j = 0; j < fcb->cepsize; j++) {
+            fprintf(stderr, "%f ", MFCC2FLOAT(mfc[i][j]));
+        }
+        fprintf(stderr, "\n");
+    }
+}
+static void
+feat_print_dbg(feat_t *fcb, mfcc_t ***feat, int32 nfr, const char *text)
+{
+    E_INFO("%s\n", text);
+    feat_print(fcb, feat, nfr, stderr);
+}
+#else /* !DUMP_FEATURES */
+#define cep_dump_dbg(fcb,mfc,nfr,text)
+#define feat_print_dbg(fcb,mfc,nfr,text)
+#endif
 
 int32
 feat_readfile(feat_t * fcb, char *file, int32 sf, int32 ef,
@@ -753,7 +775,7 @@ feat_copy(feat_t * fcb, mfcc_t ** mfc, mfcc_t ** feat)
 }
 
 feat_t *
-feat_init(char *type, char *cmn, char *varnorm, char *agc, int32 breport)
+feat_init(char *type, cmn_type_t cmn, int32 varnorm, agc_type_t agc, int32 breport)
 {
     feat_t *fcb;
     int32 i, l, k;
@@ -762,7 +784,7 @@ feat_init(char *type, char *cmn, char *varnorm, char *agc, int32 breport)
     if (breport)
         E_INFO
             ("Initializing feature stream to type: '%s', CMN='%s', VARNORM='%s', AGC='%s'\n",
-             type, cmn, varnorm, agc);
+             type, cmn_type_str[cmn], varnorm ? "yes" : "no", agc_type_str[agc]);
 
     fcb = (feat_t *) ckd_calloc(1, sizeof(feat_t));
 
@@ -893,27 +915,16 @@ feat_init(char *type, char *cmn, char *varnorm, char *agc, int32 breport)
         fcb->compute_feat = feat_copy;
     }
 
-    fcb->cmn_struct = cmn_init();
-    if (strcmp(cmn, "current") == 0)
-        fcb->cmn = 1;
-    else if (strcmp(cmn, "none") == 0)
-        fcb->cmn = 0;
-    else
-        E_FATAL("Unsupported CMN type '%s'\n", cmn);
-
-    if (strcmp(varnorm, "yes") == 0)
-        fcb->varnorm = 1;
-    else if (strcmp(varnorm, "no") == 0)
-        fcb->varnorm = 0;
-    else
-        E_FATAL("Unsupported VARNORM type '%s'\n", varnorm);
-
-    if (strcmp(agc, "max") == 0)
-        fcb->agc = 1;
-    else if (strcmp(agc, "none") == 0)
-        fcb->agc = 0;
-    else
-        E_FATAL("Unsupported AGC type '%s'\n", agc);
+    if (cmn != CMN_NONE)
+        fcb->cmn_struct = cmn_init();
+    fcb->cmn = cmn;
+    fcb->varnorm = varnorm;
+    if (agc != AGC_NONE)
+        fcb->agc_struct = agc_init();
+    if (agc == AGC_EMAX)
+        /* HACK: hardwired initial estimates based on use of CMN (from Sphinx2) */
+        agc_emax_set(fcb->agc_struct, (cmn != CMN_NONE) ? 5.0 : 10.0);
+    fcb->agc = agc;
 
     fcb->cepbuf = NULL;
     fcb->tmpcepbuf = NULL;
@@ -1027,16 +1038,7 @@ feat_s2mfc2feat(feat_t * fcb, char *file, char *dir, char *cepext,
         ckd_free_2d((void **) mfc);
         return -1;
     }
-
-#if 0
-    for (i = 0; i < nfr; i++) {
-        int32 j;
-        for (j = 0; j < fcb->cepsize; j++) {
-            fprintf(stderr, "%f ", MFCC2FLOAT(mfc[i][j]));
-        }
-        fprintf(stderr, "\n");
-    }
-#endif
+    cep_dump_dbg(fcb, mfc, nfr, "Incoming features");
 
     if (nfr < 2 * win + 1) {
         E_ERROR
@@ -1053,16 +1055,7 @@ feat_s2mfc2feat(feat_t * fcb, char *file, char *dir, char *cepext,
                    fcb->cepsize * sizeof(mfcc_t));
         nfr -= sf;
     }
-
-#if 0
-    for (i = 0; i < nfr; i++) {
-        int32 j;
-        for (j = 0; j < fcb->cepsize; j++) {
-            fprintf(stderr, "%f ", MFCC2FLOAT(mfc[i][j]));
-        }
-        fprintf(stderr, "\n");
-    }
-#endif
+    cep_dump_dbg(fcb, mfc, nfr, "After padding");
 
     /* Add padding at the end by replicating input data, if necessary */
     k = ef - sf + 1;
@@ -1085,60 +1078,44 @@ feat_s2mfc2feat(feat_t * fcb, char *file, char *dir, char *cepext,
         return -1;
     }
 
-
-    if (fcb->cmn) {
-
-        /*if(breport) E_INFO("CMN\n"); */
-
-        cmn(mfc, fcb->varnorm, nfr, fcb->cepsize, fcb->cmn_struct);
+    switch (fcb->cmn) {
+    case CMN_CURRENT:
+        cmn(fcb->cmn_struct, mfc, fcb->varnorm, nfr, fcb->cepsize);
+        break;
+    case CMN_PRIOR:
+        cmn_prior(fcb->cmn_struct, mfc, fcb->varnorm, nfr, fcb->cepsize, 1);
+        break;
+    default:
+        ;
     }
+    cep_dump_dbg(fcb, mfc, nfr, "After CMN");
 
-#if 0
-    E_INFO("After CMN. \n");
-    for (i = 0; i < nfr; i++) {
-        int32 j;
-        for (j = 0; j < fcb->cepsize; j++) {
-            fprintf(stderr, "%f ", MFCC2FLOAT(mfc[i][j]));
-        }
-        fprintf(stderr, "\n");
+    switch (fcb->agc) {
+    case AGC_MAX:
+        agc_max(fcb->agc_struct, mfc, nfr);
+        break;
+    case AGC_EMAX:
+        agc_emax(fcb->agc_struct, mfc, nfr);
+        break;
+    case AGC_NOISE:
+        agc_noise(fcb->agc_struct, mfc, nfr);
+        break;
+    default:
+        ;
     }
-#endif
-
-    if (fcb->agc) {
-
-        /*if(breport) E_INFO("AGC\n"); */
-
-        agc_max(mfc, nfr);
-    }
-
-#if 0
-    for (i = 0; i < nfr; i++) {
-        int32 j;
-        for (j = 0; j < fcb->cepsize; j++) {
-            fprintf(stderr, "%f ", MFCC2FLOAT(mfc[i][j]));
-        }
-        fprintf(stderr, "\n");
-    }
-#endif
+    cep_dump_dbg(fcb, mfc, nfr, "After AGC");
 
     /* Create feature vectors */
     for (i = win; i < nfr - win; i++) {
         fcb->compute_feat(fcb, mfc + i, feat[i - win]);
     }
 
-#if 0
-    E_INFO("After dynamic coefficients computation. \n");
-    feat_print(fcb, feat, nfr, stderr);
-#endif
+    feat_print_dbg(fcb, feat, nfr - win * 2, "After dynamic feature computation");
 
     if (fcb->lda) {
         feat_lda_transform(fcb, feat, nfr - win * 2);
+        feat_print_dbg(fcb, feat, nfr - win * 2, "After LDA");
     }
-
-#if 0
-    E_INFO("After dimensionality reduction. \n");
-    feat_print(fcb, feat, nfr, stderr);
-#endif
 
     ckd_free_2d((void **) mfc);
 
@@ -1180,8 +1157,14 @@ feat_s2mfc2feat_block(feat_t * fcb, mfcc_t ** uttcep, int32 nfr,
                LIVEBUFBLOCKSIZE);
     }
 
-    if (fcb->cmn)               /* Only cmn_prior in block computation mode */
-        cmn_prior(uttcep, fcb->varnorm, nfr, fcb->cepsize, endutt, fcb->cmn_struct);
+    if (fcb->cmn != CMN_NONE) /* Only cmn_prior in block computation mode. */
+        cmn_prior(fcb->cmn_struct, uttcep, fcb->varnorm, nfr, fcb->cepsize, endutt);
+
+    if (fcb->agc != AGC_NONE) { /* Only agc_max in block computation mode. */
+        agc_emax(fcb->agc_struct, uttcep, nfr);
+        if (endutt)
+            agc_emax_update(fcb->agc_struct);
+    }
 
     residualvecs = 0;
 
@@ -1276,6 +1259,7 @@ feat_free(feat_t * f)
         ckd_free((void *) f->stream_len);
 
         cmn_free(f->cmn_struct);
+        agc_free(f->agc_struct);
 
         ckd_free((void *) f);
 

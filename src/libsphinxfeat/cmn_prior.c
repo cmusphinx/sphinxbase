@@ -53,9 +53,10 @@
 #include "cmn.h"
 
 void
-cmn_prior(mfcc_t **incep, int32 varnorm,
+cmn_prior(cmn_t *cmn,
+          mfcc_t **incep, int32 varnorm,
           int32 nfr, int32 ceplen,
-          int32 endutt, cmn_t *cmn)
+          int32 endutt)
 {
     mfcc_t sf;
     int32 i, j;

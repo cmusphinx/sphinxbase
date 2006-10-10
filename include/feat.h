@@ -84,6 +84,7 @@
 #include "prim_type.h"
 #include "fe.h"
 #include "cmn.h"
+#include "agc.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -115,12 +116,12 @@ typedef struct feat_s {
     int32 *stream_len;	/**< Vector length of each feature stream */
     int32 window_size;	/**< #Extra frames around given input frame needed to compute
                            corresponding output feature (so total = window_size*2 + 1) */
-    /*This should be removed to somewhere else */
-    int32 cmn;		/**< Whether CMN is to be performed on each utterance */
-  
+
+    cmn_type_t cmn;	/**< Type of CMN to be performed on each utterance */
     int32 varnorm;	/**< Whether variance normalization is to be performed on each utt;
                            Irrelevant if no CMN is performed */
-    int32 agc;		/**< Whether AGC-Max is to be performed on each utterance */
+    agc_type_t agc;	/**< Type of AGC to be performed on each utterance */
+
     /**
      * Feature computation function. 
      * @param fcb the feat_t describing this feature type
@@ -134,8 +135,10 @@ typedef struct feat_s {
      * speech input must be feature vector itself.
      **/
     void (*compute_feat)(struct feat_s *fcb, mfcc_t **input, mfcc_t **feat);
-    cmn_t* cmn_struct;	/**< Structure that stores the temporary variables for cepstral 
+    cmn_t *cmn_struct;	/**< Structure that stores the temporary variables for cepstral 
                            means normalization*/
+    agc_t *agc_struct;	/**< Structure that stores the temporary variables for acoustic
+                           gain control*/
     mfcc_t **cepbuf;	/**< TEMPORARY VARILABLE */
     mfcc_t **tmpcepbuf;	/**< TEMPORARY VARILABLE */
     int32   bufpos; /*  RAH 4.15.01 upgraded unsigned char variables to int32*/
@@ -243,15 +246,14 @@ mfcc_t **feat_vector_alloc(feat_t *fcb  /**< In: Descriptor from feat_init(),
  * must not directly modify the contents of the returned value.
  */
 feat_t *feat_init(char *type,	/**< In: Type of feature stream */
-                  char *cmn,	/**< In: Type of cepstram mean normalization to 
-			           be done before feature computation; can be 
-		                   NULL (for none) */
-                  char *varnorm,  /**< In: ("yes" or "no") Whether variance 
+                  cmn_type_t cmn, /**< In: Type of cepstram mean normalization to 
+                                     be done before feature computation; can be 
+                                     CMN_NONE (for none) */
+                  int32 varnorm,  /**< In: (boolean) Whether variance 
                                      normalization done on each utt; only 
                                      applicable if CMN also done */
-                  char *agc,	/**< In: Type of automatic gain control to be 
-				   done before feature computation; can be 
-				   NULL (for none) */
+                  agc_type_t agc, /**< In: Type of automatic gain control to be 
+                                     done before feature computation */
                   int32 breport /**< In: Whether to show a report for feat_t */
     );
 

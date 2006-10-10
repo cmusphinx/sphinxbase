@@ -102,6 +102,22 @@ extern "C" {
  * must be available beforehand (batchmode).
  */
 
+/**
+ * \enum cmn_type_t
+ * Types of cepstral mean normalization to apply to the features.
+ */
+typedef enum cmn_type_e {
+    CMN_NONE = 0,
+    CMN_CURRENT,
+    CMN_PRIOR
+} cmn_type_t;
+
+/** String representations of cmn_type_t values. */
+extern const char *cmn_type_str[];
+
+/** Convert string representation (from command-line) to cmn_type_t */
+cmn_type_t cmn_type_from_str(const char *str);
+
 /** \struct cmn_t
  *  \brief wrapper of operation of the cepstral mean normalization. 
  */
@@ -121,24 +137,25 @@ cmn_t* cmn_init();
 /**
    CMN for the whole sentence
 */
-void cmn (mfcc_t **mfc,	/**< In/Out: mfc[f] = mfc vector in frame f */
-	  int32 varnorm,	/**< In: if not FALSE, variance normalize the input vectors
-				   to have unit variance (along each dimension independently);
-				   Irrelevant if no cmn is performed */
-	  int32 n_frame,	/**< In: #frames of mfc vectors */
-	  int32 veclen,         /**< In: mfc vector length */
-	  cmn_t *cmn	        /**< In/Out: cmn normalization, which contains the cmn_mean and cmn_var) */
+void cmn (cmn_t *cmn,   /**< In/Out: cmn normalization, which contains the cmn_mean and cmn_var) */
+          mfcc_t **mfc,	/**< In/Out: mfc[f] = mfc vector in frame f */
+	  int32 varnorm,/**< In: if not FALSE, variance normalize the input vectors
+			   to have unit variance (along each dimension independently);
+			   Irrelevant if no cmn is performed */
+	  int32 n_frame,/**< In: #frames of mfc vectors */
+	  int32 veclen /**< In: mfc vector length */
 	);
 
 #define CMN_WIN_HWM     800     /* #frames after which window shifted */
 #define CMN_WIN         500
 
-void cmn_prior(mfcc_t **incep,  /**< In/Out: mfc[f] = mfc vector in frame f*/
+void cmn_prior(cmn_t *cmn,        /**< In/Out: cmn normalization, which contains
+                                    the cmn_mean and cmn_var) */
+               mfcc_t **incep,  /**< In/Out: mfc[f] = mfc vector in frame f*/
 	       int32 varnorm,    /**< This flag should always be 0 for live */
 	       int32 nfr,        /**< Number of incoming frames */
 	       int32 ceplen,     /**< Length of the cepstral vector */
-	       int32 endutt,     /**< Flag indicating end of utterance */
-	       cmn_t *cmn        /**< In/Out: cmn normalization, which contains the cmn_mean and cmn_var) */
+	       int32 endutt     /**< Flag indicating end of utterance */
     );
 
 /* RAH, free previously allocated memory */

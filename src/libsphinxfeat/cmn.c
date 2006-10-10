@@ -95,7 +95,29 @@
 #include <math.h>
 
 #include "ckd_alloc.h"
+#include "err.h"
 #include "cmn.h"
+
+/* NOTE!  These must match the enum in cmn.h */
+const char *cmn_type_str[] = {
+    "none",
+    "current",
+    "prior"
+};
+static const int n_cmn_type_str = sizeof(cmn_type_str)/sizeof(cmn_type_str[0]);
+
+cmn_type_t
+cmn_type_from_str(const char *str)
+{
+    int i;
+
+    for (i = 0; i < n_cmn_type_str; ++i) {
+        if (0 == strcmp(str, cmn_type_str[i]))
+            return i;
+    }
+    E_FATAL("Unknown CMN type '%s'\n", str);
+    return CMN_NONE;
+}
 
 cmn_t *
 cmn_init()
@@ -108,8 +130,7 @@ cmn_init()
 
 
 void
-cmn(mfcc_t ** mfc, int32 varnorm, int32 n_frame, int32 veclen,
-    cmn_t * cmn)
+cmn(cmn_t *cmn, mfcc_t ** mfc, int32 varnorm, int32 n_frame, int32 veclen)
 {
     mfcc_t *mfcp;
     mfcc_t t;
