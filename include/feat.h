@@ -133,15 +133,15 @@ typedef struct feat_s {
      * (feat[stream][]).  If NULL, no conversion available, the
      * speech input must be feature vector itself.
      **/
-    void (*compute_feat)(struct feat_s *fcb, float32 **input, float32 **feat);
+    void (*compute_feat)(struct feat_s *fcb, mfcc_t **input, mfcc_t **feat);
     cmn_t* cmn_struct;	/**< Structure that stores the temporary variables for cepstral 
                            means normalization*/
-    float32 **cepbuf;	/**< TEMPORARY VARILABLE */
-    float32 **tmpcepbuf;	/**< TEMPORARY VARILABLE */
+    mfcc_t **cepbuf;	/**< TEMPORARY VARILABLE */
+    mfcc_t **tmpcepbuf;	/**< TEMPORARY VARILABLE */
     int32   bufpos; /*  RAH 4.15.01 upgraded unsigned char variables to int32*/
     int32   curpos; /*  RAH 4.15.01 upgraded unsigned char variables to int32*/
 
-    float32 ***lda; /**< Array of linear transformations (for LDA, MLLT, or whatever) */
+    mfcc_t ***lda; /**< Array of linear transformations (for LDA, MLLT, or whatever) */
     uint32 n_lda;   /**< Number of linear transformations in lda. */
     uint32 out_dim; /**< Output dimensionality */
 } feat_t;
@@ -166,7 +166,7 @@ typedef struct feat_s {
  *   (int32) No. of frames in file (N)
  *   (int32) No. of feature streams (S)
  *   (int32 x S) Width or dimensionality of each feature stream (sum = L)
- *   (float32) Feature vector data (NxL float32 items).
+ *   (mfcc_t) Feature vector data (NxL mfcc_t items).
  *   (uint32) Checksum (if present).
  * (Note that this routine does NOT verify the checksum.)
  * Return value: # frames read if successful, -1 if error.
@@ -176,7 +176,7 @@ int32 feat_readfile(feat_t *fcb,	/** In: Control block from feat_init() */
                     int32 sf,		/** In: Start/end frames (range) to be read from
 					    file; use 0, 0x7ffffff0 to read entire file */
                     int32 ef,
-                    float32 ***feat,	/** Out: Data structure to be filled with read
+                    mfcc_t ***feat,	/** Out: Data structure to be filled with read
 					    data; allocate using feat_array_alloc() */
 		    int32 maxfrq	/** In: #Frames allocated for feat above; error if
 					    attempt to read more than this amount. */
@@ -188,7 +188,7 @@ int32 feat_readfile(feat_t *fcb,	/** In: Control block from feat_init() */
  */
 int32 feat_writefile(feat_t *fcb,	/** In: Control block from feat_init() */
 		     char *file,	/** In: File to write */
-		     float32 ***feat,	/** In: Feature data to be written */
+		     mfcc_t ***feat,	/** In: Feature data to be written */
 		     int32 nfr		/** In: #Frames to be written */
     );
 
@@ -200,7 +200,7 @@ int32
 feat_s2mfc_read(char *file,		/** In: Sphinx-II format MFC file to be read */
 		int32 sf, int32 ef,	/** In: Start/end frames (range) to be read from file;
 					    Can use 0,-1 to read entire file */
-		float32 **mfc,		/** Out: 2-D array to be filled with read data;
+		mfcc_t **mfc,		/** Out: 2-D array to be filled with read data;
 					    caller must have allocated this array */
 		int32 maxfr,		/** In: #Frames of mfc array allocated; error if
 					    attempt to read more than this amount. */
@@ -209,7 +209,7 @@ feat_s2mfc_read(char *file,		/** In: Sphinx-II format MFC file to be read */
 
 /**
  * Allocate an array to hold several frames worth of feature vectors.  The returned value
- * is the float32 ***data array, organized as follows:
+ * is the mfcc_t ***data array, organized as follows:
  *   data[0][0] = frame 0 stream 0 vector, data[0][1] = frame 0 stream 1 vector, ...
  *   data[1][0] = frame 1 stream 0 vector, data[0][1] = frame 1 stream 1 vector, ...
  *   data[2][0] = frame 2 stream 0 vector, data[0][1] = frame 2 stream 1 vector, ...
@@ -217,7 +217,7 @@ feat_s2mfc_read(char *file,		/** In: Sphinx-II format MFC file to be read */
  * NOTE: For I/O convenience, the entire data area is allocated as one contiguous block.
  * Return value: Pointer to the allocated space if successful, NULL if any error.
  */
-float32 ***feat_array_alloc(feat_t *fcb,	/**< In: Descriptor from feat_init(), used
+mfcc_t ***feat_array_alloc(feat_t *fcb,	/**< In: Descriptor from feat_init(), used
 					   to obtain #streams and stream sizes */
                            int32 nfr	/**< In: #Frames for which to allocate */
     );
@@ -225,7 +225,7 @@ float32 ***feat_array_alloc(feat_t *fcb,	/**< In: Descriptor from feat_init(), u
  * Like feat_array_alloc except that only a single frame is allocated.  Hence, one
  * dimension less.
  */
-float32 **feat_vector_alloc(feat_t *fcb  /**< In: Descriptor from feat_init(),
+mfcc_t **feat_vector_alloc(feat_t *fcb  /**< In: Descriptor from feat_init(),
                                            used to obtain #streams and 
                                            stream sizes */
     );
@@ -268,7 +268,7 @@ int32 feat_read_lda(feat_t *feat,	 /**< In: Descriptor from feat_init() */
  * Transform a block of features using the feature module's LDA transform.
  **/
 void feat_lda_transform(feat_t *fcb,		/**< In: Descriptor from feat_init() */
-                        float32 ***inout_feat,	/**< Feature block to transform. */
+                        mfcc_t ***inout_feat,	/**< Feature block to transform. */
                         uint32 nfr		/**< In: Number of frames in inout_feat. */
     );
 
@@ -277,7 +277,7 @@ void feat_lda_transform(feat_t *fcb,		/**< In: Descriptor from feat_init() */
  * Print the given block of feature vectors to the given FILE.
  */
 void feat_print(feat_t *fcb,		/**< In: Descriptor from feat_init() */
-		float32 ***feat,		/**< In: Feature data to be printed */
+		mfcc_t ***feat,		/**< In: Feature data to be printed */
 		int32 nfr,		/**< In: #Frames of feature data above */
 		FILE *fp		/**< In: Output file pointer */
     );
@@ -307,7 +307,7 @@ int32 feat_s2mfc2feat(feat_t *fcb,	/**< In: Descriptor from feat_init() */
                                                within file to be read. Use
                                                0,-1 to process entire
                                                file */
-		      float32 ***feat,	/**< Out: Computed feature vectors; 
+		      mfcc_t ***feat,	/**< Out: Computed feature vectors; 
 					   caller must allocate this space */
 		      int32 maxfr	/**< In: Available space (#frames) in 
 					   above feat array; it must be 
@@ -320,11 +320,11 @@ int32 feat_s2mfc2feat(feat_t *fcb,	/**< In: Descriptor from feat_init() */
  * deltas etc */
 
 int32 feat_s2mfc2feat_block(feat_t  *fcb,     /**< In: Descriptor from feat_init() */
-                            float32 **uttcep, /**< In: Incoming cepstral buffer */
+                            mfcc_t **uttcep, /**< In: Incoming cepstral buffer */
                             int32   nfr,      /**< In: Size of incoming buffer */
                             int32 beginutt,   /**< In: Begining of utterance flag */
                             int32 endutt,     /**< In: End of utterance flag */
-                            float32 ***ofeat  /**< In: Output feature buffer */
+                            mfcc_t ***ofeat  /**< In: Output feature buffer */
     );
 
 

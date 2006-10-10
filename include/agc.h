@@ -68,6 +68,7 @@
 #define _S3_AGC_H_
 
 #include "prim_type.h"
+#include "fe.h"
 
 /** \file agc.h
  *  \brief routine that implements automatic gain control
@@ -91,7 +92,7 @@ extern "C" {
  * This function operates on an entire utterance at a time.  Hence, the entire utterance
  * must be available beforehand (batchmode).
  */
-void agc_max (float32 **mfc,	/**< In/Out: mfc[f] = cepstrum vector in frame f */
+void agc_max (mfcc_t **mfc,	/**< In/Out: mfc[f] = cepstrum vector in frame f */
 	      int32 n_frame	/**< In: #frames of cepstrum vectors supplied */
 	      );
 

@@ -123,6 +123,7 @@
 #include <config.h>
 #endif
 
+#include "fe.h"
 #include "feat.h"
 #include "bio.h"
 #include "pio.h"
@@ -148,13 +149,14 @@
 
 int32
 feat_readfile(feat_t * fcb, char *file, int32 sf, int32 ef,
-              float32 *** feat, int32 maxfr)
+              mfcc_t *** feat, int32 maxfr)
 {
     FILE *fp;
     int32 i, l, k, nfr;
     int32 byteswap, chksum_present;
     uint32 chksum;
     char **argname, **argval;
+    float32 *float_feat;
 
     E_INFO("Reading feature file: '%s'[%d..%d]\n", file, sf, ef);
     assert(fcb);
@@ -244,15 +246,26 @@ feat_readfile(feat_t * fcb, char *file, int32 sf, int32 ef,
     }
 
     /* Position at desired start frame and read feature data */
+#ifdef FIXED_POINT
+    float_feat = ckd_calloc(nfr * k, sizeof(float32));
+#else
+    float_feat = feat[0][0];
+#endif
     if (sf > 0)
         fseek(fp, sf * k * sizeof(float32), SEEK_CUR);
     if (bio_fread
-        (feat[0][0], sizeof(float32), nfr * k, fp, byteswap,
+        (float_feat, sizeof(float32), nfr * k, fp, byteswap,
          &chksum) != nfr * k) {
         E_ERROR("%s: fread(%dx%d) (feature data) failed\n", file, nfr, k);
         fclose(fp);
         return -1;
     }
+#ifdef FIXED_POINT
+    for (i = 0; i < nfr * k; ++i) {
+        feat[0][0][i] = FLOAT2MFCC(float_feat[i]);
+    }
+    ckd_free(float_feat);
+#endif
 
     fclose(fp);                 /* NOTE: checksum NOT verified; we might read only part of file */
 
@@ -261,10 +274,11 @@ feat_readfile(feat_t * fcb, char *file, int32 sf, int32 ef,
 
 
 int32
-feat_writefile(feat_t * fcb, char *file, float32 *** feat, int32 nfr)
+feat_writefile(feat_t * fcb, char *file, mfcc_t *** feat, int32 nfr)
 {
     FILE *fp;
     int32 i, k;
+    float32 *float_feat;
 
     E_INFO("Writing feature file: '%s'\n", file);
     assert(fcb);
@@ -285,13 +299,26 @@ feat_writefile(feat_t * fcb, char *file, float32 *** feat, int32 nfr)
         k += feat_stream_len(fcb, i);
     }
 
+#ifdef FIXED_POINT
+    float_feat = ckd_calloc(nfr * k, sizeof(float32));
+    for (i = 0; i < nfr * k; ++i) {
+        float_feat[i] = MFCC2FLOAT(feat[0][0][i]);
+    }
+#else
+    float_feat = feat[0][0];
+#endif
+
     /* Feature data is assumed to be in a single block, starting at feat[0][0][0] */
-    if ((int32) fwrite(feat[0][0], sizeof(float32), nfr * k, fp) !=
+    if ((int32) fwrite(float_feat, sizeof(float32), nfr * k, fp) !=
         nfr * k) {
         E_ERROR("%s: fwrite(%dx%d feature data) failed\n", file, nfr, k);
         fclose(fp);
         return -1;
     }
+
+#ifdef FIXED_POINT
+    ckd_free(float_feat);
+#endif
 
     fclose(fp);
 
@@ -304,11 +331,12 @@ feat_writefile(feat_t * fcb, char *file, float32 *** feat, int32 nfr)
  * #frames read.  Return -1 if error.
  */
 int32
-feat_s2mfc_read(char *file, int32 sf, int32 ef, float32 ** mfc,
+feat_s2mfc_read(char *file, int32 sf, int32 ef, mfcc_t ** mfc,
                 int32 maxfr, int32 cepsize)
 {
     FILE *fp;
     int32 n_float32;
+    float32 *float_feat;
     struct stat statbuf;
     int32 i, n, byterev;
 
@@ -393,15 +421,27 @@ feat_s2mfc_read(char *file, int32 sf, int32 ef, float32 ** mfc,
     if (sf > 0)
         fseek(fp, sf * cepsize * sizeof(float32), SEEK_CUR);
     n_float32 = n * cepsize;
-    if (fread_retry(mfc[0], sizeof(float32), n_float32, fp) != n_float32) {
+#ifdef FIXED_POINT
+    float_feat = ckd_calloc(n_float32, sizeof(float32));
+#else
+    float_feat = mfc[0];
+#endif
+    if (fread_retry(float_feat, sizeof(float32), n_float32, fp) != n_float32) {
         E_ERROR("%s: fread(%dx%d) (MFC data) failed\n", file, n, cepsize);
         fclose(fp);
         return -1;
     }
     if (byterev) {
-        for (i = 0; i < n_float32; i++)
-            SWAP_FLOAT32(&(mfc[0][i]));
+        for (i = 0; i < n_float32; i++) {
+            SWAP_FLOAT32(&float_feat[i]);
+        }
     }
+#ifdef FIXED_POINT
+    for (i = 0; i < n_float32; ++i) {
+        mfc[0][i] = FLOAT2MFCC(float_feat[i]);
+    }
+    ckd_free(float_feat);
+#endif
 
     fclose(fp);
 
@@ -421,11 +461,11 @@ feat_stream_len_sum(feat_t * fcb)
 }
 
 
-float32 **
+mfcc_t **
 feat_vector_alloc(feat_t * fcb)
 {
     int32 i, k;
-    float32 *data, **feat;
+    mfcc_t *data, **feat;
 
     assert(fcb);
 
@@ -435,8 +475,8 @@ feat_vector_alloc(feat_t * fcb)
     }
 
     /* Allocate feature data array so that data is in one block from feat[0][0] */
-    feat = (float32 **) ckd_calloc(feat_n_stream(fcb), sizeof(float32 *));
-    data = (float32 *) ckd_calloc(k, sizeof(float32));
+    feat = (mfcc_t **) ckd_calloc(feat_n_stream(fcb), sizeof(mfcc_t *));
+    data = (mfcc_t *) ckd_calloc(k, sizeof(mfcc_t));
 
     for (i = 0; i < feat_n_stream(fcb); i++) {
         feat[i] = data;
@@ -447,11 +487,11 @@ feat_vector_alloc(feat_t * fcb)
 }
 
 
-float32 ***
+mfcc_t ***
 feat_array_alloc(feat_t * fcb, int32 nfr)
 {
     int32 i, j, k;
-    float32 *data, ***feat;
+    mfcc_t *data, ***feat;
 
     assert(fcb);
     assert(nfr > 0);
@@ -463,9 +503,9 @@ feat_array_alloc(feat_t * fcb, int32 nfr)
 
     /* Allocate feature data array so that data is in one block from feat[0][0][0] */
     feat =
-        (float32 ***) ckd_calloc_2d(nfr, feat_n_stream(fcb),
-                                    sizeof(float32 *));
-    data = (float32 *) ckd_calloc(nfr * k, sizeof(float32));
+        (mfcc_t ***) ckd_calloc_2d(nfr, feat_n_stream(fcb),
+                                    sizeof(mfcc_t *));
+    data = (mfcc_t *) ckd_calloc(nfr * k, sizeof(mfcc_t));
 
     for (i = 0; i < nfr; i++) {
         for (j = 0; j < feat_n_stream(fcb); j++) {
@@ -479,12 +519,12 @@ feat_array_alloc(feat_t * fcb, int32 nfr)
 
 
 static void
-feat_s2_4x_cep2feat(feat_t * fcb, float32 ** mfc, float32 ** feat)
+feat_s2_4x_cep2feat(feat_t * fcb, mfcc_t ** mfc, mfcc_t ** feat)
 {
-    float32 *f;
-    float32 *w, *_w;
-    float32 *w1, *w_1, *_w1, *_w_1;
-    float32 d1, d2;
+    mfcc_t *f;
+    mfcc_t *w, *_w;
+    mfcc_t *w1, *w_1, *_w1, *_w_1;
+    mfcc_t d1, d2;
     int32 i, j;
 
     assert(fcb);
@@ -498,7 +538,7 @@ feat_s2_4x_cep2feat(feat_t * fcb, float32 ** mfc, float32 ** feat)
     assert(feat_window_size(fcb) == 4);
 
     /* CEP; skip C0 */
-    memcpy(feat[0], mfc[0] + 1, (feat_cepsize(fcb) - 1) * sizeof(float32));
+    memcpy(feat[0], mfc[0] + 1, (feat_cepsize(fcb) - 1) * sizeof(mfcc_t));
 
     /*
      * DCEP(SHORT): mfc[2] - mfc[-2]
@@ -543,12 +583,12 @@ feat_s2_4x_cep2feat(feat_t * fcb, float32 ** mfc, float32 ** feat)
 
 
 static void
-feat_s3_1x39_cep2feat(feat_t * fcb, float32 ** mfc, float32 ** feat)
+feat_s3_1x39_cep2feat(feat_t * fcb, mfcc_t ** mfc, mfcc_t ** feat)
 {
-    float32 *f;
-    float32 *w, *_w;
-    float32 *w1, *w_1, *_w1, *_w_1;
-    float32 d1, d2;
+    mfcc_t *f;
+    mfcc_t *w, *_w;
+    mfcc_t *w1, *w_1, *_w1, *_w_1;
+    mfcc_t d1, d2;
     int32 i;
 
     assert(fcb);
@@ -559,7 +599,7 @@ feat_s3_1x39_cep2feat(feat_t * fcb, float32 ** mfc, float32 ** feat)
     assert(feat_window_size(fcb) == 3);
 
     /* CEP; skip C0 */
-    memcpy(feat[0], mfc[0] + 1, (feat_cepsize(fcb) - 1) * sizeof(float32));
+    memcpy(feat[0], mfc[0] + 1, (feat_cepsize(fcb) - 1) * sizeof(mfcc_t));
     /*
      * DCEP: mfc[2] - mfc[-2];
      */
@@ -598,7 +638,7 @@ feat_s3_1x39_cep2feat(feat_t * fcb, float32 ** mfc, float32 ** feat)
 
 
 static void
-feat_s3_cep(feat_t * fcb, float32 ** mfc, float32 ** feat)
+feat_s3_cep(feat_t * fcb, mfcc_t ** mfc, mfcc_t ** feat)
 {
     assert(fcb);
     assert(feat_cepsize(fcb) == 13);
@@ -608,15 +648,15 @@ feat_s3_cep(feat_t * fcb, float32 ** mfc, float32 ** feat)
     assert(feat_window_size(fcb) == 0);
 
     /* CEP */
-    memcpy(feat[0], mfc[0], feat_cepsize_used(fcb) * sizeof(float32));
+    memcpy(feat[0], mfc[0], feat_cepsize_used(fcb) * sizeof(mfcc_t));
 }
 
 
 static void
-feat_s3_cep_dcep(feat_t * fcb, float32 ** mfc, float32 ** feat)
+feat_s3_cep_dcep(feat_t * fcb, mfcc_t ** mfc, mfcc_t ** feat)
 {
-    float32 *f;
-    float32 *w, *_w;
+    mfcc_t *f;
+    mfcc_t *w, *_w;
     int32 i;
 
     assert(fcb);
@@ -627,7 +667,7 @@ feat_s3_cep_dcep(feat_t * fcb, float32 ** mfc, float32 ** feat)
     assert(feat_window_size(fcb) == 2);
 
     /* CEP */
-    memcpy(feat[0], mfc[0], feat_cepsize_used(fcb) * sizeof(float32));
+    memcpy(feat[0], mfc[0], feat_cepsize_used(fcb) * sizeof(mfcc_t));
 
     /*
      * DCEP: mfc[2] - mfc[-2];
@@ -641,12 +681,12 @@ feat_s3_cep_dcep(feat_t * fcb, float32 ** mfc, float32 ** feat)
 }
 
 static void
-feat_1s_c_d_dd_cep2feat(feat_t * fcb, float32 ** mfc, float32 ** feat)
+feat_1s_c_d_dd_cep2feat(feat_t * fcb, mfcc_t ** mfc, mfcc_t ** feat)
 {
-    float32 *f;
-    float32 *w, *_w;
-    float32 *w1, *w_1, *_w1, *_w_1;
-    float32 d1, d2;
+    mfcc_t *f;
+    mfcc_t *w, *_w;
+    mfcc_t *w1, *w_1, *_w1, *_w_1;
+    mfcc_t d1, d2;
     int32 i;
 
     assert(fcb);
@@ -657,7 +697,7 @@ feat_1s_c_d_dd_cep2feat(feat_t * fcb, float32 ** mfc, float32 ** feat)
     assert(feat_window_size(fcb) == 3);
 
     /* CEP */
-    memcpy(feat[0], mfc[0], feat_cepsize(fcb) * sizeof(float32));
+    memcpy(feat[0], mfc[0], feat_cepsize(fcb) * sizeof(mfcc_t));
 
     /*
      * DCEP: mfc[w] - mfc[-w], where w = FEAT_DCEP_WIN;
@@ -689,7 +729,7 @@ feat_1s_c_d_dd_cep2feat(feat_t * fcb, float32 ** mfc, float32 ** feat)
 }
 
 static void
-feat_copy(feat_t * fcb, float32 ** mfc, float32 ** feat)
+feat_copy(feat_t * fcb, mfcc_t ** mfc, mfcc_t ** feat)
 {
     int32 win, i, j;
 
@@ -706,7 +746,7 @@ feat_copy(feat_t * fcb, float32 ** mfc, float32 ** feat)
             stream_len = feat_stream_len(fcb, j) / (2 * win + 1);
             memcpy(feat[j] + ((i + win) * stream_len),
                    mfc[i] + spos,
-                   stream_len * sizeof(float32));
+                   stream_len * sizeof(mfcc_t));
             spos += stream_len;
         }
     }
@@ -879,26 +919,26 @@ feat_init(char *type, char *cmn, char *varnorm, char *agc, int32 breport)
     fcb->tmpcepbuf = NULL;
     fcb->out_dim = fcb->stream_len[0];
 
-    fcb->cepbuf = (float32 **) ckd_calloc_2d(LIVEBUFBLOCKSIZE,
+    fcb->cepbuf = (mfcc_t **) ckd_calloc_2d(LIVEBUFBLOCKSIZE,
                                              feat_cepsize(fcb),
-                                             sizeof(float32));
+                                             sizeof(mfcc_t));
     if (!fcb->cepbuf)
         E_FATAL("Unable to allocate cepbuf ckd_calloc_2d(%ld,%d,%d)\n",
-                LIVEBUFBLOCKSIZE, feat_cepsize(fcb), sizeof(float32));
+                LIVEBUFBLOCKSIZE, feat_cepsize(fcb), sizeof(mfcc_t));
     fcb->tmpcepbuf =
-        (float32 **) ckd_calloc_2d(2 * feat_window_size(fcb) + 1,
-                                   feat_cepsize(fcb), sizeof(float32));
+        (mfcc_t **) ckd_calloc_2d(2 * feat_window_size(fcb) + 1,
+                                   feat_cepsize(fcb), sizeof(mfcc_t));
     if (!fcb->tmpcepbuf)
         E_FATAL
             ("Unable to allocate tmpcepbuf ckd_calloc_2d(%ld,%d,%d)\n",
              2 * feat_window_size(fcb) + 1, feat_cepsize(fcb),
-             sizeof(float32));
+             sizeof(mfcc_t));
     return fcb;
 }
 
 
 void
-feat_print(feat_t * fcb, float32 *** feat, int32 nfr, FILE * fp)
+feat_print(feat_t * fcb, mfcc_t *** feat, int32 nfr, FILE * fp)
 {
     int32 i, j, k;
 
@@ -909,7 +949,7 @@ feat_print(feat_t * fcb, float32 *** feat, int32 nfr, FILE * fp)
             fprintf(fp, "\t%2d:", j);
 
             for (k = 0; k < feat_stream_len(fcb, j); k++)
-                fprintf(fp, " %8.4f", feat[i][j][k]);
+                fprintf(fp, " %8.4f", MFCC2FLOAT(feat[i][j][k]));
             fprintf(fp, "\n");
         }
     }
@@ -920,12 +960,12 @@ feat_print(feat_t * fcb, float32 *** feat, int32 nfr, FILE * fp)
 
 int32
 feat_s2mfc2feat(feat_t * fcb, char *file, char *dir, char *cepext,
-                int32 sf, int32 ef, float32 *** feat, int32 maxfr)
+                int32 sf, int32 ef, mfcc_t *** feat, int32 maxfr)
 {
     char path[16384];
     int32 win, nfr;
     int32 i, k, file_length, cepext_length;
-    float32 **mfc;
+    mfcc_t **mfc;
 
     assert(cepext);
 
@@ -974,8 +1014,8 @@ feat_s2mfc2feat(feat_t * fcb, char *file, char *dir, char *cepext,
 
     /* Read mfc file */
     mfc =
-        (float32 **) ckd_calloc_2d(S3_MAX_FRAMES, fcb->cepsize,
-                                   sizeof(float32));
+        (mfcc_t **) ckd_calloc_2d(S3_MAX_FRAMES, fcb->cepsize,
+                                   sizeof(mfcc_t));
     if (sf < 0)
         nfr =
             feat_s2mfc_read(path, 0, ef, mfc - sf,
@@ -992,7 +1032,7 @@ feat_s2mfc2feat(feat_t * fcb, char *file, char *dir, char *cepext,
     for (i = 0; i < nfr; i++) {
         int32 j;
         for (j = 0; j < fcb->cepsize; j++) {
-            fprintf(stderr, "%f ", mfc[i][j]);
+            fprintf(stderr, "%f ", MFCC2FLOAT(mfc[i][j]));
         }
         fprintf(stderr, "\n");
     }
@@ -1010,7 +1050,7 @@ feat_s2mfc2feat(feat_t * fcb, char *file, char *dir, char *cepext,
     if (sf < 0) {
         for (i = 0; i < -sf; i++)
             memcpy(mfc[i], mfc[i - sf + 1],
-                   fcb->cepsize * sizeof(float32));
+                   fcb->cepsize * sizeof(mfcc_t));
         nfr -= sf;
     }
 
@@ -1018,7 +1058,7 @@ feat_s2mfc2feat(feat_t * fcb, char *file, char *dir, char *cepext,
     for (i = 0; i < nfr; i++) {
         int32 j;
         for (j = 0; j < fcb->cepsize; j++) {
-            fprintf(stderr, "%f ", mfc[i][j]);
+            fprintf(stderr, "%f ", MFCC2FLOAT(mfc[i][j]));
         }
         fprintf(stderr, "\n");
     }
@@ -1033,7 +1073,7 @@ feat_s2mfc2feat(feat_t * fcb, char *file, char *dir, char *cepext,
 
         for (i = 0; i < k; i++)
             memcpy(mfc[nfr + i], mfc[nfr + i - 1 - k],
-                   fcb->cepsize * sizeof(float32));
+                   fcb->cepsize * sizeof(mfcc_t));
         nfr += k;
     }
     /* At this point, nfr includes complete padded cepstrum frames */
@@ -1058,7 +1098,7 @@ feat_s2mfc2feat(feat_t * fcb, char *file, char *dir, char *cepext,
     for (i = 0; i < nfr; i++) {
         int32 j;
         for (j = 0; j < fcb->cepsize; j++) {
-            fprintf(stderr, "%f ", mfc[i][j]);
+            fprintf(stderr, "%f ", MFCC2FLOAT(mfc[i][j]));
         }
         fprintf(stderr, "\n");
     }
@@ -1075,7 +1115,7 @@ feat_s2mfc2feat(feat_t * fcb, char *file, char *dir, char *cepext,
     for (i = 0; i < nfr; i++) {
         int32 j;
         for (j = 0; j < fcb->cepsize; j++) {
-            fprintf(stderr, "%f ", mfc[i][j]);
+            fprintf(stderr, "%f ", MFCC2FLOAT(mfc[i][j]));
         }
         fprintf(stderr, "\n");
     }
@@ -1114,11 +1154,11 @@ feat_s2mfc2feat(feat_t * fcb, char *file, char *dir, char *cepext,
  front-end yet. */
 
 int32
-feat_s2mfc2feat_block(feat_t * fcb, float32 ** uttcep, int32 nfr,
-                      int32 beginutt, int32 endutt, float32 *** ofeat)
+feat_s2mfc2feat_block(feat_t * fcb, mfcc_t ** uttcep, int32 nfr,
+                      int32 beginutt, int32 endutt, mfcc_t *** ofeat)
 {
-    float32 **cepbuf = NULL;
-    float32 **tmpcepbuf = NULL;
+    mfcc_t **cepbuf = NULL;
+    mfcc_t **tmpcepbuf = NULL;
     int32 win, cepsize;
     int32 i, j, nfeatvec, residualvecs;
     int32 tmppos;
@@ -1148,14 +1188,7 @@ feat_s2mfc2feat_block(feat_t * fcb, float32 ** uttcep, int32 nfr,
     if (beginutt) {
         /* Replicate first frame into the first win frames */
         for (i = 0; i < win; i++) {
-            /* FIXME: This makes no sense at all!!! */
-#if 0
-            if (nfr >= win + 1)
-                memcpy(cepbuf[i], uttcep[0 + i + 1],
-                       cepsize * sizeof(float32));
-            else
-#endif
-                memcpy(cepbuf[i], uttcep[0], cepsize * sizeof(float32));
+            memcpy(cepbuf[i], uttcep[0], cepsize * sizeof(mfcc_t));
         }
         fcb->bufpos = win;
         fcb->bufpos %= LIVEBUFBLOCKSIZE;
@@ -1166,7 +1199,7 @@ feat_s2mfc2feat_block(feat_t * fcb, float32 ** uttcep, int32 nfr,
     for (i = 0; i < nfr; i++) {
         assert(fcb->bufpos < LIVEBUFBLOCKSIZE);
         memcpy(cepbuf[fcb->bufpos++], uttcep[i],
-               cepsize * sizeof(float32));
+               cepsize * sizeof(mfcc_t));
         fcb->bufpos %= LIVEBUFBLOCKSIZE;
     }
 
@@ -1176,7 +1209,7 @@ feat_s2mfc2feat_block(feat_t * fcb, float32 ** uttcep, int32 nfr,
             for (i = 0; i < win; i++) {
                 assert(fcb->bufpos < LIVEBUFBLOCKSIZE);
                 memcpy(cepbuf[fcb->bufpos++], uttcep[nfr - 1],
-                       cepsize * sizeof(float32));
+                       cepsize * sizeof(mfcc_t));
                 fcb->bufpos %= LIVEBUFBLOCKSIZE;
             }
         }
@@ -1186,7 +1219,7 @@ feat_s2mfc2feat_block(feat_t * fcb, float32 ** uttcep, int32 nfr,
             for (i = 0; i < win; i++) {
                 assert(fcb->bufpos < LIVEBUFBLOCKSIZE);
                 memcpy(cepbuf[fcb->bufpos++], cepbuf[tpos],
-                       cepsize * sizeof(float32));
+                       cepsize * sizeof(mfcc_t));
                 fcb->bufpos %= LIVEBUFBLOCKSIZE;
             }
         }
@@ -1204,7 +1237,7 @@ feat_s2mfc2feat_block(feat_t * fcb, float32 ** uttcep, int32 nfr,
                     (j + fcb->curpos +
                      LIVEBUFBLOCKSIZE) % LIVEBUFBLOCKSIZE;
                 memcpy(tmpcepbuf[win + j], cepbuf[tmppos],
-                       cepsize * sizeof(float32));
+                       cepsize * sizeof(mfcc_t));
             }
             fcb->compute_feat(fcb, tmpcepbuf + win, ofeat[i]);
         }
@@ -1269,185 +1302,3 @@ feat_report(feat_t * f)
     E_INFO_NOFN("Whether variance is normalized = %d\n", f->varnorm);
     E_INFO_NOFN("\n");
 }
-
-
-/* ARCHAN: Unused code in the past. I keep them to show my respect to the original author*/
-/* This part of the code is contaminated by static-style programming. */
-#if 0
-    /*static */ float32 **feat = NULL;
-    /*static */ float32 **cepbuf = NULL;
-                                /*static */ int32 bufpos;
-                                /*  RAH 4.15.01 upgraded unsigned char variables to int32 */
-                                /*static */ int32 curpos;
-                                /*  RAH 4.15.01 upgraded unsigned char variables to int32 */
-                                                /*static */ int32 jp1, jp2, jp3, jf1, jf2, jf3;
-                                                /* RAH 4.15.01 upgraded unsigned char variables to int32 */
-int32 win, cepsize;
-int32 i, j, nfeatvec, residualvecs;
-
-float32 *w, *_w, *f;
-float32 *w1, *w_1, *_w1, *_w_1;
-float32 d1, d2;
-
-    /* If this assert fails, you're risking overwriting elements
-     * in the buffer. -EBG */
-assert(nfr < LIVEBUFBLOCKSIZE);
-win = feat_window_size(fcb);
-
-if (fcb->cepsize <= 0)
-    E_FATAL("Bad cepsize: %d\n", fcb->cepsize);
-cepsize = feat_cepsize(fcb);
-if (feat == NULL)
-    feat = (float32 **) ckd_calloc_2d(LIVEBUFBLOCKSIZE,
-                                      feat_stream_len(fcb, 0),
-                                      sizeof(float32));
-if (cepbuf == NULL) {
-    cepbuf = (float32 **) ckd_calloc_2d(LIVEBUFBLOCKSIZE,
-                                        cepsize, sizeof(float32));
-    beginutt = 1;               /* If no buffer was present we are beginning an utt */
-    if (!feat)
-        E_FATAL("Unable to allocate feat ckd_calloc_2d(%ld,%d,%d)\n",
-                LIVEBUFBLOCKSIZE, feat_stream_len(fcb, 0),
-                sizeof(float32));
-    if (!cepbuf)
-        E_FATAL("Unable to allocate cepbuf ckd_calloc_2d(%ld,%d,%d)\n",
-                LIVEBUFBLOCKSIZE, cepsize, sizeof(float32));
-    E_INFO("Feature buffers initialized to %d vectors\n",
-           LIVEBUFBLOCKSIZE);
-}
-
-
-if (fcb->cmn)                   /* Only cmn_prior in block computation mode */
-    cmn_prior(uttcep, fcb->varnorm, nfr, fcb->cepsize, endutt);
-     /*cmn_prior (uttcep, fcb->varnorm, nfr, fcb->cepsize, endutt,fcb->cmn_struct); */
-
-residualvecs = 0;
-if (beginutt) {
-    /* Replicate first frame into the first win frames */
-    for (i = 0; i < win; i++)
-        memcpy(cepbuf[i], uttcep[0], cepsize * sizeof(float32));
-    /* beginutt = 0; *//* Removed by Rita Singh around 02-Jan-2001 */
-    /* See History at the top of this file */
-    bufpos = win;
-    bufpos %= LIVEBUFBLOCKSIZE;
-    curpos = bufpos;
-    jp1 = curpos - 1;
-    jp1 %= LIVEBUFBLOCKSIZE;
-    jp2 = curpos - 2;
-    jp2 %= LIVEBUFBLOCKSIZE;
-    jp3 = curpos - 3;
-    jp3 %= LIVEBUFBLOCKSIZE;
-    jf1 = curpos + 1;
-    jf1 %= LIVEBUFBLOCKSIZE;
-    jf2 = curpos + 2;
-    jf2 %= LIVEBUFBLOCKSIZE;
-    jf3 = curpos + 3;
-    jf3 %= LIVEBUFBLOCKSIZE;
-    residualvecs -= win;
-}
-
-for (i = 0; i < nfr; i++) {
-    assert(bufpos < LIVEBUFBLOCKSIZE);
-    memcpy(cepbuf[bufpos++], uttcep[i], cepsize * sizeof(float32));
-    bufpos %= LIVEBUFBLOCKSIZE;
-}
-
-if (endutt) {
-    /* Replicate last frame into the last win frames */
-    if (nfr > 0) {
-        for (i = 0; i < win; i++) {
-            assert(bufpos < LIVEBUFBLOCKSIZE);
-            memcpy(cepbuf[bufpos++], uttcep[nfr - 1],
-                   cepsize * sizeof(float32));
-            bufpos %= LIVEBUFBLOCKSIZE;
-        }
-    }
-    else {
-        int16 tpos = bufpos - 1;
-        tpos %= LIVEBUFBLOCKSIZE;
-        for (i = 0; i < win; i++) {
-            assert(bufpos < LIVEBUFBLOCKSIZE);
-            memcpy(cepbuf[bufpos++], cepbuf[tpos],
-                   cepsize * sizeof(float32));
-            bufpos %= LIVEBUFBLOCKSIZE;
-        }
-    }
-    residualvecs += win;
-}
-
-    /* Create feature vectors */
-nfeatvec = 0;
-nfr += residualvecs;
-
-    /* ARCHAN : "Polluted code", reference to s3.3 to know the original */
-for (i = 0; i < nfr; i++, nfeatvec++) {
-    /* CEP */
-    /*        memcpy (feat[i], cepbuf[curpos], (cepsize) * sizeof(float32)); */
-    memcpy(feat[i], cepbuf[curpos] + 1, (cepsize - 1) * sizeof(float32));
-
-    /*
-     * DCEP: mfc[2] - mfc[-2];
-     */
-    /*f = feat[i] + cepsize ; */
-    f = feat[i] + cepsize - 1;
-
-    /*        w  = cepbuf[jf2]; *//* +1 to skip C0 */
-        /*_w = cepbuf[jp2];*/
-
-    w = cepbuf[jf2] + 1;
-    _w = cepbuf[jp2] + 1;
-
-    /*        for (j = 0; j < cepsize; j++) */
-    for (j = 0; j < cepsize - 1; j++)
-        f[j] = w[j] - _w[j];
-
-    f += cepsize - 1;
-
-    f[0] = cepbuf[curpos][0];
-    f[1] = cepbuf[jf2][0] - cepbuf[jp2][0];
-    d1 = cepbuf[jf3][0] - cepbuf[jp1][0];
-    d2 = cepbuf[jf1][0] - cepbuf[jp3][0];
-    f[2] = d1 - d2;
-
-    /* D2CEP: (mfc[3] - mfc[-1]) - (mfc[1] - mfc[-3]) */
-    /*f += cepsize; */
-    f += 3;
-
-    /*        w1   = cepbuf[jf3]; */
-    /* Final +1 to skip C0 */
-        /*_w1  = cepbuf[jp1];
-        w_1  = cepbuf[jf1];
-        _w_1 = cepbuf[jp3];*/
-
-    w1 = cepbuf[jf3] + 1;
-    _w1 = cepbuf[jp1] + 1;
-    w_1 = cepbuf[jf1] + 1;
-    _w_1 = cepbuf[jp3] + 1;
-
-    /*        for (j = 0; j < cepsize; j++) { */
-    for (j = 0; j < cepsize - 1; j++) {
-        d1 = w1[j] - _w1[j];
-        d2 = w_1[j] - _w_1[j];
-
-        f[j] = d1 - d2;
-    }
-    jf1++;
-    jf2++;
-    jf3++;
-    jp1++;
-    jp2++;
-    jp3++;
-    curpos++;
-    jf1 %= LIVEBUFBLOCKSIZE;
-    jf2 %= LIVEBUFBLOCKSIZE;
-    jf3 %= LIVEBUFBLOCKSIZE;
-    jp1 %= LIVEBUFBLOCKSIZE;
-    jp2 %= LIVEBUFBLOCKSIZE;
-    jp3 %= LIVEBUFBLOCKSIZE;
-    curpos %= LIVEBUFBLOCKSIZE;
-}
-
-*ofeat = feat;
-
-return (nfeatvec);
-#endif

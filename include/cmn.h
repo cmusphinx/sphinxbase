@@ -84,6 +84,7 @@
 #define _S3_CMN_H_
 
 #include "prim_type.h"
+#include "fe.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -107,11 +108,11 @@ extern "C" {
 
 typedef struct {
 	/*These two are used in cmn*/
-	float32 *cmn_mean;  /**< Temporary variables: stored the cmn mean */
-	float32 *cmn_var;    /**< Temporary variables: stored the cmn variance */
+	mfcc_t *cmn_mean;  /**< Temporary variables: stored the cmn mean */
+	mfcc_t *cmn_var;    /**< Temporary variables: stored the cmn variance */
 	/*These three are used in cmn_prior*/
-	float32 *cur_mean;   /**< Temporary variable: current means */
-	float32 *sum;        /**< The sum of the cmn frames */
+	mfcc_t *cur_mean;   /**< Temporary variable: current means */
+	mfcc_t *sum;        /**< The sum of the cmn frames */
 	int32 nframe; /**< Number of frames*/
 }cmn_t;
 
@@ -120,7 +121,7 @@ cmn_t* cmn_init();
 /**
    CMN for the whole sentence
 */
-void cmn (float32 **mfc,	/**< In/Out: mfc[f] = mfc vector in frame f */
+void cmn (mfcc_t **mfc,	/**< In/Out: mfc[f] = mfc vector in frame f */
 	  int32 varnorm,	/**< In: if not FALSE, variance normalize the input vectors
 				   to have unit variance (along each dimension independently);
 				   Irrelevant if no cmn is performed */
@@ -132,7 +133,7 @@ void cmn (float32 **mfc,	/**< In/Out: mfc[f] = mfc vector in frame f */
 #define CMN_WIN_HWM     800     /* #frames after which window shifted */
 #define CMN_WIN         500
 
-void cmn_prior(float32 **incep,  /**< In/Out: mfc[f] = mfc vector in frame f*/
+void cmn_prior(mfcc_t **incep,  /**< In/Out: mfc[f] = mfc vector in frame f*/
 	       int32 varnorm,    /**< This flag should always be 0 for live */
 	       int32 nfr,        /**< Number of incoming frames */
 	       int32 ceplen,     /**< Length of the cepstral vector */

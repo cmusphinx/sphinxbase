@@ -103,6 +103,13 @@ feat_read_lda(feat_t *feat, const char *ldafile, int32 dim)
         fclose(fh);
         return -1;
     }
+#ifdef FIXED_POINT
+    /* FIXME: This is a fragile hack that depends on mfcc_t and
+     * float32 being the same size (which they are, but...) */
+    for (i = 0; i < feat->n_lda * m * n; ++i) {
+        feat->lda[0][0][i] = FLOAT2MFCC(((float *)feat->lda[0][0])[i]);
+    }
+#endif
 
     /* Note that SphinxTrain stores the eigenvectors as row vectors. */
     assert(n == feat_stream_len(feat, 0));
@@ -112,23 +119,23 @@ feat_read_lda(feat_t *feat, const char *ldafile, int32 dim)
 }
 
 void
-feat_lda_transform(feat_t *fcb, float32 ***inout_feat, uint32 nfr)
+feat_lda_transform(feat_t *fcb, mfcc_t ***inout_feat, uint32 nfr)
 {
-    float32 *tmp;
+    mfcc_t *tmp;
     uint32 i, j, k;
 
-    tmp = ckd_calloc(feat_stream_len(fcb,0), sizeof(float32));
+    tmp = ckd_calloc(feat_stream_len(fcb,0), sizeof(mfcc_t));
     for (i = 0; i < nfr; ++i) {
         /* Do the matrix multiplication inline here since fcb->lda
          * is transposed (eigenvectors in rows not columns). */
         /* FIXME: In the future we ought to use the BLAS. */
-        memset(tmp, 0, sizeof(float32)*feat_stream_len(fcb,0));
+        memset(tmp, 0, sizeof(mfcc_t)*feat_stream_len(fcb,0));
         for (j = 0; j < feat_dimension(fcb); ++j) {
             for (k = 0; k < feat_stream_len(fcb,0); ++k) {
-                tmp[j] += inout_feat[i][0][k] * fcb->lda[0][j][k];
+                tmp[j] += MFCCMUL(inout_feat[i][0][k], fcb->lda[0][j][k]);
             }
         }
-        memcpy(inout_feat[i][0], tmp, feat_stream_len(fcb,0) * sizeof(float32));
+        memcpy(inout_feat[i][0], tmp, feat_stream_len(fcb,0) * sizeof(mfcc_t));
     }
     ckd_free(tmp);
 }

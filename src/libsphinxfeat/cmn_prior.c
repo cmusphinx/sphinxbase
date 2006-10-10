@@ -53,11 +53,11 @@
 #include "cmn.h"
 
 void
-cmn_prior(float32 **incep, int32 varnorm,
+cmn_prior(mfcc_t **incep, int32 varnorm,
           int32 nfr, int32 ceplen,
           int32 endutt, cmn_t *cmn)
 {
-    float32 sf;
+    mfcc_t sf;
     int32 i, j;
 
     assert(incep != NULL);
@@ -68,12 +68,13 @@ cmn_prior(float32 **incep, int32 varnorm,
 
     /* FIXME: Why bother passing ceplen if it can't change? */
     if (cmn->cur_mean == NULL) {
-        cmn->cur_mean = (float32 *) ckd_calloc(ceplen, sizeof(float32));
+        cmn->cur_mean = (mfcc_t *) ckd_calloc(ceplen, sizeof(mfcc_t));
         /* A front-end dependent magic number */
         cmn->cur_mean[0] = 12.0;
-        cmn->sum = (float32 *) ckd_calloc(ceplen, sizeof(float32));
+        cmn->sum = (mfcc_t *) ckd_calloc(ceplen, sizeof(mfcc_t));
         cmn->nframe = 0;
-        E_INFO("mean[0]= %.2f, mean[1..%d]= 0.0\n", cmn->cur_mean[0], ceplen - 1);
+        E_INFO("mean[0]= %.2f, mean[1..%d]= 0.0\n",
+               MFCC2FLOAT(cmn->cur_mean[0]), ceplen - 1);
     }
 
     if (nfr <= 0)
@@ -89,31 +90,30 @@ cmn_prior(float32 **incep, int32 varnorm,
 
     /* Shift buffer down if we have more than CMN_WIN_HWM frames */
     if (cmn->nframe > CMN_WIN_HWM) {
-        sf = (float32) (1.0 / cmn->nframe);
+        sf = FLOAT2MFCC(1.0) / cmn->nframe;
         for (i = 0; i < ceplen; i++)
-            cmn->cur_mean[i] = cmn->sum[i] * sf;
+            cmn->cur_mean[i] = cmn->sum[i] / cmn->nframe; /* sum[i] * sf */
 
         /* Make the accumulation decay exponentially */
         if (cmn->nframe >= CMN_WIN_HWM) {
             sf = CMN_WIN * sf;
             for (i = 0; i < ceplen; i++)
-                cmn->sum[i] *= sf;
+                cmn->sum[i] = MFCCMUL(cmn->sum[i], sf);
             cmn->nframe = CMN_WIN;
         }
     }
 
     if (endutt) {
         /* Update mean buffer */
-
-        sf = (float32) (1.0 / cmn->nframe);
+        sf = FLOAT2MFCC(1.0) / cmn->nframe;
         for (i = 0; i < ceplen; i++)
-            cmn->cur_mean[i] = cmn->sum[i] * sf;
+            cmn->cur_mean[i] = cmn->sum[i] / cmn->nframe; /* sum[i] * sf; */
 
         /* Make the accumulation decay exponentially */
         if (cmn->nframe > CMN_WIN_HWM) {
             sf = CMN_WIN * sf;
             for (i = 0; i < ceplen; i++)
-                cmn->sum[i] *= sf;
+                cmn->sum[i] = MFCCMUL(cmn->sum[i], sf);
             cmn->nframe = CMN_WIN;
         }
     }

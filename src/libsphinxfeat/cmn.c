@@ -108,11 +108,11 @@ cmn_init()
 
 
 void
-cmn(float32 ** mfc, int32 varnorm, int32 n_frame, int32 veclen,
+cmn(mfcc_t ** mfc, int32 varnorm, int32 n_frame, int32 veclen,
     cmn_t * cmn)
 {
-    float32 *mfcp;
-    float32 t;
+    mfcc_t *mfcp;
+    mfcc_t t;
     int32 i, f;
 
     assert(mfc != NULL);
@@ -124,10 +124,10 @@ cmn(float32 ** mfc, int32 varnorm, int32 n_frame, int32 veclen,
     }
 
     if (cmn->cmn_mean == NULL)
-        cmn->cmn_mean = (float32 *) ckd_calloc(veclen, sizeof(float32));
+        cmn->cmn_mean = (mfcc_t *) ckd_calloc(veclen, sizeof(mfcc_t));
 
     /* If cmn->cmn_mean wasn't NULL, we need to zero the contents */
-    memset(cmn->cmn_mean, 0, veclen * sizeof(float32));
+    memset(cmn->cmn_mean, 0, veclen * sizeof(mfcc_t));
 
     /* Find mean cep vector for this utterance */
     for (f = 0; f < n_frame; f++) {
@@ -149,26 +149,27 @@ cmn(float32 ** mfc, int32 varnorm, int32 n_frame, int32 veclen,
     else {
         /* Scale cep vectors to have unit variance along each dimension, and subtract means */
         if (cmn->cmn_var == NULL)
-            cmn->cmn_var = (float32 *) ckd_calloc(veclen, sizeof(float32));
+            cmn->cmn_var = (mfcc_t *) ckd_calloc(veclen, sizeof(mfcc_t));
 
         /* If cmn->cmn_var wasn't NULL, we need to zero the contents */
-        memset(cmn->cmn_var, 0, veclen * sizeof(float32));
+        memset(cmn->cmn_var, 0, veclen * sizeof(mfcc_t));
 
         for (f = 0; f < n_frame; f++) {
             mfcp = mfc[f];
 
             for (i = 0; i < veclen; i++) {
                 t = mfcp[i] - cmn->cmn_mean[i];
-                cmn->cmn_var[i] += t * t;
+                cmn->cmn_var[i] += MFCCMUL(t, t);
             }
         }
         for (i = 0; i < veclen; i++)
-            cmn->cmn_var[i] = (float32) sqrt((float64) n_frame / cmn->cmn_var[i]);      /* Inverse Std. Dev, RAH added type case from sqrt */
+            /* Inverse Std. Dev, RAH added type case from sqrt */
+            cmn->cmn_var[i] = FLOAT2MFCC(sqrt((float64)n_frame / MFCC2FLOAT(cmn->cmn_var[i])));
 
         for (f = 0; f < n_frame; f++) {
             mfcp = mfc[f];
             for (i = 0; i < veclen; i++)
-                mfcp[i] = (mfcp[i] - cmn->cmn_mean[i]) * cmn->cmn_var[i];
+                mfcp[i] = MFCCMUL((mfcp[i] - cmn->cmn_mean[i]), cmn->cmn_var[i]);
         }
     }
 }

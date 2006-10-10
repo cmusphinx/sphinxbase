@@ -66,9 +66,9 @@
  * Normalize c0 for all frames such that max(c0) = 0.
  */
 void
-agc_max(float **mfc, int32 n_frame)
+agc_max(mfcc_t **mfc, int32 n_frame)
 {
-    float32 maxc0;
+    mfcc_t maxc0;
     int32 i;
 
     assert(n_frame > 0);
