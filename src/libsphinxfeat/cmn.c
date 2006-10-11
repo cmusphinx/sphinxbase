@@ -89,6 +89,7 @@
  */
 
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
@@ -120,17 +121,26 @@ cmn_type_from_str(const char *str)
 }
 
 cmn_t *
-cmn_init()
+cmn_init(int32 veclen)
 {
     cmn_t *cmn;
     cmn = (cmn_t *) ckd_calloc(1, sizeof(cmn_t));
+    cmn->veclen = veclen;
+    cmn->cmn_mean = (mfcc_t *) ckd_calloc(veclen, sizeof(mfcc_t));
+    cmn->cmn_var = (mfcc_t *) ckd_calloc(veclen, sizeof(mfcc_t));
+    cmn->sum = (mfcc_t *) ckd_calloc(veclen, sizeof(mfcc_t));
+    /* A front-end dependent magic number */
+    cmn->cmn_mean[0] = FLOAT2MFCC(12.0);
+    cmn->nframe = 0;
+    E_INFO("mean[0]= %.2f, mean[1..%d]= 0.0\n",
+           MFCC2FLOAT(cmn->cmn_mean[0]), veclen - 1);
 
     return cmn;
 }
 
 
 void
-cmn(cmn_t *cmn, mfcc_t ** mfc, int32 varnorm, int32 n_frame, int32 veclen)
+cmn(cmn_t *cmn, mfcc_t ** mfc, int32 varnorm, int32 n_frame)
 {
     mfcc_t *mfcp;
     mfcc_t t;
@@ -138,58 +148,51 @@ cmn(cmn_t *cmn, mfcc_t ** mfc, int32 varnorm, int32 n_frame, int32 veclen)
 
     assert(mfc != NULL);
 
-    /* assert ((n_frame > 0) && (veclen > 0)); */
-    /* Added by PPK to prevent this assert from aborting Sphinx 3 */
-    if ((n_frame <= 0) || (veclen <= 0)) {
+    if (n_frame <= 0)
         return;
-    }
-
-    if (cmn->cmn_mean == NULL)
-        cmn->cmn_mean = (mfcc_t *) ckd_calloc(veclen, sizeof(mfcc_t));
 
     /* If cmn->cmn_mean wasn't NULL, we need to zero the contents */
-    memset(cmn->cmn_mean, 0, veclen * sizeof(mfcc_t));
+    memset(cmn->cmn_mean, 0, cmn->veclen * sizeof(mfcc_t));
 
     /* Find mean cep vector for this utterance */
     for (f = 0; f < n_frame; f++) {
         mfcp = mfc[f];
-        for (i = 0; i < veclen; i++)
+        for (i = 0; i < cmn->veclen; i++) {
             cmn->cmn_mean[i] += mfcp[i];
+        }
     }
-    for (i = 0; i < veclen; i++)
+
+    for (i = 0; i < cmn->veclen; i++)
         cmn->cmn_mean[i] /= n_frame;
 
     if (!varnorm) {
         /* Subtract mean from each cep vector */
         for (f = 0; f < n_frame; f++) {
             mfcp = mfc[f];
-            for (i = 0; i < veclen; i++)
+            for (i = 0; i < cmn->veclen; i++)
                 mfcp[i] -= cmn->cmn_mean[i];
         }
     }
     else {
         /* Scale cep vectors to have unit variance along each dimension, and subtract means */
-        if (cmn->cmn_var == NULL)
-            cmn->cmn_var = (mfcc_t *) ckd_calloc(veclen, sizeof(mfcc_t));
-
         /* If cmn->cmn_var wasn't NULL, we need to zero the contents */
-        memset(cmn->cmn_var, 0, veclen * sizeof(mfcc_t));
+        memset(cmn->cmn_var, 0, cmn->veclen * sizeof(mfcc_t));
 
         for (f = 0; f < n_frame; f++) {
             mfcp = mfc[f];
 
-            for (i = 0; i < veclen; i++) {
+            for (i = 0; i < cmn->veclen; i++) {
                 t = mfcp[i] - cmn->cmn_mean[i];
                 cmn->cmn_var[i] += MFCCMUL(t, t);
             }
         }
-        for (i = 0; i < veclen; i++)
+        for (i = 0; i < cmn->veclen; i++)
             /* Inverse Std. Dev, RAH added type case from sqrt */
             cmn->cmn_var[i] = FLOAT2MFCC(sqrt((float64)n_frame / MFCC2FLOAT(cmn->cmn_var[i])));
 
         for (f = 0; f < n_frame; f++) {
             mfcp = mfc[f];
-            for (i = 0; i < veclen; i++)
+            for (i = 0; i < cmn->veclen; i++)
                 mfcp[i] = MFCCMUL((mfcp[i] - cmn->cmn_mean[i]), cmn->cmn_var[i]);
         }
     }
@@ -207,9 +210,6 @@ cmn_free(cmn_t * cmn)
 
         if (cmn->cmn_mean)
             ckd_free((void *) cmn->cmn_mean);
-
-        if (cmn->cur_mean)
-            ckd_free((void *) cmn->cur_mean);
 
         if (cmn->sum)
             ckd_free((void *) cmn->sum);

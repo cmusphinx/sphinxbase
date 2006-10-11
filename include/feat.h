@@ -201,10 +201,14 @@ int32 feat_writefile(feat_t *fcb,	/** In: Control block from feat_init() */
  */
 int32
 feat_s2mfc_read(char *file,		/** In: Sphinx-II format MFC file to be read */
+                int32 win,		/** In: Size of dynamic feature window to add to the
+                                            input.  Padding will be added if necessary. */
 		int32 sf, int32 ef,	/** In: Start/end frames (range) to be read from file;
-					    Can use 0,-1 to read entire file */
-		mfcc_t **mfc,		/** Out: 2-D array to be filled with read data;
-					    caller must have allocated this array */
+					    Can use 0,-1 to read entire file.  Note that the
+                                            window will be added on either side of these. */
+		mfcc_t ***out_mfc,	/** Out: 2-D array to be filled with read data;
+					    this will be allocated internally and must be
+                                            freed with ckd_free_2d(). */
 		int32 maxfr,		/** In: #Frames of mfc array allocated; error if
 					    attempt to read more than this amount. */
 		int32 cepsize		/** In: Length of each MFC vector. */
@@ -232,6 +236,15 @@ mfcc_t **feat_vector_alloc(feat_t *fcb  /**< In: Descriptor from feat_init(),
                                            used to obtain #streams and 
                                            stream sizes */
     );
+/**
+ * Free a buffer allocated with feat_array_alloc()
+ */
+void feat_array_free(mfcc_t ***feat);
+/**
+ * Free a buffer allocated with feat_vector_alloc()
+ */
+void feat_vector_free(mfcc_t **feat);
+
 
 /**
  * Initialize feature module to use the selected type of feature stream.  
@@ -299,10 +312,10 @@ void feat_print(feat_t *fcb,		/**< In: Descriptor from feat_init() */
  */
 
 int32 feat_s2mfc2feat(feat_t *fcb,	/**< In: Descriptor from feat_init() */
-		      char *file,	/**< In: File to be read */
-		      char *dir,	/**< In: Directory prefix for file, 
+		      const char *file,	/**< In: File to be read */
+		      const char *dir,	/**< In: Directory prefix for file, 
 					   if needed; can be NULL */
-		      char *cepext,	/**< In: Extension of the
+		      const char *cepext,/**< In: Extension of the
 					   cepstrum file.It cannot be
 					   NULL */
 		      int32 sf, int32 ef,   /* Start/End frames
@@ -317,9 +330,19 @@ int32 feat_s2mfc2feat(feat_t *fcb,	/**< In: Descriptor from feat_init() */
     );
 
 
-/** Feature computation routine for live mode decoder. Computes features
+/**
+ * Feature computation routine for live mode decoder. Computes features
  * for blocks of incoming data. Retains an internal buffer for computing
- * deltas etc */
+ * deltas etc.
+ *
+ * If beginutt and endutt are both true, CMN_CURRENT and AGC_MAX will
+ * be done.  Otherwise only CMN_PRIOR and AGC_EMAX will be done.
+ *
+ * Returns the number of frames actually computed - the caller is
+ * responsible for checking to see if this is less than nfr.  You
+ * should repeatedly call this function until all frames are
+ * processed.
+ **/
 
 int32 feat_s2mfc2feat_block(feat_t  *fcb,     /**< In: Descriptor from feat_init() */
                             mfcc_t **uttcep, /**< In: Incoming cepstral buffer */

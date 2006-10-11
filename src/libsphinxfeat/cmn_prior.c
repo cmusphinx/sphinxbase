@@ -53,12 +53,82 @@
 #include "cmn.h"
 
 void
-cmn_prior(cmn_t *cmn,
-          mfcc_t **incep, int32 varnorm,
-          int32 nfr, int32 ceplen,
-          int32 endutt)
+cmn_prior_set(cmn_t *cmn, mfcc_t * vec)
+{
+    int32 i;
+
+    for (i = 0; i < cmn->veclen; i++) {
+        cmn->cmn_mean[i] = vec[i];
+        cmn->sum[i] = vec[i] * CMN_WIN;
+    }
+    cmn->nframe = CMN_WIN;
+}
+
+void
+cmn_prior_get(cmn_t *cmn, mfcc_t * vec)
+{
+    int32 i;
+
+    for (i = 0; i < cmn->veclen; i++)
+        vec[i] = cmn->cmn_mean[i];
+
+}
+
+static void
+cmn_prior_shiftwin(cmn_t *cmn)
 {
     mfcc_t sf;
+    int32 i;
+
+    sf = FLOAT2MFCC(1.0) / cmn->nframe;
+    for (i = 0; i < cmn->veclen; i++)
+        cmn->cmn_mean[i] = cmn->sum[i] / cmn->nframe; /* sum[i] * sf */
+
+    /* Make the accumulation decay exponentially */
+    if (cmn->nframe >= CMN_WIN_HWM) {
+        sf = CMN_WIN * sf;
+        for (i = 0; i < cmn->veclen; i++)
+            cmn->sum[i] = MFCCMUL(cmn->sum[i], sf);
+        cmn->nframe = CMN_WIN;
+    }
+}
+
+void
+cmn_prior_update(cmn_t *cmn)
+{
+    mfcc_t sf;
+    int32 i;
+
+    if (cmn->nframe <= 0)
+        return;
+
+    E_INFO("cmn_prior_update: from < ");
+    for (i = 0; i < cmn->veclen; i++)
+        E_INFOCONT("%5.2f ", MFCC2FLOAT(cmn->cmn_mean[i]));
+    E_INFOCONT(">\n");
+
+    /* Update mean buffer */
+    sf = FLOAT2MFCC(1.0) / cmn->nframe;
+    for (i = 0; i < cmn->veclen; i++)
+        cmn->cmn_mean[i] = cmn->sum[i] / cmn->nframe; /* sum[i] * sf; */
+
+    /* Make the accumulation decay exponentially */
+    if (cmn->nframe > CMN_WIN_HWM) {
+        sf = CMN_WIN * sf;
+        for (i = 0; i < cmn->veclen; i++)
+            cmn->sum[i] = MFCCMUL(cmn->sum[i], sf);
+        cmn->nframe = CMN_WIN;
+    }
+
+    E_INFO("cmn_prior_update: to   < ");
+    for (i = 0; i < cmn->veclen; i++)
+        E_INFOCONT("%5.2f ", MFCC2FLOAT(cmn->cmn_mean[i]));
+    E_INFOCONT(">\n");
+}
+
+void
+cmn_prior(cmn_t *cmn, mfcc_t **incep, int32 varnorm, int32 nfr)
+{
     int32 i, j;
 
     assert(incep != NULL);
@@ -67,55 +137,18 @@ cmn_prior(cmn_t *cmn,
         E_FATAL
             ("Variance normalization not implemented in live mode decode\n");
 
-    /* FIXME: Why bother passing ceplen if it can't change? */
-    if (cmn->cur_mean == NULL) {
-        cmn->cur_mean = (mfcc_t *) ckd_calloc(ceplen, sizeof(mfcc_t));
-        /* A front-end dependent magic number */
-        cmn->cur_mean[0] = 12.0;
-        cmn->sum = (mfcc_t *) ckd_calloc(ceplen, sizeof(mfcc_t));
-        cmn->nframe = 0;
-        E_INFO("mean[0]= %.2f, mean[1..%d]= 0.0\n",
-               MFCC2FLOAT(cmn->cur_mean[0]), ceplen - 1);
-    }
-
     if (nfr <= 0)
         return;
 
     for (i = 0; i < nfr; i++) {
-        for (j = 0; j < ceplen; j++) {
+        for (j = 0; j < cmn->veclen; j++) {
             cmn->sum[j] += incep[i][j];
-            incep[i][j] -= cmn->cur_mean[j];
+            incep[i][j] -= cmn->cmn_mean[j];
         }
         ++cmn->nframe;
     }
 
     /* Shift buffer down if we have more than CMN_WIN_HWM frames */
-    if (cmn->nframe > CMN_WIN_HWM) {
-        sf = FLOAT2MFCC(1.0) / cmn->nframe;
-        for (i = 0; i < ceplen; i++)
-            cmn->cur_mean[i] = cmn->sum[i] / cmn->nframe; /* sum[i] * sf */
-
-        /* Make the accumulation decay exponentially */
-        if (cmn->nframe >= CMN_WIN_HWM) {
-            sf = CMN_WIN * sf;
-            for (i = 0; i < ceplen; i++)
-                cmn->sum[i] = MFCCMUL(cmn->sum[i], sf);
-            cmn->nframe = CMN_WIN;
-        }
-    }
-
-    if (endutt) {
-        /* Update mean buffer */
-        sf = FLOAT2MFCC(1.0) / cmn->nframe;
-        for (i = 0; i < ceplen; i++)
-            cmn->cur_mean[i] = cmn->sum[i] / cmn->nframe; /* sum[i] * sf; */
-
-        /* Make the accumulation decay exponentially */
-        if (cmn->nframe > CMN_WIN_HWM) {
-            sf = CMN_WIN * sf;
-            for (i = 0; i < ceplen; i++)
-                cmn->sum[i] = MFCCMUL(cmn->sum[i], sf);
-            cmn->nframe = CMN_WIN;
-        }
-    }
+    if (cmn->nframe > CMN_WIN_HWM)
+        cmn_prior_shiftwin(cmn);
 }

@@ -123,40 +123,53 @@ cmn_type_t cmn_type_from_str(const char *str);
  */
 
 typedef struct {
-	/*These two are used in cmn*/
-	mfcc_t *cmn_mean;  /**< Temporary variables: stored the cmn mean */
-	mfcc_t *cmn_var;    /**< Temporary variables: stored the cmn variance */
-	/*These three are used in cmn_prior*/
-	mfcc_t *cur_mean;   /**< Temporary variable: current means */
-	mfcc_t *sum;        /**< The sum of the cmn frames */
-	int32 nframe; /**< Number of frames*/
-}cmn_t;
+    mfcc_t *cmn_mean;   /**< Temporary variable: current means */
+    mfcc_t *cmn_var;    /**< Temporary variables: stored the cmn variance */
+    mfcc_t *sum;        /**< The sum of the cmn frames */
+    int32 nframe;	/**< Number of frames */
+    int32 veclen;	/**< Length of cepstral vector */
+} cmn_t;
 
-cmn_t* cmn_init();
+cmn_t* cmn_init(int32 veclen);
 
 /**
-   CMN for the whole sentence
+ * CMN for the whole sentence
 */
 void cmn (cmn_t *cmn,   /**< In/Out: cmn normalization, which contains the cmn_mean and cmn_var) */
           mfcc_t **mfc,	/**< In/Out: mfc[f] = mfc vector in frame f */
 	  int32 varnorm,/**< In: if not FALSE, variance normalize the input vectors
 			   to have unit variance (along each dimension independently);
 			   Irrelevant if no cmn is performed */
-	  int32 n_frame,/**< In: #frames of mfc vectors */
-	  int32 veclen /**< In: mfc vector length */
+	  int32 n_frame /**< In: #frames of mfc vectors */
 	);
 
 #define CMN_WIN_HWM     800     /* #frames after which window shifted */
 #define CMN_WIN         500
 
+/**
+ * CMN for one block of data, using prior mean
+ */
 void cmn_prior(cmn_t *cmn,        /**< In/Out: cmn normalization, which contains
                                     the cmn_mean and cmn_var) */
                mfcc_t **incep,  /**< In/Out: mfc[f] = mfc vector in frame f*/
 	       int32 varnorm,    /**< This flag should always be 0 for live */
-	       int32 nfr,        /**< Number of incoming frames */
-	       int32 ceplen,     /**< Length of the cepstral vector */
-	       int32 endutt     /**< Flag indicating end of utterance */
+	       int32 nfr         /**< Number of incoming frames */
     );
+
+/**
+ * Update prior mean based on observed data
+ */
+void cmn_prior_update(cmn_t *cmn);
+
+/**
+ * Set the prior mean.
+ */
+void cmn_prior_set(cmn_t *cmn, mfcc_t *vec);
+
+/**
+ * Get the prior mean.
+ */
+void cmn_prior_get(cmn_t *cmn, mfcc_t *vec);
 
 /* RAH, free previously allocated memory */
 void cmn_free (cmn_t *cmn);

@@ -349,24 +349,26 @@ feat_writefile(feat_t * fcb, char *file, mfcc_t *** feat, int32 nfr)
 
 
 /*
- * Read specified segment [sf..ef] of Sphinx-II format mfc file read and return
+ * Read specified segment [sf-win..ef+win] of Sphinx-II format mfc file read and return
  * #frames read.  Return -1 if error.
  */
 int32
-feat_s2mfc_read(char *file, int32 sf, int32 ef, mfcc_t ** mfc,
-                int32 maxfr, int32 cepsize)
+feat_s2mfc_read(char *file, int32 win,
+                int32 sf, int32 ef,
+                mfcc_t *** out_mfc,
+                int32 maxfr,
+                int32 cepsize)
 {
     FILE *fp;
     int32 n_float32;
     float32 *float_feat;
     struct stat statbuf;
     int32 i, n, byterev;
-
-    if (ef < 0)
-        ef = (int32) 0x7fff0000;        /* Hack!! hardwired constant */
+    int32 start_pad, end_pad;
+    mfcc_t **mfc;
 
     E_INFO("Reading mfc file: '%s'[%d..%d]\n", file, sf, ef);
-    if (ef <= sf) {
+    if (ef >= 0 && ef <= sf) {
         E_ERROR("%s: End frame (%d) <= Start frame (%d)\n", file, ef, sf);
         return -1;
     }
@@ -418,7 +420,7 @@ feat_s2mfc_read(char *file, int32 sf, int32 ef, mfcc_t ** mfc,
         return -1;
     }
 
-    /* Check sf/ef specified */
+    /* Check start and end frames */
     if (sf > 0) {
         if (sf >= n) {
             E_ERROR("%s: Start frame (%d) beyond file size (%d)\n", file,
@@ -426,27 +428,50 @@ feat_s2mfc_read(char *file, int32 sf, int32 ef, mfcc_t ** mfc,
             fclose(fp);
             return -1;
         }
-        n -= sf;
     }
+    if (ef < 0)
+        ef = n-1;
+    else if (ef >= n) {
+        E_WARN("%s: End frame (%d) beyond file size (%d), will truncate\n",
+               file, ef, n);
+        ef = n-1;
+    }
+
+    /* Add window to start and end frames */
+    sf -= win;
+    ef += win;
+    if (sf < 0) {
+        start_pad = -sf;
+        sf = 0;
+    }
+    else
+        start_pad = 0;
+    if (ef >= n) {
+        end_pad = ef - n + 1;
+        ef = n - 1;
+    }
+    else
+        end_pad = 0;
 
     /* Limit n if indicated by [sf..ef] */
     if ((ef - sf + 1) < n)
         n = (ef - sf + 1);
-    if (n > maxfr) {
-        E_ERROR("%s: MFC buffer size(%d frames) < actual #frames(%d)\n",
-                file, maxfr, n);
+    if (n + start_pad + end_pad > maxfr) {
+        E_ERROR("%s: Maximum output size(%d frames) < actual #frames(%d)\n",
+                file, maxfr, n + start_pad + end_pad);
         fclose(fp);
         return -1;
     }
 
-    /* Position at desired start frame and read MFC data */
+    /* Position at desired start frame and read actual MFC data */
+    mfc = (mfcc_t **)ckd_calloc_2d(n + start_pad + end_pad, cepsize, sizeof(mfcc_t));
     if (sf > 0)
         fseek(fp, sf * cepsize * sizeof(float32), SEEK_CUR);
     n_float32 = n * cepsize;
 #ifdef FIXED_POINT
     float_feat = ckd_calloc(n_float32, sizeof(float32));
 #else
-    float_feat = mfc[0];
+    float_feat = mfc[start_pad];
 #endif
     if (fread_retry(float_feat, sizeof(float32), n_float32, fp) != n_float32) {
         E_ERROR("%s: fread(%dx%d) (MFC data) failed\n", file, n, cepsize);
@@ -460,14 +485,26 @@ feat_s2mfc_read(char *file, int32 sf, int32 ef, mfcc_t ** mfc,
     }
 #ifdef FIXED_POINT
     for (i = 0; i < n_float32; ++i) {
-        mfc[0][i] = FLOAT2MFCC(float_feat[i]);
+        mfc[start_pad][i] = FLOAT2MFCC(float_feat[i]);
     }
     ckd_free(float_feat);
 #endif
 
+    /* Replicate start and end frames if necessary. */
+    for (i = 0; i < start_pad; ++i)
+        memcpy(mfc[i], mfc[start_pad], cepsize * sizeof(mfcc_t));
+    for (i = 0; i < end_pad; ++i)
+        memcpy(mfc[start_pad + n + i], mfc[start_pad + n - 1],
+               cepsize * sizeof(mfcc_t));
+
+    if (out_mfc)
+        *out_mfc = mfc;
+    else
+        ckd_free_2d((void **)mfc);
+
     fclose(fp);
 
-    return n;
+    return n + start_pad + end_pad;
 }
 
 
@@ -508,6 +545,12 @@ feat_vector_alloc(feat_t * fcb)
     return feat;
 }
 
+void
+feat_vector_free(mfcc_t **feat)
+{
+    ckd_free(feat[0]);
+    ckd_free(feat);
+}
 
 mfcc_t ***
 feat_array_alloc(feat_t * fcb, int32 nfr)
@@ -539,6 +582,12 @@ feat_array_alloc(feat_t * fcb, int32 nfr)
     return feat;
 }
 
+void
+feat_array_free(mfcc_t ***feat)
+{
+    ckd_free(feat[0][0]);
+    ckd_free_2d((void **)feat);
+}
 
 static void
 feat_s2_4x_cep2feat(feat_t * fcb, mfcc_t ** mfc, mfcc_t ** feat)
@@ -916,7 +965,7 @@ feat_init(char *type, cmn_type_t cmn, int32 varnorm, agc_type_t agc, int32 brepo
     }
 
     if (cmn != CMN_NONE)
-        fcb->cmn_struct = cmn_init();
+        fcb->cmn_struct = cmn_init(feat_cepsize(fcb));
     fcb->cmn = cmn;
     fcb->varnorm = varnorm;
     if (agc != AGC_NONE)
@@ -968,14 +1017,86 @@ feat_print(feat_t * fcb, mfcc_t *** feat, int32 nfr, FILE * fp)
     fflush(fp);
 }
 
+static void
+feat_cmn(feat_t *fcb, mfcc_t **mfc, int32 nfr, int32 beginutt, int32 endutt)
+{
+    cmn_type_t cmn_type = fcb->cmn;
+
+    if (!(beginutt && endutt)
+        && cmn_type != CMN_NONE) /* Only cmn_prior in block computation mode. */
+        cmn_type = CMN_PRIOR;
+
+    switch (cmn_type) {
+    case CMN_CURRENT:
+        cmn(fcb->cmn_struct, mfc, fcb->varnorm, nfr);
+        break;
+    case CMN_PRIOR:
+        cmn_prior(fcb->cmn_struct, mfc, fcb->varnorm, nfr);
+        if (endutt)
+            cmn_prior_update(fcb->cmn_struct);
+        break;
+    default:
+        ;
+    }
+    cep_dump_dbg(fcb, mfc, nfr, "After CMN");
+}
+
+static void
+feat_agc(feat_t *fcb, mfcc_t **mfc, int32 nfr, int32 beginutt, int32 endutt)
+{
+    agc_type_t agc_type = fcb->agc;
+
+    if (!(beginutt && endutt)
+        && agc_type != AGC_NONE) /* Only agc_emax in block computation mode. */
+        agc_type = AGC_EMAX;
+
+    switch (agc_type) {
+    case AGC_MAX:
+        agc_max(fcb->agc_struct, mfc, nfr);
+        break;
+    case AGC_EMAX:
+        agc_emax(fcb->agc_struct, mfc, nfr);
+        if (endutt)
+            agc_emax_update(fcb->agc_struct);
+        break;
+    case AGC_NOISE:
+        agc_noise(fcb->agc_struct, mfc, nfr);
+        break;
+    default:
+        ;
+    }
+    cep_dump_dbg(fcb, mfc, nfr, "After AGC");
+}
+
+static void
+feat_compute_utt(feat_t *fcb, mfcc_t **mfc, int32 nfr, int32 win, mfcc_t ***feat)
+{
+    int32 i;
+
+    cep_dump_dbg(fcb, mfc, nfr, "Incoming features (after padding)");
+    feat_cmn(fcb, mfc, nfr, 1, 1);
+    feat_agc(fcb, mfc, nfr, 1, 1);
+
+    /* Create feature vectors */
+    for (i = win; i < nfr - win; i++) {
+        fcb->compute_feat(fcb, mfc + i, feat[i - win]);
+    }
+
+    feat_print_dbg(fcb, feat, nfr - win * 2, "After dynamic feature computation");
+
+    if (fcb->lda) {
+        feat_lda_transform(fcb, feat, nfr - win * 2);
+        feat_print_dbg(fcb, feat, nfr - win * 2, "After LDA");
+    }
+}
 
 int32
-feat_s2mfc2feat(feat_t * fcb, char *file, char *dir, char *cepext,
+feat_s2mfc2feat(feat_t * fcb, const char *file, const char *dir, const char *cepext,
                 int32 sf, int32 ef, mfcc_t *** feat, int32 maxfr)
 {
     char path[16384];
     int32 win, nfr;
-    int32 i, k, file_length, cepext_length;
+    int32 file_length, cepext_length;
     mfcc_t **mfc;
 
     assert(cepext);
@@ -1017,118 +1138,19 @@ feat_s2mfc2feat(feat_t * fcb, char *file, char *dir, char *cepext,
 
     win = feat_window_size(fcb);
 
-    /* Adjust boundaries to include padding for feature computation */
-    if (ef < 0)
-        ef = (int32) 0x7fff0000 - win;  /* Hack!! Hardwired constant */
-    sf -= win;
-    ef += win;
-
-    /* Read mfc file */
-    mfc =
-        (mfcc_t **) ckd_calloc_2d(S3_MAX_FRAMES, fcb->cepsize,
-                                   sizeof(mfcc_t));
-    if (sf < 0)
-        nfr =
-            feat_s2mfc_read(path, 0, ef, mfc - sf,
-                            S3_MAX_FRAMES + sf - win, fcb->cepsize);
-    else
-        nfr = feat_s2mfc_read(path, sf, ef, mfc, S3_MAX_FRAMES - win,
-                              fcb->cepsize);
+    /* Read mfc file including window or padding if necessary */
+    nfr = feat_s2mfc_read(path, win, sf, ef, &mfc, maxfr, fcb->cepsize);
     if (nfr < 0) {
         ckd_free_2d((void **) mfc);
         return -1;
     }
-    cep_dump_dbg(fcb, mfc, nfr, "Incoming features");
 
-    if (nfr < 2 * win + 1) {
-        E_ERROR
-            ("%s: MFC file/segment too short to compute features: %d frames\n",
-             file, nfr);
-        ckd_free_2d((void **) mfc);
-        return -1;
-    }
-
-    /* Add padding at the beginning by replicating input data, if necessary */
-    if (sf < 0) {
-        for (i = 0; i < -sf; i++)
-            memcpy(mfc[i], mfc[i - sf + 1],
-                   fcb->cepsize * sizeof(mfcc_t));
-        nfr -= sf;
-    }
-    cep_dump_dbg(fcb, mfc, nfr, "After padding");
-
-    /* Add padding at the end by replicating input data, if necessary */
-    k = ef - sf + 1;
-    if (nfr < k) {
-        k -= nfr;               /* Extra frames padding needed at the end */
-        if (k > win)
-            k = win;            /* Limit feature frames to extent of file, not to unbounded ef */
-
-        for (i = 0; i < k; i++)
-            memcpy(mfc[nfr + i], mfc[nfr + i - 1 - k],
-                   fcb->cepsize * sizeof(mfcc_t));
-        nfr += k;
-    }
-    /* At this point, nfr includes complete padded cepstrum frames */
-
-    if (nfr - win * 2 > maxfr) {
-        E_ERROR("%s: Feature buffer size(%d frames) < required(%d)\n",
-                maxfr, nfr - win * 2);
-        ckd_free_2d((void **) mfc);
-        return -1;
-    }
-
-    switch (fcb->cmn) {
-    case CMN_CURRENT:
-        cmn(fcb->cmn_struct, mfc, fcb->varnorm, nfr, fcb->cepsize);
-        break;
-    case CMN_PRIOR:
-        cmn_prior(fcb->cmn_struct, mfc, fcb->varnorm, nfr, fcb->cepsize, 1);
-        break;
-    default:
-        ;
-    }
-    cep_dump_dbg(fcb, mfc, nfr, "After CMN");
-
-    switch (fcb->agc) {
-    case AGC_MAX:
-        agc_max(fcb->agc_struct, mfc, nfr);
-        break;
-    case AGC_EMAX:
-        agc_emax(fcb->agc_struct, mfc, nfr);
-        break;
-    case AGC_NOISE:
-        agc_noise(fcb->agc_struct, mfc, nfr);
-        break;
-    default:
-        ;
-    }
-    cep_dump_dbg(fcb, mfc, nfr, "After AGC");
-
-    /* Create feature vectors */
-    for (i = win; i < nfr - win; i++) {
-        fcb->compute_feat(fcb, mfc + i, feat[i - win]);
-    }
-
-    feat_print_dbg(fcb, feat, nfr - win * 2, "After dynamic feature computation");
-
-    if (fcb->lda) {
-        feat_lda_transform(fcb, feat, nfr - win * 2);
-        feat_print_dbg(fcb, feat, nfr - win * 2, "After LDA");
-    }
-
+    /* Actually compute the features */
+    feat_compute_utt(fcb, mfc, nfr, win, feat);
     ckd_free_2d((void **) mfc);
 
     return (nfr - win * 2);
 }
-
-
-
-/* 20041111: ARCHAN: Nearly rewrite the whole thing because some
- variables are STATIC. bufpos and curpos were orignially static
- function, I decided to eliminate by putting all of them into the
- structure feat.  This is slower, but we were not optimizing the
- front-end yet. */
 
 int32
 feat_s2mfc2feat_block(feat_t * fcb, mfcc_t ** uttcep, int32 nfr,
@@ -1140,16 +1162,41 @@ feat_s2mfc2feat_block(feat_t * fcb, mfcc_t ** uttcep, int32 nfr,
     int32 i, j, nfeatvec, residualvecs;
     int32 tmppos;
 
+    assert(fcb->cepsize > 0);
+    win = feat_window_size(fcb);
+    cepsize = feat_cepsize(fcb);
+
+    if (beginutt && endutt) {
+        /* Special case when we are asked to process the entire utterance. */
+        /* Copy and pad out the utterance (this requires that the
+         * feature computation functions always access the buffer via
+         * the frame pointers, which they do)  */
+        cepbuf = ckd_calloc(nfr + win * 2, sizeof(mfcc_t *));
+        memcpy(cepbuf + win, uttcep, nfr * sizeof(mfcc_t *));
+        for (i = 0; i < win; ++i) {
+            cepbuf[i] = ckd_calloc(cepsize, sizeof(mfcc_t));
+            memcpy(cepbuf[i], uttcep[win], cepsize * sizeof(mfcc_t));
+            cepbuf[nfr + win + i] = ckd_calloc(cepsize, sizeof(mfcc_t));
+            memcpy(cepbuf[nfr + win + i], uttcep[nfr + win - 1], cepsize * sizeof(mfcc_t));
+        }
+        feat_compute_utt(fcb, cepbuf, nfr + win * 2, win, ofeat);
+        for (i = 0; i < win; ++i) {
+            ckd_free(cepbuf[i]);
+            ckd_free(cepbuf[nfr + win + i]);
+        }
+        ckd_free(cepbuf);
+        return nfr;
+    }
+
     cepbuf = fcb->cepbuf;
     tmpcepbuf = fcb->tmpcepbuf;
 
-    assert(nfr < LIVEBUFBLOCKSIZE);
-    assert(fcb->cepsize > 0);
+    if (nfr >= LIVEBUFBLOCKSIZE) {
+        nfr = LIVEBUFBLOCKSIZE - 1;
+        endutt = 0;
+    }
     assert(cepbuf);
     assert(tmpcepbuf);
-
-    win = feat_window_size(fcb);
-    cepsize = feat_cepsize(fcb);
 
     if (cepbuf == NULL) {
         beginutt = 1;           /* If no buffer was present we are beginning an utt */
@@ -1157,14 +1204,8 @@ feat_s2mfc2feat_block(feat_t * fcb, mfcc_t ** uttcep, int32 nfr,
                LIVEBUFBLOCKSIZE);
     }
 
-    if (fcb->cmn != CMN_NONE) /* Only cmn_prior in block computation mode. */
-        cmn_prior(fcb->cmn_struct, uttcep, fcb->varnorm, nfr, fcb->cepsize, endutt);
-
-    if (fcb->agc != AGC_NONE) { /* Only agc_max in block computation mode. */
-        agc_emax(fcb->agc_struct, uttcep, nfr);
-        if (endutt)
-            agc_emax_update(fcb->agc_struct);
-    }
+    feat_cmn(fcb, uttcep, nfr, beginutt, endutt);
+    feat_agc(fcb, uttcep, nfr, beginutt, endutt);
 
     residualvecs = 0;
 
