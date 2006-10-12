@@ -138,14 +138,21 @@ fe_init_auto()
     p.swap = strcmp("little", cmd_ln_str("-input_endian")) == 0 ? 0 : 1;
 #endif
 
-    /* don't really know how to initialize the following from command line 
-       parameters.  somebody fix this */
-    
-    /*
-    p.logspec;
-    p.doublebw;
-    p.verbose;
-    */
+    if (cmd_ln_boolean("-logspec"))
+        p.logspec = RAW_LOG_SPEC;
+    if (cmd_ln_boolean("-smoothspec"))
+        p.logspec = SMOOTH_LOG_SPEC;
+    p.doublebw = cmd_ln_boolean("-doublebw");
+    p.verbose = cmd_ln_boolean("-verbose");
+
+    if (0 == strcmp(cmd_ln_str("-transform"), "dct"))
+        p.transform = DCT_II;
+    else if (0 == strcmp(cmd_ln_str("-transform"), "legacy"))
+        p.transform = LEGACY_DCT;
+    else {
+        E_WARN("Invalid transform type (values are 'dct', 'legacy')\n");
+        return NULL;
+    }
 
     p.warp_type = cmd_ln_str("-warp_type");
     p.warp_params = cmd_ln_str("-warp_params");

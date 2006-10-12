@@ -478,12 +478,15 @@ fe_mel_cep(fe_t * FE, powspec_t * mfspec, mfcc_t * mfcep)
     }
     /* For smoothed spectrum, do DCT-II followed by (its inverse) DCT-III */
     else if (FE->LOG_SPEC == SMOOTH_LOG_SPEC) {
+        /* FIXME: This is probably broken for fixed-point. */
         fe_dct2(FE, mfspec, mfcep);
         fe_dct3(FE, mfcep, mfspec);
         for (i = 0; i < FE->FEATURE_DIMENSION; i++) {
             mfcep[i] = (mfcc_t) mfspec[i];
         }
     }
+    else if (FE->transform == DCT_II)
+        fe_dct2(FE, mfspec, mfcep);
     else
         fe_spec2cep(FE, mfspec, mfcep);
     return;
@@ -855,6 +858,7 @@ fe_parse_general_params(param_t const *P, fe_t * FE)
         FE->FFT_SIZE = DEFAULT_FFT_SIZE;
 
     FE->LOG_SPEC = P->logspec;
+    FE->transform = P->transform;
     if (!FE->LOG_SPEC)
         FE->FEATURE_DIMENSION = FE->NUM_CEPSTRA;
     else {

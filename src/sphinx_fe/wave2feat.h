@@ -57,12 +57,11 @@ enum {
     BIG =  2
 };
 
-/* Enums for DCT types. */
+/* Enums for conversion operations. */
 enum {
-    NO_DCT = 0,
-    LEGACY_DCT2 = 1,
-    DCT2 = 2,
-    DCT3 = 3
+    WAV2FEAT = 0,
+    SPEC2CEP = 1,
+    CEP2SPEC = 2
 };
 
 #define COUNT_PARTIAL 1

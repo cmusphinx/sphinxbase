@@ -89,7 +89,7 @@ struct globals_s {
     int32 output_endian;
     int32 nchans;
     int32 whichchan;
-    int32 dct;
+    int32 convert;
 };
 typedef struct globals_s globals_t;
 
@@ -195,7 +195,7 @@ fe_convert_files(globals_t * P)
             if (P->params.verbose)
                 E_INFO("%s\n", infile);
 
-            if (P->dct) {
+            if (P->convert) {
                 /* Special case for doing various DCTs */
                 return_value = fe_convert_with_dct(P, FE, infile, outfile);
                 if (return_value != FE_SUCCESS)
@@ -357,7 +357,7 @@ fe_convert_files(globals_t * P)
             printf("%s\n", infile);
 
         /* Special case for doing various DCTs. */
-        if (P->dct)
+        if (P->convert != WAV2FEAT)
             return fe_convert_with_dct(P, FE, infile, outfile);
 
         return_value =
@@ -606,14 +606,8 @@ fe_parse_options(int32 argc, char **argv)
     P->params.SAMPLING_RATE = cmd_ln_float32("-srate");
     P->params.WINDOW_LENGTH = cmd_ln_float32("-wlen");
     P->params.FRAME_RATE = cmd_ln_int32("-frate");
-    if (!strcmp(cmd_ln_str("-feat"), "sphinx")) {
-        P->params.FB_TYPE = MEL_SCALE;
-        P->output_endian = BIG;
-    }
-    else {
-        E_ERROR("MEL_SCALE IS CURRENTLY THE ONLY IMPLEMENTATION\n\n");
-        E_FATAL("Make sure you specify '-feat sphinx'\n");
-    }
+    P->params.FB_TYPE = MEL_SCALE;
+    P->output_endian = BIG;
     P->params.NUM_FILTERS = cmd_ln_int32("-nfilt");
     P->params.NUM_CEPSTRA = cmd_ln_int32("-ncep");
     P->params.LOWER_FILT_FREQ = cmd_ln_float32("-lowerf");
@@ -664,15 +658,24 @@ fe_parse_options(int32 argc, char **argv)
     if (cmd_ln_boolean("-smoothspec")) {
         P->params.logspec = SMOOTH_LOG_SPEC;
     }
-    P->dct = 0;
-    if (cmd_ln_boolean("-logspec2cep")) {
-        P->dct = LEGACY_DCT2;
+    if (cmd_ln_boolean("-spec2cep")) {
+        P->convert = SPEC2CEP;
     }
-    else if (cmd_ln_boolean("-dct2")) {
-        P->dct = DCT2;
+    if (cmd_ln_boolean("-cep2spec")) {
+        P->convert = CEP2SPEC;
     }
-    else if (cmd_ln_boolean("-dct3")) {
-        P->dct = DCT3;
+
+    if (0 == strcmp(cmd_ln_str("-transform"), "dct"))
+        P->params.transform = DCT_II;
+    else if (0 == strcmp(cmd_ln_str("-transform"), "legacy")) {
+        if (P->convert == CEP2SPEC) {
+            E_FATAL("Cannot convert cepstra to spectra with legacy transform, use -transform dct\n");
+        }
+        P->params.transform = LEGACY_DCT;
+    }
+    else {
+        E_WARN("Invalid transform type (values are 'dct', 'legacy')\n");
+        return NULL;
     }
 
     fe_validate_parameters(P);
@@ -1165,19 +1168,15 @@ fe_convert_with_dct(globals_t * P, fe_t * FE, char *infile, char *outfile)
                 nfloats, ifsize / 4 - 1);
         return (FE_INPUT_FILE_READ_ERROR);
     }
-    switch (P->dct) {
-    case DCT3:
-        /* These ones convert MFCCs to logspectra. */
+    if (P->convert == CEP2SPEC) {
+        /* Convert MFCCs to logspectra. */
         input_ncoeffs = FE->NUM_CEPSTRA;
         output_ncoeffs = FE->MEL_FB->num_filters;
-        break;
-    case LEGACY_DCT2:
-    case DCT2:
-    default:
-        /* These ones convert logspectra to MFCCs. */
+    }
+    else {
+        /* Convert logspectra to MFCCs. */
         input_ncoeffs = FE->MEL_FB->num_filters;
         output_ncoeffs = FE->NUM_CEPSTRA;
-        break;
     }
     nfloats = nfloats * output_ncoeffs / input_ncoeffs;
 
@@ -1194,16 +1193,14 @@ fe_convert_with_dct(globals_t * P, fe_t * FE, char *infile, char *outfile)
                 SWAP_FLOAT32(logspec + i);
             }
         }
-        switch (P->dct) {
-        case LEGACY_DCT2:
-            fe_logspec_to_mfcc(FE, logspec, logspec);
-            break;
-        case DCT2:
-            fe_logspec_dct2(FE, logspec, logspec);
-            break;
-        case DCT3:
+        if (P->convert == CEP2SPEC) {
             fe_mfcc_dct3(FE, logspec, logspec);
-            break;
+        }
+        else {
+            if (P->params.transform == LEGACY_DCT)
+                fe_logspec_to_mfcc(FE, logspec, logspec);
+            else
+                fe_logspec_dct2(FE, logspec, logspec);
         }
         if (swap) {
             for (i = 0; i < output_ncoeffs; ++i) {

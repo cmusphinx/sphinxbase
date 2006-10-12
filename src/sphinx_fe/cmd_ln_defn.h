@@ -170,25 +170,25 @@ static arg_t defn[] = {
     "no",
     "Write out logspectral files instead of cepstra" },
   
-  { "-logspec2cep",
-    ARG_BOOLEAN,
-    "no",
-    "Convert logspectra to cepstra using legacy not-quite-DCT2" },
-  
-  { "-dct2",
-    ARG_BOOLEAN,
-    "no",
-    "Convert logspectra to cepstra using DCT-II" },
-  
-  { "-dct3",
-    ARG_BOOLEAN,
-    "no",
-    "Convert cepstra to logspectra using DCT-III (IDCT)" },
-  
   { "-smoothspec",
     ARG_BOOLEAN,
     "no",
     "Write out cepstral-smoothed logspectral files" },
+  
+  { "-transform",
+    ARG_STRING,
+    "legacy",
+    "Which type of transform to use to calculate cepstra (legacy or dct)" },
+  
+  { "-spec2cep",
+    ARG_BOOLEAN,
+    "no",
+    "Input is log spectral files, output is cepstral files" },
+  
+  { "-cep2spec",
+    ARG_BOOLEAN,
+    "no",
+    "Input is cepstral files, output is log spectral files" },
   
   { "-feat",
     ARG_STRING,

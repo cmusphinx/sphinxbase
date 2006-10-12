@@ -84,6 +84,19 @@ enum {
 	SMOOTH_LOG_SPEC = 2
 };
 
+/* Values for the 'FB_TYPE' field (actually MEL_SCALE is the only one
+ * supported). */
+enum {
+	MEL_SCALE,
+	LOG_LINEAR,
+};
+
+/* Values for the 'transform' field. */
+enum {
+	LEGACY_DCT = 0,
+	DCT_II = 1
+};
+
 /** Structure holding front-end parameters. */
 typedef struct param_s param_t;
 struct param_s {
@@ -105,6 +118,7 @@ struct param_s {
     int32 verbose;
     char *warp_type;
     char *warp_params;
+    int32 transform;
 };
 
 /** Base Struct to hold all structure for MFCC computation. */
@@ -149,11 +163,7 @@ struct fe_s {
     int16 PRIOR;
     window_t *HAMMING_WINDOW;
     int32 FRAME_COUNTER;
-};
-
-enum {
-	MEL_SCALE,
-	LOG_LINEAR
+    int32 transform;
 };
 
 enum {
