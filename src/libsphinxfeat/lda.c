@@ -40,13 +40,16 @@
  * Author: David Huggins-Daines <dhuggins@cs.cmu.edu>
  */
 
+#include <assert.h>
+#include <string.h>
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "feat.h"
 #include "ckd_alloc.h"
 #include "bio.h"
 #include "err.h"
-
-#include <assert.h>
-#include <string.h>
 
 #define MATRIX_FILE_VERSION "0.1"
 
