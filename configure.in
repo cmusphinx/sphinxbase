@@ -63,6 +63,7 @@ AC_ARG_ENABLE(fixed,
 	AC_HELP_STRING([--enable-fixed=RADIX],
 		       [Use 32-bit fixed-point for MFCC and GMM computation,
 		        optionally specifying a radix point]),[
+AM_CONDITIONAL(FIXED_POINT, test x$enableval = xyes)
 if test x$enableval = xyes; then
    AC_DEFINE(FIXED_POINT)
 else
