@@ -137,7 +137,12 @@ struct melfb_s {
     int32 doublewide;
     char *warp_type;
     char *warp_params;
+    /* Precomputed normalization constants for unitary DCT-II/DCT-III */
+    mfcc_t sqrt_inv_n, sqrt_inv_2n;
 };
+
+/* sqrt(1/2), also used for unitary DCT-II/DCT-III */
+#define SQRT_HALF FLOAT2MFCC(0.707106781186548)
 
 /** Structure for the front-end computation. */
 typedef struct fe_s fe_t;
@@ -337,8 +342,10 @@ int32 fe_logspec_to_mfcc(fe_t *FE,  /**< A FE structure */
 /**
  * Convert log spectra to MFCC using DCT-II.
  *
- * This uses the canonical form of the DCT-II, with a scaling factor
- * of 2.0/nfilt applied.
+ * This uses the "unitary" form of the DCT-II, i.e. with a scaling
+ * factor of sqrt(2/N) and a "beta" factor of sqrt(1/2) applied to the
+ * cos(0) basis vector (i.e. the one corresponding to the DC
+ * coefficient in the output).
  **/
 int32 fe_logspec_dct2(fe_t *FE,  /**< A FE structure */
 		      const mfcc_t *fr_spec, /**< One frame of spectrum */
@@ -348,8 +355,10 @@ int32 fe_logspec_dct2(fe_t *FE,  /**< A FE structure */
 /**
  * Convert MFCC to log spectra using DCT-III.
  *
- * This uses the canonical form of the DCT-III, with no scaling factor
- * applied.
+ * This uses the "unitary" form of the DCT-III, i.e. with a scaling
+ * factor of sqrt(2/N) and a "beta" factor of sqrt(1/2) applied to the
+ * cos(0) basis vector (i.e. the one corresponding to the DC
+ * coefficient in the input).
  **/
 int32 fe_mfcc_dct3(fe_t *FE,  /**< A FE structure */
 		   const mfcc_t *fr_cep, /**< One frame of cepstrum */

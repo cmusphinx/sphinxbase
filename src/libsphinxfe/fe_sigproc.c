@@ -227,6 +227,10 @@ fe_compute_melcosine(melfb_t * MEL_FB)
         }
     }
 
+    /* Also precompute normalization constants for unitary DCT. */
+    MEL_FB->sqrt_inv_n = FLOAT2MFCC(sqrt(1.0 / MEL_FB->num_filters));
+    MEL_FB->sqrt_inv_2n = FLOAT2MFCC(sqrt(2.0 / MEL_FB->num_filters));
+
     return (0);
 }
 
@@ -531,7 +535,7 @@ fe_dct2(fe_t * FE, const powspec_t * mflogspec, mfcc_t * mfcep)
     mfcep[0] = mflogspec[0];
     for (j = 1; j < FE->MEL_FB->num_filters; j++)
 	mfcep[0] += mflogspec[j];
-    mfcep[0] = mfcep[0] * 2 / FE->MEL_FB->num_filters;
+    mfcep[0] = MFCCMUL(mfcep[0], FE->MEL_FB->sqrt_inv_n);
 
     for (i = 1; i < FE->NUM_CEPSTRA; ++i) {
         mfcep[i] = 0;
@@ -539,7 +543,7 @@ fe_dct2(fe_t * FE, const powspec_t * mflogspec, mfcc_t * mfcep)
 	    mfcep[i] += MFCCMUL(mflogspec[j],
 				FE->MEL_FB->mel_cosine[i][j]);
         }
-        mfcep[i] = mfcep[i] * 2 / FE->MEL_FB->num_filters;
+        mfcep[i] = MFCCMUL(mfcep[i], FE->MEL_FB->sqrt_inv_2n);
     }
 }
 
@@ -549,11 +553,12 @@ fe_dct3(fe_t * FE, const mfcc_t * mfcep, powspec_t * mflogspec)
     int32 i, j;
 
     for (i = 0; i < FE->MEL_FB->num_filters; ++i) {
-        mflogspec[i] = mfcep[0] / 2;
+        mflogspec[i] = MFCCMUL(mfcep[0], SQRT_HALF);
         for (j = 1; j < FE->NUM_CEPSTRA; j++) {
             mflogspec[i] += MFCCMUL(mfcep[j],
                                     FE->MEL_FB->mel_cosine[j][i]);
         }
+        mflogspec[i] = MFCCMUL(mflogspec[i], FE->MEL_FB->sqrt_inv_2n);
     }
 }
 
