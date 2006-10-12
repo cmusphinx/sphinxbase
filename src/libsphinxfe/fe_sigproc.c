@@ -266,8 +266,7 @@ fe_pre_emphasis(int16 const *in, frame_t * out, int32 len,
                 float32 factor, int16 prior)
 {
     int32 i;
-#ifdef FIXED_POINT
-#ifdef FIXED16
+#if defined(FIXED16)
     int32 fxd_factor = (int32) (factor * (float32) (1 << DEFAULT_RADIX));
     out[0] = in[0] - ((int32) (prior * fxd_factor) >> DEFAULT_RADIX);
 
@@ -275,23 +274,22 @@ fe_pre_emphasis(int16 const *in, frame_t * out, int32 len,
         out[i] =
             in[i] - ((int32) (in[i - 1] * fxd_factor) >> DEFAULT_RADIX);
     }
-#else
-    int32 fxd_factor = (int32) (factor * (float32) (1 << DEFAULT_RADIX));
-    out[0] =
-        (int32) (in[0] << DEFAULT_RADIX) - (int32) (prior * fxd_factor);
+#elif defined(FIXED_POINT)
+    /* Use extra precision for alpha under the assumption it is between 0 and 1. */
+    fixed32 fxd_factor = FLOAT2FIX_ANY(factor, 30);
+    out[0] = (int32) (in[0] << DEFAULT_RADIX)
+        - FIXMUL_ANY(prior, fxd_factor, 30-DEFAULT_RADIX);
 
     for (i = 1; i < len; ++i) {
-        out[i] =
-            (int32) (in[i] << DEFAULT_RADIX) -
-            (int32) (in[i - 1] * fxd_factor);
+        out[i] = ((int32)in[i] << DEFAULT_RADIX)
+            - FIXMUL_ANY(in[i-1], fxd_factor, 30-DEFAULT_RADIX);
     }
-#endif
-#else                           /* FIXED_POINT */
+#else
     out[0] = (frame_t) in[0] - factor * (frame_t) prior;
     for (i = 1; i < len; i++) {
         out[i] = (frame_t) in[i] - factor * (frame_t) in[i - 1];
     }
-#endif                          /* FIXED_POINT */
+#endif
 }
 
 void
@@ -315,10 +313,18 @@ fe_create_hamming(window_t * in, int32 in_len)
 
     if (in_len > 1)
         for (i = 0; i < in_len; i++) {
-            in[i] =
-                FLOAT2MFCC(0.54 -
-                           0.46 * cos(2 * M_PI * i /
-                                      ((float64) in_len - 1.0)));
+            float64 hamm;
+
+            hamm  = (0.54 - 0.46 * cos(2 * M_PI * i /
+                                       ((float64) in_len - 1.0)));
+
+            /* Use extra precision for the window, after all, it is
+             * always between 0 and 1! */
+#ifdef FIXED_POINT
+            in[i] = FLOAT2FIX_ANY(hamm, 30);
+#else
+            in[i] = hamm;
+#endif
         }
 
     return;
@@ -332,7 +338,13 @@ fe_hamming_window(frame_t * in, window_t * window, int32 in_len)
 
     if (in_len > 1)
         for (i = 0; i < in_len; i++) {
-            in[i] = MFCCMUL(in[i], window[i]);
+            /* Use extra precision for the window, after all, it is
+             * always between 0 and 1! */
+#ifdef FIXED_POINT
+            in[i] = FIXMUL_ANY(in[i], window[i], 30);
+#else
+            in[i] = FLOAT2MFCC(MFCC2FLOAT(in[i]) * window[i]);
+#endif
         }
 
     return;
@@ -707,12 +719,17 @@ fe_fft_real(frame_t * x, int n)
 
             a = 2 * M_PI * i / n;
 
-#ifdef FIXED16
+            /* Use extra precision for twiddle factors (after all they
+             * are always between -1 and 1!) */
+#if defined(FIXED16)
             ccc[i] = cos(a) * 32768;
             sss[i] = sin(a) * 32768;
-#else
-            ccc[i] = FLOAT2MFCC(cos(a));
-            sss[i] = FLOAT2MFCC(sin(a));
+#elif defined(FIXED_POINT)
+            ccc[i] = FLOAT2FIX_ANY(cos(a), 30);
+            sss[i] = FLOAT2FIX_ANY(sin(a), 30);
+#else /* Not fixed-point */
+            ccc[i] = cos(a);
+            sss[i] = sin(a);
 #endif
         }
         lastn = n;
@@ -758,16 +775,19 @@ fe_fft_real(frame_t * x, int n)
                 /* cc = cos(a); ss = sin(a); */
                 cc = ccc[j << (m - n1)];
                 ss = sss[j << (m - n1)];
-#ifdef FIXED16
+#if defined(FIXED16)
                 t1 = (((int32) x[i3] * cc) >> 15)
                     + (((int32) x[i4] * ss) >> 15);
                 t2 = ((int32) x[i3] * ss >> 15)
                     - (((int32) x[i4] * cc) >> 15);
+#elif defined(FIXED_POINT)
+                t1 = FIXMUL_ANY(x[i3], cc, 30)
+                    + FIXMUL_ANY(x[i4], ss, 30);
+                t2 = FIXMUL_ANY(x[i3], ss, 30)
+                    - FIXMUL_ANY(x[i4], cc, 30);
 #else
-                t1 = MFCCMUL((mfcc_t) x[i3], (mfcc_t) cc)
-                    + MFCCMUL((mfcc_t) x[i4], (mfcc_t) ss);
-                t2 = MFCCMUL((mfcc_t) x[i3], (mfcc_t) ss)
-                    - MFCCMUL((mfcc_t) x[i4], (mfcc_t) cc);
+                t1 = x[i3] * cc + x[i4] * ss;
+                t2 = x[i3] * ss - x[i4] * cc;
 #endif
                 x[i4] = x[i2] - t2;
                 x[i3] = -x[i2] - t2;
