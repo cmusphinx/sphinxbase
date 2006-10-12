@@ -1175,9 +1175,9 @@ feat_s2mfc2feat_block(feat_t * fcb, mfcc_t ** uttcep, int32 nfr,
         memcpy(cepbuf + win, uttcep, nfr * sizeof(mfcc_t *));
         for (i = 0; i < win; ++i) {
             cepbuf[i] = ckd_calloc(cepsize, sizeof(mfcc_t));
-            memcpy(cepbuf[i], uttcep[win], cepsize * sizeof(mfcc_t));
+            memcpy(cepbuf[i], uttcep[0], cepsize * sizeof(mfcc_t));
             cepbuf[nfr + win + i] = ckd_calloc(cepsize, sizeof(mfcc_t));
-            memcpy(cepbuf[nfr + win + i], uttcep[nfr + win - 1], cepsize * sizeof(mfcc_t));
+            memcpy(cepbuf[nfr + win + i], uttcep[nfr - 1], cepsize * sizeof(mfcc_t));
         }
         feat_compute_utt(fcb, cepbuf, nfr + win * 2, win, ofeat);
         for (i = 0; i < win; ++i) {
