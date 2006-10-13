@@ -603,7 +603,7 @@ fe_parse_options(int32 argc, char **argv)
     P->nchans = cmd_ln_int32("-nchans");
     P->whichchan = cmd_ln_int32("-whichchan");
     P->params.PRE_EMPHASIS_ALPHA = cmd_ln_float32("-alpha");
-    P->params.SAMPLING_RATE = cmd_ln_float32("-srate");
+    P->params.SAMPLING_RATE = cmd_ln_float32("-samprate");
     P->params.WINDOW_LENGTH = cmd_ln_float32("-wlen");
     P->params.FRAME_RATE = cmd_ln_int32("-frate");
     P->params.FB_TYPE = MEL_SCALE;

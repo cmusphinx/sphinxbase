@@ -4,7 +4,7 @@ tmpout="test-sphinx_fe.out"
 
 echo "WAVE2FEAT TEST"
 sh @top_builddir@/libtool --mode=execute @top_builddir@/src/sphinx_fe/sphinx_fe \
--srate 11025 \
+-samprate 11025 \
 -frate 105 \
 -wlen 0.024 \
 -alpha 0.97 \

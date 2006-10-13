@@ -89,6 +89,8 @@ static arg_t defn[] = {
     ARG_BOOLEAN,
     "no",
     "Shows example of how to use the tool"},
+
+  waveform_to_cepstral_command_line_macro(),
   
   { "-i",
     ARG_STRING,
@@ -150,11 +152,6 @@ static arg_t defn[] = {
     "no",
     "Defines input format as Microsoft Wav (RIFF)" },
   
-  { "-input_endian",
-    ARG_STRING,
-    "little",
-    "Endianness of input data, big or little, ignored if NIST or MS Wav" },
-  
   { "-nchans",
     ARG_INT32,
     "1",
@@ -164,31 +161,6 @@ static arg_t defn[] = {
     ARG_INT32,
     "1",
     "Channel to process" },
-  
-  { "-logspec",
-    ARG_BOOLEAN,
-    "no",
-    "Write out logspectral files instead of cepstra" },
-  
-  { "-smoothspec",
-    ARG_BOOLEAN,
-    "no",
-    "Write out cepstral-smoothed logspectral files" },
-  
-  { "-transform",
-    ARG_STRING,
-    "legacy",
-    "Which type of transform to use to calculate cepstra (legacy or dct)" },
-  
-  { "-spec2cep",
-    ARG_BOOLEAN,
-    "no",
-    "Input is log spectral files, output is cepstral files" },
-  
-  { "-cep2spec",
-    ARG_BOOLEAN,
-    "no",
-    "Input is cepstral files, output is log spectral files" },
   
   { "-feat",
     ARG_STRING,
@@ -204,85 +176,10 @@ static arg_t defn[] = {
 #endif
     "Endianness of machine, big or little" },
   
-  { "-alpha",
-    ARG_FLOAT32,
-    ARG_STRINGIFY(DEFAULT_PRE_EMPHASIS_ALPHA),
-    "Preemphasis parameter" },
-  
-  { "-samprate",
-    ARG_FLOAT32,
-    ARG_STRINGIFY(DEFAULT_SAMPLING_RATE),
-    "Sampling rate" },
-  
-  { "-frate",
-    ARG_INT32,
-    ARG_STRINGIFY(DEFAULT_FRAME_RATE),
-    "Frame rate" },
-  
-  { "-wlen",
-    ARG_FLOAT32,
-    ARG_STRINGIFY(DEFAULT_WINDOW_LENGTH),
-    "Hamming window length" },
-  
-  { "-nfft",
-    ARG_INT32,
-    ARG_STRINGIFY(DEFAULT_FFT_SIZE),
-    "Size of FFT" },
-  
-  { "-nfilt",
-    ARG_INT32,
-    ARG_STRINGIFY(DEFAULT_NUM_FILTERS),
-    "Number of filter banks" },
-  
-  { "-lowerf",
-    ARG_FLOAT32,
-    ARG_STRINGIFY(DEFAULT_LOWER_FILT_FREQ),
-    "Lower edge of filters" },
-  
-  { "-upperf",
-    ARG_FLOAT32,
-    ARG_STRINGIFY(DEFAULT_UPPER_FILT_FREQ),
-    "Upper edge of filters" },
-  
-  { "-ncep",
-    ARG_INT32,
-    ARG_STRINGIFY(DEFAULT_NUM_CEPSTRA),
-    "Number of cep coefficients" },
-  
-  { "-doublebw",
-    ARG_BOOLEAN,
-    "no",
-    "Use double bandwidth filters (same center freq)" },
-  
-  { "-warp_type",
-    ARG_STRING,
-    DEFAULT_WARP_TYPE,
-    "Warping function type (or shape)" },
-
-  { "-warp_params",
-    ARG_STRING,
-    NULL,
-    "Parameters defining the warping function" },
-
   { "-blocksize",
     ARG_INT32,
     ARG_STRINGIFY(DEFAULT_BLOCKSIZE),
     "Block size, used to limit the number of samples used at a time when reading very large audio files" },
-  
-  { "-dither",
-    ARG_BOOLEAN,
-    "no",
-    "Add 1/2-bit noise" },
-  
-  { "-seed",
-    ARG_INT32,
-    ARG_STRINGIFY(SEED),
-    "Seed for random number generator; if less than zero, pick our own" },
-
-  { "-verbose",
-    ARG_BOOLEAN,
-    "no",
-    "Show input filenames" },
   
   { NULL, 0, NULL, NULL }
 };
