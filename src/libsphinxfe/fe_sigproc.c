@@ -53,6 +53,8 @@
 #include "genrand.h"
 #include "err.h"
 
+/* Use extra precision for cosines, Hamming window, pre-emphasis
+ * coefficient, twiddle factors. */
 #ifdef FIXED_POINT
 #define FLOAT2COS(x) FLOAT2FIX_ANY(x,30)
 #define COSMUL(x,y) FIXMUL_ANY(x,y,30)
@@ -327,13 +329,7 @@ fe_create_hamming(window_t * in, int32 in_len)
             hamm  = (0.54 - 0.46 * cos(2 * M_PI * i /
                                        ((float64) in_len - 1.0)));
 
-            /* Use extra precision for the window, after all, it is
-             * always between 0 and 1! */
-#ifdef FIXED_POINT
-            in[i] = FLOAT2FIX_ANY(hamm, 30);
-#else
-            in[i] = hamm;
-#endif
+            in[i] = FLOAT2COS(hamm);
         }
 
     return;
@@ -347,8 +343,6 @@ fe_hamming_window(frame_t * in, window_t * window, int32 in_len)
 
     if (in_len > 1)
         for (i = 0; i < in_len; i++) {
-            /* Use extra precision for the window, after all, it is
-             * always between 0 and 1! */
             in[i] = COSMUL(in[i], window[i]);
         }
 
@@ -724,8 +718,6 @@ fe_fft_real(frame_t * x, int n)
 
             a = 2 * M_PI * i / n;
 
-            /* Use extra precision for twiddle factors (after all they
-             * are always between -1 and 1!) */
 #if defined(FIXED16)
             ccc[i] = cos(a) * 32768;
             sss[i] = sin(a) * 32768;
