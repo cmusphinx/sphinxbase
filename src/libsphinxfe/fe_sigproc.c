@@ -53,6 +53,15 @@
 #include "genrand.h"
 #include "err.h"
 
+#ifdef FIXED_POINT
+#define FLOAT2COS(x) FLOAT2FIX_ANY(x,30)
+#define COSMUL(x,y) FIXMUL_ANY(x,y,30)
+#else
+#define FLOAT2COS(x) (x)
+#define COSMUL(x,y) ((x)*(y))
+#endif
+
+
 int32
 fe_build_melfilters(melfb_t * MEL_FB)
 {
@@ -223,13 +232,13 @@ fe_compute_melcosine(melfb_t * MEL_FB)
             float64 cosine;
 
             cosine = cos(freqstep * i * (j + 0.5));
-            MEL_FB->mel_cosine[i][j] = FLOAT2MFCC(cosine);
+            MEL_FB->mel_cosine[i][j] = FLOAT2COS(cosine);
         }
     }
 
     /* Also precompute normalization constants for unitary DCT. */
-    MEL_FB->sqrt_inv_n = FLOAT2MFCC(sqrt(1.0 / MEL_FB->num_filters));
-    MEL_FB->sqrt_inv_2n = FLOAT2MFCC(sqrt(2.0 / MEL_FB->num_filters));
+    MEL_FB->sqrt_inv_n = FLOAT2COS(sqrt(1.0 / MEL_FB->num_filters));
+    MEL_FB->sqrt_inv_2n = FLOAT2COS(sqrt(2.0 / MEL_FB->num_filters));
 
     return (0);
 }
@@ -340,11 +349,7 @@ fe_hamming_window(frame_t * in, window_t * window, int32 in_len)
         for (i = 0; i < in_len; i++) {
             /* Use extra precision for the window, after all, it is
              * always between 0 and 1! */
-#ifdef FIXED_POINT
-            in[i] = FIXMUL_ANY(in[i], window[i], 30);
-#else
-            in[i] = FLOAT2MFCC(MFCC2FLOAT(in[i]) * window[i]);
-#endif
+            in[i] = COSMUL(in[i], window[i]);
         }
 
     return;
@@ -527,8 +532,8 @@ fe_spec2cep(fe_t * FE, const powspec_t * mflogspec, mfcc_t * mfcep)
                 beta = 1;       /* 0.5 */
             else
                 beta = 2;       /* 1.0 */
-            mfcep[i] += MFCCMUL(mflogspec[j],
-                                FE->MEL_FB->mel_cosine[i][j]) * beta;
+            mfcep[i] += COSMUL(mflogspec[j],
+                               FE->MEL_FB->mel_cosine[i][j]) * beta;
         }
 	/* Note that this actually normalizes by num_filters, like the
 	 * original Sphinx front-end, due to the doubled 'beta' factor
@@ -547,15 +552,15 @@ fe_dct2(fe_t * FE, const powspec_t * mflogspec, mfcc_t * mfcep)
     mfcep[0] = mflogspec[0];
     for (j = 1; j < FE->MEL_FB->num_filters; j++)
 	mfcep[0] += mflogspec[j];
-    mfcep[0] = MFCCMUL(mfcep[0], FE->MEL_FB->sqrt_inv_n);
+    mfcep[0] = COSMUL(mfcep[0], FE->MEL_FB->sqrt_inv_n);
 
     for (i = 1; i < FE->NUM_CEPSTRA; ++i) {
         mfcep[i] = 0;
         for (j = 0; j < FE->MEL_FB->num_filters; j++) {
-	    mfcep[i] += MFCCMUL(mflogspec[j],
+	    mfcep[i] += COSMUL(mflogspec[j],
 				FE->MEL_FB->mel_cosine[i][j]);
         }
-        mfcep[i] = MFCCMUL(mfcep[i], FE->MEL_FB->sqrt_inv_2n);
+        mfcep[i] = COSMUL(mfcep[i], FE->MEL_FB->sqrt_inv_2n);
     }
 }
 
@@ -565,12 +570,12 @@ fe_dct3(fe_t * FE, const mfcc_t * mfcep, powspec_t * mflogspec)
     int32 i, j;
 
     for (i = 0; i < FE->MEL_FB->num_filters; ++i) {
-        mflogspec[i] = MFCCMUL(mfcep[0], SQRT_HALF);
+        mflogspec[i] = COSMUL(mfcep[0], SQRT_HALF);
         for (j = 1; j < FE->NUM_CEPSTRA; j++) {
-            mflogspec[i] += MFCCMUL(mfcep[j],
+            mflogspec[i] += COSMUL(mfcep[j],
                                     FE->MEL_FB->mel_cosine[j][i]);
         }
-        mflogspec[i] = MFCCMUL(mflogspec[i], FE->MEL_FB->sqrt_inv_2n);
+        mflogspec[i] = COSMUL(mflogspec[i], FE->MEL_FB->sqrt_inv_2n);
     }
 }
 
@@ -621,8 +626,8 @@ fe_fft(complex const *in, complex * out, int32 N, int32 invert)
         /* w = exp(-2*PI*i/N), w[k] = w^k                                       */
         for (k = 0; k < N / 2; k++) {
             float64 x = -2 * M_PI * invert * k / N;
-            w[k].r = FLOAT2MFCC(cos(x));
-            w[k].i = FLOAT2MFCC(sin(x));
+            w[k].r = FLOAT2COS(cos(x));
+            w[k].i = FLOAT2COS(sin(x));
         }
         lastN = N;
     }
@@ -652,8 +657,8 @@ fe_fft(complex const *in, complex * out, int32 N, int32 invert)
             /* compute <s,k>                                                    */
             while (ww < wEnd) {
                 /* wwf2 = ww * f2                                                       */
-                wwf2.r = MFCCMUL(f2->r, ww->r) - MFCCMUL(f2->i, ww->i);
-                wwf2.i = MFCCMUL(f2->r, ww->i) + MFCCMUL(f2->i, ww->r);
+                wwf2.r = COSMUL(f2->r, ww->r) - COSMUL(f2->i, ww->i);
+                wwf2.i = COSMUL(f2->r, ww->i) + COSMUL(f2->i, ww->r);
                 /* t1 = f1 + wwf2                                                       */
                 t1->r = f1->r + wwf2.r;
                 t1->i = f1->i + wwf2.i;
@@ -724,12 +729,9 @@ fe_fft_real(frame_t * x, int n)
 #if defined(FIXED16)
             ccc[i] = cos(a) * 32768;
             sss[i] = sin(a) * 32768;
-#elif defined(FIXED_POINT)
-            ccc[i] = FLOAT2FIX_ANY(cos(a), 30);
-            sss[i] = FLOAT2FIX_ANY(sin(a), 30);
-#else /* Not fixed-point */
-            ccc[i] = cos(a);
-            sss[i] = sin(a);
+#else
+            ccc[i] = FLOAT2COS(cos(a));
+            sss[i] = FLOAT2COS(sin(a));
 #endif
         }
         lastn = n;
@@ -780,14 +782,9 @@ fe_fft_real(frame_t * x, int n)
                     + (((int32) x[i4] * ss) >> 15);
                 t2 = ((int32) x[i3] * ss >> 15)
                     - (((int32) x[i4] * cc) >> 15);
-#elif defined(FIXED_POINT)
-                t1 = FIXMUL_ANY(x[i3], cc, 30)
-                    + FIXMUL_ANY(x[i4], ss, 30);
-                t2 = FIXMUL_ANY(x[i3], ss, 30)
-                    - FIXMUL_ANY(x[i4], cc, 30);
 #else
-                t1 = x[i3] * cc + x[i4] * ss;
-                t2 = x[i3] * ss - x[i4] * cc;
+                t1 = COSMUL(x[i3], cc) + COSMUL(x[i4], ss);
+                t2 = COSMUL(x[i3], ss) - COSMUL(x[i4], cc);
 #endif
                 x[i4] = x[i2] - t2;
                 x[i3] = -x[i2] - t2;
