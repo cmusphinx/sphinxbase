@@ -1193,15 +1193,17 @@ fe_convert_with_dct(globals_t * P, fe_t * FE, char *infile, char *outfile)
                 SWAP_FLOAT32(logspec + i);
             }
         }
+        fe_float_to_mfcc(FE, &logspec, (mfcc_t **)&logspec, 1);
         if (P->convert == CEP2SPEC) {
-            fe_mfcc_dct3(FE, logspec, logspec);
+            fe_mfcc_dct3(FE, (mfcc_t *)logspec, (mfcc_t *)logspec);
         }
         else {
             if (P->params.transform == LEGACY_DCT)
-                fe_logspec_to_mfcc(FE, logspec, logspec);
+                fe_logspec_to_mfcc(FE, (mfcc_t *)logspec, (mfcc_t *)logspec);
             else
-                fe_logspec_dct2(FE, logspec, logspec);
+                fe_logspec_dct2(FE, (mfcc_t *)logspec, (mfcc_t *)logspec);
         }
+        fe_mfcc_to_float(FE, (mfcc_t **)&logspec, &logspec, 1);
         if (swap) {
             for (i = 0; i < output_ncoeffs; ++i) {
                 SWAP_FLOAT32(logspec + i);
