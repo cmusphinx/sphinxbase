@@ -209,7 +209,7 @@ static arg_t defn[] = {
     ARG_STRINGIFY(DEFAULT_PRE_EMPHASIS_ALPHA),
     "Preemphasis parameter" },
   
-  { "-srate",
+  { "-samprate",
     ARG_FLOAT32,
     ARG_STRINGIFY(DEFAULT_SAMPLING_RATE),
     "Sampling rate" },
