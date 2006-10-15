@@ -711,8 +711,8 @@ static void
 feat_s3_cep(feat_t * fcb, mfcc_t ** mfc, mfcc_t ** feat)
 {
     assert(fcb);
-    assert(feat_cepsize(fcb) == 13);
-    assert((feat_cepsize_used(fcb) <= 13) && (feat_cepsize_used(fcb) > 0));
+    assert((feat_cepsize_used(fcb) <= feat_cepsize(fcb))
+           && (feat_cepsize_used(fcb) > 0));
     assert(feat_n_stream(fcb) == 1);
     assert(feat_stream_len(fcb, 0) == feat_cepsize_used(fcb));
     assert(feat_window_size(fcb) == 0);
@@ -730,8 +730,8 @@ feat_s3_cep_dcep(feat_t * fcb, mfcc_t ** mfc, mfcc_t ** feat)
     int32 i;
 
     assert(fcb);
-    assert(feat_cepsize(fcb) == 13);
-    assert((feat_cepsize_used(fcb) <= 13) && (feat_cepsize_used(fcb) > 0));
+    assert((feat_cepsize_used(fcb) <= feat_cepsize(fcb))
+           && (feat_cepsize_used(fcb) > 0));
     assert(feat_n_stream(fcb) == 1);
     assert(feat_stream_len(fcb, 0) == (feat_cepsize_used(fcb) * 2));
     assert(feat_window_size(fcb) == 2);
@@ -760,23 +760,23 @@ feat_1s_c_d_dd_cep2feat(feat_t * fcb, mfcc_t ** mfc, mfcc_t ** feat)
     int32 i;
 
     assert(fcb);
-    assert(feat_cepsize(fcb) == 13);
-    assert(feat_cepsize_used(fcb) == 13);
+    assert((feat_cepsize_used(fcb) <= feat_cepsize(fcb))
+           && (feat_cepsize_used(fcb) > 0));
     assert(feat_n_stream(fcb) == 1);
-    assert(feat_stream_len(fcb, 0) == 39);
+    assert(feat_stream_len(fcb, 0) == feat_cepsize_used(fcb) * 3);
     assert(feat_window_size(fcb) == 3);
 
     /* CEP */
-    memcpy(feat[0], mfc[0], feat_cepsize(fcb) * sizeof(mfcc_t));
+    memcpy(feat[0], mfc[0], feat_cepsize_used(fcb) * sizeof(mfcc_t));
 
     /*
      * DCEP: mfc[w] - mfc[-w], where w = FEAT_DCEP_WIN;
      */
-    f = feat[0] + feat_cepsize(fcb);
+    f = feat[0] + feat_cepsize_used(fcb);
     w = mfc[FEAT_DCEP_WIN];
     _w = mfc[-FEAT_DCEP_WIN];
 
-    for (i = 0; i < feat_cepsize(fcb); i++)
+    for (i = 0; i < feat_cepsize_used(fcb); i++)
         f[i] = w[i] - _w[i];
 
     /* 
@@ -790,7 +790,7 @@ feat_1s_c_d_dd_cep2feat(feat_t * fcb, mfcc_t ** mfc, mfcc_t ** feat)
     w_1 = mfc[FEAT_DCEP_WIN - 1];
     _w_1 = mfc[-FEAT_DCEP_WIN - 1];
 
-    for (i = 0; i < feat_cepsize(fcb); i++) {
+    for (i = 0; i < feat_cepsize_used(fcb); i++) {
         d1 = w1[i] - _w1[i];
         d2 = w_1[i] - _w_1[i];
 
@@ -823,22 +823,29 @@ feat_copy(feat_t * fcb, mfcc_t ** mfc, mfcc_t ** feat)
 }
 
 feat_t *
-feat_init(char *type, cmn_type_t cmn, int32 varnorm, agc_type_t agc, int32 breport)
+feat_init(char *type, cmn_type_t cmn, int32 varnorm, agc_type_t agc, int32 breport, int32 cepsize)
 {
     feat_t *fcb;
     int32 i, l, k;
     char wd[16384], *strp;
 
+    if (cepsize == 0)
+        cepsize = 13;
     if (breport)
         E_INFO
-            ("Initializing feature stream to type: '%s', CMN='%s', VARNORM='%s', AGC='%s'\n",
-             type, cmn_type_str[cmn], varnorm ? "yes" : "no", agc_type_str[agc]);
+            ("Initializing feature stream to type: '%s', ceplen=%d, CMN='%s', VARNORM='%s', AGC='%s'\n",
+             type, cepsize, cmn_type_str[cmn], varnorm ? "yes" : "no", agc_type_str[agc]);
 
     fcb = (feat_t *) ckd_calloc(1, sizeof(feat_t));
 
     fcb->name = (char *) ckd_salloc(type);
     if (strcmp(type, "s2_4x") == 0) {
         /* Sphinx-II format 4-stream feature (Hack!! hardwired constants below) */
+        if (cepsize != 13) {
+            E_ERROR("s2_4x features require cepsize == 13\n");
+            ckd_free(fcb);
+            return NULL;
+        }
         fcb->cepsize = 13;
         fcb->cepsize_used = 13;
         fcb->n_stream = 4;
@@ -853,6 +860,11 @@ feat_init(char *type, cmn_type_t cmn, int32 varnorm, agc_type_t agc, int32 brepo
     }
     else if (strcmp(type, "s3_1x39") == 0) {
         /* 1-stream cep/dcep/pow/ddcep (Hack!! hardwired constants below) */
+        if (cepsize != 13) {
+            E_ERROR("s2_4x features require cepsize == 13\n");
+            ckd_free(fcb);
+            return NULL;
+        }
         fcb->cepsize = 13;
         fcb->cepsize_used = 13;
         fcb->n_stream = 1;
@@ -862,19 +874,27 @@ feat_init(char *type, cmn_type_t cmn, int32 varnorm, agc_type_t agc, int32 brepo
         fcb->window_size = 3;
         fcb->compute_feat = feat_s3_1x39_cep2feat;
     }
-    else if (strcmp(type, "1s_c_d_dd") == 0) {
-        fcb->cepsize = 13;
-        fcb->cepsize_used = 13;
+    else if (strncmp(type, "1s_c_d_dd", 9) == 0) {
+        fcb->cepsize = cepsize;
+        /* Check if using only a portion of cep dimensions */
+        if (type[9] == ',') {
+            if ((sscanf(type + 10, "%d%n", &(fcb->cepsize_used), &l) != 1)
+                || (type[l + 10] != '\0') || (feat_cepsize_used(fcb) <= 0)
+                || (feat_cepsize_used(fcb) > feat_cepsize(fcb)))
+                E_FATAL("Bad feature type argument: '%s'\n", type);
+        }
+        else
+            fcb->cepsize_used = cepsize;
         fcb->n_stream = 1;
         fcb->stream_len = (int32 *) ckd_calloc(1, sizeof(int32));
-        fcb->stream_len[0] = 39;
-        fcb->out_dim = 39;
+        fcb->stream_len[0] = cepsize * 3;
+        fcb->out_dim = cepsize * 3;
         fcb->window_size = 3;   /* FEAT_DCEP_WIN + 1 */
         fcb->compute_feat = feat_1s_c_d_dd_cep2feat;
     }
     else if (strncmp(type, "cep_dcep", 8) == 0) {
-        /* 1-stream cep/dcep (Hack!! hardwired constants below) */
-        fcb->cepsize = 13;
+        /* 1-stream cep/dcep */
+        fcb->cepsize = cepsize;
         /* Check if using only a portion of cep dimensions */
         if (type[8] == ',') {
             if ((sscanf(type + 9, "%d%n", &(fcb->cepsize_used), &l) != 1)
@@ -883,7 +903,7 @@ feat_init(char *type, cmn_type_t cmn, int32 varnorm, agc_type_t agc, int32 brepo
                 E_FATAL("Bad feature type argument: '%s'\n", type);
         }
         else
-            fcb->cepsize_used = 13;
+            fcb->cepsize_used = cepsize;
         fcb->n_stream = 1;
         fcb->stream_len = (int32 *) ckd_calloc(1, sizeof(int32));
         fcb->stream_len[0] = feat_cepsize_used(fcb) * 2;
@@ -892,8 +912,8 @@ feat_init(char *type, cmn_type_t cmn, int32 varnorm, agc_type_t agc, int32 brepo
         fcb->compute_feat = feat_s3_cep_dcep;
     }
     else if (strncmp(type, "cep", 3) == 0) {
-        /* 1-stream cep (Hack!! hardwired constants below) */
-        fcb->cepsize = 13;
+        /* 1-stream cep */
+        fcb->cepsize = cepsize;
         /* Check if using only a portion of cep dimensions */
         if (type[3] == ',') {
             if ((sscanf(type + 4, "%d%n", &(fcb->cepsize_used), &l) != 1)
@@ -902,7 +922,7 @@ feat_init(char *type, cmn_type_t cmn, int32 varnorm, agc_type_t agc, int32 brepo
                 E_FATAL("Bad feature type argument: '%s'\n", type);
         }
         else
-            fcb->cepsize_used = 13;
+            fcb->cepsize_used = cepsize;
         fcb->n_stream = 1;
         fcb->stream_len = (int32 *) ckd_calloc(1, sizeof(int32));
         fcb->stream_len[0] = feat_cepsize_used(fcb);

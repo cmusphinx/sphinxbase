@@ -267,7 +267,10 @@ feat_t *feat_init(char *type,	/**< In: Type of feature stream */
                                      applicable if CMN also done */
                   agc_type_t agc, /**< In: Type of automatic gain control to be 
                                      done before feature computation */
-                  int32 breport /**< In: Whether to show a report for feat_t */
+                  int32 breport, /**< In: Whether to show a report for feat_t */
+                  int32 cepsize  /**< Number of components in the input vector
+                                    (or 0 for the default for this feature type,
+                                    which is usually 13) */
     );
 
 /**
