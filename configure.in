@@ -3,7 +3,7 @@ dnl try not to hurt yourself ;)
 
 AC_INIT(sphinxbase, 0.2)
 AC_CONFIG_HEADERS([include/config.h include/sphinx_config.h])
-AM_INIT_AUTOMAKE([no-define dist-bzip2])
+AM_INIT_AUTOMAKE([no-define])
 
 CFLAGS=${CFLAGS:--g -O2 -Wall}
 
@@ -182,19 +182,11 @@ src/sphinx_fe/Makefile
 src/sphinx_cepview/Makefile
 doc/Makefile
 test/Makefile
+test/testfuncs.sh
 test/unit/Makefile
 test/unit/test_case/Makefile
 test/unit/test_hash/Makefile
 test/unit/test_matrix/Makefile
 test/unit/test_feat/Makefile
 test/regression/Makefile
-test/regression/test-cepview.sh
-test/regression/test-sphinx_fe-dct.sh
-test/regression/test-sphinx_fe-dither-seed.sh
-test/regression/test-sphinx_fe-logspec2cep.sh
-test/regression/test-sphinx_fe-logspec.sh
-test/regression/test-sphinx_fe.sh
-test/regression/test-sphinx_fe-smoothspec.sh
 ])
-
-chmod +x test/regression/*.sh

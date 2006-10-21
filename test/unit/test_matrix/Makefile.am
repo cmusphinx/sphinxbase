@@ -14,6 +14,6 @@ INCLUDES = \
 LDADD = ${top_builddir}/src/libsphinxutil/libsphinxutil.la -lm
 
 
-TESTS = $(wildcard _*.test) 
-
-
+TESTS = $(wildcard $(srcdir)/_*.test) 
+EXTRA_DIST = $(TESTS)
+CLEANFILES = *.out

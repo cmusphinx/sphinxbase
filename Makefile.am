@@ -17,9 +17,7 @@ EXTRA_DIST = autogen.sh				\
 	win32/sphinx_fe/sphinx_fe.dsp
 
 AUTOMAKE_OPTIONS = dist-bzip2 \
-		   dist-zip   \
-		   dist-shar  \
-		   dist-tarZ
+		   dist-zip
 
 etags:
 	etags `find . -name "*.[ch]"`

@@ -1,6 +1,7 @@
 #!/bin/sh
+. ../../testfuncs.sh
 
 set -e
 ./deletehash -subvq > _hash_delete2.out 2>&1 
-diff _hash_delete2.out _hash_delete2.res > /dev/null 2>&1
+diff _hash_delete2.out $tests/unit/test_hash/_hash_delete2.res > /dev/null 2>&1
 rm -f _hash_delete2.out

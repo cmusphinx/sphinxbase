@@ -1,5 +1,4 @@
 EXTRA_DIST =					\
-	compare_table.pl			\
 	chan3.cepview				\
 	chan3-dither.cepview			\
 	chan3.logspec				\
@@ -35,8 +34,9 @@ CLEANFILES =					\
 
 # Disable sphinx_fe tests for now if fixed-point due to imprecision
 if FIXED_POINT
-TESTS = test-cepview.sh
+TESTS = $(srcdir)/test-cepview.sh
 else
-TESTS = $(wildcard test-*.sh)
+TESTS = $(wildcard $(srcdir)/test-*.sh)
 endif
 
+EXTRA_DIST += $(TESTS)
