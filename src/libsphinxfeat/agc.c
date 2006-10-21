@@ -57,7 +57,6 @@
  * 		Created.
  */
 
-#include <assert.h>
 #include <string.h>
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -111,7 +110,8 @@ agc_max(agc_t *agc, mfcc_t **mfc, int32 n_frame)
 {
     int32 i;
 
-    assert(n_frame > 0);
+    if (n_frame <= 0)
+        return;
     agc->obs_max = mfc[0][0];
     for (i = 1; i < n_frame; i++) {
         if (mfc[i][0] > agc->obs_max) {
@@ -142,7 +142,8 @@ agc_emax(agc_t *agc, mfcc_t **mfc, int32 n_frame)
 {
     int i;
 
-    assert(n_frame > 0);
+    if (n_frame <= 0)
+        return;
     agc->obs_max = mfc[0][0];
     for (i = 1; i < n_frame; ++i) {
         if (mfc[i][0] > agc->obs_max) {

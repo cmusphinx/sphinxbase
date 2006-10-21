@@ -46,7 +46,6 @@
  */
 
 
-#include <assert.h>
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -133,8 +132,6 @@ void
 cmn_prior(cmn_t *cmn, mfcc_t **incep, int32 varnorm, int32 nfr)
 {
     int32 i, j;
-
-    assert(incep != NULL);
 
     if (varnorm)
         E_FATAL
