@@ -1,5 +1,5 @@
 #!/bin/sh
-. ../../testfuncs.sh
+. ../testfuncs.sh
 
 set -e
 ./test_transpose > _test_transpose.out

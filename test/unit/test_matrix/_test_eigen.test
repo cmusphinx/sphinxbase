@@ -1,5 +1,5 @@
 #!/bin/sh
-. ../../testfuncs.sh
+. ../testfuncs.sh
 
 set -e
 ./test_eigen > _test_eigen.out

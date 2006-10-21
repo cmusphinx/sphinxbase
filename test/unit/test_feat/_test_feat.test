@@ -1,5 +1,5 @@
 #!/bin/sh
-. ../../testfuncs.sh
+. ../testfuncs.sh
 
 set -e
 ./test_feat > _test_feat.out

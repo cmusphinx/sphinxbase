@@ -1,5 +1,5 @@
 #!/bin/sh
-. ../../testfuncs.sh
+. ../testfuncs.sh
 
 set -e
 ./test_invert | sed -e 's,-0\.0,0.0,g' > _test_invert.out

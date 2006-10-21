@@ -1,8 +1,9 @@
 # Utility functions and parameters for regression tests
 
 # Predefined directories you may need
-builddir="@abs_top_builddir@"
-sourcedir="@abs_top_srcdir@"
+# Stupid broken RedHat autoconf doesn't do @abs_top_srcdir@
+builddir="@top_builddir@"
+sourcedir="@top_srcdir@"
 tests=$sourcedir/test
 
 # Automatically report failures on exit

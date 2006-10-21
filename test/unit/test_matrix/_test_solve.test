@@ -1,5 +1,5 @@
 #!/bin/sh
-. ../../testfuncs.sh
+. ../testfuncs.sh
 
 set -e
 ./test_solve > _test_solve.out

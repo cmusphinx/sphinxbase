@@ -182,11 +182,12 @@ src/sphinx_fe/Makefile
 src/sphinx_cepview/Makefile
 doc/Makefile
 test/Makefile
-test/testfuncs.sh
+test/unit/testfuncs.sh
 test/unit/Makefile
 test/unit/test_case/Makefile
 test/unit/test_hash/Makefile
 test/unit/test_matrix/Makefile
 test/unit/test_feat/Makefile
+test/regression/testfuncs.sh
 test/regression/Makefile
 ])
