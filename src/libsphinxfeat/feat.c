@@ -994,10 +994,7 @@ feat_init(char *type, cmn_type_t cmn, int32 varnorm, agc_type_t agc, int32 brepo
         agc_emax_set(fcb->agc_struct, (cmn != CMN_NONE) ? 5.0 : 10.0);
     fcb->agc = agc;
 
-    fcb->cepbuf = NULL;
-    fcb->tmpcepbuf = NULL;
     fcb->out_dim = fcb->stream_len[0];
-
     fcb->cepbuf = (mfcc_t **) ckd_calloc_2d(LIVEBUFBLOCKSIZE,
                                              feat_cepsize(fcb),
                                              sizeof(mfcc_t));
@@ -1185,7 +1182,7 @@ feat_s2mfc2feat_block(feat_t * fcb, mfcc_t ** uttcep, int32 nfr,
     win = feat_window_size(fcb);
     cepsize = feat_cepsize(fcb);
 
-    if (beginutt && endutt) {
+    if (beginutt && endutt && nfr > 0) {
         /* Special case when we are asked to process the entire utterance. */
         /* Copy and pad out the utterance (this requires that the
          * feature computation functions always access the buffer via
@@ -1209,18 +1206,12 @@ feat_s2mfc2feat_block(feat_t * fcb, mfcc_t ** uttcep, int32 nfr,
 
     cepbuf = fcb->cepbuf;
     tmpcepbuf = fcb->tmpcepbuf;
+    assert(cepbuf);
+    assert(tmpcepbuf);
 
     if (nfr >= LIVEBUFBLOCKSIZE) {
         nfr = LIVEBUFBLOCKSIZE - 1;
         endutt = 0;
-    }
-    assert(cepbuf);
-    assert(tmpcepbuf);
-
-    if (cepbuf == NULL) {
-        beginutt = 1;           /* If no buffer was present we are beginning an utt */
-        E_INFO("Feature buffers initialized to %d vectors\n",
-               LIVEBUFBLOCKSIZE);
     }
 
     feat_cmn(fcb, uttcep, nfr, beginutt, endutt);
@@ -1228,7 +1219,7 @@ feat_s2mfc2feat_block(feat_t * fcb, mfcc_t ** uttcep, int32 nfr,
 
     residualvecs = 0;
 
-    if (beginutt) {
+    if (beginutt && nfr > 0) {
         /* Replicate first frame into the first win frames */
         for (i = 0; i < win; i++) {
             memcpy(cepbuf[i], uttcep[0], cepsize * sizeof(mfcc_t));
@@ -1257,10 +1248,15 @@ feat_s2mfc2feat_block(feat_t * fcb, mfcc_t ** uttcep, int32 nfr,
             }
         }
         else {
-            int16 tpos = fcb->bufpos - 1;
-            tpos %= LIVEBUFBLOCKSIZE;
+            int32 tpos;
+
+            if (fcb->bufpos == 0)
+                tpos = LIVEBUFBLOCKSIZE-1;
+            else
+                tpos = fcb->bufpos;
             for (i = 0; i < win; i++) {
                 assert(fcb->bufpos < LIVEBUFBLOCKSIZE);
+                assert(tpos < LIVEBUFBLOCKSIZE);
                 memcpy(cepbuf[fcb->bufpos++], cepbuf[tpos],
                        cepsize * sizeof(mfcc_t));
                 fcb->bufpos %= LIVEBUFBLOCKSIZE;
