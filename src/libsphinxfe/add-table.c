@@ -55,7 +55,7 @@
 
 #include "prim_type.h"
 
-int16 fe_logadd_table[99042] = {
+const int16 fe_logadd_table[99042] = {
     6932,
     6931,
     6931,
@@ -99099,4 +99099,4 @@ int16 fe_logadd_table[99042] = {
     1,
     0,
 };
-int32 fe_logadd_table_size = 99042;
+const int32 fe_logadd_table_size = 99042;

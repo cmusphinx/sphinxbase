@@ -130,8 +130,8 @@ typedef int32 fixed32;
  *
  * Link with -lsphinxfe if you wish to use these (PocketSphinx does)
  **/
-extern int16 fe_logadd_table[];
-extern int32 fe_logadd_table_size;
+extern const int16 fe_logadd_table[];
+extern const int32 fe_logadd_table_size;
 
 /** Add two numbers in FE_LOG domain. */
 #define FE_LOG_ADD(x,y) ((x) > (y) ? \
