@@ -104,4 +104,51 @@ typedef int32 fixed32;
 	+ ((((uint32)(b))&((1<<(radix))-1)) * (((int32)(a))>>(radix))))
 #endif
 
+/* Various fixed-point logarithmic functions that we need. */
+/**
+ * Take natural logarithm of an integer, yielding a fixedpoint number
+ * with an arbitrary radix point.
+ */
+#define FIXLN_2		((fixed32)(0.693147180559945 * (1<<DEFAULT_RADIX)))
+/** Take natural logarithm of a fixedpoint number. */
+#define FIXLN(x) (fixlog(x) - (FIXLN_2 * DEFAULT_RADIX))
+
+/** Base we use for logarithmic representation of power spectrum. */
+#define FE_BASE		1.0001
+/** Natural log of FE_BASE. */
+#define FE_LOG_BASE	9.9995e-5
+/** Smallest value expressible in logarithmic form. */
+#define FE_MIN_LOG		-690810000
+/** Take integer log of a floating point number in FE_BASE. */
+#define FE_LOG(x)	((x == 0.0) ? FE_MIN_LOG :				\
+			      ((x > 1.0) ?					\
+				 (int32) ((log (x) / FE_LOG_BASE) + 0.5) :	\
+				 (int32) ((log (x) / FE_LOG_BASE) - 0.5)))
+
+/**
+ * Log-addition tables
+ *
+ * Link with -lsphinxfe if you wish to use these (PocketSphinx does)
+ **/
+extern int16 fe_logadd_table[];
+extern int32 fe_logadd_table_size;
+
+/** Add two numbers in FE_LOG domain. */
+#define FE_LOG_ADD(x,y) ((x) > (y) ? \
+                  (((y) <= FE_MIN_LOG ||(x)-(y)>=fe_logadd_table_size ||(x) - +(y)<0) ? \
+		           (x) : fe_logadd_table[(x) - (y)] + (x))	\
+		   : \
+		  (((x) <= FE_MIN_LOG ||(y)-(x)>=fe_logadd_table_size ||(y) - +(x)<0) ? \
+		          (y) : fe_logadd_table[(y) - (x)] + (y)))
+
+#define FE_SQ_LOGFACTOR(radix) ((fixed32)(FE_LOG_BASE * (1<<radix) * (1<<radix)))
+/** Inverse integer log base, converts FIXLN() to LOG() via FIXMUL. */
+#define FE_INVLOG_BASE ((fixed32)(1.0/(FE_LOG_BASE)))
+/** Take integer FE_LOG() of a fixed point number. */
+#define FIXLOG(x)  ((x == 0) ? FE_MIN_LOG : FIXMUL(FIXLN(x), FE_INVLOG_BASE))
+/** Take integer FE_LOG() of an integer. */
+#define INTLOG(x)  ((x == 0) ? FE_MIN_LOG : FIXMUL(fixlog(x), FE_INVLOG_BASE))
+/** Convert integer FE_LOG() to fixed point natural logarithm with arbitrary radix. */
+#define FE_LOG_TO_FIXLN(x) FIXMUL(x,FE_SQ_LOGFACTOR(DEFAULT_RADIX))
+
 #endif /* _FIXPOINT_H_ */

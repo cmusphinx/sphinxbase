@@ -472,7 +472,7 @@ fe_mel_cep(fe_t * FE, powspec_t * mfspec, mfcc_t * mfcep)
 #if defined(FIXED_POINT)
         /* It's already in log domain!  Don't check if it's
          * greater than zero... */
-        mfspec[i] = LOG_TO_FIXLN(mfspec[i]);
+        mfspec[i] = FE_LOG_TO_FIXLN(mfspec[i]);
 #else                           /* !FIXED_POINT */
         if (mfspec[i] > 0)
             mfspec[i] = log(mfspec[i]);
