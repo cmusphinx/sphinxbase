@@ -1,5 +1,20 @@
 #!/bin/bash -x
 
+# Check if we're running under PBS and print information useful for debugging
+if [ -n "$PBS_ENVIRONMENT" ]; then
+    echo ""
+    echo "This job was submitted by user: $PBS_O_LOGNAME"
+    echo "This job was submitted to host: $PBS_O_HOST"
+    echo "This job was submitted to queue: $PBS_O_QUEUE"
+    echo "PBS working directory: $PBS_O_WORKDIR"
+    echo "PBS job id: $PBS_JOBID"
+    echo "PBS job name: $PBS_JOBNAME"
+    echo "PBS environment: $PBS_ENVIRONMENT"
+    echo ""
+    echo "This script is running on `hostname` "
+    echo ""
+fi
+
 # While "loopUntilSuccess.sh" is not part of the regression tests, use
 # the local copy. That's why we need the ${HOME}/script here
 export PATH=/usr/local/bin:${PATH}:${HOME}/script
@@ -40,13 +55,13 @@ ${TAR} -xzf an4_sphere.tar.gz
 if (loopUntilSuccess.sh ${SVN} co https://svn.sourceforge.net/svnroot/cmusphinx/trunk/sphinxbase > /dev/null &&
 cd sphinxbase &&
 ./autogen.sh &&
-./autogen.sh &&
-make ; then
+./autogen.sh CFLAGS="-O2 -Wall" --prefix=`(cd ..; pwd)`/build &&
+make all install) >> $LOG 2>&1 ; then
 
 # Get the trainer
 if (loopUntilSuccess.sh ${SVN} co https://svn.sourceforge.net/svnroot/cmusphinx/trunk/SphinxTrain > /dev/null &&
 cd SphinxTrain &&
-./configure DISTCHECK_CONFIGURE_FLAGS=--with-sphinxbase=$temp_dir/sphinxbase && 
+./configure CFLAGS="-O2 -Wall" --with-sphinxbase=$temp_dir/sphinxbase && 
 ${MAKE} && 
 ${PERL} scripts_pl/setup_tutorial.pl an4) >> $LOG 2>&1 ; then
 
@@ -54,7 +69,7 @@ ${PERL} scripts_pl/setup_tutorial.pl an4) >> $LOG 2>&1 ; then
 if (loopUntilSuccess.sh ${SVN} co https://svn.sourceforge.net/svnroot/cmusphinx/trunk/sphinx3 > /dev/null &&
 cd sphinx3 &&
 ./autogen.sh &&
-./autogen.sh --prefix=`pwd`/build DISTCHECK_CONFIGURE_FLAGS=--with-sphinxbase=$temp_dir/sphinxbase && 
+./autogen.sh  CFLAGS="-O2 -Wall" --prefix=`(cd ..; pwd)`/build --with-sphinxbase=$temp_dir/sphinxbase && 
 ${MAKE} all install && 
 ${PERL} scripts/setup_tutorial.pl an4) >> $LOG 2>&1 ; then
 
@@ -74,13 +89,12 @@ fi
 
 # Check whether the Word Error Rate is reasonable, hardwired for now
 if SER=`grep 'SENTENCE ERROR' $LOG 2>&1`; then
-FAIL=`echo $SER | awk '{if ($(NF-1) - 55 > 2) print "1"}'`;
-else
-FAIL=1
+SUCCESS=`echo $SER | awk '{d = $(3) - 60};{if (d < 0) d = -d};{if (d < 2) print "1"}'`;
 fi;
 
 # Send mail if we failed
-if test x${FAIL} != x ; then
+if test x${SUCCESS} == x ; then
+cat `find $temp_dir/an4/logdir/ -type f -print | tail -1` >> ${LOG}
 $MAIL -s "Tutorial failed" ${MAILLIST} < ${LOG}
 else
 echo $SER | $MAIL -s "Tutorial succeded" ${MAILLIST}
