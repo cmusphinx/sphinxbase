@@ -366,6 +366,10 @@ feat_s2mfc_read(char *file, int32 win,
     int32 start_pad, end_pad;
     mfcc_t **mfc;
 
+    /* Initialize the output pointer to NULL, so that any attempts to
+       free() it if we fail before allocating it will not segfault! */
+    if (out_mfc)
+        *out_mfc = NULL;
     E_INFO("Reading mfc file: '%s'[%d..%d]\n", file, sf, ef);
     if (ef >= 0 && ef <= sf) {
         E_ERROR("%s: End frame (%d) <= Start frame (%d)\n", file, ef, sf);
