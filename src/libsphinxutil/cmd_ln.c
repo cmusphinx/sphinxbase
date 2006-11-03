@@ -447,7 +447,7 @@ cmd_ln_parse(arg_t * defn, int32 argc, char *argv[])
     /* Enter argument names into hash table */
     for (i = 0; i < n; i++) {
         /* Associate argument name with index i */
-        if (hash_table_enter(ht, defn[i].name, (caddr_t)i) != (caddr_t)i) {
+        if (hash_table_enter(ht, defn[i].name, (void *)i) != (void *)i) {
             E_ERROR("Duplicate argument name: %s\n", defn[i].name);
             goto error;
         }
