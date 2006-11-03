@@ -125,7 +125,7 @@ fe_init_auto()
     p.UPPER_FILT_FREQ = cmd_ln_float32("-upperf");
     p.LOWER_FILT_FREQ = cmd_ln_float32("-lowerf");
     p.PRE_EMPHASIS_ALPHA = cmd_ln_float32("-alpha");
-    if (strcmp("yes", cmd_ln_str("-dither")) == 0) {
+    if (cmd_ln_boolean("-dither")) {
         p.dither = 1;
         p.seed = cmd_ln_int32("-seed");
     }
