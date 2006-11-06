@@ -1,5 +1,5 @@
 #!/bin/sh
-. testfuncs.sh
+. ./testfuncs.sh
 
 echo "CEPVIEW TEST"
 tmpout="test-cepview.out"
