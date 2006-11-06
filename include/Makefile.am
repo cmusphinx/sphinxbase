@@ -34,3 +34,7 @@ pkginclude_HEADERS =				\
 	str2words.h				\
 	s3_arraylist.h				\
 	unlimit.h
+
+EXTRA_DIST = \
+	wince/sphinx_config.h \
+	win32/sphinx_config.h
