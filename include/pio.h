@@ -83,7 +83,9 @@
 #define _LIBUTIL_IO_H_
 
 #include <stdio.h>
+#ifndef _WIN32_WCE
 #include <sys/stat.h>
+#endif
 #include "prim_type.h"
 
 /** \file pio.h
@@ -149,6 +151,7 @@ FILE *_myfopen(const char *file, char *mode,
 int32 fread_retry(void *pointer, int32 size, int32 num_items, FILE *stream);
 
 
+#ifndef _WIN32_WCE
 /**
  * Like fread_retry, but for stat.  Arguments identical to regular stat.
  * Return value: 0 if successful, -1 if stat failed several attempts.
@@ -160,6 +163,7 @@ int32 stat_retry (char *file, struct stat *statbuf);
  */
 
 int32 stat_mtime (char *file);
+#endif /* !_WIN32_WCE */
 
 #ifdef __cplusplus
 }
