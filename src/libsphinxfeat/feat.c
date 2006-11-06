@@ -132,14 +132,6 @@
 #include "ckd_alloc.h"
 #include "prim_type.h"
 
-#if (! WIN32)
-#include <sys/file.h>
-#include <sys/errno.h>
-#include <sys/param.h>
-#else
-#include <fcntl.h>
-#endif
-
 #define FEAT_VERSION	"1.0"
 #define FEAT_DCEP_WIN		2
 

@@ -62,16 +62,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-#if !defined(WIN32)
-#include <unistd.h>
-#endif
+
 #include "cmd_ln.h"
 #include "err.h"
 #include "ckd_alloc.h"
 #include "hash_table.h"
 #include "case.h"
-#include <sys/types.h>
-#include <sys/stat.h>
 
 
 /* Storage for argument values */
@@ -94,7 +90,9 @@ static uint32 f_argc;
 
 
 /*variables that allow redirecting all files to a log file */
+#ifndef _WIN32_WCE /* FIXME: this is all BOGUS BOGUS BOGUS */
 static FILE orig_stdout, orig_stderr;
+#endif
 static FILE *logfp;
 
 
@@ -242,7 +240,6 @@ cmd_ln_appl_enter(int argc, char *argv[], char *default_argfn,
     char *str;
     int32 i;
     char *logfile;
-    struct stat statbuf;
 
     str = NULL;
 
@@ -254,14 +251,18 @@ cmd_ln_appl_enter(int argc, char *argv[], char *default_argfn,
     if ((argc == 2) && (argv[1][0] != '-'))
         str = argv[1];
     else if (argc == 1) {
+        FILE *fp;
         E_INFO("Looking for default argument file: %s\n", default_argfn);
-        if (stat(default_argfn, &statbuf) == 0) {
-            str = default_argfn;
-        }
-        else {
+
+        if ((fp = fopen(default_argfn, "r")) == NULL) {
             E_INFO("Can't find default argument file %s.\n",
                    default_argfn);
         }
+        else {
+            str = default_argfn;
+        }
+        if (fp != NULL)
+            fclose(fp);
     }
 
 
@@ -291,10 +292,12 @@ cmd_ln_appl_enter(int argc, char *argv[], char *default_argfn,
         }
         else {
             /* ARCHAN: Do we still need this hack nowadays? */
+#ifndef _WIN32_WCE
             orig_stdout = *stdout;      /* Hack!! To avoid hanging problem under Linux */
             orig_stderr = *stderr;      /* Hack!! To avoid hanging problem under Linux */
             *stdout = *logfp;
             *stderr = *logfp;
+#endif
 
             E_INFO("Command line:\n");
             for (i = 0; i < argc; i++) {
@@ -322,8 +325,10 @@ cmd_ln_appl_exit()
 {
     if (logfp) {
         fclose(logfp);
+#ifndef _WIN32_WCE
         *stdout = orig_stdout;
         *stderr = orig_stderr;
+#endif
     }
     cmd_ln_free();
 }

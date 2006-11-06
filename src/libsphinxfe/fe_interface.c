@@ -177,7 +177,11 @@ fe_init_dither(int32 seed)
     if (seed < 0) {
         E_INFO
             ("You are using the internal mechanism to generate the seed.");
+#ifdef _WIN32_WCE
+        s3_rand_seed(GetTickCount());
+#else
         s3_rand_seed((long) time(0));
+#endif
     }
     else {
         E_INFO("You are using %d as the seed.", seed);

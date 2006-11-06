@@ -86,18 +86,19 @@
 
 #include "pio.h"
 #include "err.h"
-
+#include "ckd_alloc.h"
 
 FILE *
 fopen_comp(const char *file, char *mode, int32 * ispipe)
 {
-    char command[16384];
     FILE *fp;
+
+#if defined(_WIN32_WCE) || defined(GNUWINCE)
+    *ispipe = 0; /* No popen() on WinCE */
+#else /* NOT WINCE */
     int32 k, isgz;
-
     k = strlen(file);
-
-#if (WIN32)
+#if defined(WIN32)
     *ispipe = (k > 3) && ((strcmp(file + k - 3, ".gz") == 0)
                           || (strcmp(file + k - 3, ".GZ") == 0));
     isgz = *ispipe;
@@ -116,10 +117,16 @@ fopen_comp(const char *file, char *mode, int32 * ispipe)
             isgz = 1;
         }
     }
-#endif
+#endif /* NOT WIN32 */
+#endif /* NOT WINCE */
 
     if (*ispipe) {
-#if (WIN32)
+#if defined(_WIN32_WCE) || defined(GNUWINCE)
+        /* Shouldn't get here, anyway */
+        E_FATAL("No popen() on WinCE\n");
+#else
+        char command[16384];
+#if defined(WIN32) 
         if (strcmp(mode, "r") == 0) {
             sprintf(command, "gzip.exe -d -c %s", file);
             if ((fp = _popen(command, mode)) == NULL) {
@@ -166,7 +173,8 @@ fopen_comp(const char *file, char *mode, int32 * ispipe)
             E_ERROR("fopen_comp not implemented for mode = %s\n", mode);
             return NULL;
         }
-#endif
+#endif /* NOT WIN32 */
+#endif /* NOT WINCE */
     }
     else {
         fp = fopen(file, mode);
@@ -180,7 +188,8 @@ void
 fclose_comp(FILE * fp, int32 ispipe)
 {
     if (ispipe) {
-#if (WIN32)
+#if defined(_WIN32_WCE) || defined(GNUWINCE)
+#elif defined(WIN32)
         _pclose(fp);
 #else
         pclose(fp);
@@ -194,13 +203,18 @@ fclose_comp(FILE * fp, int32 ispipe)
 FILE *
 fopen_compchk(char *file, int32 * ispipe)
 {
+#if defined(_WIN32_WCE) || defined(GNUWINCE)
+    *ispipe = 0; /* No popen() on WinCE */
+    /* And therefore the rest of this function is useless. */
+    return (fopen_comp(file, "r", ispipe));
+#else /* NOT WINCE */
     char tmpfile[16384];
     int32 k, isgz;
     struct stat statbuf;
 
     k = strlen(file);
 
-#if (WIN32)
+#if defined(WIN32)
     *ispipe = (k > 3) && ((strcmp(file + k - 3, ".gz") == 0)
                           || (strcmp(file + k - 3, ".GZ") == 0));
     isgz = *ispipe;
@@ -252,6 +266,7 @@ fopen_compchk(char *file, int32 * ispipe)
     }
 
     return (fopen_comp(tmpfile, "r", ispipe));
+#endif /* NOT WINCE */
 }
 
 
@@ -290,7 +305,7 @@ fread_retry(void *pointer, int32 size, int32 num_items, FILE * stream)
             --n_retry_rem;
 
             loc += n_items_read * size;
-#if (! WIN32)
+#ifndef _WIN32
             sleep(1);
 #endif
         }
@@ -300,8 +315,44 @@ fread_retry(void *pointer, int32 size, int32 num_items, FILE * stream)
 }
 
 
-#define STAT_RETRY_COUNT	10
+#ifdef _WIN32_WCE /* No stat() on WinCE */
+int32
+stat_retry(char *file, struct stat * statbuf)
+{
+    WIN32_FIND_DATA file_data;
+    HANDLE *h;
+    wchar_t *wfile;
+    size_t len;
 
+    len = mbstowcs(NULL, file, 0) + 1;
+    wfile = ckd_calloc(len, sizeof(*wfile));
+    mbstowcs(wfile, file, len);
+    if ((h = FindFirstFile(wfile, &file_data)) == INVALID_HANDLE_VALUE) {
+        ckd_free(wfile);
+        return -1;
+    }
+    ckd_free(wfile);
+    memset(statbuf, 0, sizeof(statbuf));
+    statbuf->st_mtime = file_data.ftLastWriteTime.dwLowDateTime;
+    statbuf->st_size = file_data.nFileSizeLow;
+    FindClose(h);
+
+    return 0;
+}
+
+
+int32
+stat_mtime(char *file)
+{
+    struct stat statbuf;
+
+    if (stat_retry(file, &statbuf) != 0)
+        return -1;
+
+    return ((int32) statbuf.st_mtime);
+}
+#else
+#define STAT_RETRY_COUNT	10
 int32
 stat_retry(char *file, struct stat * statbuf)
 {
@@ -333,7 +384,7 @@ stat_mtime(char *file)
 
     return ((int32) statbuf.st_mtime);
 }
-
+#endif
 
 FILE *
 _myfopen(const char *file, char *mode, char *pgm, int32 line)
@@ -345,10 +396,16 @@ _myfopen(const char *file, char *mode, char *pgm, int32 line)
         fprintf(stderr,
                 "FATAL_ERROR: \"%s\", line %d: fopen(%s,%s) failed; ",
                 pgm, line, file, mode);
+#ifndef _WIN32_WCE
         perror("");
+#endif
         fflush(stderr);
 
+#ifdef _WIN32_WCE
+        exit(-1);
+#else
         exit(errno);
+#endif
     }
 
     return fp;
