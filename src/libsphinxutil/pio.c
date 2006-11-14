@@ -305,7 +305,7 @@ fread_retry(void *pointer, int32 size, int32 num_items, FILE * stream)
             --n_retry_rem;
 
             loc += n_items_read * size;
-#ifndef _WIN32
+#if !(defined(_WIN32) || defined(GNUWINCE))
             sleep(1);
 #endif
         }
