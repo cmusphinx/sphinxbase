@@ -73,7 +73,7 @@ typedef int32 fixed32;
 	   "mov %0, %0, lsr %4\n"			\
 	   "orr %0, %0, %1, lsl %5\n"			\
 	   : "=&r" (cl), "=&r" (ch)			\
-	   : "r" (_a), "r" (_b), "i" (r), "i" (32-r));	\
+	   : "r" (_a), "r" (_b), "i" (r), "i" (32-(r)));\
       cl; })
 #elif defined(BFIN) && DEFAULT_RADIX == 16
 /* Blackfin magic */
