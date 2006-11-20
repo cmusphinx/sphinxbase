@@ -77,10 +77,10 @@
  * \brief Type signatures used in Sphinx. 
  * 
  * \warning As many people point out, the following definition will
- * easily confuse developers.  As it is possible that int32 can
- * actually be 64 bits. The length of a particular data type actually
- * depends on the host machine architecture, type of compiler and how
- * the compiler were compiled. 
+ * easily confuse developers.  It is possible (though EXTREMELY
+ * unlikely) that int32 can actually be 64 bits. The length of a
+ * particular data type actually depends on the host machine
+ * architecture, type of compiler and how the compiler were compiled.
  */
 #ifdef __cplusplus
 extern "C" {

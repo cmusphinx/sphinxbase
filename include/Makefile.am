@@ -31,6 +31,7 @@ pkginclude_HEADERS =				\
 	prim_type.h				\
 	profile.h				\
 	sphinx_config.h				\
+	sphinx_types.h				\
 	str2words.h				\
 	s3_arraylist.h				\
 	unlimit.h
