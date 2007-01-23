@@ -888,7 +888,7 @@ feat_init(char *type, cmn_type_t cmn, int32 varnorm, agc_type_t agc, int32 brepo
         fcb->window_size = 3;   /* FEAT_DCEP_WIN + 1 */
         fcb->compute_feat = feat_1s_c_d_dd_cep2feat;
     }
-    else if (strncmp(type, "cep_dcep", 8) == 0) {
+    else if (strncmp(type, "cep_dcep", 8) == 0 || strncmp(type, "1s_c_d", 6) == 0) {
         /* 1-stream cep/dcep */
         fcb->cepsize = cepsize;
         /* Check if using only a portion of cep dimensions */
@@ -907,7 +907,7 @@ feat_init(char *type, cmn_type_t cmn, int32 varnorm, agc_type_t agc, int32 brepo
         fcb->window_size = 2;
         fcb->compute_feat = feat_s3_cep_dcep;
     }
-    else if (strncmp(type, "cep", 3) == 0) {
+    else if (strncmp(type, "cep", 3) == 0 || strncmp(type, "1s_c", 4) == 0) {
         /* 1-stream cep */
         fcb->cepsize = cepsize;
         /* Check if using only a portion of cep dimensions */
