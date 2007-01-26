@@ -105,7 +105,7 @@ AC_ARG_WITH(alsa,
 
 if test "x$ad_files" = "x"; then
         case $host in
-                *-*-linux*)
+                *-*-linux*|*-*-uclinux*)
                         ad_files="ad_oss.lo"
                         ad_backend="AD_BACKEND_OSS"
 			AC_DEFINE(AD_BACKEND_OSS, [], [Use OSS interface for sound I/O])
