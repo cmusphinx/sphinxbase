@@ -33,7 +33,13 @@ If you downloaded a release version or if you have already run
     > ./configure
     > make
 
-You could also check the validity of the package by typing
+If you are compiling for a platform without floating-point arithmetic,
+you should instead use:
+
+    > ./configure --enable-fixed --without-lapack
+    > make
+
+You can also check the validity of the package by typing
 
     > make check 
 
@@ -41,7 +47,7 @@ and then install it with
 
     > make install
 
-This defaults to installing Sphinx-3 under /usr/local. You may
+This defaults to installing SphinxBase under /usr/local. You may
 customize it by running ./configure with an argument, as in
 
     >./configure --prefix=/my/own/installation/directory
@@ -51,7 +57,7 @@ Windows Installation:
 To compile sphinxbase in Visual C++ 6.0,
 1, unzip the file.
 2, rename the directory to sphinxbase
-3, go into the sphinxbase folder and click programs.dsw
+3, go into the sphinxbase folder and click sphinxbase.dsw
 4, in the menu, choose Build -> Rebuild All -> Batch Build -> Build
 
 In Step 4, make sure all projects are selected, preferably the
