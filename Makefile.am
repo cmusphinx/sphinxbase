@@ -11,6 +11,7 @@ EXTRA_DIST = autogen.sh				\
 	win32/libsphinxfe/libsphinxfe.dsp	\
 	win32/libsphinxfe/libsphinxfe.vcp	\
 	win32/libsphinxfeat/libsphinxfeat.dsp	\
+	win32/libsphinxfeat/libsphinxfeat.vcp	\
 	win32/libsphinxutil/libsphinxutil.dsp	\
 	win32/libsphinxutil/libsphinxutil.vcp	\
 	win32/sphinx_cepview/sphinx_cepview.dsp	\
