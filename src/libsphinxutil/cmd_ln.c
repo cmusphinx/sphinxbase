@@ -63,6 +63,14 @@
 #include <string.h>
 #include <assert.h>
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #include "cmd_ln.h"
 #include "err.h"
 #include "ckd_alloc.h"
@@ -95,6 +103,7 @@ static FILE orig_stdout, orig_stderr;
 #endif
 static FILE *logfp;
 
+static void arg_dump(FILE * fp, arg_t * defn, int32 doc);
 
 #if 0
 static const char *
@@ -291,13 +300,15 @@ cmd_ln_appl_enter(int argc, char *argv[], char *default_argfn,
                  logfile);
         }
         else {
-            /* ARCHAN: Do we still need this hack nowadays? */
+#ifdef HAVE_UNISTD_H
+	    dup2(fileno(logfp), 1);
+	    dup2(fileno(logfp), 2);
+#else /* !HAVE_UNISTD_H */
 #ifndef _WIN32_WCE
-            orig_stdout = *stdout;      /* Hack!! To avoid hanging problem under Linux */
-            orig_stderr = *stderr;      /* Hack!! To avoid hanging problem under Linux */
             *stdout = *logfp;
             *stderr = *logfp;
-#endif
+#endif /* !_WIN32_WCE */
+#endif /* !HAVE_UNISTD_H */
 
             E_INFO("Command line:\n");
             for (i = 0; i < argc; i++) {
@@ -307,6 +318,11 @@ cmd_ln_appl_enter(int argc, char *argv[], char *default_argfn,
             }
             printf("\n\n");
             fflush(stdout);
+            /* Make sure all messages go in order. */
+            setbuf(stdout, NULL);
+            /* Make sure the arguments go there too. */
+            arg_dump(logfp, defn, 0);
+
         }
     }
     /*
