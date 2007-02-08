@@ -59,11 +59,21 @@ cmn_prior_set(cmn_t *cmn, mfcc_t * vec)
 {
     int32 i;
 
+    E_INFO("cmn_prior_set: from < ");
+    for (i = 0; i < cmn->veclen; i++)
+        E_INFOCONT("%5.2f ", MFCC2FLOAT(cmn->cmn_mean[i]));
+    E_INFOCONT(">\n");
+
     for (i = 0; i < cmn->veclen; i++) {
         cmn->cmn_mean[i] = vec[i];
         cmn->sum[i] = vec[i] * CMN_WIN;
     }
     cmn->nframe = CMN_WIN;
+
+    E_INFO("cmn_prior_set: to   < ");
+    for (i = 0; i < cmn->veclen; i++)
+        E_INFOCONT("%5.2f ", MFCC2FLOAT(cmn->cmn_mean[i]));
+    E_INFOCONT(">\n");
 }
 
 void
