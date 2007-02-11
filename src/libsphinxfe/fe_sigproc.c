@@ -403,7 +403,21 @@ fe_spec_magnitude(frame_t const *data, int32 data_len,
     }
     fe_fft_real(fft, fftsize);
 
-    for (j = 0; j <= fftsize / 2; j++) {
+    /* The first point (DC coefficient) has no imaginary part */
+    {
+#ifdef FIXED_POINT
+        uint32 r = abs(fft[0]);
+#ifdef FIXED16
+        spec[0] = INTLOG(r) * 2;
+#else
+        spec[0] = FIXLOG(r) * 2;
+#endif /* !FIXED16 */
+#else /* !FIXED_POINT */
+        spec[0] = fft[0] * fft[0];
+#endif /* !FIXED_POINT */
+    }
+
+    for (j = 1; j <= fftsize / 2; j++) {
 #ifdef FIXED_POINT
         uint32 r = abs(fft[j]);
         uint32 i = abs(fft[fftsize - j]);
