@@ -5,6 +5,10 @@
 #include <assert.h>
 #include "f2c.h"
 
+#ifdef _WIN32
+#pragma warning (disable: 4244)
+#endif
+
 
 extern void
 s_wsfe(cilist * f)
@@ -30,6 +34,7 @@ s_rnge(char *var, int index, char *routine, int lineno)
             index, routine, lineno);
     fflush(stderr);
 	assert(2+2 == 5);
+	return 0;
 }
 
 
@@ -480,7 +485,7 @@ extern "C" {
             if (n == 0 || x == 1)
                 return 1;
             if (x != -1)
-                return x == 0 ? 1 / x : 0;
+                return x != 0 ? 1 / x : 0;
             n = -n;
         } u = n;
         for (pow = 1;;) {
