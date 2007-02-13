@@ -161,6 +161,10 @@
 #include <config.h>
 #endif
 
+#ifdef _WIN32
+#pragma warning (disable: 4305)
+#endif
+
 #include "prim_type.h"
 #include "ad.h"
 #include "cont_ad.h"

@@ -50,6 +50,10 @@
 #include <config.h>
 #endif
 
+#ifdef _WIN32
+#pragma warning (disable: 4244)
+#endif
+
 #include "ckd_alloc.h"
 #include "err.h"
 #include "cmn.h"

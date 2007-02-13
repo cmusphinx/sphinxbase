@@ -122,6 +122,10 @@
 #include <config.h>
 #endif
 
+#ifdef _WIN32
+#pragma warning (disable: 4244 4996)
+#endif
+
 #include "fe.h"
 #include "feat.h"
 #include "bio.h"

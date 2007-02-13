@@ -74,6 +74,10 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#ifdef _WIN32
+#pragma warning (disable: 4996) 
+#endif
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif

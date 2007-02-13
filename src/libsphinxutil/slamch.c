@@ -12,6 +12,10 @@
 
 #include "f2c.h"
 
+#ifdef _WIN32
+#pragma warning (disable: 4244)
+#endif
+
 /* Table of constant values */
 
 static integer c__1 = 1;

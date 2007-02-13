@@ -65,6 +65,10 @@
 
 #include "filename.h"
 
+#ifdef _WIN32
+#pragma warning (disable: 4996)
+#endif
+
 
 /* Strip off all leading pathname components */
 void

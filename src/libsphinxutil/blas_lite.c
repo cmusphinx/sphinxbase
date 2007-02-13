@@ -4,6 +4,10 @@ NOTE: This is generated code. Look in README.python for information on
 */
 #include "f2c.h"
 
+#ifdef _WIN32
+#pragma warning (disable: 4244)
+#endif
+
 #ifdef HAVE_CONFIG
 #include "config.h"
 #else

@@ -46,6 +46,10 @@
 #include <config.h>
 #endif
 
+#ifdef _WIN32
+#pragma warning (disable: 4018)
+#endif
+
 #include "feat.h"
 #include "ckd_alloc.h"
 #include "bio.h"

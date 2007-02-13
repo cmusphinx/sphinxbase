@@ -45,6 +45,10 @@
 #include <config.h>
 #endif
 
+#ifdef _WIN32
+#pragma warning (disable: 4244)
+#endif
+
 #include "prim_type.h"
 #include "fixpoint.h"
 #include "fe.h"

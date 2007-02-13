@@ -51,6 +51,10 @@
 #include <fcntl.h>
 #include <assert.h>
 
+#ifdef _WIN32
+#pragma warning (disable: 4996 4018)
+#endif
+
 #if defined(WIN32) && !defined(GNUWINCE)
 #include <io.h>
 #include <errno.h>

@@ -67,7 +67,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#if ((! WIN32) && (! _SGI_SOURCE))
+#if ((!defined(_WIN32)) && (!defined(_SGI_SOURCE)))
 #include <sys/errno.h>
 #else
 #include <errno.h>

@@ -89,6 +89,10 @@
 #include <string.h>
 #include <assert.h>
 
+#ifdef _WIN32
+#pragma warning (disable: 4018)
+#endif
+
 #include "hash_table.h"
 #include "err.h"
 #include "ckd_alloc.h"

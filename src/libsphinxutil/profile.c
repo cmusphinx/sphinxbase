@@ -74,6 +74,10 @@
 #include <time.h>
 #endif
 
+#ifdef _WIN32
+#pragma warning (disable: 4996)
+#endif
+
 #include "profile.h"
 #include "err.h"
 #include "ckd_alloc.h"

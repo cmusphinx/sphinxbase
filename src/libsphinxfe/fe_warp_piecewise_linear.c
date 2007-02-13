@@ -60,6 +60,10 @@
 #include <math.h>
 #include <string.h>
 
+#ifdef _WIN32
+#pragma warning (disable: 4996)
+#endif
+
 #include "err.h"
 #include "fe_warp.h"
 #include "fe_warp_piecewise_linear.h"

@@ -63,6 +63,10 @@
 #include <string.h>
 #include <assert.h>
 
+#ifdef _WIN32
+#pragma warning (disable: 4996 4018)
+#endif
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif

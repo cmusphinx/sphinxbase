@@ -89,6 +89,10 @@
 #include <string.h>
 #include <assert.h>
 
+#ifdef _WIN32
+#pragma warning (disable: 4996)
+#endif
+
 
 #include "ckd_alloc.h"
 #include "err.h"
