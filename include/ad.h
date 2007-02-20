@@ -275,6 +275,7 @@ typedef struct {
   PABLIO_Stream *astream;
   int32 sps;
   int32 bps;
+  int32 recording;
 } ad_rec_t;
 
 #else

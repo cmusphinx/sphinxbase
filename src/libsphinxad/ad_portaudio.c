@@ -91,6 +91,7 @@ ad_open(void)
 int32
 ad_start_rec(ad_rec_t * r)
 {
+    r->recording = 1;
     return 0;
 }
 
@@ -98,6 +99,7 @@ ad_start_rec(ad_rec_t * r)
 int32
 ad_stop_rec(ad_rec_t * r)
 {
+    r->recording = 0;
     return 0;
 }
 
@@ -105,11 +107,16 @@ ad_stop_rec(ad_rec_t * r)
 int32
 ad_read(ad_rec_t * r, int16 * buf, int32 max)
 {
-    if (r == NULL)
+    long to_read;
+
+    if (r == NULL || !r->recording)
         return -1;
 
-    ReadAudioStream(r->astream, buf, max);
-    return max;
+    to_read = GetAudioStreamReadable(r->astream);
+    if (to_read > max)
+	to_read = max;
+    ReadAudioStream(r->astream, buf, to_read);
+    return to_read;
 }
 
 
