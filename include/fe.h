@@ -57,6 +57,12 @@
 
 #include "fixpoint.h"
 
+#ifdef WORDS_BIGENDIAN
+#define NATIVE_ENDIAN "big"
+#else
+#define NATIVE_ENDIAN "little"
+#endif
+
 #define waveform_to_cepstral_command_line_macro() \
   { "-logspec", \
     ARG_BOOLEAN, \
@@ -140,7 +146,7 @@
    \
   { "-input_endian", \
     ARG_STRING, \
-    "little", \
+    NATIVE_ENDIAN, \
     "Endianness of input data, big or little, ignored if NIST or MS Wav" }, \
    \
   { "-warp_type", \
