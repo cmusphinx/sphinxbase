@@ -18,6 +18,9 @@
 /* Use OSS interface for sound I/O */
 #undef AD_BACKEND_OSS_BSD
 
+/* Use PortAudio interface for sound I/O */
+#undef AD_BACKEND_PORTAUDIO
+
 /* Use SunOS interface for sound I/O */
 #undef AD_BACKEND_SUNOS
 

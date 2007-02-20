@@ -129,6 +129,11 @@
 
 #include <dmedia/audio.h>
 
+#elif defined(AD_BACKEND_PORTAUDIO)
+
+#include "portaudio.h"
+#include "pablio.h"
+
 #endif
 
 #include "prim_type.h"
