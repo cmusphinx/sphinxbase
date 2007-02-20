@@ -2,6 +2,14 @@ lib_LTLIBRARIES = libsphinxutil.la
 
 libsphinxutil_la_LDFLAGS = -version-info 0:0:0
 
+if LAPACK_LITE
+LAPACK_LITE_SRCS = \
+	slamch.c \
+	slapack_lite.c \
+	blas_lite.c \
+	f2c_lite.c
+endif
+
 libsphinxutil_la_SOURCES = \
         bitvec.c \
 	bio.c \
@@ -22,15 +30,8 @@ libsphinxutil_la_SOURCES = \
         profile.c \
         str2words.c \
 	s3_arraylist.c \
-	unlimit.c
-
-if LAPACK_LITE
-libsphinxutil_la_SOURCES += \
-	slamch.c \
-	slapack_lite.c \
-	blas_lite.c \
-	f2c_lite.c
-endif
+	unlimit.c \
+	$(LAPACK_LITE_SRCS)
 
 EXTRA_DIST = \
 	slamch.c \

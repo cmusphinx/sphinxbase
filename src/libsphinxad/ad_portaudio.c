@@ -41,8 +41,11 @@
 
 #include <stdio.h>
 #include <string.h>
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
-#include "s3types.h"
+#include "sphinx_types.h"
 #include "ad.h"
 #include "pablio.h"
 
