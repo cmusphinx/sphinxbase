@@ -150,6 +150,7 @@ if test "x$ad_files" = "x"; then
                         ad_files="ad_portaudio.lo pa_convert.lo pa_lib.lo \
 			          pa_mac_core.lo pa_trace.lo pablio.lo ringbuffer.lo"
                         ad_backend="AD_BACKEND_PORTAUDIO"
+			ad_libs="-framework CoreAudio -framework AudioToolbox"
 			AC_DEFINE(AD_BACKEND_PORTAUDIO, [], [Use PortAudio interface for sound I/O])
                         ;;
                 *)
