@@ -323,7 +323,9 @@ cmd_ln_appl_enter(int argc, char *argv[], char *default_argfn,
             printf("\n\n");
             fflush(stdout);
             /* Make sure all messages go in order. */
+#ifndef _WIN32_WCE
             setbuf(stdout, NULL);
+#endif /* !_WIN32_WCE */
             /* Make sure the arguments go there too. */
             arg_dump(logfp, defn, 0);
 

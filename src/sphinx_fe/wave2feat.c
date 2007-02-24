@@ -866,12 +866,15 @@ fe_openfiles(globals_t * P, fe_t * FE, char *infile, int32 * fp_in,
         else if (P->input_format == MSWAV) {
             /* Read the header */
             MSWAV_hdr *hdr_buf;
+            /* MC: read till just before datatag */
+            const int hdr_len_to_read = ((char *) (&hdr_buf->datatag))
+                - (char *) hdr_buf;
             if ((hdr_buf =
                  (MSWAV_hdr *) calloc(1, sizeof(MSWAV_hdr))) == NULL) {
                 E_ERROR("Cannot allocate for input file header\n");
                 return (FE_INPUT_FILE_READ_ERROR);
             }
-            if (read(fp, hdr_buf, sizeof(MSWAV_hdr)) != sizeof(MSWAV_hdr)) {
+            if (read(fp,hdr_buf,hdr_len_to_read) != hdr_len_to_read){
                 E_ERROR("Cannot allocate for input file header\n");
                 return (FE_INPUT_FILE_READ_ERROR);
             }
@@ -881,10 +884,10 @@ fe_openfiles(globals_t * P, fe_t * FE, char *infile, int32 * fp_in,
                 E_ERROR("Error in mswav file header\n");
                 return (FE_INPUT_FILE_READ_ERROR);
             }
-            if (strncmp(hdr_buf->datatag, "data", 4) != 0) {
-                /* In this case, there are other "chunks" before the
-                 * data chunk, which we can ignore. We have to find the
-                 * start of the data chunk, which begins with the string
+            {
+                /* There may be other "chunks" before the data chunk,
+                 * which we can ignore. We have to find the start of
+                 * the data chunk, which begins with the string
                  * "data".
                  */
                 int16 found = 0;

@@ -108,7 +108,7 @@
 #include <w32api/windows.h>
 #include <w32api/mmsystem.h>
 
-#elif defined(WIN32) && !defined(GNUWINCE)
+#elif (defined(WIN32) && !defined(GNUWINCE)) || defined(_WIN32_WCE)
 
 #include <windows.h>
 #include <mmsystem.h>

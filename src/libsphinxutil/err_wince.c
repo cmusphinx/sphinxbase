@@ -50,24 +50,20 @@
 #include "err.h"
 #include "ckd_alloc.h"
 
-/* Borrowed from CMU Flite (I wrote it there too...) */
 int cst_verrmsg(const char *fmt, va_list args)
 {
-    WCHAR wmsg[256];
-    WCHAR *wfmt;
+    char msg[256];
+    WCHAR *wmsg;
     size_t len;
 
-    len = mbstowcs(NULL,fmt,0) + 1;
-    wfmt = ckd_calloc(len,sizeof(*wfmt));
-    mbstowcs(wfmt,fmt,len);
+    _vsnprintf(msg,256,fmt,args);
 
-    va_start(args,fmt);
-    _vsnwprintf(wmsg,256,wfmt,args);
-    va_end(args);
+    len = mbstowcs(NULL,msg,0) + 1;
+    wmsg = ckd_calloc(len,sizeof(*wmsg));
+    mbstowcs(wmsg,msg,len);
 
-    wmsg[255]=L'\0';
-    ckd_free(wfmt);
     OutputDebugStringW(wmsg);
+    ckd_free(wmsg);
     return 0;
 }
 
