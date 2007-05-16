@@ -358,7 +358,7 @@ void fe_init_params(param_t *P /** An allocated param_t structure */
  * Function that automatically initializes a front-end structure by reading
  * command-line arguments (cmd_ln.h)
  */
-fe_t* fe_init_auto();
+fe_t* fe_init_auto(void);
 
 /**
  * Function that initialize the routine 

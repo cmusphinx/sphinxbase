@@ -181,7 +181,7 @@ void cmd_ln_appl_enter(int argc,   /**< In: #Actual arguments */
  *argument file and argument list.  
  */
 
-void cmd_ln_appl_exit();
+void cmd_ln_appl_exit(void);
 
 /*
  * Return a pointer to the previously parsed value for the given argument name.
@@ -206,7 +206,7 @@ void  cmd_ln_print_help (FILE *fp,	/**< In: File to which to print */
 	);
 
 /* RAH, 4.17.01, call this to free memory allocated during cmd_ln_parse() */
-void cmd_ln_free ();
+void cmd_ln_free (void);
 
 #ifdef __cplusplus
 }
