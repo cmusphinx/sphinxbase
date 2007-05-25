@@ -183,6 +183,12 @@ void cmd_ln_appl_enter(int argc,   /**< In: #Actual arguments */
 
 void cmd_ln_appl_exit(void);
 
+/**
+ * Return a true value if the command line argument exists (i.e. it
+ * was one of the arguments defined in the call to cmd_ln_parse().
+ */
+int cmd_ln_exists(char *name);
+
 /*
  * Return a pointer to the previously parsed value for the given argument name.
  * The pointer should be cast to the appropriate type before use:

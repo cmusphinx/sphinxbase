@@ -649,6 +649,16 @@ cmd_ln_print_help(FILE * fp, arg_t * defn)
     arg_dump(fp, defn, 1);
 }
 
+int
+cmd_ln_exists(char *name)
+{
+    void *val;
+
+    if (!argval)
+        E_FATAL("cmd_ln_exists invoked before cmd_ln_parse\n");
+
+    return (hash_table_lookup(ht, name, &val) == 0);
+}
 
 const void *
 cmd_ln_access(char *name)
