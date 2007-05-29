@@ -1115,7 +1115,8 @@ feat_s2mfc2feat(feat_t * fcb, const char *file, const char *dir, const char *cep
     int32 file_length, cepext_length;
     mfcc_t **mfc;
 
-    assert(cepext);
+    if (cepext == NULL)
+        cepext = "";
 
     if (fcb->cepsize <= 0) {
         E_ERROR("Bad cepsize: %d\n", fcb->cepsize);
