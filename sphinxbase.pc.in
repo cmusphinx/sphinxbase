@@ -1,0 +1,13 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+libs="@LIBS@ @ad_libs@"
+
+Name: SphinxBase
+Description: Shared components for Sphinx speech recognition
+Version: @VERSION@
+URL: http://www.cmusphinx.org/
+Libs: -L${libdir} -lsphinxad -lsphinxfe -lsphinxfeat -lsphinxutil
+Libs.private: ${libs}
+Cflags: -I${includedir}/sphinxbase

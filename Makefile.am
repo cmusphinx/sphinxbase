@@ -4,6 +4,7 @@ SUBDIRS = src \
 	test
 
 EXTRA_DIST = autogen.sh				\
+	sphinxbase.pc.in			\
 	sphinxbase.dsw				\
 	sphinxbase.vcw				\
 	win32/libsphinxad/libsphinxad.dsp	\
@@ -17,8 +18,9 @@ EXTRA_DIST = autogen.sh				\
 	win32/sphinx_cepview/sphinx_cepview.dsp	\
 	win32/sphinx_fe/sphinx_fe.dsp
 
-AUTOMAKE_OPTIONS = dist-bzip2 \
-		   dist-zip
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = sphinxbase.pc
+CLEANFILES = sphinxbase.pc
 
 etags:
 	etags `find . -name "*.[ch]"`
