@@ -76,6 +76,7 @@
 #include <alsa/asoundlib.h>
 #include <errno.h>
 #include <config.h>
+#include <unistd.h>
 
 #include "prim_type.h"
 #include "ad.h"
@@ -252,7 +253,7 @@ ad_open_dev(const char *dev, int32 sps)
         return NULL;
     }
     if ((handle = (ad_rec_t *) calloc(1, sizeof(ad_rec_t))) == NULL) {
-        fprintf(stderr, "calloc(%ld) failed\n", sizeof(ad_rec_t));
+        fprintf(stderr, "calloc(%d) failed\n", (int)sizeof(ad_rec_t));
         abort();
     }
 
@@ -305,7 +306,11 @@ ad_start_rec(ad_rec_t * handle)
     if (handle->recording)
         return AD_ERR_GEN;
 
-    /* This is actually not necessary. */
+    err = snd_pcm_prepare(handle->dspH);
+    if (err < 0) {
+        fprintf(stderr, "snd_pcm_prepare failed: %s\n", snd_strerror(err));
+        return AD_ERR_GEN;
+    }
     err = snd_pcm_start(handle->dspH);
     if (err < 0) {
         fprintf(stderr, "snd_pcm_start failed: %s\n", snd_strerror(err));
@@ -333,7 +338,6 @@ ad_stop_rec(ad_rec_t * handle)
         fprintf(stderr, "snd_pcm_drop failed: %s\n", snd_strerror(err));
         return AD_ERR_GEN;
     }
-
     handle->recording = 0;
 
     return (0);
@@ -343,25 +347,43 @@ ad_stop_rec(ad_rec_t * handle)
 int32
 ad_read(ad_rec_t * handle, int16 * buf, int32 max)
 {
-    int32 length;
+    int32 length, err;
+
+    if (!handle->recording)
+	return AD_EOF;
 
     length = snd_pcm_readi(handle->dspH, buf, max);
     if (length == -EAGAIN) {
         length = 0;
     }
-    else if (length == -EPIPE || length == -ESTRPIPE) {
+    else if (length == -EPIPE) {
         fprintf(stderr, "Input overrrun (non-fatal)\n");
-        snd_pcm_prepare(handle->dspH);
+        err = snd_pcm_prepare(handle->dspH);
+	if (err < 0) {
+		fprintf(stderr, "Can't recover from underrun: %s\n",
+			snd_strerror(err));
+		return AD_ERR_GEN;
+	}
         length = 0;
     }
+    else if (length == -ESTRPIPE) {
+        fprintf(stderr, "Resuming sound driver (non-fatal)\n");
+	while ((err = snd_pcm_resume(handle->dspH)) == -EAGAIN)
+		usleep(10000); /* Wait for the driver to wake up */
+	if (err < 0) {
+		err = snd_pcm_prepare(handle->dspH);
+		if (err < 0) {
+			fprintf(stderr, "Can't recover from underrun: %s\n",
+				snd_strerror(err));
+			return AD_ERR_GEN;
+		}
+	}
+	length = 0;
+    }
     else if (length < 0) {
-        if (!handle->recording)
-            return AD_EOF;
-        else {
-            fprintf(stderr, "Audio read error: %s\n",
-                    snd_strerror(length));
-            return AD_ERR_GEN;
-        }
+	fprintf(stderr, "Audio read error: %s\n",
+		snd_strerror(length));
+	return AD_ERR_GEN;
     }
     return length;
 }

@@ -123,7 +123,7 @@
 
 #elif defined(AD_BACKEND_ALSA)
 
-#include <sys/asoundlib.h>
+#include <alsa/asoundlib.h>
 
 #elif defined(AD_BACKEND_IRIX)
 
