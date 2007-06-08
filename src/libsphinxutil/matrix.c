@@ -65,236 +65,91 @@ solve(float32 **a, float32 *b, float32 *out_x, int32   n)
     E_FATAL("No LAPACK library available, cannot solve linear equations (FIXME)\n");
     return 0;
 }
-int32
-eigenvectors(float32 **a,
-	     float32 *out_ur, float32 *out_ui,
-	     float32 **out_vr, float32 **out_vi,
-	     int32 len)
-{
-    E_FATAL("No LAPACK library available, cannot compute eigen-decomposition (FIXME)\n");
-    return 0;
-}
 #else /* WITH_LAPACK */
 /* Find determinant through LU decomposition. */
 float64
 determinant(float32 ** a, int32 n)
 {
-    float32 *tmp_a;
+    float32 **tmp_a;
     float64 det;
-    int32 M, N, LDA, INFO;
-    int32 *IPIV;
-    int32 i, j;
+    char uplo;
+    int32 info, i;
 
-    M = N = LDA = n;
+    /* a is assumed to be symmetric, so we don't need to switch the
+     * ordering of the data.  But we do need to copy it since it is
+     * overwritten by LAPACK. */
+    tmp_a = (float32 **)ckd_calloc_2d(n, n, sizeof(float32));
+    memcpy(tmp_a[0], a[0], n*n*sizeof(float32));
 
-    /* To use the f2c lapack function, row/column ordering of the
-       arrays need to be changed.  (FIXME: might be faster to do this
-       in-place twice?) */
-    tmp_a = (float32 *) ckd_calloc(N * N, sizeof(float32));
-    for (i = 0; i < N; i++)
-        for (j = 0; j < N; j++)
-            tmp_a[N * j + i] = a[i][j];
-
-    IPIV = (int32 *) ckd_calloc(N, sizeof(int32));
-    sgetrf_(&M, &N, tmp_a, &LDA, IPIV, &INFO);
-
-    det = IPIV[0] == 1 ? tmp_a[0] : -tmp_a[0];
-    for (i = 1; i < n; ++i) {
-        if (IPIV[i] != i + 1)
-            det *= -tmp_a[i + N * i];
-        else
-            det *= tmp_a[i + N * i];
-    }
-
-    ckd_free(tmp_a);
-    ckd_free(IPIV);
-
-    return det;
+    uplo = 'L';
+    spotrf_(&uplo, &n, tmp_a[0], &n, &info);
+    det = tmp_a[0][0];
+    /* det = prod(diag(l))^2 */
+    for (i = 1; i < n; ++i)
+	det *= tmp_a[i][i];
+    ckd_free_2d((void **)tmp_a);
+    if (info > 0)
+	return -1.0; /* Generic "not positive-definite" answer */
+    else
+	return det * det;
 }
-
-/* Solve x for equations Ax=b */
+
 int32
 solve(float32 **a, /*Input : an n*n matrix A */
       float32 *b,  /*Input : a n dimesion vector b */
       float32 *out_x,  /*Output : a n dimesion vector x */
       int32   n)
 {
-    float32 *tmp_l;
-    float32 *tmp_r;
-    int i, j;
-    int32 N, NRHS, LDA, LDB, INFO;
-    int32 *IPIV;
+    char uplo;
+    float32 **tmp_a;
+    int32 info, nrhs;
 
-    N=n;
-    NRHS=1;    
-    LDA=n;    
-    LDB=n;
+    /* a is assumed to be symmetric, so we don't need to switch the
+     * ordering of the data.  But we do need to copy it since it is
+     * overwritten by LAPACK. */
+    tmp_a = (float32 **)ckd_calloc_2d(n, n, sizeof(float32));
+    memcpy(tmp_a[0], a[0], n*n*sizeof(float32));
+    memcpy(out_x, b, n*sizeof(float32));
+    uplo = 'L';
+    nrhs = 1;
+    sposv_(&uplo, &n, &nrhs, tmp_a[0], &n, out_x, &n, &info);
+    ckd_free_2d((void **)tmp_a);
 
-    tmp_l = (float32 *)ckd_calloc(N * N, sizeof(float32));
-
-    /* To use the f2c lapack function, row/column ordering of the
-       arrays need to be changed. */
-    for (i = 0; i < N; i++) 
-	for (j = 0; j < N; j++) 
-	    tmp_l[N * j + i] = a[i][j]; 
-
-    tmp_r = (float32*) ckd_calloc(N, sizeof(float32));
-    for (i = 0; i < N; i++) 
-	tmp_r[i] = b[i];
-
-    IPIV = (int32 *)ckd_calloc(N, sizeof(int32));
-
-    /* Beware ! all arguments of lapack have to be a pointer */
-    sgesv_(&N, &NRHS, tmp_l,&LDA,IPIV,tmp_r, &LDB, &INFO);
-
-    for(i= 0 ; i< n ; i++){
-	out_x[i] = tmp_r[i]; 
-    }
-    
-    ckd_free ((void *)tmp_l);
-    ckd_free ((void *)tmp_r);
-    ckd_free ((void *)IPIV);
-
-    return INFO;
+    if (info != 0)
+	return -1;
+    else
+	return info;
 }
-
+
 /* Find inverse by solving AX=I. */
 int32
 invert(float32 ** ainv, float32 ** a, int32 n)
 {
-    float32 *tmp_a;
-    int i, j;
-    int32 N, NRHS, LDA, LDB, INFO;
-    int32 *IPIV;
-
-    N = n;
-    NRHS = n;
-    LDA = n;
-    LDB = n;
-
-    /* To use the f2c lapack function, row/column ordering of the
-       arrays need to be changed.  (FIXME: might be faster to do this
-       in-place twice?) */
-    tmp_a = (float32 *) ckd_calloc(N * N, sizeof(float32));
-    for (i = 0; i < N; i++)
-        for (j = 0; j < N; j++)
-            tmp_a[N * j + i] = a[i][j];
+    char uplo;
+    float32 **tmp_a;
+    int32 info, nrhs, i;
 
     /* Construct an identity matrix. */
-    memset(ainv[0], 0, sizeof(float32) * N * N);
-    for (i = 0; i < N; i++)
+    memset(ainv[0], 0, sizeof(float32) * n * n);
+    for (i = 0; i < n; i++)
         ainv[i][i] = 1.0;
+    /* a is assumed to be symmetric, so we don't need to switch the
+     * ordering of the data.  But we do need to copy it since it is
+     * overwritten by LAPACK. */
+    tmp_a = (float32 **)ckd_calloc_2d(n, n, sizeof(float32));
+    memcpy(tmp_a[0], a[0], n*n*sizeof(float32));
+    uplo = 'L';
+    nrhs = n;
+    sposv_(&uplo, &n, &nrhs, tmp_a[0], &n, ainv[0], &n, &info);
+    ckd_free_2d((void **)tmp_a);
 
-    IPIV = (int32 *) ckd_calloc(N, sizeof(int32));
-
-    /* Beware! all arguments of lapack have to be a pointer */
-    sgesv_(&N, &NRHS, tmp_a, &LDA, IPIV, ainv[0], &LDB, &INFO);
-
-    if (INFO != 0)
-        return -1;
-
-    /* Reorder the output in place. */
-    for (i = 0; i < n; ++i) {
-        for (j = i+1; j < n; ++j) {
-	    float32 tmp = ainv[i][j];
-            ainv[i][j] = ainv[j][i];
-	    ainv[j][i] = tmp;
-	}
-    }
-
-    ckd_free((void *) tmp_a);
-    ckd_free((void *) IPIV);
-
-    return 0;
-}
-
-int32
-eigenvectors(float32 **a,
-	     float32 *out_ur, float32 *out_ui,
-	     float32 **out_vr, float32 **out_vi,
-	     int32 len)
-{
-    float32 *tmp_a, *vr, *work, lwork;
-    int32 one, info, ilwork, all_real, i, j;
-    char no, yes;
-
-    /* Transpose A to FORTRAN format. */
-    tmp_a = ckd_calloc(len * len, sizeof(float32));
-    for (i = 0; i < len; i++)
-        for (j = 0; j < len; j++)
-            tmp_a[len * j + i] = a[i][j];
-
-    /* Right eigenvectors. */
-    vr = ckd_calloc(len * len, sizeof(float32));
-
-    /* Find the optimal workspace. */
-    one = 1;
-    no = 'N';
-    yes = 'V';
-    ilwork = -1;
-    sgeev_(&no, &yes, &len, tmp_a, &len, out_ur, out_ui, NULL,
-	   &one, vr, &len, &lwork, &ilwork, &info);
     if (info != 0)
-	E_FATAL("Failed to get workspace from SGEEV: %d\n", info);
-
-    /* Allocate workspace. */
-    ilwork = (int)lwork;
-    work = ckd_calloc(ilwork, sizeof(float32));
-
-    /* Actually calculate the eigenvectors. */
-    sgeev_(&no, &yes, &len, tmp_a, &len, out_ur, out_ui, NULL,
-	   &one, vr, &len, work, &ilwork, &info);
-    ckd_free(work);
-    ckd_free(tmp_a);
-
-    /* Reconstruct the outputs. */
-    /* Check if all eigenvalues are real. */
-    all_real = 1;
-    for (i = 0; i < len; i++) {
-	if (out_ui[i] != 0.0) {
-	    all_real = 0;
-	    break;
-	}
-    }
-
-    if (all_real) {
-	/* Then all eigenvectors are real. */
-	memset(out_vi[0], 0, sizeof(float32) * len * len);
-	/* We don't need to do anything because LAPACK places the
-	 * eigenvectors in the columns in FORTRAN order, which puts
-	 * them in the rows for us. */
-	memcpy(out_vr[0], vr, sizeof(float32) * len * len);
-    }
-    else {
-	for (i = 0; i < len; ++i) {
-	    if (out_ui[i] == 0.0) {
-		for (j = 0; j < len; ++j) {
-		    /* Again, see above: FORTRAN column order. */
-		    out_vr[i][j] = vr[i * len + j];
-		}
-	    }
-	    else {
-		/* There is a complex conjugate pair here. */
-		if (i < len-1) {
-		    for (j = 0; j < len; ++j) {
-			out_vr[i][j] = vr[i * len + j];
-			out_vi[i][j] = vr[(i + 1) * len + j];
-			out_vr[i+1][j] = vr[i * len + j];
-			out_vi[i+1][j] = -vr[(i+1) * len + j];
-		    }
-		    ++i;
-		}
-		else {
-		    E_FATAL("Complex eigenvalue at final index %d?!\n", len-1);
-		}
-	    }
-	}
-    }
-    ckd_free(vr);
-    return info;
+	return -1;
+    else
+	return info;
 }
 #endif /* WITH_LAPACK */
-
+
 void
 outerproduct(float32 ** a, float32 * x, float32 * y, int32 len)
 {
@@ -308,69 +163,41 @@ outerproduct(float32 ** a, float32 * x, float32 * y, int32 len)
         }
     }
 }
-
-void
-matrixmultiply(float32 ** c, float32 ** a, float32 ** b, int32 m, int32 n,
-               int32 k)
-{
-    int32 i, j, r;
 
-    /* FIXME: Probably faster to do this with SGEMM */
-    memset(c[0], 0, sizeof(float32) * m * n);
-    for (i = 0; i < m; ++i)
-        for (j = 0; j < n; ++j)
-            for (r = 0; r < k; ++r)
-                c[i][j] += a[i][r] * b[r][j];
-}
-
 void
-scalarmultiply(float32 ** a, float32 x, int32 m, int32 n)
+matrixmultiply(float32 ** c, float32 ** a, float32 ** b, int32 n)
+{
+    char side, uplo;
+    float32 alpha;
+
+    side = 'L';
+    uplo = 'L';
+    alpha = 1.0;
+    ssymm_(&side, &uplo, &n, &n, &alpha, a[0], &n, b[0], &n, &alpha, c[0], &n);
+}
+
+void
+scalarmultiply(float32 ** a, float32 x, int32 n)
 {
     int32 i, j;
 
-    for (i = 0; i < m; ++i)
-        for (j = 0; j < n; ++j)
-            a[i][j] *= x;
-}
-
-void
-matrixadd(float32 ** a, float32 ** b, int32 m, int32 n)
-{
-    int32 i, j;
-
-    for (i = 0; i < m; ++i)
-        for (j = 0; j < n; ++j)
-            a[i][j] += b[i][j];
-}
-
-void
-reshape(float32 ***inout_a,
-	int32 m, int32 n)
-{
-    float32 **tmp;
-
-    tmp = (float32 **)ckd_alloc_2d_ptr(m, n, **inout_a, sizeof(float32));
-    ckd_free(*inout_a);
-    *inout_a = tmp;
-}
-
-void
-transpose(float32 ***inout_a,
-	  int32 m, int32 n)
-{
-    float32 **new_a;
-    int32 i, j;
-    
-    /* FIXME: There must be a more efficient way but I can't think of
-     * it at the moment. */
-    new_a = (float32 **)ckd_calloc_2d(n, m, sizeof(float32));
     for (i = 0; i < n; ++i) {
-	for (j = 0; j < m; ++j) {
-	    new_a[i][j] = (*inout_a)[j][i];
+	a[i][i] *= x;
+        for (j = i+1; j < n; ++j) {
+            a[i][j] *= x;
+            a[j][i] *= x;
 	}
     }
-    ckd_free_2d((void **)*inout_a);
-    *inout_a = new_a;
+}
+
+void
+matrixadd(float32 ** a, float32 ** b, int32 n)
+{
+    int32 i, j;
+
+    for (i = 0; i < n; ++i)
+        for (j = 0; j < n; ++j)
+            a[i][j] += b[i][j];
 }
 
 

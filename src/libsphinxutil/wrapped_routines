@@ -1,8 +1,4 @@
-sgeev
-ssyevd
-sgelsd
-sgesv
-sgetrf
+ssymm
+sposv
 spotrf
-sgesdd
 IGNORE: slamch

@@ -3,5 +3,5 @@
 
 set -e
 ./test_solve > _test_solve.out
-diff _test_solve.out $tests/unit/test_matrix/_test_solve.res >/dev/null 2>&1
+compare_table solve _test_solve.out $tests/unit/test_matrix/_test_solve.res
 rm -f _test_solve.out

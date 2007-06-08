@@ -4,30 +4,19 @@
 
 #include "f2c.h"
  
-/* Subroutine */ int sgesv_(integer *n, integer *nrhs, real *a, integer *lda,
-			    integer *ipiv, real *b, integer *ldb, integer *info);
- 
-/* Subroutine */ int ssyevd_(char *jobz, char *uplo, integer *n, real *a,
-			     integer *lda, real *w, real *work, integer *lwork, integer *iwork,
-			     integer *liwork, integer *info);
- 
-/* Subroutine */ int sgelsd_(integer *m, integer *n, integer *nrhs, real *a,
-			     integer *lda, real *b, integer *ldb, real *s, real *rcond, integer *
-			     rank, real *work, integer *lwork, integer *iwork, integer *info);
- 
-/* Subroutine */ int sgetrf_(integer *m, integer *n, real *a, integer *lda,
-			     integer *ipiv, integer *info);
- 
-/* Subroutine */ int spotrf_(char *uplo, integer *n, real *a, integer *lda,
-			     integer *info);
- 
-/* Subroutine */ int sgesdd_(char *jobz, integer *m, integer *n, real *a,
-			     integer *lda, real *s, real *u, integer *ldu, real *vt, integer *ldvt,
-			     real *work, integer *lwork, integer *iwork, integer *info);
+/* Subroutine */ int sgemm_(char *transa, char *transb, integer *m, integer *
+                            n, integer *k, real *alpha, real *a, integer *lda, real *b, integer *
+                            ldb, real *beta, real *c__, integer *ldc);
+/* Subroutine */ int sgemv_(char *trans, integer *m, integer *n, real *alpha,
+                            real *a, integer *lda, real *x, integer *incx, real *beta, real *y,
+                            integer *incy);
+/* Subroutine */ int ssymm_(char *side, char *uplo, integer *m, integer *n,
+                            real *alpha, real *a, integer *lda, real *b, integer *ldb, real *beta,
+                            real *c__, integer *ldc);
 
-/* Subroutine */ int sgeev_(char *jobvl, char *jobvr, integer * n, real * a,
-			    integer * lda, real * wr, real * wi, real * vl, integer * ldvl,
-			    real * vr, integer * ldvr, real * work, integer * lwork,
-			    integer * info);
+/* Subroutine */ int sposv_(char *uplo, integer *n, integer *nrhs, real *a,
+                            integer *lda, real *b, integer *ldb, integer *info);
+/* Subroutine */ int spotrf_(char *uplo, integer *n, real *a, integer *lda,
+                             integer *info);
  
 #endif /* __CLAPACK_LITE_H */

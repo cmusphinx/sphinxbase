@@ -3,5 +3,5 @@
 
 set -e
 ./test_determinant | sed -e 's,-0\.0,0.0,g' > _test_determinant.out
-diff _test_determinant.out $tests/unit/test_matrix/_test_determinant.res >/dev/null 2>&1
+compare_table determinant _test_determinant.out $tests/unit/test_matrix/_test_determinant.res
 rm -f _test_determinant.out

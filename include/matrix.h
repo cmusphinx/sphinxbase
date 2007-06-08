@@ -48,7 +48,14 @@
 #define MATRIX_H
 
 /** \file matrix.h
-    \brief Matrix and linear algebra functions.
+ * \brief Matrix and linear algebra functions.
+ *
+ * This file contains some basic matrix and linear algebra operations.
+ * In general these operate on positive definite matrices ONLY,
+ * because all matrices we're likely to encounter are either
+ * covariance matrices or are derived from them, and therefore a
+ * non-positive-definite matrix indicates some kind of pathological
+ * condition.
  */
 #ifdef __cplusplus
 extern "C" {
@@ -61,50 +68,44 @@ extern "C" {
 #include "prim_type.h"
 
 /**
- * Calculate the determinant of a matrix.
- * @param a The input matrix, must be square.
+ * Calculate the determinant of a positive definite matrix.
+ * @param a The input matrix, must be positive definite.
  * @param len The dimension of the input matrix.
- * @return The determinant of the input matrix.
+ * @return The determinant of the input matrix, or -1.0 if the matrix is
+ * not positive definite.
  *
  * \note These can be vanishingly small hence the float64 return type.
+ * Also note that only the upper triangular portion of a is
+ * considered, therefore the check for positive-definiteness is not
+ * reliable.
  **/
 float64 determinant(float32 **a, int32 len);
 
 /**
- * Invert (if possible) a matrix.
+ * Invert (if possible) a positive definite matrix.
  * @param out_ainv The inverse of a will be stored here.
- * @param a The input matrix, must be square.
+ * @param a The input matrix, must be positive definite.
  * @param len The dimension of the input matrix.
- * @return 0 for success or -1 for a singular matrix.
+ * @return 0 for success or -1 for a non-positive-definite matrix.
+ *
+ * \note Only the upper triangular portion of a is considered,
+ * therefore the check for positive-definiteness is not reliable.
  **/
 int32 invert(float32 **out_ainv, float32 **a, int32 len);
 
 /**
- * Solve (if possible) a system of linear equations AX=B for X.
- * @param a The A matrix on the left-hand side of the equation.
+ * Solve (if possible) a positive-definite system of linear equations AX=B for X.
+ * @param a The A matrix on the left-hand side of the equation, must be positive-definite.
  * @param b The B vector on the right-hand side of the equation.
  * @param out_x The X vector will be stored here.
  * @param n The dimension of the A matrix (n by n) and the B and X vectors.
- * @return 0 for success or -1 for a singular matrix.
+ * @return 0 for success or -1 for a non-positive-definite matrix.
+ *
+ * \note Only the upper triangular portion of a is considered,
+ * therefore the check for positive-definiteness is not reliable.
  **/
 int32 solve(float32 **a, float32 *b,
             float32 *out_x, int32 n);
-
-/**
- * Decompose a matrix into eigenvectors and eigenvalues.
- * @param a The matrix to decompose.
- * @param out_ur The real part of the eigenvalues will be stored here.
- * @param out_ur The imaginary part of the eigenvalues will be stored here.
- * @param out_vr The real part of the eigenvectors will be stored here as row vectors.
- * @param out_vi The imaginary part of the eigenvalues will be stored here as row vectors.
- * @param len The dimension of a (and the outputs).
- * @return 0 for success, -1 for an error, or >0 for failure to
- * converge (the return value is the number of valid eigenvectors).
- **/
-int32 eigenvectors(float32 **a,
-                   float32 *out_ur, float32 *out_ui,
-                   float32 **out_vr, float32 **out_vi,
-                   int32 len);
 
 /**
  * Calculate the outer product of two vectors.
@@ -117,53 +118,31 @@ int32 eigenvectors(float32 **a,
 void outerproduct(float32 **out_a, float32 *x, float32 *y, int32 len);
 
 /**
- * Reshape a matrix in place.
- * @param inout_a Address of the matrix to reshape
- * @param m Number of rows to reshape to
- * @param n Number of columns to reshape to
- **/
-void reshape(float32 ***inout_a,
-             int32 m, int32 n);
-
-/**
- * Transpose a matrix in place.
- * @param inout_a Address of the matrix to transpose
- * @param m Number of rows in inout_a (becomes number of columns)
- * @param n Number of columns in inout_a (becomes number of rows)
- **/
-void transpose(float32 ***inout_a,
-               int32 m, int32 n);
-
-/**
- * Multiply C=AB.
+ * Multiply C=AB where A and B are symmetric matrices.
  * @param out_c The output matrix C.
  * @param a The input matrix A.
  * @param b The input matrix B.
  **/
 void matrixmultiply(float32 **out_c, /* = */
                     float32 **a, /* * */ float32 **b,
-                    int32 m, /**< #rows of a. */
-                    int32 n, /**< #cols of b. */
-                    int32 k  /**< #cols of a, #rows of b. */
+                    int32 n /**< dimension of a and b. */
     );
 
 /**
- * Multiply a matrix by a constant in-place.
+ * Multiply a symmetric matrix by a constant in-place.
  * @param inout_a The matrix to multiply.
  * @param x The constant to multiply it by.
- * @param m #rows of a.
- * @param n #columns of a.
+ * @param n dimension of a.
  **/
-void scalarmultiply(float32 **inout_a, float32 x, int32 m, int32 n);
+void scalarmultiply(float32 **inout_a, float32 x, int32 n);
 
 /**
  * Add A += B.
  * @param inout_a The A matrix to add.
  * @param b The B matrix to add to A.
- * @param m #rows of a and b
- * @param n #columns of a and b.
+ * @param n dimension of a and b.
  **/
-void matrixadd(float32 **inout_a, float32 **b, int32 m, int32 n);
+void matrixadd(float32 **inout_a, float32 **b, int32 n);
 
 #if 0
 { /* Fool indent. */

@@ -1,7 +1,7 @@
 # Utility functions and parameters for regression tests
 
 # Predefined directories you may need
-# Stupid broken RedHat autoconf doesn't do @abs_top_srcdir@
+# Stupid broken CMU Facilities autoconf doesn't do @abs_top_srcdir@
 builddir=../"@top_builddir@"
 sourcedir=../"@top_srcdir@"
 tests=$sourcedir/test
@@ -25,6 +25,16 @@ fail() {
     title="$1"
     echo "$title FAILED"
     failures="$failures,$title"
+}
+
+assert() {
+    title="$1"
+    shift
+    if $@ >/dev/null 2>&1; then
+	pass "$title"
+    else
+	fail "$title"
+    fi
 }
 
 compare_table() {
