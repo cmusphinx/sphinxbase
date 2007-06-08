@@ -3,5 +3,5 @@
 
 set -e
 ./deletehash -foo > _hash_delete5.out 2>&1 
-diff _hash_delete5.out $tests/unit/test_hash/_hash_delete5.res > /dev/null 2>&1
+compare_table delete5 _hash_delete5.out $tests/unit/test_hash/_hash_delete5.res
 rm -f _hash_delete5.out
