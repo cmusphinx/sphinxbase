@@ -11,5 +11,5 @@ LDADD = ${top_builddir}/src/libsphinxutil/libsphinxutil.la \
 
 
 TESTS = $(wildcard $(srcdir)/_*.test) 
-EXTRA_DIST = $(TESTS)
+EXTRA_DIST = $(TESTS) $(wildcard $(srcdir)/_*.res)
 CLEANFILES = *.out
