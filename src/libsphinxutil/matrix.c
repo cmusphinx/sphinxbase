@@ -65,6 +65,21 @@ solve(float32 **a, float32 *b, float32 *out_x, int32   n)
     E_FATAL("No LAPACK library available, cannot solve linear equations (FIXME)\n");
     return 0;
 }
+
+void
+matrixmultiply(float32 ** c, float32 ** a, float32 ** b, int32 n)
+{
+    int32 i, j, k;
+
+    memset(c[0], 0, n*n*sizeof(float32));
+    for (i = 0; i < n; ++i) {
+	for (j = 0; j < n; ++j) {
+	    for (k = 0; k < n; ++k) {
+		c[i][k] += a[i][j] * b[j][k];
+	    }
+	}
+    }
+}
 #else /* WITH_LAPACK */
 /* Find determinant through LU decomposition. */
 float64
@@ -148,6 +163,19 @@ invert(float32 ** ainv, float32 ** a, int32 n)
     else
 	return info;
 }
+
+void
+matrixmultiply(float32 ** c, float32 ** a, float32 ** b, int32 n)
+{
+    char side, uplo;
+    float32 alpha;
+
+    side = 'L';
+    uplo = 'L';
+    alpha = 1.0;
+    ssymm_(&side, &uplo, &n, &n, &alpha, a[0], &n, b[0], &n, &alpha, c[0], &n);
+}
+
 #endif /* WITH_LAPACK */
 
 void
@@ -162,18 +190,6 @@ outerproduct(float32 ** a, float32 * x, float32 * y, int32 len)
             a[j][i] = x[j] * y[i];
         }
     }
-}
-
-void
-matrixmultiply(float32 ** c, float32 ** a, float32 ** b, int32 n)
-{
-    char side, uplo;
-    float32 alpha;
-
-    side = 'L';
-    uplo = 'L';
-    alpha = 1.0;
-    ssymm_(&side, &uplo, &n, &n, &alpha, a[0], &n, b[0], &n, &alpha, c[0], &n);
 }
 
 void
