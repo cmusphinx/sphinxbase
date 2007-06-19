@@ -71,7 +71,6 @@
 #include <sys/resource.h>
 #else
 #include <windows.h>
-#include <time.h>
 #endif
 
 #ifdef _WIN32
@@ -240,9 +239,9 @@ ptmr_start(ptmr_t * tm)
     gettimeofday(&e_start, 0);
     tm->start_elapsed = make_sec(&e_start);
 #elif defined(_WIN32_WCE)
-	/* No GetProcessTimes() on WinCE.  (Note CPU time will be bogus) */
-	tm->start_cpu = GetTickCount() / 1000;
-	tm->start_elapsed = (float64) clock() / CLOCKS_PER_SEC;
+    /* No GetProcessTimes() on WinCE.  (Note CPU time will be bogus) */
+    tm->start_cpu = GetTickCount() / 1000;
+    tm->start_elapsed = GetTickCount() / 1000;
 #else
     HANDLE pid;
     FILETIME t_create, t_exit, kst, ust;
@@ -282,7 +281,7 @@ ptmr_stop(ptmr_t * tm)
 #elif defined(_WIN32_WCE)
 	/* No GetProcessTimes() on WinCE.  (Note CPU time will be bogus) */
 	dt_cpu = GetTickCount() / 1000 - tm->start_cpu;
-	dt_elapsed = ((float64) clock() / CLOCKS_PER_SEC) - tm->start_elapsed;
+	dt_elapsed = GetTickCount() / 1000 - tm->start_elapsed;
 #else
     HANDLE pid;
     FILETIME t_create, t_exit, kst, ust;

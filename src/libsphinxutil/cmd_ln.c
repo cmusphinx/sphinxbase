@@ -455,6 +455,7 @@ cmd_ln_parse(arg_t * defn, int32 argc, char *argv[])
         E_FATAL("Multiple sets of argument definitions not supported\n");
 
     /* Echo command line */
+#ifndef _WIN32_WCE
     E_INFO("Parsing command line:\n");
     for (i = 0; i < argc; i++) {
         if (argv[i][0] == '-')
@@ -463,6 +464,7 @@ cmd_ln_parse(arg_t * defn, int32 argc, char *argv[])
     }
     fprintf(stderr, "\n\n");
     fflush(stderr);
+#endif
 
     /* Find number of argument names in definition */
     for (n = 0; defn[n].name; n++);
@@ -544,9 +546,11 @@ cmd_ln_parse(arg_t * defn, int32 argc, char *argv[])
         goto error;
     }
 
+#ifndef _WIN32_WCE
     /* Print configuration */
     fprintf(stderr, "Current configuration:\n");
     arg_dump(stderr, defn, 0);
+#endif
 
     return 0;
 
@@ -573,6 +577,7 @@ cmd_ln_parse_file(arg_t * defn, char *filename)
     char str[ARG_MAX_LENGTH];
     int len = 0;
     int ch;
+    int quoting;
 
     int rv = 0;
 
@@ -592,10 +597,18 @@ cmd_ln_parse_file(arg_t * defn, char *filename)
     f_argv = ckd_calloc(argv_size, sizeof(char *));
     f_argv[0] = ckd_calloc(1, sizeof(char *));
     f_argv[0][0] = '\0';
+    quoting = 0;
 
     do {
         ch = fgetc(file);
-        if (ch == EOF || strchr(" \t\r\n", ch)) {
+        /* Handle quoted arguments */
+        if (ch == '"' || ch == '\'') {
+            if (quoting == ch) /* End a quoted section with the same type */
+                quoting = 0;
+            else
+                quoting = ch; /* Start a quoted section */
+        }
+        else if (ch == EOF || (!quoting && strchr(" \t\r\n", ch))) {
             /* reallocate argv so it is big enough to contain all the arguments */
             if (argc >= argv_size) {
                 if (!
@@ -617,7 +630,14 @@ cmd_ln_parse_file(arg_t * defn, char *filename)
             argc++;
 
             for (; ch != EOF && strchr(" \t\r\n", ch); ch = fgetc(file));
-            if (ch != EOF) {
+            /* Handle quoted arguments (FIXME: duplicated code... */
+            if (ch == '"' || ch == '\'') {
+                if (quoting == ch) /* End a quoted section with the same type */
+                    quoting = 0;
+                else
+                    quoting = ch; /* Start a quoted section */
+            }
+            else if (ch != EOF) {
                 str[len++] = ch;
             }
         }

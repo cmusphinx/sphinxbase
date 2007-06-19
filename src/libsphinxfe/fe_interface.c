@@ -39,7 +39,11 @@
 #include <math.h>
 #include <stdlib.h>
 #include <assert.h>
+#ifdef _WIN32_WCE
+#include <windows.h>
+#else
 #include <time.h>
+#endif
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
