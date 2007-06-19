@@ -2,6 +2,7 @@
 # Microsoft eMbedded Visual Tools Generated Build File, Format Version 6.02
 # ** DO NOT EDIT **
 
+# TARGTYPE "Win32 (WCE ARM) Static Library" 0x8504
 # TARGTYPE "Win32 (WCE ARMV4) Static Library" 0xa304
 # TARGTYPE "Win32 (WCE emulator) Static Library" 0xa604
 
@@ -22,6 +23,8 @@ CFG=libsphinxfeat - Win32 (WCE emulator) Debug
 !MESSAGE "libsphinxfeat - Win32 (WCE emulator) Debug" (based on "Win32 (WCE emulator) Static Library")
 !MESSAGE "libsphinxfeat - Win32 (WCE ARMV4) Release" (based on "Win32 (WCE ARMV4) Static Library")
 !MESSAGE "libsphinxfeat - Win32 (WCE ARMV4) Debug" (based on "Win32 (WCE ARMV4) Static Library")
+!MESSAGE "libsphinxfeat - Win32 (WCE ARM) Debug" (based on "Win32 (WCE ARM) Static Library")
+!MESSAGE "libsphinxfeat - Win32 (WCE ARM) Release" (based on "Win32 (WCE ARM) Static Library")
 !MESSAGE 
 
 # Begin Project
@@ -134,6 +137,58 @@ BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 
+!ELSEIF  "$(CFG)" == "libsphinxfeat - Win32 (WCE ARM) Debug"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 1
+# PROP BASE Output_Dir "ARMDbg"
+# PROP BASE Intermediate_Dir "ARMDbg"
+# PROP BASE CPU_ID "{D6518FFC-710F-11D3-99F2-00105A0DF099}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 1
+# PROP Output_Dir "../../lib/ARMDbg"
+# PROP Intermediate_Dir "ARMDbg"
+# PROP CPU_ID "{D6518FFC-710F-11D3-99F2-00105A0DF099}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=clarm.exe
+# ADD BASE CPP /nologo /W3 /Zi /Od /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /YX /M$(CECrtMTDebug) /c
+# ADD CPP /nologo /W3 /Zi /Od /I "../../include" /I "../../include/wince" /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "HAVE_CONFIG_H" /YX /M$(CECrtMTDebug) /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
+!ELSEIF  "$(CFG)" == "libsphinxfeat - Win32 (WCE ARM) Release"
+
+# PROP BASE Use_MFC 0
+# PROP BASE Use_Debug_Libraries 0
+# PROP BASE Output_Dir "ARMRel"
+# PROP BASE Intermediate_Dir "ARMRel"
+# PROP BASE CPU_ID "{D6518FFC-710F-11D3-99F2-00105A0DF099}"
+# PROP BASE Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP BASE Target_Dir ""
+# PROP Use_MFC 0
+# PROP Use_Debug_Libraries 0
+# PROP Output_Dir "../../lib/ARMRel"
+# PROP Intermediate_Dir "ARMRel"
+# PROP CPU_ID "{D6518FFC-710F-11D3-99F2-00105A0DF099}"
+# PROP Platform_ID "{8A9A2F80-6887-11D3-842E-005004848CBA}"
+# PROP Target_Dir ""
+CPP=clarm.exe
+# ADD BASE CPP /nologo /W3 /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "NDEBUG" /D "ARM" /D "_ARM_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /YX /Oxs /M$(CECrtMT) /c
+# ADD CPP /nologo /W3 /I "../../include" /I "../../include/wince" /D "NDEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "HAVE_CONFIG_H" /YX /Oxs /M$(CECrtMT) /c
+LIB32=link.exe -lib
+# ADD BASE LIB32 /nologo
+# ADD LIB32 /nologo
+BSC32=bscmake.exe
+# ADD BASE BSC32 /nologo
+# ADD BSC32 /nologo
+
 !ENDIF 
 
 # Begin Target
@@ -142,6 +197,8 @@ BSC32=bscmake.exe
 # Name "libsphinxfeat - Win32 (WCE emulator) Debug"
 # Name "libsphinxfeat - Win32 (WCE ARMV4) Release"
 # Name "libsphinxfeat - Win32 (WCE ARMV4) Debug"
+# Name "libsphinxfeat - Win32 (WCE ARM) Debug"
+# Name "libsphinxfeat - Win32 (WCE ARM) Release"
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
@@ -195,6 +252,36 @@ NODEP_CPP_AGC_C=\
 	
 
 !ELSEIF  "$(CFG)" == "libsphinxfeat - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_AGC_C=\
+	"..\..\include\agc.h"\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\err.h"\
+	"..\..\include\fe.h"\
+	"..\..\include\fixpoint.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\wince\config.h"\
+	
+NODEP_CPP_AGC_C=\
+	"..\..\include\dmalloc.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libsphinxfeat - Win32 (WCE ARM) Debug"
+
+DEP_CPP_AGC_C=\
+	"..\..\include\agc.h"\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\err.h"\
+	"..\..\include\fe.h"\
+	"..\..\include\fixpoint.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\wince\config.h"\
+	
+NODEP_CPP_AGC_C=\
+	"..\..\include\dmalloc.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libsphinxfeat - Win32 (WCE ARM) Release"
 
 DEP_CPP_AGC_C=\
 	"..\..\include\agc.h"\
@@ -276,6 +363,36 @@ NODEP_CPP_CMN_C=\
 	"..\..\include\dmalloc.h"\
 	
 
+!ELSEIF  "$(CFG)" == "libsphinxfeat - Win32 (WCE ARM) Debug"
+
+DEP_CPP_CMN_C=\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\cmn.h"\
+	"..\..\include\err.h"\
+	"..\..\include\fe.h"\
+	"..\..\include\fixpoint.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\wince\config.h"\
+	
+NODEP_CPP_CMN_C=\
+	"..\..\include\dmalloc.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libsphinxfeat - Win32 (WCE ARM) Release"
+
+DEP_CPP_CMN_C=\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\cmn.h"\
+	"..\..\include\err.h"\
+	"..\..\include\fe.h"\
+	"..\..\include\fixpoint.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\wince\config.h"\
+	
+NODEP_CPP_CMN_C=\
+	"..\..\include\dmalloc.h"\
+	
+
 !ENDIF 
 
 # End Source File
@@ -329,6 +446,36 @@ NODEP_CPP_CMN_P=\
 	
 
 !ELSEIF  "$(CFG)" == "libsphinxfeat - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_CMN_P=\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\cmn.h"\
+	"..\..\include\err.h"\
+	"..\..\include\fe.h"\
+	"..\..\include\fixpoint.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\wince\config.h"\
+	
+NODEP_CPP_CMN_P=\
+	"..\..\include\dmalloc.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libsphinxfeat - Win32 (WCE ARM) Debug"
+
+DEP_CPP_CMN_P=\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\cmn.h"\
+	"..\..\include\err.h"\
+	"..\..\include\fe.h"\
+	"..\..\include\fixpoint.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\wince\config.h"\
+	
+NODEP_CPP_CMN_P=\
+	"..\..\include\dmalloc.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libsphinxfeat - Win32 (WCE ARM) Release"
 
 DEP_CPP_CMN_P=\
 	"..\..\include\ckd_alloc.h"\
@@ -430,6 +577,46 @@ NODEP_CPP_FEAT_=\
 	"..\..\include\dmalloc.h"\
 	
 
+!ELSEIF  "$(CFG)" == "libsphinxfeat - Win32 (WCE ARM) Debug"
+
+DEP_CPP_FEAT_=\
+	"..\..\include\agc.h"\
+	"..\..\include\bio.h"\
+	"..\..\include\byteorder.h"\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\cmn.h"\
+	"..\..\include\err.h"\
+	"..\..\include\fe.h"\
+	"..\..\include\feat.h"\
+	"..\..\include\fixpoint.h"\
+	"..\..\include\pio.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\wince\config.h"\
+	
+NODEP_CPP_FEAT_=\
+	"..\..\include\dmalloc.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libsphinxfeat - Win32 (WCE ARM) Release"
+
+DEP_CPP_FEAT_=\
+	"..\..\include\agc.h"\
+	"..\..\include\bio.h"\
+	"..\..\include\byteorder.h"\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\cmn.h"\
+	"..\..\include\err.h"\
+	"..\..\include\fe.h"\
+	"..\..\include\feat.h"\
+	"..\..\include\fixpoint.h"\
+	"..\..\include\pio.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\wince\config.h"\
+	
+NODEP_CPP_FEAT_=\
+	"..\..\include\dmalloc.h"\
+	
+
 !ENDIF 
 
 # End Source File
@@ -495,6 +682,44 @@ NODEP_CPP_LDA_C=\
 	
 
 !ELSEIF  "$(CFG)" == "libsphinxfeat - Win32 (WCE ARMV4) Debug"
+
+DEP_CPP_LDA_C=\
+	"..\..\include\agc.h"\
+	"..\..\include\bio.h"\
+	"..\..\include\byteorder.h"\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\cmn.h"\
+	"..\..\include\err.h"\
+	"..\..\include\fe.h"\
+	"..\..\include\feat.h"\
+	"..\..\include\fixpoint.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\wince\config.h"\
+	
+NODEP_CPP_LDA_C=\
+	"..\..\include\dmalloc.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libsphinxfeat - Win32 (WCE ARM) Debug"
+
+DEP_CPP_LDA_C=\
+	"..\..\include\agc.h"\
+	"..\..\include\bio.h"\
+	"..\..\include\byteorder.h"\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\cmn.h"\
+	"..\..\include\err.h"\
+	"..\..\include\fe.h"\
+	"..\..\include\feat.h"\
+	"..\..\include\fixpoint.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\wince\config.h"\
+	
+NODEP_CPP_LDA_C=\
+	"..\..\include\dmalloc.h"\
+	
+
+!ELSEIF  "$(CFG)" == "libsphinxfeat - Win32 (WCE ARM) Release"
 
 DEP_CPP_LDA_C=\
 	"..\..\include\agc.h"\
