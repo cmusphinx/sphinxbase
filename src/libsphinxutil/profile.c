@@ -71,6 +71,7 @@
 #include <sys/resource.h>
 #else
 #include <windows.h>
+#include <time.h>
 #endif
 
 #ifdef _WIN32
