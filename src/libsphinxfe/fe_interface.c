@@ -161,6 +161,8 @@ fe_init_auto()
     p.warp_type = cmd_ln_str("-warp_type");
     p.warp_params = cmd_ln_str("-warp_params");
 
+    p.lifter_val = cmd_ln_int32("-lifter");
+
     return fe_init(&p);
 
 }

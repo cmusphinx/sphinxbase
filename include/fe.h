@@ -144,6 +144,11 @@
     "no", \
     "Use double bandwidth filters (same center freq)" }, \
    \
+  { "-lifter", \
+    ARG_INT32, \
+    "0", \
+    "Length of sin-curve for liftering, or 0 for no liftering." }, \
+   \
   { "-input_endian", \
     ARG_STRING, \
     NATIVE_ENDIAN, \
@@ -238,6 +243,7 @@ struct param_s {
     char *warp_type;
     char *warp_params;
     int32 transform;
+    int32 lifter_val;
 };
 
 /** Base Struct to hold all structure for MFCC computation. */
@@ -258,6 +264,9 @@ struct melfb_s {
     char *warp_params;
     /* Precomputed normalization constants for unitary DCT-II/DCT-III */
     mfcc_t sqrt_inv_n, sqrt_inv_2n;
+    /* Value and coefficients for HTK-style liftering */
+    int32 lifter_val;
+    mfcc_t *lifter;
 };
 
 /* sqrt(1/2), also used for unitary DCT-II/DCT-III */

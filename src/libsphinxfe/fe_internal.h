@@ -79,6 +79,7 @@ void fe_mel_cep(fe_t *FE, powspec_t *mfspec, mfcc_t *mfcep);
 void fe_spec2cep(fe_t * FE, const powspec_t * mflogspec, mfcc_t * mfcep);
 void fe_dct2(fe_t *FE, const powspec_t *mflogspec, mfcc_t *mfcep);
 void fe_dct3(fe_t *FE, const mfcc_t *mfcep, powspec_t *mflogspec);
+void fe_lifter(fe_t *FE, mfcc_t *mfcep);
 int32 fe_fft(complex const *in, complex *out, int32 N, int32 invert);
 int32 fe_fft_real(frame_t *x, int n);
 void fe_short_to_frame(int16 const *in, frame_t *out, int32 len);

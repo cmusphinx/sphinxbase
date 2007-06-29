@@ -246,6 +246,14 @@ fe_compute_melcosine(melfb_t * MEL_FB)
     MEL_FB->sqrt_inv_n = FLOAT2COS(sqrt(1.0 / MEL_FB->num_filters));
     MEL_FB->sqrt_inv_2n = FLOAT2COS(sqrt(2.0 / MEL_FB->num_filters));
 
+    /* And liftering weights */
+    if (MEL_FB->lifter_val) {
+        for (i = 0; i < MEL_FB->num_cepstra; ++i) {
+            MEL_FB->lifter[i] = FLOAT2FIX(1 + MEL_FB->lifter_val / 2
+                                          * sin(i * M_PI / MEL_FB->lifter_val));
+        }
+    }
+
     return (0);
 }
 
@@ -373,6 +381,7 @@ fe_frame_to_fea(fe_t * FE, frame_t * in, mfcc_t * fea)
         fe_spec_magnitude(in, FE->FRAME_SIZE, spec, FE->FFT_SIZE);
         fe_mel_spec(FE, spec, mfspec);
         fe_mel_cep(FE, mfspec, fea);
+        fe_lifter(FE, fea);
 
         free(spec);
         free(mfspec);
@@ -522,6 +531,7 @@ fe_mel_cep(fe_t * FE, powspec_t * mfspec, mfcc_t * mfcep)
         fe_dct2(FE, mfspec, mfcep);
     else
         fe_spec2cep(FE, mfspec, mfcep);
+
     return;
 }
 
@@ -573,6 +583,19 @@ fe_dct2(fe_t * FE, const powspec_t * mflogspec, mfcc_t * mfcep)
 				FE->MEL_FB->mel_cosine[i][j]);
         }
         mfcep[i] = COSMUL(mfcep[i], FE->MEL_FB->sqrt_inv_2n);
+    }
+}
+
+void
+fe_lifter(fe_t *FE, mfcc_t *mfcep)
+{
+    int32 i;
+
+    if (FE->MEL_FB->lifter_val == 0)
+        return;
+
+    for (i = 0; i < FE->NUM_CEPSTRA; ++i) {
+        mfcep[i] = FIXMUL(mfcep[i], FE->MEL_FB->lifter[i]);
     }
 }
 
@@ -984,6 +1007,7 @@ fe_parse_melfb_params(param_t const *P, melfb_t * MEL)
         MEL->warp_type = P->warp_type;
     }
     MEL->warp_params = P->warp_params;
+    MEL->lifter_val = P->lifter_val;
 
     if (fe_warp_set(MEL->warp_type) != FE_SUCCESS) {
         E_FATAL("Failed to initialize the warping function.\n");
