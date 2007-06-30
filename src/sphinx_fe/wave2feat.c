@@ -653,6 +653,7 @@ fe_parse_options(int32 argc, char **argv)
             E_FATAL("Input must be big or little Endian\n");
         }
     }
+    P->params.lifter_val = cmd_ln_int32("-lifter");
     P->params.seed = cmd_ln_int32("-seed");
     P->params.dither = cmd_ln_boolean("-dither");
 

@@ -172,7 +172,7 @@ fe_build_melfilters(melfb_t * MEL_FB)
         /* Round to the nearest integer instead of truncating and adding
            one, which breaks if the divide is already an integer */
         start_pt = (int32) (leftfr / dfreq + 0.5);
-        freq = (float32) start_pt *dfreq;
+        freq = (float32) start_pt * dfreq;
         i = 0;
 
         while (freq < centerfr) {
@@ -248,9 +248,10 @@ fe_compute_melcosine(melfb_t * MEL_FB)
 
     /* And liftering weights */
     if (MEL_FB->lifter_val) {
+        MEL_FB->lifter = calloc(MEL_FB->num_cepstra, sizeof(*MEL_FB->lifter));
         for (i = 0; i < MEL_FB->num_cepstra; ++i) {
-            MEL_FB->lifter[i] = FLOAT2FIX(1 + MEL_FB->lifter_val / 2
-                                          * sin(i * M_PI / MEL_FB->lifter_val));
+            MEL_FB->lifter[i] = FLOAT2MFCC(1 + MEL_FB->lifter_val / 2
+                                           * sin(i * M_PI / MEL_FB->lifter_val));
         }
     }
 
@@ -574,6 +575,7 @@ fe_dct2(fe_t * FE, const powspec_t * mflogspec, mfcc_t * mfcep)
     mfcep[0] = mflogspec[0];
     for (j = 1; j < FE->MEL_FB->num_filters; j++)
 	mfcep[0] += mflogspec[j];
+    /* sqrt(1/N) = sqrt(2/N) * 1/sqrt(2) */
     mfcep[0] = COSMUL(mfcep[0], FE->MEL_FB->sqrt_inv_n);
 
     for (i = 1; i < FE->NUM_CEPSTRA; ++i) {
@@ -595,7 +597,7 @@ fe_lifter(fe_t *FE, mfcc_t *mfcep)
         return;
 
     for (i = 0; i < FE->NUM_CEPSTRA; ++i) {
-        mfcep[i] = FIXMUL(mfcep[i], FE->MEL_FB->lifter[i]);
+        mfcep[i] = MFCCMUL(mfcep[i], FE->MEL_FB->lifter[i]);
     }
 }
 
@@ -1036,6 +1038,10 @@ fe_print_current(fe_t const *FE)
     }
     else {
         E_INFO("Will not add dither to audio\n");
+    }
+    if (FE->MEL_FB->lifter_val) {
+        E_INFO("Will apply sine-curve liftering, period %d\n",
+               FE->MEL_FB->lifter_val);
     }
     if (FE->MEL_FB->doublewide) {
         E_INFO("Will use double bandwidth in mel filter\n");

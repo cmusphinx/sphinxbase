@@ -570,6 +570,8 @@ fe_close(fe_t * FE)
     if (FE->FB_TYPE == MEL_SCALE) {
         fe_free_2d((void *) FE->MEL_FB->filter_coeffs);
         fe_free_2d((void *) FE->MEL_FB->mel_cosine);
+        if (FE->MEL_FB->lifter)
+            free(FE->MEL_FB->lifter);
         free(FE->MEL_FB->left_apex);
         free(FE->MEL_FB->width);
         free(FE->MEL_FB);
