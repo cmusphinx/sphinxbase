@@ -147,6 +147,8 @@ fe_init_auto()
     if (cmd_ln_boolean("-smoothspec"))
         p.logspec = SMOOTH_LOG_SPEC;
     p.doublebw = cmd_ln_boolean("-doublebw");
+    p.unit_area = cmd_ln_boolean("-unit_area");
+    p.round_filters = cmd_ln_boolean("-round_filters");
     p.verbose = cmd_ln_boolean("-verbose");
 
     if (0 == strcmp(cmd_ln_str("-transform"), "dct"))

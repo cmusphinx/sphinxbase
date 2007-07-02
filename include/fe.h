@@ -1,3 +1,4 @@
+/* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* ====================================================================
  * Copyright (c) 1996-2004 Carnegie Mellon University.  All rights 
  * reserved.
@@ -134,6 +135,16 @@
     ARG_STRINGIFY(DEFAULT_UPPER_FILT_FREQ), \
     "Upper edge of filters" }, \
    \
+  { "-unit_area", \
+    ARG_BOOLEAN, \
+    "yes", \
+    "Normalize mel filters to unit area" }, \
+   \
+  { "-round_filters", \
+    ARG_BOOLEAN, \
+    "yes", \
+    "Round mel filter frequencies to DFT points" }, \
+   \
   { "-ncep", \
     ARG_INT32, \
     ARG_STRINGIFY(DEFAULT_NUM_CEPSTRA), \
@@ -244,6 +255,8 @@ struct param_s {
     char *warp_params;
     int32 transform;
     int32 lifter_val;
+    int32 unit_area;
+    int32 round_filters;
 };
 
 /** Base Struct to hold all structure for MFCC computation. */
@@ -257,7 +270,7 @@ struct melfb_s {
     float32 upper_filt_freq;
     mfcc_t **filter_coeffs;
     mfcc_t **mel_cosine;
-    mfcc_t *left_apex;
+    int32 *left_apex;
     int32 *width;
     int32 doublewide;
     char *warp_type;
@@ -267,6 +280,11 @@ struct melfb_s {
     /* Value and coefficients for HTK-style liftering */
     int32 lifter_val;
     mfcc_t *lifter;
+    /* Normalize filters to unit area */
+    int32 unit_area;
+    /* Round filter frequencies to DFT points (hurts accuracy, but is
+       useful for legacy purposes) */
+    int32 round_filters;
 };
 
 /* sqrt(1/2), also used for unitary DCT-II/DCT-III */

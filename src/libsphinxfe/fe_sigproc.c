@@ -67,45 +67,31 @@
 #define COSMUL(x,y) ((x)*(y))
 #endif
 
-
 int32
-fe_build_melfilters(melfb_t * MEL_FB)
+fe_build_melfilters(melfb_t *MEL_FB)
 {
-    int32 i, whichfilt, start_pt;
-    float32 leftfr, centerfr, rightfr, fwidth, height, *filt_edge;
-    float32 melmax, melmin, dmelbw, freq, dfreq, leftslope =
-        0, rightslope = 0;
+    int32 i, j;
+    float32 fftfreq, melmin, melmax, melbw, loslope, hislope;
 
-    /*estimate filter coefficients */
+    /* Filter coefficient matrix */
+    /* FIXME: This is much larger than it needs to be. */
     MEL_FB->filter_coeffs =
-        (mfcc_t **) fe_create_2d(MEL_FB->num_filters, MEL_FB->fft_size,
+        (mfcc_t **) fe_create_2d(MEL_FB->num_filters, MEL_FB->fft_size/2+1,
                                  sizeof(mfcc_t));
+    /* Left edge of filter coefficients, in FFT points */
     MEL_FB->left_apex =
-        (mfcc_t *) calloc(MEL_FB->num_filters, sizeof(mfcc_t));
+        (int32 *) calloc(MEL_FB->num_filters, sizeof(int32));
+    /* Width of filter, in FFT points */
     MEL_FB->width = (int32 *) calloc(MEL_FB->num_filters, sizeof(int32));
 
-    if (MEL_FB->doublewide)
-        filt_edge =
-            (float32 *) calloc(MEL_FB->num_filters + 4, sizeof(float32));
-    else
-        filt_edge =
-            (float32 *) calloc(MEL_FB->num_filters + 2, sizeof(float32));
-
-    if (MEL_FB->filter_coeffs == NULL || MEL_FB->left_apex == NULL
-        || MEL_FB->width == NULL || filt_edge == NULL) {
-        E_WARN("memory alloc failed in fe_build_mel_filters()\n");
-        return FE_MEM_ALLOC_ERROR;
-    }
-
-    dfreq = MEL_FB->sampling_rate / (float32) MEL_FB->fft_size;
-
-    melmax = fe_mel(MEL_FB->upper_filt_freq);
+    /* Minimum and maximum frequencies in mel scale */
     melmin = fe_mel(MEL_FB->lower_filt_freq);
-    dmelbw = (melmax - melmin) / (MEL_FB->num_filters + 1);
-
+    melmax = fe_mel(MEL_FB->upper_filt_freq);
+    /* Width of filters in mel scale */
+    melbw = (melmax - melmin) / (MEL_FB->num_filters + 1);
     if (MEL_FB->doublewide) {
-        melmin = melmin - dmelbw;
-        melmax = melmax + dmelbw;
+        melmin -= melbw;
+        melmax += melbw;
         if ((fe_melinv(melmin) < 0) ||
             (fe_melinv(melmax) > MEL_FB->sampling_rate / 2)) {
             E_WARN
@@ -118,101 +104,63 @@ fe_build_melfilters(melfb_t * MEL_FB)
         }
     }
 
-    if (MEL_FB->doublewide) {
-        for (i = 0; i <= MEL_FB->num_filters + 3; ++i) {
-            filt_edge[i] = fe_melinv(i * dmelbw + melmin);
-        }
-    }
-    else {
-        for (i = 0; i <= MEL_FB->num_filters + 1; ++i) {
-            filt_edge[i] = fe_melinv(i * dmelbw + melmin);
-        }
-    }
+    /* FFT point spacing */
+    fftfreq = MEL_FB->sampling_rate / (float32) MEL_FB->fft_size;
 
-    for (whichfilt = 0; whichfilt < MEL_FB->num_filters; ++whichfilt) {
-        /*line triangle edges up with nearest dft points... */
-        if (MEL_FB->doublewide) {
-            leftfr = (float32) ((int32)
-                                ((filt_edge[whichfilt] /
-                                  dfreq) + 0.5)) * dfreq;
-            centerfr = (float32) ((int32)
-                                  ((filt_edge[whichfilt + 2] /
-                                    dfreq) + 0.5)) * dfreq;
-            rightfr = (float32) ((int32)
-                                 ((filt_edge[whichfilt + 4] /
-                                   dfreq) + 0.5)) * dfreq;
-        }
-        else {
-            leftfr = (float32) ((int32)
-                                ((filt_edge[whichfilt] /
-                                  dfreq) + 0.5)) * dfreq;
-            centerfr = (float32) ((int32)
-                                  ((filt_edge[whichfilt + 1] /
-                                    dfreq) + 0.5)) * dfreq;
-            rightfr = (float32) ((int32)
-                                 ((filt_edge[whichfilt + 2] /
-                                   dfreq) + 0.5)) * dfreq;
-        }
-#ifdef FIXED_POINT
-        MEL_FB->left_apex[whichfilt] = (int32) (leftfr + 0.5);
-#else                           /* FIXED_POINT */
-        MEL_FB->left_apex[whichfilt] = leftfr;
-#endif                          /* FIXED_POINT */
-        fwidth = rightfr - leftfr;
+    /* Construct filter coefficients */
+    for (i = 0; i < MEL_FB->num_filters; ++i) {
+        float32 freqs[3];
 
-        /* 2/fwidth for triangles of area 1 */
-        height = 2 / (float32) fwidth;
-        if (centerfr != leftfr) {
-            leftslope = height / (centerfr - leftfr);
-        }
-        if (centerfr != rightfr) {
-            rightslope = height / (centerfr - rightfr);
+        /* Left, center, right frequencies in Hertz */
+        for (j = 0; j < 3; ++j) {
+            if (MEL_FB->doublewide)
+                freqs[j] = fe_melinv((i + j * 2) * melbw + melmin);
+            else
+                freqs[j] = fe_melinv((i + j) * melbw + melmin);
+            if (MEL_FB->round_filters)
+                freqs[j] = ((int)(freqs[j] / fftfreq + 0.5)) * fftfreq;
         }
 
-        /* Round to the nearest integer instead of truncating and adding
-           one, which breaks if the divide is already an integer */
-        start_pt = (int32) (leftfr / dfreq + 0.5);
-        freq = (float32) start_pt * dfreq;
-        i = 0;
+        MEL_FB->left_apex[i] = -1;
+        MEL_FB->width[i] = -1;
+        /* printf("filter %d (%f, %f, %f): ", i, freqs[0], freqs[1], freqs[2]); */
+        for (j = 0; j < MEL_FB->fft_size/2+1; ++j) {
+            float32 hz;
 
-        while (freq < centerfr) {
+            hz = j * fftfreq;
+            if (hz < freqs[0] || hz > freqs[2])
+                continue;
+            if (MEL_FB->left_apex[i] == -1)
+                MEL_FB->left_apex[i] = j;
+            MEL_FB->width[i] = j - MEL_FB->left_apex[i] + 1;
+            loslope = (hz - freqs[0]) / (freqs[1] - freqs[0]);
+            hislope = (freqs[2] - hz) / (freqs[2] - freqs[1]);
+            if (MEL_FB->unit_area) {
+                loslope *= 2 / (freqs[2] - freqs[0]);
+                hislope *= 2 / (freqs[2] - freqs[0]);
+            }
+            if (loslope < hislope) {
 #ifdef FIXED_POINT
-            MEL_FB->filter_coeffs[whichfilt][i] =
-                FE_LOG((freq - leftfr) * leftslope);
-#else                           /* FIXED_POINT */
-            MEL_FB->filter_coeffs[whichfilt][i] =
-                FLOAT2MFCC((freq - leftfr) * leftslope);
-#endif                          /* FIXED_POINT */
-            freq += dfreq;
-            i++;
-        }
-        /* If the two floats are equal, the leftslope computation above
-           results in Inf, so we handle the case here. */
-        if (freq == centerfr) {
+                MEL_FB->filter_coeffs[i][j - MEL_FB->left_apex[i]] = FE_LOG(loslope);
+#else
+                MEL_FB->filter_coeffs[i][j - MEL_FB->left_apex[i]] = loslope;
+#endif
+                /* printf("%f ", loslope); */
+            }
+            else {
 #ifdef FIXED_POINT
-            MEL_FB->filter_coeffs[whichfilt][i] = FE_LOG(height);
-#else                           /* FIXED_POINT */
-            MEL_FB->filter_coeffs[whichfilt][i] = FLOAT2MFCC(height);
-#endif                          /* FIXED_POINT */
-            freq += dfreq;
-            i++;
+                MEL_FB->filter_coeffs[i][j - MEL_FB->left_apex[i]] = FE_LOG(hislope);
+#else
+                MEL_FB->filter_coeffs[i][j - MEL_FB->left_apex[i]] = hislope;
+#endif
+                /* printf("%f ", hislope); */
+            }
         }
-        while (freq < rightfr) {
-#ifdef FIXED_POINT
-            MEL_FB->filter_coeffs[whichfilt][i] =
-                FE_LOG((freq - rightfr) * rightslope);
-#else                           /* FIXED_POINT */
-            MEL_FB->filter_coeffs[whichfilt][i] =
-                FLOAT2MFCC((freq - rightfr) * rightslope);
-#endif                          /* FIXED_POINT */
-            freq += dfreq;
-            i++;
-        }
-        MEL_FB->width[whichfilt] = i;
+        /* printf("\n"); */
+        /* printf("left_apex %d width %d\n", MEL_FB->left_apex[i], MEL_FB->width[i]); */
     }
 
-    free(filt_edge);
-    return (0);
+    return FE_SUCCESS;
 }
 
 int32
@@ -457,23 +405,10 @@ void
 fe_mel_spec(fe_t * FE, powspec_t const *spec, powspec_t * mfspec)
 {
     int32 whichfilt, start, i;
-#ifdef FIXED_POINT
-    int32 dfreq = FE->SAMPLING_RATE / FE->FFT_SIZE;
-#else                           /* FIXED_POINT */
-    float32 dfreq = FE->SAMPLING_RATE / (float32) FE->FFT_SIZE;
-#endif                          /* FIXED_POINT */
 
     for (whichfilt = 0; whichfilt < FE->MEL_FB->num_filters; whichfilt++) {
-#ifdef FIXED_POINT
-        /* There is an implicit floor here instead of rounding, hope
-         * it doesn't break stuff... */
-        start = FE->MEL_FB->left_apex[whichfilt] / dfreq;
-#else                           /* FIXED_POINT */
-        /* Round to the nearest integer instead of truncating and
-           adding one, which breaks if the divide is already an
-           integer */
-        start = (int32) (FE->MEL_FB->left_apex[whichfilt] / dfreq + 0.5);
-#endif                          /* FIXED_POINT */
+        start = FE->MEL_FB->left_apex[whichfilt];
+
 #ifdef FIXED_POINT
         mfspec[whichfilt] = spec[start]
             + FE->MEL_FB->filter_coeffs[whichfilt][0];
@@ -997,10 +932,7 @@ fe_parse_melfb_params(param_t const *P, melfb_t * MEL)
         }
     }
 
-    if (P->doublebw)
-        MEL->doublewide = 1;
-    else
-        MEL->doublewide = 0;
+    MEL->doublewide = P->doublebw;
 
     if (P->warp_type == NULL) {
         MEL->warp_type = DEFAULT_WARP_TYPE;
@@ -1010,6 +942,8 @@ fe_parse_melfb_params(param_t const *P, melfb_t * MEL)
     }
     MEL->warp_params = P->warp_params;
     MEL->lifter_val = P->lifter_val;
+    MEL->unit_area = P->unit_area;
+    MEL->round_filters = P->round_filters;
 
     if (fe_warp_set(MEL->warp_type) != FE_SUCCESS) {
         E_FATAL("Failed to initialize the warping function.\n");
@@ -1043,10 +977,10 @@ fe_print_current(fe_t const *FE)
         E_INFO("Will apply sine-curve liftering, period %d\n",
                FE->MEL_FB->lifter_val);
     }
-    if (FE->MEL_FB->doublewide) {
-        E_INFO("Will use double bandwidth in mel filter\n");
-    }
-    else {
-        E_INFO("Will not use double bandwidth in mel filter\n");
-    }
+    E_INFO("Will %snormalize filters to unit area\n",
+           FE->MEL_FB->unit_area ? "" : "not ");
+    E_INFO("Will %sround filter frequencies to DFT points\n",
+           FE->MEL_FB->round_filters ? "" : "not ");
+    E_INFO("Will %suse double bandwidth in mel filter\n",
+           FE->MEL_FB->doublewide ? "" : "not ");
 }
