@@ -84,6 +84,13 @@ fe_build_melfilters(melfb_t *MEL_FB)
     /* Width of filter, in FFT points */
     MEL_FB->width = (int32 *) calloc(MEL_FB->num_filters, sizeof(int32));
 
+    if (MEL_FB->filter_coeffs == NULL
+        || MEL_FB->left_apex == NULL
+        || MEL_FB->width == NULL) {
+        E_WARN("memory alloc failed in fe_build_melfilters()\n");
+        return FE_MEM_ALLOC_ERROR;
+    }
+
     /* Minimum and maximum frequencies in mel scale */
     melmin = fe_mel(MEL_FB->lower_filt_freq);
     melmax = fe_mel(MEL_FB->upper_filt_freq);
