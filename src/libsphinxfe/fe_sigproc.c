@@ -474,14 +474,16 @@ fe_mel_cep(fe_t * FE, powspec_t * mfspec, mfcc_t * mfcep)
     /* For smoothed spectrum, do DCT-II followed by (its inverse) DCT-III */
     else if (FE->LOG_SPEC == SMOOTH_LOG_SPEC) {
         /* FIXME: This is probably broken for fixed-point. */
-        fe_dct2(FE, mfspec, mfcep);
+        fe_dct2(FE, mfspec, mfcep, 0);
         fe_dct3(FE, mfcep, mfspec);
         for (i = 0; i < FE->FEATURE_DIMENSION; i++) {
             mfcep[i] = (mfcc_t) mfspec[i];
         }
     }
     else if (FE->transform == DCT_II)
-        fe_dct2(FE, mfspec, mfcep);
+        fe_dct2(FE, mfspec, mfcep, 0);
+    else if (FE->transform == DCT_HTK)
+        fe_dct2(FE, mfspec, mfcep, 1);
     else
         fe_spec2cep(FE, mfspec, mfcep);
 
@@ -518,7 +520,7 @@ fe_spec2cep(fe_t * FE, const powspec_t * mflogspec, mfcc_t * mfcep)
 }
 
 void
-fe_dct2(fe_t * FE, const powspec_t * mflogspec, mfcc_t * mfcep)
+fe_dct2(fe_t * FE, const powspec_t * mflogspec, mfcc_t * mfcep, int htk)
 {
     int32 i, j;
 
@@ -527,8 +529,10 @@ fe_dct2(fe_t * FE, const powspec_t * mflogspec, mfcc_t * mfcep)
     mfcep[0] = mflogspec[0];
     for (j = 1; j < FE->MEL_FB->num_filters; j++)
 	mfcep[0] += mflogspec[j];
-    /* sqrt(1/N) = sqrt(2/N) * 1/sqrt(2) */
-    mfcep[0] = COSMUL(mfcep[0], FE->MEL_FB->sqrt_inv_n);
+    if (htk)
+        mfcep[0] = COSMUL(mfcep[0], FE->MEL_FB->sqrt_inv_2n);
+    else /* sqrt(1/N) = sqrt(2/N) * 1/sqrt(2) */
+        mfcep[0] = COSMUL(mfcep[0], FE->MEL_FB->sqrt_inv_n);
 
     for (i = 1; i < FE->NUM_CEPSTRA; ++i) {
         mfcep[i] = 0;

@@ -78,7 +78,7 @@
   { "-transform", \
     ARG_STRING, \
     "legacy", \
-    "Which type of transform to use to calculate cepstra (legacy or dct)" }, \
+    "Which type of transform to use to calculate cepstra (legacy, dct, or htk)" }, \
    \
   { "-spec2cep", \
     ARG_BOOLEAN, \
@@ -234,7 +234,8 @@ enum {
 /* Values for the 'transform' field. */
 enum {
 	LEGACY_DCT = 0,
-	DCT_II = 1
+	DCT_II = 1,
+        DCT_HTK = 2
 };
 
 /** Structure holding front-end parameters. */

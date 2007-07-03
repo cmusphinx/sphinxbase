@@ -158,8 +158,10 @@ fe_init_auto()
         p.transform = DCT_II;
     else if (0 == strcmp(cmd_ln_str("-transform"), "legacy"))
         p.transform = LEGACY_DCT;
+    else if (0 == strcmp(cmd_ln_str("-transform"), "htk"))
+        p.transform = DCT_HTK;
     else {
-        E_WARN("Invalid transform type (values are 'dct', 'legacy')\n");
+        E_WARN("Invalid transform type (values are 'dct', 'legacy', 'htk')\n");
         return NULL;
     }
 
@@ -662,7 +664,7 @@ fe_logspec_dct2(fe_t * FE, const mfcc_t * fr_spec, mfcc_t * fr_cep)
     powspec = malloc(FE->MEL_FB->num_filters * sizeof(powspec_t));
     for (i = 0; i < FE->MEL_FB->num_filters; ++i)
         powspec[i] = (powspec_t) fr_spec[i];
-    fe_dct2(FE, powspec, fr_cep);
+    fe_dct2(FE, powspec, fr_cep, 0);
     free(powspec);
 #endif                          /* ! FIXED_POINT */
     return 0;

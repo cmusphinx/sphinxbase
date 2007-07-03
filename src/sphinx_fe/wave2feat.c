@@ -681,8 +681,10 @@ fe_parse_options(int32 argc, char **argv)
         }
         P->params.transform = LEGACY_DCT;
     }
+    else if (0 == strcmp(cmd_ln_str("-transform"), "htk"))
+        P->params.transform = DCT_HTK;
     else {
-        E_WARN("Invalid transform type (values are 'dct', 'legacy')\n");
+        E_WARN("Invalid transform type (values are 'dct', 'legacy', 'htk')\n");
         return NULL;
     }
 
