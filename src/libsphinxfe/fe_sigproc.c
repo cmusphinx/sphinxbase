@@ -305,16 +305,26 @@ fe_create_hamming(window_t * in, int32 in_len)
 
 
 void
-fe_hamming_window(frame_t * in, window_t * window, int32 in_len)
+fe_hamming_window(frame_t * in, window_t * window, int32 in_len, int32 remove_dc)
 {
     int i;
 
-    if (in_len > 1)
+    if (remove_dc) {
+        frame_t mean = 0;
+
+        for (i = 0; i < in_len; i++)
+            mean += in[i];
+        mean /= in_len;
+        for (i = 0; i < in_len; i++)
+            in[i] -= mean;
+    }
+
+    if (in_len > 1) {
         for (i = 0; i < in_len; i++) {
             in[i] = COSMUL(in[i], window[i]);
         }
+    }
 
-    return;
 }
 
 
@@ -858,6 +868,7 @@ fe_parse_general_params(param_t const *P, fe_t * FE)
 
     FE->LOG_SPEC = P->logspec;
     FE->transform = P->transform;
+    FE->remove_dc = P->remove_dc;
     if (!FE->LOG_SPEC)
         FE->FEATURE_DIMENSION = FE->NUM_CEPSTRA;
     else {
@@ -973,6 +984,8 @@ fe_print_current(fe_t const *FE)
     E_INFO("\tNumber of filters:         %d\n", FE->MEL_FB->num_filters);
     E_INFO("\tNumber of Overflow Samps:  %d\n", FE->NUM_OVERFLOW_SAMPS);
     E_INFO("\tStart Utt Status:          %d\n", FE->START_FLAG);
+    E_INFO("Will %sremove DC offset at frame level\n",
+           FE->remove_dc ? "" : "not ");
     if (FE->dither) {
         E_INFO("Will add dither to audio\n");
         E_INFO("Dither seeded with %d\n", FE->seed);

@@ -185,6 +185,11 @@
     ARG_STRINGIFY(SEED), \
     "Seed for random number generator; if less than zero, pick our own" }, \
  \
+  { "-remove_dc", \
+    ARG_BOOLEAN, \
+    "no", \
+    "Remove DC offset from each frame" }, \
+   \
   { "-verbose", \
     ARG_BOOLEAN, \
     "no", \
@@ -257,6 +262,7 @@ struct param_s {
     int32 lifter_val;
     int32 unit_area;
     int32 round_filters;
+    int32 remove_dc;
 };
 
 /** Base Struct to hold all structure for MFCC computation. */
@@ -315,6 +321,7 @@ struct fe_s {
     window_t *HAMMING_WINDOW;
     int32 FRAME_COUNTER;
     int32 transform;
+    int32 remove_dc;
 };
 
 enum {

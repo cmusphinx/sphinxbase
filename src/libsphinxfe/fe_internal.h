@@ -71,7 +71,7 @@ float32 fe_melinv(float32 x);
 int32 fe_dither(int16 *buffer,int32 nsamps);
 void fe_pre_emphasis(int16 const *in, frame_t *out, int32 len, float32 factor, int16 prior);
 void fe_create_hamming(window_t *in, int32 in_len);
-void fe_hamming_window(frame_t *in, window_t *window, int32 in_len);
+void fe_hamming_window(frame_t *in, window_t *window, int32 in_len, int32 remove_dc);
 void fe_spec_magnitude(frame_t const *data, int32 data_len, powspec_t *spec, int32 fftsize);
 int32 fe_frame_to_fea(fe_t *FE, frame_t *in, mfcc_t *fea);
 void fe_mel_spec(fe_t *FE, powspec_t const *spec, powspec_t *mfspec);

@@ -94,6 +94,8 @@ fe_init_params(param_t * P)
 /* Now take care of variables that do not default to zero */
     P->FB_TYPE = DEFAULT_FB_TYPE;
     P->seed = SEED;
+    P->round_filters = 1;
+    P->unit_area = 1;
 }
 
 /*********************************************************************
@@ -149,6 +151,7 @@ fe_init_auto()
     p.doublebw = cmd_ln_boolean("-doublebw");
     p.unit_area = cmd_ln_boolean("-unit_area");
     p.round_filters = cmd_ln_boolean("-round_filters");
+    p.remove_dc = cmd_ln_boolean("-remove_dc");
     p.verbose = cmd_ln_boolean("-verbose");
 
     if (0 == strcmp(cmd_ln_str("-transform"), "dct"))
@@ -347,7 +350,7 @@ fe_process_frame(fe_t * FE, int16 * spch, int32 nsamps, mfcc_t * fr_cep)
 
 
     /* frame based processing - let's make some cepstra... */
-    fe_hamming_window(spbuf, FE->HAMMING_WINDOW, FE->FRAME_SIZE);
+    fe_hamming_window(spbuf, FE->HAMMING_WINDOW, FE->FRAME_SIZE, FE->remove_dc);
     return_value = fe_frame_to_fea(FE, spbuf, fr_cep);
     free(spbuf);
 
@@ -451,7 +454,7 @@ fe_process_utt(fe_t * FE, int16 * spch, int32 nsamps,
             for (i = 0; i < FE->FRAME_SIZE; i++)
                 fr_data[i] = spbuf[whichframe * FE->FRAME_SHIFT + i];
 
-            fe_hamming_window(fr_data, FE->HAMMING_WINDOW, FE->FRAME_SIZE);
+            fe_hamming_window(fr_data, FE->HAMMING_WINDOW, FE->FRAME_SIZE, FE->remove_dc);
 
             frame_return_value =
                 fe_frame_to_fea(FE, fr_data, cep[whichframe]);
@@ -541,7 +544,7 @@ fe_end_utt(fe_t * FE, mfcc_t * cepvector, int32 * nframes)
             fe_short_to_frame(FE->OVERFLOW_SAMPS, spbuf, FE->FRAME_SIZE);
         }
 
-        fe_hamming_window(spbuf, FE->HAMMING_WINDOW, FE->FRAME_SIZE);
+        fe_hamming_window(spbuf, FE->HAMMING_WINDOW, FE->FRAME_SIZE, FE->remove_dc);
         return_value = fe_frame_to_fea(FE, spbuf, cepvector);
         frame_count = 1;
         free(spbuf);            /* RAH */

@@ -618,6 +618,7 @@ fe_parse_options(int32 argc, char **argv)
     P->params.UPPER_FILT_FREQ = cmd_ln_float32("-upperf");
     P->params.unit_area = cmd_ln_boolean("-unit_area");
     P->params.round_filters = cmd_ln_boolean("-round_filters");
+    P->params.remove_dc = cmd_ln_boolean("-remove_dc");
 
     P->params.warp_type = cmd_ln_str("-warp_type");
     P->params.warp_params = cmd_ln_str("-warp_params");
