@@ -4,6 +4,9 @@ module=$1
 shift
 options=$*
 
+# Set the cpu limit to 2 hours, just in case
+ulimit -t 7200
+
 # Define a path, just in case
 export PATH="/usr/local/bin:/bin:/usr/bin:/usr/ccs/bin"
 
@@ -59,7 +62,7 @@ chmod +x $repeat
 
 # Fresh download of sphinxbase. Some modules need it, some don't. Just
 # in case, get it.
-$repeat svn co https://svn.sourceforge.net/svnroot/cmusphinx/trunk/sphinxbase
+$repeat svn co https://cmusphinx.svn.sourceforge.net/svnroot/cmusphinx/trunk/sphinxbase
 
 # Configure it
 pushd sphinxbase || echo "FAILED: sphinxbase not found"
@@ -77,7 +80,7 @@ fi
 popd
 
 # Fresh download of pocketsphinx
-$repeat svn co https://svn.sourceforge.net/svnroot/cmusphinx/trunk/$module
+$repeat svn co https://cmusphinx.svn.sourceforge.net/svnroot/cmusphinx/trunk/$module
 
 # Configure it
 pushd $module || echo "FAILED: $module not found"

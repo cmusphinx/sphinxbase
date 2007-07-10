@@ -52,21 +52,21 @@ ${TAR} -xzf an4_sphere.tar.gz
 /bin/rm an4_sphere.tar.gz
 
 # Get sphinxbase
-if (loopUntilSuccess.sh ${SVN} co https://svn.sourceforge.net/svnroot/cmusphinx/trunk/sphinxbase > /dev/null &&
+if (loopUntilSuccess.sh ${SVN} co https://cmusphinx.svn.sourceforge.net/svnroot/cmusphinx/trunk/sphinxbase > /dev/null &&
 cd sphinxbase &&
 ./autogen.sh &&
 ./autogen.sh CFLAGS="-O2 -Wall" --prefix=`(cd ..; pwd)`/build &&
 make all install) >> $LOG 2>&1 ; then
 
 # Get the trainer
-if (loopUntilSuccess.sh ${SVN} co https://svn.sourceforge.net/svnroot/cmusphinx/trunk/SphinxTrain > /dev/null &&
+if (loopUntilSuccess.sh ${SVN} co https://cmusphinx.svn.sourceforge.net/svnroot/cmusphinx/trunk/SphinxTrain > /dev/null &&
 cd SphinxTrain &&
 ./configure CFLAGS="-O2 -Wall" --with-sphinxbase=$temp_dir/sphinxbase && 
 ${MAKE} && 
 ${PERL} scripts_pl/setup_tutorial.pl an4) >> $LOG 2>&1 ; then
 
 # Get the decoder
-if (loopUntilSuccess.sh ${SVN} co https://svn.sourceforge.net/svnroot/cmusphinx/trunk/sphinx3 > /dev/null &&
+if (loopUntilSuccess.sh ${SVN} co https://cmusphinx.svn.sourceforge.net/svnroot/cmusphinx/trunk/sphinx3 > /dev/null &&
 cd sphinx3 &&
 ./autogen.sh &&
 ./autogen.sh  CFLAGS="-O2 -Wall" --prefix=`(cd ..; pwd)`/build --with-sphinxbase=$temp_dir/sphinxbase && 

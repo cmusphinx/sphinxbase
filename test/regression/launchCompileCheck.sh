@@ -18,6 +18,8 @@ fi
 }
 
 
+ulimit -t 7200
+
 # Define a path, just in case
 export PATH="/usr/local/bin:/bin:/usr/bin:/usr/ccs/bin"
 
@@ -68,7 +70,7 @@ echo "Results in $outdir" > $mail_file
 echo "Summary:" >> $mail_file
 
 # Fresh download of sphinxbase
-if svn co https://svn.sourceforge.net/svnroot/cmusphinx/trunk/sphinxbase/test/regression; then
+if svn co https://cmusphinx.svn.sourceforge.net/svnroot/cmusphinx/trunk/sphinxbase/test/regression; then
 
     success=1;
 
