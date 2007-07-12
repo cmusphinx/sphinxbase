@@ -216,17 +216,31 @@ setlevels(const char *dev)
     snd_mixer_selem_id_alloca(&sid);
     snd_mixer_selem_id_set_name(sid, "Mic");
     if ((elem = snd_mixer_find_selem(handle, sid)) == NULL) {
-        fprintf(stderr, "Could not find Mic element\n");
-        snd_mixer_close(handle);
-        return -1;
+        fprintf(stderr, "Warning: Could not find Mic element\n");
     }
-    if ((err = snd_mixer_selem_set_capture_switch_all(elem, 1)) < 0) {
-        fprintf(stderr,
-                "Failed to enable microfphone capture: %s\n",
-                snd_strerror(err));
-        snd_mixer_close(handle);
-        return -1;
+    else {
+        if ((err = snd_mixer_selem_set_capture_switch_all(elem, 1)) < 0) {
+            fprintf(stderr,
+                    "Failed to enable microphone capture: %s\n",
+                    snd_strerror(err));
+            snd_mixer_close(handle);
+            return -1;
+        }
     }
+    snd_mixer_selem_id_set_name(sid, "Capture");
+    if ((elem = snd_mixer_find_selem(handle, sid)) == NULL) {
+        fprintf(stderr, "Warning: Could not find Capture element\n");
+    }
+    else {
+        if ((err = snd_mixer_selem_set_capture_switch_all(elem, 1)) < 0) {
+            fprintf(stderr,
+                    "Failed to enable microphone capture: %s\n",
+                    snd_strerror(err));
+            snd_mixer_close(handle);
+            return -1;
+        }
+    }
+
     return 0;
 }
 
@@ -244,7 +258,7 @@ ad_open_dev(const char *dev, int32 sps)
     err = snd_pcm_open(&dspH, dev, SND_PCM_STREAM_CAPTURE, 0);
     if (err < 0) {
         fprintf(stderr,
-                "Error opening audio device %s for caputre: %s\n",
+                "Error opening audio device %s for capture: %s\n",
                 dev, snd_strerror(err));
         return NULL;
     }
@@ -350,7 +364,7 @@ ad_stop_rec(ad_rec_t * handle)
 int32
 ad_read(ad_rec_t * handle, int16 * buf, int32 max)
 {
-    int32 length, err;
+    int32 length, err, i;
 
     if (!handle->recording)
 	return AD_EOF;
