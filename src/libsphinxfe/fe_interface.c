@@ -656,7 +656,7 @@ int32
 fe_logspec_dct2(fe_t * FE, const mfcc_t * fr_spec, mfcc_t * fr_cep)
 {
 #ifdef FIXED_POINT
-    fe_dct2(FE, fr_spec, fr_cep);
+    fe_dct2(FE, fr_spec, fr_cep, 0);
 #else                           /* ! FIXED_POINT */
     powspec_t *powspec;
     int32 i;
