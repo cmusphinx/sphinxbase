@@ -843,7 +843,7 @@ fe_openfiles(globals_t * P, fe_t * FE, char *infile, int32 * fp_in,
         P->input_endian = LITTLE;       // Default for MS WAV riff files
     }
 
-
+    /* FIXME: Why aren't we using stdio here??? */
     if ((fp = open(infile, O_RDONLY | O_BINARY, 0644)) < 0) {
         fprintf(stderr, "Cannot open %s\n", infile);
         return (FE_INPUT_FILE_OPEN_ERROR);
@@ -875,6 +875,8 @@ fe_openfiles(globals_t * P, fe_t * FE, char *infile, int32 * fp_in,
             /* MC: read till just before datatag */
             const int hdr_len_to_read = ((char *) (&hdr_buf->datatag))
                 - (char *) hdr_buf;
+            int data_start;
+
             if ((hdr_buf =
                  (MSWAV_hdr *) calloc(1, sizeof(MSWAV_hdr))) == NULL) {
                 E_ERROR("Cannot allocate for input file header\n");
@@ -900,7 +902,6 @@ fe_openfiles(globals_t * P, fe_t * FE, char *infile, int32 * fp_in,
                 char readChar;
                 char *dataString = "data";
                 int16 charPointer = 0;
-                printf("LENGTH: %d\n", (int) strlen(dataString));
                 while (!found) {
                     if (read(fp, &readChar, sizeof(char)) != sizeof(char)) {
                         E_ERROR("Failed reading wav file.\n");
@@ -923,6 +924,7 @@ fe_openfiles(globals_t * P, fe_t * FE, char *infile, int32 * fp_in,
                     }
                 }
             }
+            data_start = lseek(fp, 0, SEEK_CUR);
             if (P->input_endian != P->machine_endian) { // If machine is Big Endian
                 hdr_buf->datalength = SWAP_INT32(&(hdr_buf->datalength));
                 hdr_buf->data_format = SWAP_INT16(&(hdr_buf->data_format));
@@ -938,7 +940,11 @@ fe_openfiles(globals_t * P, fe_t * FE, char *infile, int32 * fp_in,
                 E_ERROR("MS WAV file not in 16-bit PCM format\n");
                 return (FE_INPUT_FILE_READ_ERROR);
             }
+            /* This number may be bogus.  Check for a truncated file. */
             len = hdr_buf->datalength / sizeof(short);
+            if (len > (filestats.st_size - data_start) / sizeof(short))
+                len = (filestats.st_size - data_start) / sizeof(short);
+            
             P->nchans = hdr_buf->numchannels;
             /* DEBUG: Dump Info */
             if (P->params.verbose) {
@@ -1009,11 +1015,13 @@ fe_readblock_spch(globals_t * P, int32 fp, int32 nsamps, int16 * buf)
     whichchan = P->whichchan;
 
     if (nchans == 1) {
-        if (P->input_format == RAW || P->input_format == NIST
+        if (P->input_format == RAW
+            || P->input_format == NIST
             || P->input_format == MSWAV) {
             nreadbytes = nsamps * sizeof(int16);
             if ((bytes_read = read(fp, buf, nreadbytes)) != nreadbytes) {
-                E_ERROR("error reading block\n");
+                E_ERROR_SYSTEM("error reading block: %ld != %d",
+                               bytes_read, nreadbytes);
                 return (0);
             }
         }
