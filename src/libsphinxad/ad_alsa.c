@@ -238,6 +238,9 @@ ad_open_dev(const char *dev, int32 sps)
 
     int err;
 
+    if (dev == NULL)
+        dev = DEFAULT_DEVICE;
+
     err = snd_pcm_open(&dspH, dev, SND_PCM_STREAM_CAPTURE, 0);
     if (err < 0) {
         fprintf(stderr,

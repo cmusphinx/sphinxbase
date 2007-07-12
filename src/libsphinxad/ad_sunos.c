@@ -75,6 +75,8 @@ ad_open_dev(const char *dev, int32 sps)
     if ((r = (ad_rec_t *) calloc(1, sizeof(ad_rec_t))) == NULL)
         return NULL;
 
+    if (dev == NULL)
+        dev = DEFAULT_DEVICE;
     r->audio_fd = audioOpen(dev, (int) sps);
     r->recording = 0;
 

@@ -89,6 +89,9 @@ ad_open_dev(const char *dev, int32 sps)
 
     sampleRate = sps;
 
+    if (dev == NULL)
+        dev = DEFAULT_DEVICE;
+
     /* Used to have O_NDELAY. */
     if ((dspFD = open(dev, O_RDONLY)) < 0) {
         if (errno == EBUSY)

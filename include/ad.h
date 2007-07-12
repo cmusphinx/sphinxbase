@@ -240,7 +240,7 @@ typedef struct {
 
 #elif defined(AD_BACKEND_ALSA)
 
-#define DEFAULT_DEVICE "plughw:0,0,0"
+#define DEFAULT_DEVICE "default"
 typedef struct {
     snd_pcm_t *dspH;
     int32 recording;
