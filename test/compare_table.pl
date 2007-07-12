@@ -32,57 +32,60 @@
 
 use strict;
 
-die "$0 <file1> <file2> (tolerance)\n" unless (($#ARGV == 1) or ($#ARGV == 2));
+die "$0 <file1> <file2> (tolerance) (fields)\n" unless @ARGV >= 2;
 
-my $fn1 = $ARGV[0];
-my $fn2 = $ARGV[1];
-my $tolerance = 0.002;
-$tolerance = $ARGV[2] if ($#ARGV == 2);
+my ($fn1, $fn2, $tolerance, $fields) = @ARGV;
+$tolerance = 0.002 unless defined($tolerance);
+my @fields;
+@fields = split /,/, $fields if defined($fields);
 
 my $comparison = 0;
-if ((-s $fn1) == (-s $fn2)) {
-  my $line1 = "";
-  my $line2 = "";
-  if ((open (FN1, "<$fn1")) and (open (FN2, "<$fn2"))) {
-    $comparison = 1;
-    while (($line1 = <FN1>) . ($line2 = <FN2>)) {
-      chomp($line1);
-      chomp($line2);
-      next if ($line1 eq $line2);
-      my @field1 = split /\s+/, $line1;
-      my @field2 = split /\s+/, $line2;
-      # If the number of tokens in each line is different, the lines,
-      # and therefore the files, don't match.
-      if ($#field1 != $#field2) {
-	$comparison = 0;
-	last;
-      }
-      for (my $i = 0; $i <= $#field1; $i++) {
-	if (($field1[$i] =~ m/[a-z]/i) or ($field2[$i] =~ m/[a-z]/i)) {
-	  # Check if any of the tokens in the line is a string rather
-	  # than a number, and compare the strings
-	  if ($field1[$i] ne $field2[$i]) {
-	    $comparison = 0;
-	    last;
-	  }
-	} elsif (abs($field1[$i] - $field2[$i]) > $tolerance) {
-	  # If the tokens are both numbers, check if they match within
-	  # a tolerance
+
+my $line1 = "";
+my $line2 = "";
+if ((open (FN1, "<$fn1")) and (open (FN2, "<$fn2"))) {
+  $comparison = 1;
+  while (($line1 = <FN1>) . ($line2 = <FN2>)) {
+    chomp($line1);
+    chomp($line2);
+    next if ($line1 eq $line2);
+    my @field1 = split /[,\s]+/, $line1;
+    my @field2 = split /[,\s]+/, $line2;
+    # If the number of tokens in each line is different, the lines,
+    # and therefore the files, don't match.
+    if ($#field1 != $#field2) {
+      $comparison = 0;
+      last;
+    }
+    @fields = (0..$#field1) unless @fields;
+    foreach my $i (@fields) {
+      if (($field1[$i] !~ m/^([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\)?$/) or
+	  ($field2[$i] !~ m/^([+-]?)(?=\d|\.\d)\d*(\.\d*)?([Ee]([+-]?\d+))?\)?$/)) {
+	# Check if any of the tokens in the line is a string rather
+	# than a number, and compare the strings
+	if ($field1[$i] ne $field2[$i]) {
 	  $comparison = 0;
 	  last;
 	}
+      } else {
+	  # If the tokens are both numbers, check if they match within
+	  # a tolerance
+	  if (abs($field1[$i] - $field2[$i]) > $tolerance) {
+	      $comparison = 0;
+	      last;
+	  }
       }
-      # If there was a mismatch, we can skip to the end of the loop
-      last if ($comparison == 0);
     }
-    # If the files don't have the same number of lines, one of the
-    # lines will be EOF, and the other won't.
-    $comparison = 0 if ($line1 != $line2);
+    # If there was a mismatch, we can skip to the end of the loop
+    last if ($comparison == 0);
   }
-
-  close(FN1);
-  close(FN2);
+  # If the files don't have the same number of lines, one of the
+  # lines will be EOF, and the other won't.
+  $comparison = 0 if ($line1 != $line2);
 }
+
+close(FN1);
+close(FN2);
 
 if ($comparison) {
   print "Comparison: SUCCESS\n";
