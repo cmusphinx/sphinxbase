@@ -16,8 +16,10 @@ if [ -n "$PBS_ENVIRONMENT" ]; then
 fi
 
 # While "loopUntilSuccess.sh" is not part of the regression tests, use
-# the local copy. That's why we need the ${HOME}/script here
-export PATH=/usr/local/bin:${PATH}:${HOME}/script
+# the local copy. That's why we need the ${HOME}/script here. Also
+# make sure that /usr/ucb is here, towards the beginning, to make sure
+# that the 'ps' command in Solaris is compatible with the gnu one.
+export PATH=/usr/ucb:/usr/local/bin:${PATH}:${HOME}/script
 
 # Check that we have all executables
 if ! WGET=`command -v wget 2>&1`; then exit 1; fi
@@ -56,7 +58,7 @@ if (loopUntilSuccess.sh ${SVN} co https://cmusphinx.svn.sourceforge.net/svnroot/
 cd sphinxbase &&
 ./autogen.sh &&
 ./autogen.sh CFLAGS="-O2 -Wall" --prefix=`(cd ..; pwd)`/build &&
-make all install) >> $LOG 2>&1 ; then
+${MAKE} all install) >> $LOG 2>&1 ; then
 
 # Get the trainer
 if (loopUntilSuccess.sh ${SVN} co https://cmusphinx.svn.sourceforge.net/svnroot/cmusphinx/trunk/SphinxTrain > /dev/null &&
