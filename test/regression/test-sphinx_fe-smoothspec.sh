@@ -16,6 +16,7 @@ run_program sphinx_fe \
 -lowerf 130 \
 -blocksize 262500 \
 -i $tests/regression/chan3.raw \
+-input_endian little \
 -o test-sphinx_fe-smoothspec.logspec.out  \
 -raw yes > $tmpout 2>&1 
 
