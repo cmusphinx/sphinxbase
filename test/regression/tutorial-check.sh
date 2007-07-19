@@ -15,11 +15,23 @@ if [ -n "$PBS_ENVIRONMENT" ]; then
     echo ""
 fi
 
-# While "loopUntilSuccess.sh" is not part of the regression tests, use
-# the local copy. That's why we need the ${HOME}/script here. Also
 # make sure that /usr/ucb is here, towards the beginning, to make sure
 # that the 'ps' command in Solaris is compatible with the gnu one.
-export PATH=/usr/ucb:/usr/local/bin:${PATH}:${HOME}/script
+export PATH=/usr/ucb:/usr/local/bin:${PATH}
+
+loopUntilSuccess () {
+    cmd=$@
+    # start loop to download code
+    count=0;
+
+    while ! $cmd; do
+	count=`expr $count + 1`
+	if [ $count -gt 50 ]; then
+	    # not successful, and we attempted it too many times. Clean up and leave.
+	    return $count
+	fi
+    done
+}
 
 # Check that we have all executables
 if ! WGET=`command -v wget 2>&1`; then exit 1; fi
@@ -54,21 +66,21 @@ ${TAR} -xzf an4_sphere.tar.gz
 /bin/rm an4_sphere.tar.gz
 
 # Get sphinxbase
-if (loopUntilSuccess.sh ${SVN} co https://cmusphinx.svn.sourceforge.net/svnroot/cmusphinx/trunk/sphinxbase > /dev/null &&
+if (loopUntilSuccess ${SVN} co https://cmusphinx.svn.sourceforge.net/svnroot/cmusphinx/trunk/sphinxbase > /dev/null &&
 cd sphinxbase &&
 ./autogen.sh &&
 ./autogen.sh CFLAGS="-O2 -Wall" --prefix=`(cd ..; pwd)`/build &&
 ${MAKE} all install) >> $LOG 2>&1 ; then
 
 # Get the trainer
-if (loopUntilSuccess.sh ${SVN} co https://cmusphinx.svn.sourceforge.net/svnroot/cmusphinx/trunk/SphinxTrain > /dev/null &&
+if (loopUntilSuccess ${SVN} co https://cmusphinx.svn.sourceforge.net/svnroot/cmusphinx/trunk/SphinxTrain > /dev/null &&
 cd SphinxTrain &&
 ./configure CFLAGS="-O2 -Wall" --with-sphinxbase=$temp_dir/sphinxbase && 
 ${MAKE} && 
 ${PERL} scripts_pl/setup_tutorial.pl an4) >> $LOG 2>&1 ; then
 
 # Get the decoder
-if (loopUntilSuccess.sh ${SVN} co https://cmusphinx.svn.sourceforge.net/svnroot/cmusphinx/trunk/sphinx3 > /dev/null &&
+if (loopUntilSuccess ${SVN} co https://cmusphinx.svn.sourceforge.net/svnroot/cmusphinx/trunk/sphinx3 > /dev/null &&
 cd sphinx3 &&
 ./autogen.sh &&
 ./autogen.sh  CFLAGS="-O2 -Wall" --prefix=`(cd ..; pwd)`/build --with-sphinxbase=$temp_dir/sphinxbase && 
