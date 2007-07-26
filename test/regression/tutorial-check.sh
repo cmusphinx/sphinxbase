@@ -103,7 +103,7 @@ fi
 
 # Check whether the Word Error Rate is reasonable, hardwired for now
 if SER=`grep 'SENTENCE ERROR' $LOG 2>&1`; then
-SUCCESS=`echo $SER | awk '{d = $(3) - 60};{if (d < 0) d = -d};{if (d < 2) print "1"}'`;
+SUCCESS=`echo $SER | awk '{d = $(3) - 57};{if (d < 0) d = -d};{if (d < 2) print "1"}'`;
 fi;
 
 # Send mail if we failed
