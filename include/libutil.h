@@ -98,9 +98,8 @@
 #include "pio.h"
 #include "linklist.h"
 #include "profile.h"
-#include "str2words.h"
+#include "strfuncs.h"
 #include "unlimit.h"
-#include "nextword.h"
 #include "info.h"
 #include "genrand.h"
 

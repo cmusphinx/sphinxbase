@@ -26,7 +26,6 @@ pkginclude_HEADERS =				\
 	matrix.h				\
 	misc.h					\
 	mulaw.h					\
-	nextword.h				\
 	pio.h					\
 	prim_type.h				\
 	profile.h				\
