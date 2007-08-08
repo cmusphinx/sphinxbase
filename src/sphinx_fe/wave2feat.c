@@ -554,7 +554,7 @@ fe_parse_options(int32 argc, char **argv)
     int32 format;
     char *endian;
 
-    cmd_ln_parse(defn, argc, argv);
+    cmd_ln_parse(defn, argc, argv, TRUE);
 
     if ((P = (globals_t *) calloc(1, sizeof(globals_t))) == NULL) {
         E_FATAL("memory alloc failed in fe_parse_options()\n...exiting\n");

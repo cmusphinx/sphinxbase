@@ -81,14 +81,8 @@
 #include "hash_table.h"
 #include "case.h"
 
-
-/* Storage for argument values */
-typedef struct argval_s {
-    anytype_t val;
-    const void *ptr;            /* Needed (with NULL value) in case there is no default */
-} argval_t;
-static argval_t *argval = NULL;
-static hash_table_t *ht;        /* Hash table */
+/* Hash table holding all arguments and their values */
+static hash_table_t *ht;
 
 /** Added at 20050701 to keep track of the memory allocated when a file
     is used in input of the command-line. 
@@ -107,42 +101,14 @@ static FILE orig_stdout, orig_stderr;
 #endif
 static FILE *logfp;
 
-static void arg_dump(FILE * fp, arg_t * defn, int32 doc);
-
-#if 0
-static const char *
-arg_type2str(argtype_t t)
-{
-    switch (t) {
-    case ARG_INT32:
-    case REQARG_int32:
-        return ("int32");
-        break;
-    case ARG_FLOAT32:
-    case REQARG_FLOAT32:
-        return ("float32");
-        break;
-    case ARG_FLOAT64:
-    case REQARG_FLOAT64:
-        return ("float64");
-        break;
-    case ARG_STRING:
-    case REQARG_STRING:
-        return ("string");
-        break;
-    default:
-        E_FATAL("Unknown argument type: %d\n", t);
-    }
-}
-#endif
-
+static void arg_dump(FILE * fp, const arg_t * defn, int32 doc);
 
 /*
  * Find max length of name and default fields in the given defn array.
  * Return #items in defn array.
  */
 static int32
-arg_strlen(arg_t * defn, int32 * namelen, int32 * deflen)
+arg_strlen(const arg_t * defn, int32 * namelen, int32 * deflen)
 {
     int32 i, l;
 
@@ -152,12 +118,13 @@ arg_strlen(arg_t * defn, int32 * namelen, int32 * deflen)
         if (*namelen < l)
             *namelen = l;
 
-        if (defn[i].deflt) {
+        if (defn[i].deflt)
             l = strlen(defn[i].deflt);
-            /*      E_INFO("string default, %s , name %s, length %d\n",defn[i].deflt,defn[i].name,l); */
-            if (*deflen < l)
-                *deflen = l;
-        }
+	else
+	    l = strlen("(null)");
+	/*      E_INFO("string default, %s , name %s, length %d\n",defn[i].deflt,defn[i].name,l); */
+	if (*deflen < l)
+	    *deflen = l;
     }
 
     return i;
@@ -165,7 +132,7 @@ arg_strlen(arg_t * defn, int32 * namelen, int32 * deflen)
 
 
 /* For sorting argument definition list by name */
-static arg_t *tmp_defn;
+static const arg_t *tmp_defn;
 
 static int32
 cmp_name(const void *a, const void *b)
@@ -176,7 +143,7 @@ cmp_name(const void *a, const void *b)
 }
 
 static int32 *
-arg_sort(arg_t * defn, int32 n)
+arg_sort(const arg_t * defn, int32 n)
 {
     int32 *pos;
     int32 i;
@@ -191,66 +158,71 @@ arg_sort(arg_t * defn, int32 n)
     return pos;
 }
 
-static int32
-arg_str2val(argval_t * v, argtype_t t, char *str)
+static anytype_t *
+arg_str2val(argtype_t t, const char *str)
 {
-    if (!str)
-        v->ptr = NULL;
+    anytype_t val, *v;
+
+    if (!str) {
+	/* For lack of a better default value. */
+	memset(&val, 0, sizeof(val));
+    }
     else {
         switch (t) {
         case ARG_INT32:
         case REQARG_INT32:
-            if (sscanf(str, "%d", &(v->val.i_32)) != 1)
-                return -1;
-            v->ptr = (void *) &(v->val.i_32);
+            if (sscanf(str, "%d", &val.i_32) != 1)
+                return NULL;
             break;
         case ARG_FLOAT32:
         case REQARG_FLOAT32:
-            if (sscanf(str, "%f", &(v->val.fl_32)) != 1)
-                return -1;
-            v->ptr = (void *) &(v->val.fl_32);
+            if (sscanf(str, "%f", &val.fl_32) != 1)
+                return NULL;
             break;
         case ARG_FLOAT64:
         case REQARG_FLOAT64:
-            if (sscanf(str, "%lf", &(v->val.fl_64)) != 1)
-                return -1;
-            v->ptr = (void *) &(v->val.fl_64);
+            if (sscanf(str, "%lf", &val.fl_64) != 1)
+                return NULL;
             break;
         case ARG_BOOLEAN:
         case REQARG_BOOLEAN:
             if ((str[0] == 'y') || (str[0] == 't') ||
                 (str[0] == 'Y') || (str[0] == 'T') || (str[0] == '1')) {
-                v->val.i_32 = TRUE;
+                val.i_32 = TRUE;
             }
             else if ((str[0] == 'n') || (str[0] == 'f') ||
                      (str[0] == 'N') || (str[0] == 'F') |
                      (str[0] == '0')) {
-                v->val.i_32 = FALSE;
+                val.i_32 = FALSE;
             }
             else {
                 E_ERROR("Unparsed boolean value '%s'\n", str);
             }
-            v->ptr = (void *) &(v->val.i_32);
             break;
         case ARG_STRING:
         case REQARG_STRING:
-            v->ptr = (void *) str;
+            /* This const-casting is okay because we know these
+             * strings won't ever be written to. */
+            val.ptr = (char *)str;
             break;
         default:
             E_FATAL("Unknown argument type: %d\n", t);
         }
     }
 
-    return 0;
+    v = ckd_calloc(1, sizeof(*v));
+    memcpy(v, &val, sizeof(*v));
+    return v;
 }
 
 
 void
-cmd_ln_appl_enter(int argc, char *argv[], char *default_argfn,
+cmd_ln_appl_enter(int argc, char *argv[],
+                  const char *default_argfn,
                   arg_t * defn)
 {
     /* Look for default or specified arguments file */
-    char *str;
+    const char *str;
     int32 i;
     char *logfile;
 
@@ -293,7 +265,7 @@ cmd_ln_appl_enter(int argc, char *argv[], char *default_argfn,
         }
     }
     else {
-        cmd_ln_parse(defn, argc, argv);
+        cmd_ln_parse(defn, argc, argv, TRUE);
     }
 
     logfp = NULL;
@@ -356,12 +328,12 @@ cmd_ln_appl_exit()
 }
 
 static void
-arg_dump(FILE * fp, arg_t * defn, int32 doc)
+arg_dump(FILE * fp, const arg_t * defn, int32 doc)
 {
     int32 *pos;
     int32 i, j, l, n;
     int32 namelen, deflen;
-    const void *vp;
+    anytype_t *vp;
 
     /* Find max lengths of name and default value fields, and #entries in defn */
     n = arg_strlen(defn, &namelen, &deflen);
@@ -413,23 +385,24 @@ arg_dump(FILE * fp, arg_t * defn, int32 doc)
                 switch (defn[j].type) {
                 case ARG_INT32:
                 case REQARG_INT32:
-                    fprintf(fp, "%d", *((int32 *) vp));
+                    fprintf(fp, "%d", vp->i_32);
                     break;
                 case ARG_FLOAT32:
                 case REQARG_FLOAT32:
-                    fprintf(fp, "%e", *((float32 *) vp));
+                    fprintf(fp, "%e", vp->fl_32);
                     break;
                 case ARG_FLOAT64:
                 case REQARG_FLOAT64:
-                    fprintf(fp, "%e", *((float64 *) vp));
+                    fprintf(fp, "%e", vp->fl_64);
                     break;
                 case ARG_STRING:
                 case REQARG_STRING:
-                    fprintf(fp, "%s", (char *) vp);
+		    if (vp->ptr)
+			fprintf(fp, "%s", (char *)vp->ptr);
                     break;
                 case ARG_BOOLEAN:
                 case REQARG_BOOLEAN:
-                    fprintf(fp, "%s", *((int32 *) vp) ? "yes" : "no");
+                    fprintf(fp, "%s", vp->i_32 ? "yes" : "no");
                     break;
                 default:
                     E_FATAL("Unknown argument type: %d\n", defn[j].type);
@@ -447,12 +420,10 @@ arg_dump(FILE * fp, arg_t * defn, int32 doc)
 
 
 int32
-cmd_ln_parse(arg_t * defn, int32 argc, char *argv[])
+cmd_ln_parse(const arg_t * defn, int32 argc, char *argv[], int strict)
 {
     int32 i, j, n;
-
-    if (argval)
-        E_FATAL("Multiple sets of argument definitions not supported\n");
+    hash_table_t *defidx = NULL;
 
     /* Echo command line */
 #ifndef _WIN32_WCE
@@ -466,74 +437,84 @@ cmd_ln_parse(arg_t * defn, int32 argc, char *argv[])
     fflush(stderr);
 #endif
 
-    /* Find number of argument names in definition */
-    for (n = 0; defn[n].name; n++);
+    /* Build a hash table for argument definitions */
+    defidx = hash_table_new(50, 0);
+    for (n = 0; defn[n].name; n++) {
+	void *v;
 
-    /* Allocate memory for argument values */
-    ht = hash_table_new(n, 0 /* argument names are case-sensitive */ );
-    argval = (argval_t *) ckd_calloc(n, sizeof(argval_t));
-
-    /* Enter argument names into hash table */
-    for (i = 0; i < n; i++) {
-        /* Associate argument name with index i */
-        if (hash_table_enter(ht, defn[i].name, (void *)i) != (void *)i) {
-            E_ERROR("Duplicate argument name: %s\n", defn[i].name);
+	v = hash_table_enter(defidx, defn[n].name, (void *)&defn[n]);
+        if (strict && (v != &defn[n])) {
+            E_ERROR("Duplicate argument name in definition: %s\n", defn[n].name);
             goto error;
         }
     }
 
+    /* Allocate memory for argument values */
+    ht = hash_table_new(n, 0 /* argument names are case-sensitive */ );
+
     /* Parse command line arguments (name-value pairs); skip argv[0] if argc is odd */
     for (j = 1; j < argc; j += 2) {
-        void *val;
-
-        if (hash_table_lookup(ht, argv[j], &val) < 0) {
-            cmd_ln_print_help(stderr, defn);
-            E_ERROR("Unknown argument: %s\n", argv[j]);
-            goto error;
-        }
-        i = (int32)val;
-
-        /* Check if argument has already been parsed before */
-        if (argval[i].ptr) {
-            E_ERROR("Multiple occurrences of argument %s\n", argv[j]);
-            goto error;
-        }
+        arg_t *argdef;
+        void *v, *vv;
 
         if (j + 1 >= argc) {
             cmd_ln_print_help(stderr, defn);
             E_ERROR("Argument value for '%s' missing\n", argv[j]);
             goto error;
         }
+        if (hash_table_lookup(defidx, argv[j], &v) < 0) {
+            if (strict) {
+                E_ERROR("Unknown argument name '%s'\n", argv[j]);
+                goto error;
+            }
+            else
+                continue;
+        }
+	argdef = v;
 
         /* Enter argument value */
-        if (arg_str2val(argval + i, defn[i].type, argv[j + 1]) < 0) {
+        if ((v = arg_str2val(argdef->type, argv[j + 1])) == NULL) {
             cmd_ln_print_help(stderr, defn);
             E_ERROR("Bad argument value for %s: %s\n", argv[j],
                     argv[j + 1]);
             goto error;
         }
 
-        assert(argval[i].ptr);
+        if ((vv = hash_table_enter(ht, argdef->name, v)) != v) {
+	    ckd_free(v);
+	    if (strict) {
+		    E_ERROR("Duplicate argument name in arguments: %s\n",
+			    argdef->name);
+		    goto error;
+	    }
+	    else {
+		vv = hash_table_replace(ht, argdef->name, v);
+		ckd_free(vv);
+	    }
+        }
     }
 
     /* Fill in default values, if any, for unspecified arguments */
     for (i = 0; i < n; i++) {
-        if (!argval[i].ptr) {
-            if (arg_str2val(argval + i, defn[i].type, defn[i].deflt) < 0) {
+	void *v;
+        if (hash_table_lookup(ht, defn[i].name, &v) < 0) {
+            if ((v = arg_str2val(defn[i].type, defn[i].deflt)) == NULL) {
                 E_ERROR
                     ("Bad default argument value for %s: %s\n",
                      defn[i].name, defn[i].deflt);
                 goto error;
             }
+            assert(hash_table_enter(ht, defn[i].name, v) == v);
         }
     }
 
     /* Check for required arguments; exit if any missing */
     j = 0;
     for (i = 0; i < n; i++) {
-        if ((defn[i].type & ARG_REQUIRED) && (!argval[i].ptr)) {
-            E_ERROR("Missing required argument %s\n", defn[i].name);
-            j++;
+        if (defn[i].type & ARG_REQUIRED) {
+            void *v;
+            if (hash_table_lookup(ht, defn[i].name, &v) != 0)
+                E_ERROR("Missing required argument %s\n", defn[i].name);
         }
     }
     if (j > 0) {
@@ -541,7 +522,8 @@ cmd_ln_parse(arg_t * defn, int32 argc, char *argv[])
         goto error;
     }
 
-    if (argc == 1) {
+    if (strict && argc == 1) {
+	E_ERROR("No arguments given, exiting\n");
         cmd_ln_print_help(stderr, defn);
         goto error;
     }
@@ -551,24 +533,19 @@ cmd_ln_parse(arg_t * defn, int32 argc, char *argv[])
     fprintf(stderr, "Current configuration:\n");
     arg_dump(stderr, defn, 0);
 #endif
-
+    hash_table_free(defidx);
     return 0;
 
   error:
-
-    if (ht) {
-        hash_table_free(ht);
-    }
-    if (argval) {
-        ckd_free(argval);
-    }
-
+    if (defidx)
+	hash_table_free(defidx);
+    cmd_ln_free();
     E_ERROR("cmd_ln_parse failed, forced exit\n");
     exit(-1);
 }
 
 int32
-cmd_ln_parse_file(arg_t * defn, char *filename)
+cmd_ln_parse_file(const arg_t * defn, const char *filename)
 {
     FILE *file;
     char **tmp_argv;
@@ -653,7 +630,7 @@ cmd_ln_parse_file(arg_t * defn, char *filename)
     } while (ch != EOF);
 
     if (rv == 0) {
-        rv = cmd_ln_parse(defn, argc, f_argv);
+        rv = cmd_ln_parse(defn, argc, f_argv, TRUE);
     }
 
     f_argc = argc;
@@ -663,34 +640,26 @@ cmd_ln_parse_file(arg_t * defn, char *filename)
 }
 
 void
-cmd_ln_print_help(FILE * fp, arg_t * defn)
+cmd_ln_print_help(FILE * fp, const arg_t * defn)
 {
     fprintf(fp, "Arguments list definition:\n");
     arg_dump(fp, defn, 1);
 }
 
 int
-cmd_ln_exists(char *name)
+cmd_ln_exists(const char *name)
 {
     void *val;
-
-    if (!argval)
-        E_FATAL("cmd_ln_exists invoked before cmd_ln_parse\n");
-
     return (hash_table_lookup(ht, name, &val) == 0);
 }
 
-const void *
-cmd_ln_access(char *name)
+anytype_t *
+cmd_ln_access(const char *name)
 {
     void *val;
-
-    if (!argval)
-        E_FATAL("cmd_ln_access invoked before cmd_ln_parse\n");
-
     if (hash_table_lookup(ht, name, &val) < 0)
         E_FATAL("Unknown argument: %s\n", name);
-    return (argval[(int32)val].ptr);
+    return (anytype_t *)val;
 }
 
 /* RAH, 4.17.01, free memory allocated above  */
@@ -699,13 +668,20 @@ cmd_ln_free()
 {
     int32 i;
 
-    if (ht)
+    if (ht) {
+        glist_t entries;
+        gnode_t *gn;
+        int32 n;
+
+        entries = hash_table_tolist(ht, &n);
+        for (gn = entries; gn; gn = gnode_next(gn)) {
+	    hash_entry_t *e = gnode_ptr(gn);
+            ckd_free(e->val);
+        }
+	glist_free(entries);
         hash_table_free(ht);
-
+    }
     ht = NULL;
-    ckd_free((void *) argval);
-    argval = NULL;
-
 
     if (f_argv) {
         if (f_argc > 1) {
