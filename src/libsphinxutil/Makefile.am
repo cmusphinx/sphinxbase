@@ -26,9 +26,8 @@ libsphinxutil_la_SOURCES = \
         pio.c \
 	linklist.c \
 	matrix.c \
-	nextword.c \
         profile.c \
-        str2words.c \
+        strfuncs.c \
 	s3_arraylist.c \
 	unlimit.c \
 	$(LAPACK_LITE_SRCS)

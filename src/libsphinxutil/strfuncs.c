@@ -1,6 +1,6 @@
 /* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* ====================================================================
- * Copyright (c) 1999-2004 Carnegie Mellon University.  All rights
+ * Copyright (c) 1999-2006 Carnegie Mellon University.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,36 +35,95 @@
  *
  */
 /*
- * nextword.c -- Yet another "next word from a string" package.
- *
- * **********************************************
- * CMU ARPA Speech Project
- *
- * Copyright (c) 1996 Carnegie Mellon University.
- * ALL RIGHTS RESERVED.
- * **********************************************
- * 
- * HISTORY
- * $Log: nextword.c,v $
- * Revision 1.3  2005/06/22 03:09:11  arthchan2003
- * 1, Fixed doxygen documentation, 2, Added  keyword.
- *
- * Revision 1.3  2005/03/30 01:22:48  archan
- * Fixed mistakes in last updates. Add
- *
- * 
- * 21-Oct-95	M K Ravishankar (rkm@cs.cmu.edu) at Carnegie Mellon University.
- * 		Created.
+ * strfuncs.c -- String functions
  */
 
 
-#include "nextword.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+#include <assert.h>
+#include <stdarg.h>
+
+#include "ckd_alloc.h"
+#include "strfuncs.h"
+
+char *
+string_join(const char *base, ...)
+{
+    va_list args;
+    size_t len;
+    const char *c;
+    char *out;
+
+    va_start(args, base);
+    len = strlen(base);
+    while ((c = va_arg(args, const char *)) != NULL) {
+        len += strlen(c);
+    }
+    len++;
+    va_end(args);
+
+    out = ckd_calloc(len, 1);
+    va_start(args, base);
+    strcpy(out, base);
+    while ((c = va_arg(args, const char *)) != NULL) {
+        strcat(out, c);
+    }
+    va_end(args);
+
+    return out;
+}
+
+int32
+str2words(char *line, char **ptr, int32 max_ptr)
+{
+    int32 i, n;
+
+    n = 0;                      /* #words found so far */
+    i = 0;                      /* For scanning through the input string */
+    while (1) {
+        /* Skip whitespace before next word */
+        while (line[i] && isspace((int)line[i]))
+            ++i;
+        if (!line[i])
+            break;
+
+        if (ptr != NULL && n >= max_ptr) {
+            /*
+             * Pointer array size insufficient.  Restore NULL chars inserted so far
+             * to space chars.  Not a perfect restoration, but better than nothing.
+             */
+            for (; i >= 0; --i)
+                if (line[i] == '\0')
+                    line[i] = ' ';
+
+            return -1;
+        }
+
+        /* Scan to end of word */
+        if (ptr != NULL)
+            ptr[n] = line + i;
+        ++n;
+        while (line[i] && !isspace((int)line[i]))
+            ++i;
+        if (!line[i])
+            break;
+        if (ptr != NULL)
+            line[i] = '\0';
+        ++i;
+    }
+
+    return n;
+}
 
 
 int32
-nextword(char *line, char *delim, char **word, char *delimfound)
+nextword(char *line, const char *delim, char **word, char *delimfound)
 {
-    char *w, *d;
+    const char *d;
+    char *w;
 
     /* Skip past any preceding delimiters */
     for (w = line; *w; w++) {
@@ -73,7 +132,7 @@ nextword(char *line, char *delim, char **word, char *delimfound)
             break;
     }
     if (!*w)
-        return -1;
+        return 0;
 
     *word = w;                  /* Beginning of word */
 
@@ -88,5 +147,5 @@ nextword(char *line, char *delim, char **word, char *delimfound)
     *delimfound = *w;
     *w = '\0';
 
-    return (w - *word);         /* Length of word */
+    return (w - line);
 }

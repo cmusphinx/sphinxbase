@@ -162,6 +162,13 @@ int32 cmd_ln_parse_file(arg_t *defn,  /**< In: Array of argument name definition
 			char *filename  /**< In: A file that contains all the arguments */ 
 	);
 
+/** Load arguments from a file and create a null-terminated argv array.
+ */
+int32 argfile_load (char *file, /**< The file name for input argument */
+		    char *pgm,  /**< The program name */
+		    char ***argvout /**< Output: The argument */
+		    );
+
 /**
  *Default entering routine application routine for command-line
  *initialization, this control the relationship between specified

@@ -92,13 +92,4 @@ int32 ctlfile_next (FILE *fp,
 void  ctlfile_close (FILE *fp /**< The input file pointer */
 		     );
 
-
-/** Loading arguments from a file 
-    Note: This function should move to cmd_ln.c
- */
-int32 argfile_load (char *file, /**< The file name for input argument */
-		    char *pgm,  /**< The program name */
-		    char ***argvout /**< Output: The argument */
-		    );
-
 #endif
