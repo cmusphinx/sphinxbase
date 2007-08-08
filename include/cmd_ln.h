@@ -160,7 +160,9 @@ int32 cmd_ln_parse (const arg_t *defn,	/**< In: Array of argument name definitio
  * into an argv[] for cmd_ln_parse().
  */
 int32 cmd_ln_parse_file(const arg_t *defn,   /**< In: Array of argument name definitions*/
-			const char *filename /**< In: A file that contains all the arguments */ 
+			const char *filename,/**< In: A file that contains all the arguments */ 
+                        int32 strict         /**< In: Fail on duplicate or unknown
+                                                arguments, or no arguments? */
 	);
 
 

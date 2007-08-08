@@ -254,7 +254,7 @@ cmd_ln_appl_enter(int argc, char *argv[],
     if (str) {
         /* Build command line argument list from file */
         E_INFO("Parsing command lines from file %s\n", str);
-        if (cmd_ln_parse_file(defn, str)) {
+        if (cmd_ln_parse_file(defn, str, TRUE)) {
             fprintf(stderr, "Usage:\n");
             fprintf(stderr, "\t%s argument-list, or\n", argv[0]);
             fprintf(stderr,
@@ -545,7 +545,7 @@ cmd_ln_parse(const arg_t * defn, int32 argc, char *argv[], int strict)
 }
 
 int32
-cmd_ln_parse_file(const arg_t * defn, const char *filename)
+cmd_ln_parse_file(const arg_t * defn, const char *filename, int32 strict)
 {
     FILE *file;
     char **tmp_argv;
@@ -630,7 +630,7 @@ cmd_ln_parse_file(const arg_t * defn, const char *filename)
     } while (ch != EOF);
 
     if (rv == 0) {
-        rv = cmd_ln_parse(defn, argc, f_argv, TRUE);
+        rv = cmd_ln_parse(defn, argc, f_argv, strict);
     }
 
     f_argc = argc;
