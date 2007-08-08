@@ -450,7 +450,8 @@ cmd_ln_parse(const arg_t * defn, int32 argc, char *argv[], int strict)
     }
 
     /* Allocate memory for argument values */
-    ht = hash_table_new(n, 0 /* argument names are case-sensitive */ );
+    if (ht == NULL)
+	ht = hash_table_new(n, 0 /* argument names are case-sensitive */ );
 
     /* Parse command line arguments (name-value pairs); skip argv[0] if argc is odd */
     for (j = 1; j < argc; j += 2) {
