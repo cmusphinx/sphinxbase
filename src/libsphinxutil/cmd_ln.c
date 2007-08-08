@@ -269,7 +269,7 @@ cmd_ln_appl_enter(int argc, char *argv[],
     }
 
     logfp = NULL;
-    if ((logfile = (char *) cmd_ln_access("-logfn")) != NULL) {
+    if ((logfile = cmd_ln_str("-logfn")) != NULL) {
         if ((logfp = fopen(logfile, "w")) == NULL) {
             E_ERROR
                 ("fopen(%s,w) failed; logging to stdout/stderr\n",
