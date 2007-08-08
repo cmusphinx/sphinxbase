@@ -107,6 +107,17 @@ main(int argc, char *argv[])
             printf("didn't get -1 at end of string\n");
         }
 
+        line = strdup("FOO!");
+        n = nextword(line, delim, &word, &delimfound);
+        if (strcmp(word, "FOO!") != 0) {
+            printf("%s != FOO!\n", word);
+            return 1;
+        }
+        if (delimfound != '\0') {
+            printf("didn't find NUL\n");
+            return 1;
+        }
+
         return 0;
     }
     return 0;
