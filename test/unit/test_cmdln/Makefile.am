@@ -1,4 +1,4 @@
-check_PROGRAMS = cmdln_parse
+check_PROGRAMS = cmdln_parse cmdln_parse_multiple
 
 INCLUDES = \
 	-I$(top_srcdir)/include \

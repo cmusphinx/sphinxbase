@@ -482,11 +482,11 @@ cmd_ln_parse(const arg_t * defn, int32 argc, char *argv[], int strict)
         }
 
         if ((vv = hash_table_enter(ht, argdef->name, v)) != v) {
-	    ckd_free(v);
 	    if (strict) {
-		    E_ERROR("Duplicate argument name in arguments: %s\n",
-			    argdef->name);
-		    goto error;
+		ckd_free(v);
+		E_ERROR("Duplicate argument name in arguments: %s\n",
+			argdef->name);
+		goto error;
 	    }
 	    else {
 		vv = hash_table_replace(ht, argdef->name, v);

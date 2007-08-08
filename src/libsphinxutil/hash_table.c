@@ -352,10 +352,12 @@ enter(hash_table_t * h, uint32 hash, const char *key, size_t len, void *val, int
     hash_entry_t *cur, *new;
 
     if ((cur = lookup(h, hash, key, len)) != NULL) {
+        void *oldval;
         /* Key already exists. */
-        if (replace)
+        oldval = cur->val;
+        if (replace) 
             cur->val = val;
-        return cur->val;
+        return oldval;
     }
 
     cur = &(h->table[hash]);
