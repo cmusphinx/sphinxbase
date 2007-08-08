@@ -9,7 +9,7 @@
 int
 main(int argc, char *argv[])
 {
-    if (argv < 2)
+    if (argc < 2)
         return 1;
 
     if (!strcmp(argv[1], "string_join")) {
@@ -67,8 +67,8 @@ main(int argc, char *argv[])
             printf("didn't find ' '\n");
             return 1;
         }
-        line[n] = delimfound;
-        line += n;
+        word[n] = delimfound;
+        line = word + n;
         n = nextword(line, delim, &word, &delimfound);
         if (strcmp(word, "bar") != 0) {
             printf("%s != bar\n", word);
@@ -78,8 +78,8 @@ main(int argc, char *argv[])
             printf("didn't find '\\n'\n");
             return 1;
         }
-        line[n] = delimfound;
-        line += n;
+        word[n] = delimfound;
+        line = word + n;
         n = nextword(line, delim, &word, &delimfound);
         if (strcmp(word, "baz") != 0) {
             printf("%s != baz\n", word);
@@ -89,8 +89,8 @@ main(int argc, char *argv[])
             printf("didn't find ' '\n");
             return 1;
         }
-        line[n] = delimfound;
-        line += n;
+        word[n] = delimfound;
+        line = word + n;
         n = nextword(line, delim, &word, &delimfound);
         if (strcmp(word, "argh") != 0) {
             printf("%s != argh\n", word);

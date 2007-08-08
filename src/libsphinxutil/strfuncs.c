@@ -147,5 +147,5 @@ nextword(char *line, const char *delim, char **word, char *delimfound)
     *delimfound = *w;
     *w = '\0';
 
-    return (w - line);
+    return (w - *word);
 }

@@ -81,12 +81,12 @@ int32 str2words (char *line,	/**< In/Out: line to be parsed.  This
 
 /**
  * Yet another attempt at a clean "next-word-in-string" function.  See arguments below.
- * @return Ending position of search in line, or 0 if nothing found.
+ * @return Length of word returned, or 0 if nothing found.
  * This allows you to scan through a line:
  * while ((n = nextword(line, delim, &word, &delimfound))) {
  *     ... do something with word ..
- *     line[n] = delimfound;
- *     line += n;
+ *     word[n] = delimfound;
+ *     line = word + n;
  * }
  */
 int32 nextword (char *line, /**< Input: String being searched for next word.
