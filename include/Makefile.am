@@ -24,7 +24,6 @@ pkginclude_HEADERS =				\
 	libutil.h				\
 	linklist.h				\
 	matrix.h				\
-	misc.h					\
 	mulaw.h					\
 	pio.h					\
 	prim_type.h				\
