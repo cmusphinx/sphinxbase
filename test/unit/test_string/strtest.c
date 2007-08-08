@@ -100,6 +100,12 @@ main(int argc, char *argv[])
             printf("didn't find NUL\n");
             return 1;
         }
+        word[n] = delimfound;
+        line = word + n;
+        n = nextword(line, delim, &word, &delimfound);
+        if (n != -1) {
+            printf("didn't get -1 at end of string\n");
+        }
 
         return 0;
     }

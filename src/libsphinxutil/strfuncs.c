@@ -132,7 +132,7 @@ nextword(char *line, const char *delim, char **word, char *delimfound)
             break;
     }
     if (!*w)
-        return 0;
+        return -1;
 
     *word = w;                  /* Beginning of word */
 
