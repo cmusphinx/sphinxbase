@@ -59,6 +59,7 @@
 #define _LIBUTIL_CMD_LN_H_
 
 #include "prim_type.h"
+#include "hash_table.h"
 
 /** \file cmd_ln.h
  *  \brief Command-line parsing and handling.
@@ -162,12 +163,6 @@ int32 cmd_ln_parse_file(arg_t *defn,  /**< In: Array of argument name definition
 			char *filename  /**< In: A file that contains all the arguments */ 
 	);
 
-/** Load arguments from a file and create a null-terminated argv array.
- */
-int32 argfile_load (char *file, /**< The file name for input argument */
-		    char *pgm,  /**< The program name */
-		    char ***argvout /**< Output: The argument */
-		    );
 
 /**
  *Default entering routine application routine for command-line
