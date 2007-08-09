@@ -7,7 +7,7 @@ INCLUDES = \
 LDADD = ${top_builddir}/src/libsphinxutil/libsphinxutil.la -lm
 
 
-TESTS = $(wildcard $(srcdir)/_*.test) 
+TESTS = $(wildcard $(srcdir)/_*.test)
 
 
-EXTRA_DIST = $(TESTS)
+EXTRA_DIST = $(TESTS) $(wildcard $(srcdir)/_*.res)
