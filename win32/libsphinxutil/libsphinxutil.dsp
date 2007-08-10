@@ -149,10 +149,6 @@ SOURCE=..\..\src\libsphinxutil\matrix.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\src\libsphinxutil\nextword.c
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\src\libsphinxutil\pio.c
 # End Source File
 # Begin Source File
@@ -173,7 +169,7 @@ SOURCE=..\..\src\libsphinxutil\slapack_lite.c
 # End Source File
 # Begin Source File
 
-SOURCE=..\..\src\libsphinxutil\str2words.c
+SOURCE=..\..\src\libsphinxutil\strfuncs.c
 # End Source File
 # Begin Source File
 
