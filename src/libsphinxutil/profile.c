@@ -71,7 +71,9 @@
 #include <sys/resource.h>
 #else
 #include <windows.h>
+#ifndef _WIN32_WCE
 #include <time.h>
+#endif
 #endif
 
 #ifdef _WIN32
