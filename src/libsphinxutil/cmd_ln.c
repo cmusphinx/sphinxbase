@@ -505,7 +505,7 @@ cmd_ln_parse(const arg_t * defn, int32 argc, char *argv[], int strict)
                      defn[i].name, defn[i].deflt);
                 goto error;
             }
-            assert(hash_table_enter(ht, defn[i].name, v) == v);
+            hash_table_enter(ht, defn[i].name, v);
         }
     }
 
