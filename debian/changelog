@@ -1,3 +1,9 @@
+sphinxbase (0.3-2) unstable; urgency=low
+
+  * Change required debhelper version to 4, so maemo builds work
+
+ -- David Huggins-Daines <dhuggins@cs.cmu.edu>  Wed, 22 Aug 2007 19:01:51 -0400
+
 sphinxbase (0.3-1) unstable; urgency=low
 
   * Initial Debian packaging.
