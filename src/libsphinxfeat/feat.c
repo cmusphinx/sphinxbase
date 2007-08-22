@@ -1258,8 +1258,8 @@ feat_s2mfc2feat_block(feat_t * fcb, mfcc_t ** uttcep, int32 nfr,
             for (i = 0; i < win; i++) {
                 assert(fcb->bufpos < LIVEBUFBLOCKSIZE);
                 assert(tpos < LIVEBUFBLOCKSIZE);
-                memcpy(cepbuf[fcb->bufpos++], cepbuf[tpos],
-                       cepsize * sizeof(mfcc_t));
+                memmove(cepbuf[fcb->bufpos++], cepbuf[tpos],
+                        cepsize * sizeof(mfcc_t));
                 fcb->bufpos %= LIVEBUFBLOCKSIZE;
             }
         }
