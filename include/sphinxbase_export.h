@@ -13,4 +13,4 @@
 #define SPHINXBASE_EXPORT
 #endif
 
-#endif __SPHINXBASE_EXPORT_H__
+#endif /* __SPHINXBASE_EXPORT_H__ */
