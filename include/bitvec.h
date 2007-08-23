@@ -67,8 +67,10 @@
 #ifndef _LIBUTIL_BITVEC_H_
 #define _LIBUTIL_BITVEC_H_
 
-#include "prim_type.h"
-#include "ckd_alloc.h"
+/* Win32/WinCE DLL gunk */
+#include <sphinxbase_export.h>
+#include <prim_type.h>
+#include <ckd_alloc.h>
 
   /** \file bitvec.h
    * \brief An implementation of bit vector
@@ -152,6 +154,7 @@ typedef uint32 *bitvec_t;
    * @param len is the length of bit vector #vec
    * @return the number of bits being set in vector #vec
    */
+SPHINXBASE_EXPORT
 int32 bitvec_count_set (bitvec_t vec,	/* In: Bit vector to search */
 			int32 len);	/* In: Lenght of above bit vector */
 

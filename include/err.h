@@ -64,6 +64,9 @@
 #include <errno.h>
 #endif
 
+/* Win32/WinCE DLL gunk */
+#include <sphinxbase_export.h>
+
 /**\file err.h
  *\brief Implementation of error checking routine with flush. 
  *
@@ -79,14 +82,23 @@ extern "C" {
 }
 #endif
 
+SPHINXBASE_EXPORT
 void _E__pr_header( char const *file, long line, char const *msg );
+SPHINXBASE_EXPORT
 void _E__pr_info_header( char const *file, long line, char const *tag );
+SPHINXBASE_EXPORT
 void _E__pr_info_header_wofn(char const *msg);
+SPHINXBASE_EXPORT
 void _E__pr_warn( char const *fmt, ... );
+SPHINXBASE_EXPORT
 void _E__pr_info( char const *fmt, ... );
+SPHINXBASE_EXPORT
 void _E__die_error( char const *fmt, ... );
+SPHINXBASE_EXPORT
 void _E__abort_error( char const *fmt, ... );
+SPHINXBASE_EXPORT
 void _E__sys_error( char const *fmt, ... );
+SPHINXBASE_EXPORT
 void _E__fatal_sys_error( char const *fmt, ... );
 
 /* These three all abort */

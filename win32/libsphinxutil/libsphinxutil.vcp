@@ -155,7 +155,7 @@ CPP=clarm.exe
 # PROP Target_Dir ""
 CPP=clarm.exe
 # ADD BASE CPP /nologo /W3 /Zi /Od /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /YX /M$(CECrtMTDebug) /c
-# ADD CPP /nologo /W3 /Zi /Od /I "../../include/wince" /I "../../include" /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "HAVE_CONFIG_H" /YX /M$(CECrtMTDebug) /c
+# ADD CPP /nologo /W3 /Zi /Od /I "../../include/wince" /I "../../include" /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "HAVE_CONFIG_H" /D "LIBPOCKETSPHINX" /YX /M$(CECrtMTDebug) /c
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
@@ -181,7 +181,7 @@ BSC32=bscmake.exe
 # PROP Target_Dir ""
 CPP=clarm.exe
 # ADD BASE CPP /nologo /W3 /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "NDEBUG" /D "ARM" /D "_ARM_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /YX /Oxs /M$(CECrtMT) /c
-# ADD CPP /nologo /W3 /I "../../include/wince" /I "../../include" /D "NDEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "HAVE_CONFIG_H" /YX /Oxs /M$(CECrtMT) /c
+# ADD CPP /nologo /W3 /I "../../include/wince" /I "../../include" /D "NDEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "HAVE_CONFIG_H" /D "LIBPOCKETSPHINX" /YX /Oxs /M$(CECrtMT) /c
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
@@ -266,9 +266,7 @@ DEP_CPP_BIO_C=\
 	"..\..\include\ckd_alloc.h"\
 	"..\..\include\err.h"\
 	"..\..\include\prim_type.h"\
-	
-NODEP_CPP_BIO_C=\
-	"..\..\include\dmalloc.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 
 !ELSEIF  "$(CFG)" == "libsphinxutil - Win32 (WCE ARM) Release"
@@ -341,9 +339,7 @@ DEP_CPP_BITVE=\
 	"..\..\include\bitvec.h"\
 	"..\..\include\ckd_alloc.h"\
 	"..\..\include\prim_type.h"\
-	
-NODEP_CPP_BITVE=\
-	"..\..\include\dmalloc.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 
 !ELSEIF  "$(CFG)" == "libsphinxutil - Win32 (WCE ARM) Release"
@@ -402,6 +398,7 @@ DEP_CPP_CASE_=\
 	"..\..\include\case.h"\
 	"..\..\include\err.h"\
 	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 
 !ELSEIF  "$(CFG)" == "libsphinxutil - Win32 (WCE ARM) Release"
@@ -469,9 +466,7 @@ DEP_CPP_CKD_A=\
 	"..\..\include\ckd_alloc.h"\
 	"..\..\include\err.h"\
 	"..\..\include\prim_type.h"\
-	
-NODEP_CPP_CKD_A=\
-	"..\..\include\dmalloc.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 
 !ELSEIF  "$(CFG)" == "libsphinxutil - Win32 (WCE ARM) Release"
@@ -562,10 +557,8 @@ DEP_CPP_CMD_L=\
 	"..\..\include\glist.h"\
 	"..\..\include\hash_table.h"\
 	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	"..\..\include\wince\config.h"\
-	
-NODEP_CPP_CMD_L=\
-	"..\..\include\dmalloc.h"\
 	
 
 !ELSEIF  "$(CFG)" == "libsphinxutil - Win32 (WCE ARM) Release"
@@ -641,9 +634,7 @@ DEP_CPP_ERR_W=\
 	"..\..\include\ckd_alloc.h"\
 	"..\..\include\err.h"\
 	"..\..\include\prim_type.h"\
-	
-NODEP_CPP_ERR_W=\
-	"..\..\include\dmalloc.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 
 !ELSEIF  "$(CFG)" == "libsphinxutil - Win32 (WCE ARM) Release"
@@ -697,6 +688,7 @@ DEP_CPP_FILEN=\
 DEP_CPP_FILEN=\
 	"..\..\include\filename.h"\
 	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 
 !ELSEIF  "$(CFG)" == "libsphinxutil - Win32 (WCE ARM) Release"
@@ -782,9 +774,7 @@ DEP_CPP_GLIST=\
 	"..\..\include\ckd_alloc.h"\
 	"..\..\include\glist.h"\
 	"..\..\include\prim_type.h"\
-	
-NODEP_CPP_GLIST=\
-	"..\..\include\dmalloc.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 
 !ELSEIF  "$(CFG)" == "libsphinxutil - Win32 (WCE ARM) Release"
@@ -870,9 +860,7 @@ DEP_CPP_HASH_=\
 	"..\..\include\glist.h"\
 	"..\..\include\hash_table.h"\
 	"..\..\include\prim_type.h"\
-	
-NODEP_CPP_HASH_=\
-	"..\..\include\dmalloc.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 
 !ELSEIF  "$(CFG)" == "libsphinxutil - Win32 (WCE ARM) Release"
@@ -946,9 +934,7 @@ DEP_CPP_HEAP_=\
 	"..\..\include\ckd_alloc.h"\
 	"..\..\include\heap.h"\
 	"..\..\include\prim_type.h"\
-	
-NODEP_CPP_HEAP_=\
-	"..\..\include\dmalloc.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 
 !ELSEIF  "$(CFG)" == "libsphinxutil - Win32 (WCE ARM) Release"
@@ -1002,6 +988,7 @@ DEP_CPP_INFO_=\
 DEP_CPP_INFO_=\
 	"..\..\include\err.h"\
 	"..\..\include\info.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 
 !ELSEIF  "$(CFG)" == "libsphinxutil - Win32 (WCE ARM) Release"
@@ -1073,9 +1060,7 @@ DEP_CPP_LINKL=\
 	"..\..\include\err.h"\
 	"..\..\include\linklist.h"\
 	"..\..\include\prim_type.h"\
-	
-NODEP_CPP_LINKL=\
-	"..\..\include\dmalloc.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 
 !ELSEIF  "$(CFG)" == "libsphinxutil - Win32 (WCE ARM) Release"
@@ -1166,10 +1151,8 @@ DEP_CPP_MATRI=\
 	"..\..\include\f2c.h"\
 	"..\..\include\matrix.h"\
 	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	"..\..\include\wince\config.h"\
-	
-NODEP_CPP_MATRI=\
-	"..\..\include\dmalloc.h"\
 	
 
 !ELSEIF  "$(CFG)" == "libsphinxutil - Win32 (WCE ARM) Release"
@@ -1249,9 +1232,7 @@ DEP_CPP_PIO_C=\
 	"..\..\include\err.h"\
 	"..\..\include\pio.h"\
 	"..\..\include\prim_type.h"\
-	
-NODEP_CPP_PIO_C=\
-	"..\..\include\dmalloc.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 
 !ELSEIF  "$(CFG)" == "libsphinxutil - Win32 (WCE ARM) Release"
@@ -1328,9 +1309,7 @@ DEP_CPP_PROFI=\
 	"..\..\include\err.h"\
 	"..\..\include\prim_type.h"\
 	"..\..\include\profile.h"\
-	
-NODEP_CPP_PROFI=\
-	"..\..\include\dmalloc.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 
 !ELSEIF  "$(CFG)" == "libsphinxutil - Win32 (WCE ARM) Release"
@@ -1402,9 +1381,7 @@ DEP_CPP_S3_AR=\
 	"..\..\include\ckd_alloc.h"\
 	"..\..\include\prim_type.h"\
 	"..\..\include\s3_arraylist.h"\
-	
-NODEP_CPP_S3_AR=\
-	"..\..\include\dmalloc.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 
 !ELSEIF  "$(CFG)" == "libsphinxutil - Win32 (WCE ARM) Release"
@@ -1427,10 +1404,8 @@ SOURCE=..\..\src\libsphinxutil\strfuncs.c
 DEP_CPP_STRFU=\
 	"..\..\include\ckd_alloc.h"\
 	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	"..\..\include\strfuncs.h"\
-	
-NODEP_CPP_STRFU=\
-	"..\..\include\dmalloc.h"\
 	
 
 !IF  "$(CFG)" == "libsphinxutil - Win32 (WCE emulator) Release"

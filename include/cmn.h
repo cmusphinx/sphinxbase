@@ -83,8 +83,10 @@
 #ifndef _S3_CMN_H_
 #define _S3_CMN_H_
 
-#include "prim_type.h"
-#include "fe.h"
+/* Win32/WinCE DLL gunk */
+#include <sphinxbase_export.h>
+#include <prim_type.h>
+#include <fe.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -113,9 +115,11 @@ typedef enum cmn_type_e {
 } cmn_type_t;
 
 /** String representations of cmn_type_t values. */
+SPHINXBASE_EXPORT
 extern const char *cmn_type_str[];
 
 /** Convert string representation (from command-line) to cmn_type_t */
+SPHINXBASE_EXPORT
 cmn_type_t cmn_type_from_str(const char *str);
 
 /** \struct cmn_t
@@ -130,11 +134,13 @@ typedef struct {
     int32 veclen;	/**< Length of cepstral vector */
 } cmn_t;
 
+SPHINXBASE_EXPORT
 cmn_t* cmn_init(int32 veclen);
 
 /**
  * CMN for the whole sentence
 */
+SPHINXBASE_EXPORT
 void cmn (cmn_t *cmn,   /**< In/Out: cmn normalization, which contains the cmn_mean and cmn_var) */
           mfcc_t **mfc,	/**< In/Out: mfc[f] = mfc vector in frame f */
 	  int32 varnorm,/**< In: if not FALSE, variance normalize the input vectors
@@ -149,6 +155,7 @@ void cmn (cmn_t *cmn,   /**< In/Out: cmn normalization, which contains the cmn_m
 /**
  * CMN for one block of data, using prior mean
  */
+SPHINXBASE_EXPORT
 void cmn_prior(cmn_t *cmn,        /**< In/Out: cmn normalization, which contains
                                     the cmn_mean and cmn_var) */
                mfcc_t **incep,  /**< In/Out: mfc[f] = mfc vector in frame f*/
@@ -159,19 +166,23 @@ void cmn_prior(cmn_t *cmn,        /**< In/Out: cmn normalization, which contains
 /**
  * Update prior mean based on observed data
  */
+SPHINXBASE_EXPORT
 void cmn_prior_update(cmn_t *cmn);
 
 /**
  * Set the prior mean.
  */
+SPHINXBASE_EXPORT
 void cmn_prior_set(cmn_t *cmn, mfcc_t *vec);
 
 /**
  * Get the prior mean.
  */
+SPHINXBASE_EXPORT
 void cmn_prior_get(cmn_t *cmn, mfcc_t *vec);
 
 /* RAH, free previously allocated memory */
+SPHINXBASE_EXPORT
 void cmn_free (cmn_t *cmn);
 
 #ifdef __cplusplus

@@ -81,10 +81,12 @@
 
 #include <stdio.h>
 
-#include "prim_type.h"
-#include "fe.h"
-#include "cmn.h"
-#include "agc.h"
+/* Win32/WinCE DLL gunk */
+#include <sphinxbase_export.h>
+#include <prim_type.h>
+#include <fe.h>
+#include <cmn.h>
+#include <agc.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -174,6 +176,7 @@ typedef struct feat_s {
  * (Note that this routine does NOT verify the checksum.)
  * Return value: # frames read if successful, -1 if error.
  */
+SPHINXBASE_EXPORT
 int32 feat_readfile(feat_t *fcb,	/** In: Control block from feat_init() */
                     char *file,		/** In: File to read */
                     int32 sf,		/** In: Start/end frames (range) to be read from
@@ -189,6 +192,7 @@ int32 feat_readfile(feat_t *fcb,	/** In: Control block from feat_init() */
  * starting from feat[0][0][0].  (NOTE: No checksum is written.)
  * Return value: # frames read if successful, -1 if error.
  */
+SPHINXBASE_EXPORT
 int32 feat_writefile(feat_t *fcb,	/** In: Control block from feat_init() */
 		     char *file,	/** In: File to write */
 		     mfcc_t ***feat,	/** In: Feature data to be written */
@@ -199,8 +203,8 @@ int32 feat_writefile(feat_t *fcb,	/** In: Control block from feat_init() */
  * Read Sphinx-II format mfc file (s2mfc = Sphinx-II format MFC data).
  * Return value: #frames read if successful, -1 if error (e.g., mfc array too small).
  */
-int32
-feat_s2mfc_read(char *file,		/** In: Sphinx-II format MFC file to be read */
+SPHINXBASE_EXPORT
+int32 feat_s2mfc_read(char *file,	/** In: Sphinx-II format MFC file to be read */
                 int32 win,		/** In: Size of dynamic feature window to add to the
                                             input.  Padding will be added if necessary. */
 		int32 sf, int32 ef,	/** In: Start/end frames (range) to be read from file;
@@ -224,6 +228,7 @@ feat_s2mfc_read(char *file,		/** In: Sphinx-II format MFC file to be read */
  * NOTE: For I/O convenience, the entire data area is allocated as one contiguous block.
  * Return value: Pointer to the allocated space if successful, NULL if any error.
  */
+SPHINXBASE_EXPORT
 mfcc_t ***feat_array_alloc(feat_t *fcb,	/**< In: Descriptor from feat_init(), used
 					   to obtain #streams and stream sizes */
                            int32 nfr	/**< In: #Frames for which to allocate */
@@ -232,6 +237,7 @@ mfcc_t ***feat_array_alloc(feat_t *fcb,	/**< In: Descriptor from feat_init(), us
  * Like feat_array_alloc except that only a single frame is allocated.  Hence, one
  * dimension less.
  */
+SPHINXBASE_EXPORT
 mfcc_t **feat_vector_alloc(feat_t *fcb  /**< In: Descriptor from feat_init(),
                                            used to obtain #streams and 
                                            stream sizes */
@@ -239,10 +245,12 @@ mfcc_t **feat_vector_alloc(feat_t *fcb  /**< In: Descriptor from feat_init(),
 /**
  * Free a buffer allocated with feat_array_alloc()
  */
+SPHINXBASE_EXPORT
 void feat_array_free(mfcc_t ***feat);
 /**
  * Free a buffer allocated with feat_vector_alloc()
  */
+SPHINXBASE_EXPORT
 void feat_vector_free(mfcc_t **feat);
 
 
@@ -258,6 +266,7 @@ void feat_vector_free(mfcc_t **feat);
  * Return value: (feat_t *) descriptor if successful, NULL if error.  Caller 
  * must not directly modify the contents of the returned value.
  */
+SPHINXBASE_EXPORT
 feat_t *feat_init(char *type,	/**< In: Type of feature stream */
                   cmn_type_t cmn, /**< In: Type of cepstram mean normalization to 
                                      be done before feature computation; can be 
@@ -277,6 +286,7 @@ feat_t *feat_init(char *type,	/**< In: Type of feature stream */
  * Add an LDA transformation to the feature module from a file.
  * @return 0 for success or -1 if reading the LDA file failed.
  **/
+SPHINXBASE_EXPORT
 int32 feat_read_lda(feat_t *feat,	 /**< In: Descriptor from feat_init() */
                     const char *ldafile, /**< In: File to read the LDA matrix from. */
                     int32 dim		 /**< In: Dimensionality of LDA output. */
@@ -285,6 +295,7 @@ int32 feat_read_lda(feat_t *feat,	 /**< In: Descriptor from feat_init() */
 /**
  * Transform a block of features using the feature module's LDA transform.
  **/
+SPHINXBASE_EXPORT
 void feat_lda_transform(feat_t *fcb,		/**< In: Descriptor from feat_init() */
                         mfcc_t ***inout_feat,	/**< Feature block to transform. */
                         uint32 nfr		/**< In: Number of frames in inout_feat. */
@@ -294,6 +305,7 @@ void feat_lda_transform(feat_t *fcb,		/**< In: Descriptor from feat_init() */
 /**
  * Print the given block of feature vectors to the given FILE.
  */
+SPHINXBASE_EXPORT
 void feat_print(feat_t *fcb,		/**< In: Descriptor from feat_init() */
 		mfcc_t ***feat,		/**< In: Feature data to be printed */
 		int32 nfr,		/**< In: #Frames of feature data above */
@@ -313,7 +325,7 @@ void feat_print(feat_t *fcb,		/**< In: Descriptor from feat_init() */
  * already specifies extension or absolute path, then these are not
  * applied. The default extension is defined by the application.
  */
-
+SPHINXBASE_EXPORT
 int32 feat_s2mfc2feat(feat_t *fcb,	/**< In: Descriptor from feat_init() */
 		      const char *file,	/**< In: File to be read */
 		      const char *dir,	/**< In: Directory prefix for file, 
@@ -346,7 +358,7 @@ int32 feat_s2mfc2feat(feat_t *fcb,	/**< In: Descriptor from feat_init() */
  * should repeatedly call this function until all frames are
  * processed.
  **/
-
+SPHINXBASE_EXPORT
 int32 feat_s2mfc2feat_block(feat_t  *fcb,     /**< In: Descriptor from feat_init() */
                             mfcc_t **uttcep, /**< In: Incoming cepstral buffer */
                             int32   nfr,      /**< In: Size of incoming buffer */
@@ -364,12 +376,14 @@ int32 feat_s2mfc2feat_block(feat_t  *fcb,     /**< In: Descriptor from feat_init
 /**
    deallocate feat_t
 */
+SPHINXBASE_EXPORT
 void feat_free(feat_t *f /**< In: feat_t */
     );
 
 /**
  * Report the feat_t data structure 
  */
+SPHINXBASE_EXPORT
 void feat_report(feat_t *f /**< In: feat_t */
     );
 #ifdef __cplusplus

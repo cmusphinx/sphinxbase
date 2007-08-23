@@ -65,7 +65,9 @@ extern "C" {
 }
 #endif
 
-#include "prim_type.h"
+/* Win32/WinCE DLL gunk */
+#include <sphinxbase_export.h>
+#include <prim_type.h>
 
 /**
  * Calculate the determinant of a positive definite matrix.
@@ -79,6 +81,7 @@ extern "C" {
  * considered, therefore the check for positive-definiteness is not
  * reliable.
  **/
+SPHINXBASE_EXPORT
 float64 determinant(float32 **a, int32 len);
 
 /**
@@ -91,6 +94,7 @@ float64 determinant(float32 **a, int32 len);
  * \note Only the upper triangular portion of a is considered,
  * therefore the check for positive-definiteness is not reliable.
  **/
+SPHINXBASE_EXPORT
 int32 invert(float32 **out_ainv, float32 **a, int32 len);
 
 /**
@@ -104,6 +108,7 @@ int32 invert(float32 **out_ainv, float32 **a, int32 len);
  * \note Only the upper triangular portion of a is considered,
  * therefore the check for positive-definiteness is not reliable.
  **/
+SPHINXBASE_EXPORT
 int32 solve(float32 **a, float32 *b,
             float32 *out_x, int32 n);
 
@@ -115,6 +120,7 @@ int32 solve(float32 **a, float32 *b,
  * @param y A vector of length len.
  * @param len The length of the input vectors.
  **/
+SPHINXBASE_EXPORT
 void outerproduct(float32 **out_a, float32 *x, float32 *y, int32 len);
 
 /**
@@ -123,6 +129,7 @@ void outerproduct(float32 **out_a, float32 *x, float32 *y, int32 len);
  * @param a The input matrix A.
  * @param b The input matrix B.
  **/
+SPHINXBASE_EXPORT
 void matrixmultiply(float32 **out_c, /* = */
                     float32 **a, /* * */ float32 **b,
                     int32 n /**< dimension of a and b. */
@@ -134,6 +141,7 @@ void matrixmultiply(float32 **out_c, /* = */
  * @param x The constant to multiply it by.
  * @param n dimension of a.
  **/
+SPHINXBASE_EXPORT
 void scalarmultiply(float32 **inout_a, float32 x, int32 n);
 
 /**
@@ -142,6 +150,7 @@ void scalarmultiply(float32 **inout_a, float32 x, int32 n);
  * @param b The B matrix to add to A.
  * @param n dimension of a and b.
  **/
+SPHINXBASE_EXPORT
 void matrixadd(float32 **inout_a, float32 **b, int32 n);
 
 #if 0

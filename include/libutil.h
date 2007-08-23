@@ -84,24 +84,26 @@
 #endif /* RAH */
 #include <math.h>
 
-#include "prim_type.h"
+/* Win32/WinCE DLL gunk */
+#include <sphinxbase_export.h>
 
-#include "bitvec.h"
-#include "case.h"
-#include "ckd_alloc.h"
-#include "cmd_ln.h"
-#include "err.h"
-#include "filename.h"
-#include "glist.h"
-#include "hash_table.h"
-#include "heap.h"
-#include "pio.h"
-#include "linklist.h"
-#include "profile.h"
-#include "strfuncs.h"
-#include "unlimit.h"
-#include "info.h"
-#include "genrand.h"
+#include <prim_type.h>
+#include <bitvec.h>
+#include <case.h>
+#include <ckd_alloc.h>
+#include <cmd_ln.h>
+#include <err.h>
+#include <filename.h>
+#include <glist.h>
+#include <hash_table.h>
+#include <heap.h>
+#include <pio.h>
+#include <linklist.h>
+#include <profile.h>
+#include <strfuncs.h>
+#include <unlimit.h>
+#include <info.h>
+#include <genrand.h>
 
 
 #ifdef __cplusplus

@@ -58,8 +58,10 @@
 #ifndef _LIBUTIL_CMD_LN_H_
 #define _LIBUTIL_CMD_LN_H_
 
-#include "prim_type.h"
-#include "hash_table.h"
+/* Win32/WinCE DLL gunk */
+#include <sphinxbase_export.h>
+#include <prim_type.h>
+#include <hash_table.h>
 
 /** \file cmd_ln.h
  *  \brief Command-line parsing and handling.
@@ -148,6 +150,7 @@ typedef struct {
  * also prints the prevailing argument values (to stderr) after parsing.
  * Return value: 0 if successful, -1 if error.
  */
+SPHINXBASE_EXPORT
 int32 cmd_ln_parse (const arg_t *defn,	/**< In: Array of argument name definitions */
 		    int32 argc,		/**< In: #Actual arguments */
 		    char *argv[],	/**< In: Actual arguments */
@@ -159,6 +162,7 @@ int32 cmd_ln_parse (const arg_t *defn,	/**< In: Array of argument name definitio
  * Parse an arguments file by deliminating on " \r\t\n" and putting each tokens
  * into an argv[] for cmd_ln_parse().
  */
+SPHINXBASE_EXPORT
 int32 cmd_ln_parse_file(const arg_t *defn,   /**< In: Array of argument name definitions*/
 			const char *filename,/**< In: A file that contains all the arguments */ 
                         int32 strict         /**< In: Fail on duplicate or unknown
@@ -172,6 +176,7 @@ int32 cmd_ln_parse_file(const arg_t *defn,   /**< In: Array of argument name def
  *argument file and argument list.
  */
 
+SPHINXBASE_EXPORT
 void cmd_ln_appl_enter(int argc,   /**< In: #Actual arguments */
 		       char *argv[], /**< In: Actual arguments */
 		       const char* default_argfn, /**< In: default argument file name*/
@@ -185,18 +190,21 @@ void cmd_ln_appl_enter(int argc,   /**< In: #Actual arguments */
  *argument file and argument list.  
  */
 
+SPHINXBASE_EXPORT
 void cmd_ln_appl_exit(void);
 
 /**
  * Return a true value if the command line argument exists (i.e. it
  * was one of the arguments defined in the call to cmd_ln_parse().
  */
+SPHINXBASE_EXPORT
 int cmd_ln_exists(const char *name);
 
 /*
  * Return a pointer to the previously parsed value for the given argument name.
  * And, some convenient wrappers around this function.
  */
+SPHINXBASE_EXPORT
 anytype_t *cmd_ln_access (const char *name);/* In: Argument name whose value is sought */
 #define cmd_ln_str(name)	((char *)cmd_ln_access(name)->ptr)
 #define cmd_ln_int32(name)	(cmd_ln_access(name)->i_32)
@@ -208,11 +216,13 @@ anytype_t *cmd_ln_access (const char *name);/* In: Argument name whose value is 
  * Print a help message listing the valid argument names, and the associated
  * attributes as given in defn.
  */
+SPHINXBASE_EXPORT
 void  cmd_ln_print_help (FILE *fp,	   /**< In: File to which to print */
 			 const arg_t *defn /**< In: Array of argument name definitions */
 	);
 
 /* RAH, 4.17.01, call this to free memory allocated during cmd_ln_parse() */
+SPHINXBASE_EXPORT
 void cmd_ln_free (void);
 
 #ifdef __cplusplus

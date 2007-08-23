@@ -136,7 +136,10 @@
 
 #endif
 
-#include "prim_type.h"
+/* Win32/WinCE DLL gunk */
+#include <sphinxbase_export.h>
+
+#include <prim_type.h>
 
 #define AD_SAMPLE_SIZE		(sizeof(int16))
 #define DEFAULT_SAMPLES_PER_SEC	16000
@@ -301,17 +304,20 @@ typedef struct {
  * otherwise.  The return value to be used as the first argument to other recording
  * functions.
  */
+SPHINXBASE_EXPORT
 ad_rec_t *ad_open_dev (
 	const char *dev, /**< Device name (platform-specific) */
 	int32 samples_per_sec /**< Samples per second */
 	);
 
+SPHINXBASE_EXPORT
 ad_rec_t *ad_open_sps (
 		       int32 samples_per_sec /**< Samples per second */
 		       );
 
 
 /* Like ad_open_sps but with default samples/sec and bufsize */
+SPHINXBASE_EXPORT
 ad_rec_t *ad_open ( void );
 
 
@@ -320,19 +326,23 @@ ad_rec_t *ad_open ( void );
  * Like ad_open_sps but specifies buffering required within driver.  This function is
  * useful if the default (5000 msec worth) is too small and results in loss of data.
  */
+SPHINXBASE_EXPORT
 ad_rec_t *ad_open_sps_bufsize (int32 samples_per_sec, int32 bufsize_msec);
 #endif
 
 
 /* Start audio recording.  Return value: 0 if successful, <0 otherwise */
+SPHINXBASE_EXPORT
 int32 ad_start_rec (ad_rec_t *);
 
 
 /* Stop audio recording.  Return value: 0 if successful, <0 otherwise */
+SPHINXBASE_EXPORT
 int32 ad_stop_rec (ad_rec_t *);
 
 
 /* Close the recording device.  Return value: 0 if successful, <0 otherwise */
+SPHINXBASE_EXPORT
 int32 ad_close (ad_rec_t *);
 
 
@@ -341,6 +351,7 @@ int32 ad_close (ad_rec_t *);
  * Return value: # samples actually read (could be 0 since non-blocking); -1 if not
  * recording and no more samples remaining to be read from most recent recording.
  */
+SPHINXBASE_EXPORT
 int32 ad_read (ad_rec_t *, int16 *buf, int32 max);
 
 
@@ -369,14 +380,19 @@ typedef struct {
 #endif
 
 
+SPHINXBASE_EXPORT
 ad_play_t *ad_open_play_sps (int32 samples_per_sec);
 
+SPHINXBASE_EXPORT
 ad_play_t *ad_open_play ( void );
 
+SPHINXBASE_EXPORT
 int32 ad_start_play (ad_play_t *);
 
+SPHINXBASE_EXPORT
 int32 ad_stop_play (ad_play_t *);
 
+SPHINXBASE_EXPORT
 int32 ad_close_play (ad_play_t *);
 
 
@@ -386,6 +402,7 @@ int32 ad_close_play (ad_play_t *);
  * The application should resubmit the remaining data to be played.
  * Return value: # samples accepted for playback; -1 if error.
  */
+SPHINXBASE_EXPORT
 int32 ad_write (ad_play_t *, int16 *buf, int32 len);
 
 
@@ -394,6 +411,7 @@ int32 ad_write (ad_play_t *, int16 *buf, int32 len);
 /*
  * Convert mu-law data to int16 linear PCM format.
  */
+SPHINXBASE_EXPORT
 void ad_mu2li (int16 *outbuf,		/* Out: PCM data placed here (allocated by user) */
 	       unsigned char *inbuf,	/* In: Input buffer with mulaw data */
 	       int32 n_samp);		/* In: #Samples in inbuf */

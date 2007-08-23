@@ -79,7 +79,9 @@
 #ifndef _CONT_AD_H_
 #define _CONT_AD_H_
 
-#include "prim_type.h"
+/* Win32/WinCE DLL gunk */
+#include <sphinxbase_export.h>
+#include <prim_type.h>
 
 /**
  * \file cont_ad.h
@@ -225,6 +227,7 @@ typedef struct {
  * Return value: pointer to a READ-ONLY structure used in other calls to the object.
  * If any error occurs, the return value is NULL.
  */
+SPHINXBASE_EXPORT
 cont_ad_t *cont_ad_init (ad_rec_t *ad,	/**< In: The A/D source object to be filtered */
 			 int32 (*adfunc)(ad_rec_t *ad, int16 *buf, int32 max)
 			 /**< In: adfunc = source function to be invoked
@@ -236,6 +239,7 @@ cont_ad_t *cont_ad_init (ad_rec_t *ad,	/**< In: The A/D source object to be filt
  * Like cont_ad_init, but put the module in raw mode; i.e., all data is passed
  * through, unfiltered.  (By special request.)
  */
+SPHINXBASE_EXPORT
 cont_ad_t *cont_ad_init_rawmode (ad_rec_t *ad,
 				 int32 (*adfunc)(ad_rec_t *ad, int16 *buf, int32 max));
 
@@ -257,6 +261,7 @@ cont_ad_t *cont_ad_init_rawmode (ad_rec_t *ad,
  * 
  * Return value: #samples actually read, possibly 0; <0 if EOF on A/D source.
  */
+SPHINXBASE_EXPORT
 int32 cont_ad_read (cont_ad_t *r,	/**< In: Object pointer returned by cont_ad_init */
 		    int16 *buf,		/**< Out: On return, buf contains A/D data returned
 					   by this function, if any. */
@@ -275,6 +280,7 @@ int32 cont_ad_read (cont_ad_t *r,	/**< In: Object pointer returned by cont_ad_in
  * before the calibration.
  * Return value: 0 if successful, <0 otherwise.
  */
+SPHINXBASE_EXPORT
 int32 cont_ad_calib (cont_ad_t *cont	/**< In: object pointer returned by cont_ad_init */
 		     );
 
@@ -287,6 +293,7 @@ int32 cont_ad_calib (cont_ad_t *cont	/**< In: object pointer returned by cont_ad
  * Return value: 0 if successful, <0 on failure, >0 if calibration not
  * complete.
  */
+SPHINXBASE_EXPORT
 int32 cont_ad_calib_loop (cont_ad_t *r, int16 *buf, int32 max); 
 
 
@@ -301,6 +308,7 @@ int32 cont_ad_calib_loop (cont_ad_t *r, int16 *buf, int32 max);
  * speech.
  * @return: 0 if successful, <0 otherwise.
  */
+SPHINXBASE_EXPORT
 int32 cont_ad_set_thresh (cont_ad_t *cont,	/**< In: Object ptr from cont_ad_init */
 			  int32 sil,	/**< In: silence threshold (default 2) */
 			  int32 sp	/**< In: speech threshold (default 2) */
@@ -314,6 +322,7 @@ int32 cont_ad_set_thresh (cont_ad_t *cont,	/**< In: Object ptr from cont_ad_init
  *   winsize, speech_onset, sil_onset, leader and trailer are in frames of
  *   16 ms length (256 samples @ 16kHz sampling).
  */
+SPHINXBASE_EXPORT
 int32 cont_ad_set_params (cont_ad_t *r, int32 delta_sil, int32 delta_speech,
 			  int32 min_noise, int32 max_noise,
 			  int32 winsize, int32 speech_onset, int32 sil_onset,
@@ -327,6 +336,7 @@ int32 cont_ad_set_params (cont_ad_t *r, int32 delta_sil, int32 delta_speech,
  *   winsize, speech_onset, sil_onset, leader and trailer are in frames of
  *   16 ms length (256 samples @ 16kHz sampling).
  */
+SPHINXBASE_EXPORT
 int32 cont_ad_get_params (cont_ad_t *r, int32 *delta_sil, int32 *delta_speech,
 			  int32 *min_noise, int32 *max_noise,
 			  int32 *winsize, int32 *speech_onset, int32 *sil_onset,
@@ -337,18 +347,21 @@ int32 cont_ad_get_params (cont_ad_t *r, int32 *delta_sil, int32 *delta_speech,
  * Reset, discarding any accumulated speech segments.
  * Return value: 0 if successful, <0 otherwise.
  */
+SPHINXBASE_EXPORT
 int32 cont_ad_reset (cont_ad_t *cont);	/* In: Object pointer from cont_ad_init */
 
 
 /**
  * Close the continuous listening object.
  */
+SPHINXBASE_EXPORT
 int32 cont_ad_close (cont_ad_t *cont);	/* In: Object pointer from cont_ad_init */
 
 
 /**
  * Dump the power histogram.  For debugging...
  */
+SPHINXBASE_EXPORT
 void cont_ad_powhist_dump (FILE *fp, cont_ad_t *cont);
 
 
@@ -356,6 +369,7 @@ void cont_ad_powhist_dump (FILE *fp, cont_ad_t *cont);
  * Detach the given continuous listening module from the associated audio device.
  * Return 0 if successful, -1 otherwise.
  */
+SPHINXBASE_EXPORT
 int32 cont_ad_detach (cont_ad_t *c);
 
 
@@ -364,6 +378,7 @@ int32 cont_ad_detach (cont_ad_t *c);
  * (Like cont_ad_init, but without the calibration.)
  * Return 0 if successful, -1 otherwise.
  */
+SPHINXBASE_EXPORT
 int32 cont_ad_attach (cont_ad_t *c, ad_rec_t *a, int32 (*func)(ad_rec_t *, int16 *, int32));
 
 
@@ -375,6 +390,7 @@ int32 cont_ad_attach (cont_ad_t *c, ad_rec_t *a, int32 (*func)(ad_rec_t *, int16
  * assumes the file pointer is valid and opened for writing.
  * Return 0 if successful, -1 otherwise.
  */
+SPHINXBASE_EXPORT
 int32 cont_ad_set_rawfp (cont_ad_t *c,	/* The cont_ad object being addressed */
 			 FILE *fp);	/* File to which raw audio data is to
 					   be dumped; NULL to stop dumping. */
@@ -384,6 +400,7 @@ int32 cont_ad_set_rawfp (cont_ad_t *c,	/* The cont_ad object being addressed */
  * fp is NULL, logging is turned off.
  * Return 0 if successful, -1 otherwise.
  */
+SPHINXBASE_EXPORT
 int32 cont_ad_set_logfp (cont_ad_t *c,	/* The cont_ad object being addressed */
 			 FILE *fp);	/* File to which logs are written;
 					   NULL to stop logging. */
@@ -394,6 +411,7 @@ int32 cont_ad_set_logfp (cont_ad_t *c,	/* The cont_ad object being addressed */
  * set to FALSE or 0.  Otherwise the thresholds may be modified by the noise-
  * level adaptation.
  */
+SPHINXBASE_EXPORT
 int32 cont_set_thresh(cont_ad_t *r, int32 silence, int32 speech);
 
 

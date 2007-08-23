@@ -75,7 +75,11 @@ extern "C" {
 } /* Fool Emacs into not indenting things. */
 #endif
 
+/* Win32/WinCE DLL gunk */
+#include <sphinxbase_export.h>
+
 /* To remove resource (memory) usage restrictions */
+SPHINXBASE_EXPORT
 void unlimit ( void );
 
 #ifdef __cplusplus

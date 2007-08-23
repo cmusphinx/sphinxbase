@@ -41,12 +41,17 @@
 #ifndef __SB_STRFUNCS_H__
 #define __SB_STRFUNCS_H__
 
-#include "prim_type.h"
+#include <stdarg.h>
+
+/* Win32/WinCE DLL gunk */
+#include <sphinxbase_export.h>
+#include <prim_type.h>
 
 /**
  * Concatenate a NULL-terminated argument list of strings, returning a
  * newly allocated string.
  **/
+SPHINXBASE_EXPORT
 char *string_join(const char *base, ...);
 
 /* FIXME: Both of these string splitting functions basically suck.  I
@@ -59,6 +64,7 @@ char *string_join(const char *base, ...);
  * every word in the line.
  * Return value: No. of words found; -1 if no. of words in line exceeds n_wptr.
  */
+SPHINXBASE_EXPORT
 int32 str2words (char *line,	/**< In/Out: line to be parsed.  This
 				   string will be modified! (NUL
 				   characters inserted at word
@@ -89,6 +95,7 @@ int32 str2words (char *line,	/**< In/Out: line to be parsed.  This
  *     line = word + n;
  * }
  */
+SPHINXBASE_EXPORT
 int32 nextword (char *line, /**< Input: String being searched for next word.
 			       Will be modified by this function (NUL characters inserted) */
 		const char *delim, /**< Input: A word, if found, must be delimited at either

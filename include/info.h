@@ -68,11 +68,15 @@ extern "C" {
 }
 #endif
 
+/* Win32/WinCE DLL gunk */
+#include <sphinxbase_export.h>
+
 
 /**
    This function prints the hostname, the directory, compile time
    and date .  */
 
+SPHINXBASE_EXPORT
 void print_appl_info(char* appl_name);
 
 #ifdef __cplusplus

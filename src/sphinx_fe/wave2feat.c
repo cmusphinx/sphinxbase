@@ -871,7 +871,7 @@ fe_openfiles(globals_t * P, fe_t * FE, char *infile, int32 * fp_in,
         }
         else if (P->input_format == MSWAV) {
             /* Read the header */
-            MSWAV_hdr *hdr_buf;
+            MSWAV_hdr *hdr_buf = NULL;
             /* MC: read till just before datatag */
             const int hdr_len_to_read = ((char *) (&hdr_buf->datatag))
                 - (char *) hdr_buf;

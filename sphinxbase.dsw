@@ -60,7 +60,7 @@ Package=<5>
 Package=<4>
 {{{
     Begin Project Dependency
-    Project_Dep_Name libsphinxutil
+    Project_Dep_Name sphinxbase
     End Project Dependency
 }}}
 
@@ -75,11 +75,20 @@ Package=<5>
 Package=<4>
 {{{
     Begin Project Dependency
-    Project_Dep_Name libsphinxfe
+    Project_Dep_Name sphinxbase
     End Project Dependency
-    Begin Project Dependency
-    Project_Dep_Name libsphinxutil
-    End Project Dependency
+}}}
+
+###############################################################################
+
+Project: "sphinxbase"=".\WIN32\sphinxbase\sphinxbase.dsp" - Package Owner=<4>
+
+Package=<5>
+{{{
+}}}
+
+Package=<4>
+{{{
 }}}
 
 ###############################################################################

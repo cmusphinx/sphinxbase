@@ -83,7 +83,9 @@
 #define _LIBUTIL_GLIST_H_
 
 #include <stdlib.h>
-#include "prim_type.h"
+/* Win32/WinCE DLL gunk */
+#include <sphinxbase_export.h>
+#include <prim_type.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -118,19 +120,24 @@ typedef gnode_t *glist_t;	/** Head of a list of gnodes */
  * g may be NULL to indicate an initially empty list.
  * (Too bad there's no function overloading.)
  */
+SPHINXBASE_EXPORT
 glist_t glist_add_ptr (glist_t g,  /**< a link list */
 		       void *ptr   /**< a pointer */
 	);
   
+SPHINXBASE_EXPORT
 glist_t glist_add_int32 (glist_t g, /**< a link list */
 			 int32 val  /**< an integer value */
 	);
+SPHINXBASE_EXPORT
 glist_t glist_add_uint32 (glist_t g,  /**< a link list */
 			  uint32 val  /**< an unsigned integer value */
 	);
+SPHINXBASE_EXPORT
 glist_t glist_add_float32 (glist_t g, /**< a link list */
 			   float32 val /**< a float32 vlaue */
 	);
+SPHINXBASE_EXPORT
 glist_t glist_add_float64 (glist_t g, /**< a link list */
 			   float64 val  /**< a float64 vlaue */
 	);
@@ -143,18 +150,23 @@ glist_t glist_add_float64 (glist_t g, /**< a link list */
  * Return ptr to the newly created gnode_t.
  */
 
+SPHINXBASE_EXPORT
 gnode_t *glist_insert_ptr (gnode_t *gn, /**< a generic node which ptr will be inserted after it*/
 			   void *ptr /**< pointer inserted */
 	);
+SPHINXBASE_EXPORT
 gnode_t *glist_insert_int32 (gnode_t *gn, /**< a generic node which a value will be inserted after it*/
 			     int32 val /**< int32 inserted */
 	);
+SPHINXBASE_EXPORT
 gnode_t *glist_insert_uint32 (gnode_t *gn, /**< a generic node which a value will be inserted after it*/
 			      uint32 val /**< uint32 inserted */
 	);
+SPHINXBASE_EXPORT
 gnode_t *glist_insert_float32 (gnode_t *gn, /**< a generic node which a value will be inserted after it*/
 			       float32 val /**< float32 inserted */
 	);
+SPHINXBASE_EXPORT
 gnode_t *glist_insert_float64 (gnode_t *gn, /**< a generic node which a value will be inserted after it*/
 			       float64 val /**< float64 inserted */
 	);
@@ -166,6 +178,7 @@ gnode_t *glist_insert_float64 (gnode_t *gn, /**< a generic node which a value wi
  * It is more a mirror image of glist_add_* family of functions.
  */
 
+SPHINXBASE_EXPORT
 gnode_t *glist_delete (gnode_t *gn /**< a generic node which ptr will be deleted after it. */
 	);
 
@@ -174,10 +187,15 @@ gnode_t *glist_delete (gnode_t *gn /**< a generic node which ptr will be deleted
  * In the case of the ptr, only the pointer values are compared, not the data pointed to by them.
  * Return value: 1 if match found, 0 if not.
  */
+SPHINXBASE_EXPORT
 int32 glist_chkdup_ptr (glist_t g, void *val);	/* List and value to check for */
+SPHINXBASE_EXPORT
 int32 glist_chkdup_int32 (glist_t g, int32 val);
+SPHINXBASE_EXPORT
 int32 glist_chkdup_uint32 (glist_t g, uint32 val);
+SPHINXBASE_EXPORT
 int32 glist_chkdup_float32 (glist_t g, float32 val);
+SPHINXBASE_EXPORT
 int32 glist_chkdup_float64 (glist_t g, float64 val);
 
 
@@ -187,6 +205,7 @@ int32 glist_chkdup_float64 (glist_t g, float64 val);
  * NOTE: The list is reversed "in place"; i.e., no new memory is allocated.
  * @return: The head of the new list.
  */
+SPHINXBASE_EXPORT
 glist_t glist_reverse (glist_t g /**< input link list */
 	);
 
@@ -195,6 +214,7 @@ glist_t glist_reverse (glist_t g /**< input link list */
    Count the number of element in a given link list 
    @return the number of elements in the given glist_t 
 */
+SPHINXBASE_EXPORT
 int32 glist_count (glist_t g /**< input link list */
 	);
 
@@ -203,10 +223,15 @@ int32 glist_count (glist_t g /**< input link list */
  * Apply the given function to the user-defined data.ptr for each node in the list.
  * (Again, too bad there's no function overloading in C.)
  */
+SPHINXBASE_EXPORT
 void glist_apply_ptr (glist_t g, void (*func)(void *));
+SPHINXBASE_EXPORT
 void glist_apply_int32 (glist_t g, void (*func)(int32));
+SPHINXBASE_EXPORT
 void glist_apply_uint32 (glist_t g, void (*func)(uint32));
+SPHINXBASE_EXPORT
 void glist_apply_float32 (glist_t g, void (*func)(float32));
+SPHINXBASE_EXPORT
 void glist_apply_float64 (glist_t g, void (*func)(float64));
 
 
@@ -214,6 +239,7 @@ void glist_apply_float64 (glist_t g, void (*func)(float64));
  * Free the given generic list; user-defined data contained within is not
  * automatically freed.  The caller must have done that already.
  */
+SPHINXBASE_EXPORT
 void glist_free (glist_t g);
 
 
@@ -222,6 +248,7 @@ void glist_free (glist_t g);
  * glist (using myfree()).  Then free the glist.  "datasize" is the size of the
  * user-defined data at each node, and is needed by myfree().
  */
+SPHINXBASE_EXPORT
 void glist_myfree (glist_t g, int32 datasize);
 
 
@@ -229,6 +256,7 @@ void glist_myfree (glist_t g, int32 datasize);
  * Free the given node, gn, of a glist, pred being its predecessor in the list.
  * Return ptr to the next node in the list after the freed node.
  */
+SPHINXBASE_EXPORT
 gnode_t *gnode_free(gnode_t *gn, 
 		    gnode_t *pred
 	);
@@ -236,6 +264,7 @@ gnode_t *gnode_free(gnode_t *gn,
 /**
  * Return the last node in the given list.
  */
+SPHINXBASE_EXPORT
 gnode_t *glist_tail (glist_t g);
 
 #ifdef __cplusplus

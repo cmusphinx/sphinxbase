@@ -56,7 +56,9 @@
 #ifndef _NEW_FE_H_
 #define _NEW_FE_H_
 
-#include "fixpoint.h"
+/* Win32/WinCE DLL gunk */
+#include <sphinxbase_export.h>
+#include <fixpoint.h>
 
 #ifdef WORDS_BIGENDIAN
 #define NATIVE_ENDIAN "big"
@@ -386,6 +388,7 @@ enum {
 /** 
  * Function that sets default values in a param_t structure
  */
+SPHINXBASE_EXPORT
 void fe_init_params(param_t *P /** An allocated param_t structure */
         );
 
@@ -393,16 +396,19 @@ void fe_init_params(param_t *P /** An allocated param_t structure */
  * Function that automatically initializes a front-end structure by reading
  * command-line arguments (cmd_ln.h)
  */
+SPHINXBASE_EXPORT
 fe_t* fe_init_auto(void);
 
 /**
  * Function that initialize the routine 
  * @return, an initialized fe_t structure
  */
+SPHINXBASE_EXPORT
 fe_t *fe_init(param_t const *P /**< Input: A filled param_t structure */
 	);
 
 /** Function call for starting utternace */
+SPHINXBASE_EXPORT
 int32 fe_start_utt(fe_t *FE /**< Input: A filled FE rountine */
 	);
 
@@ -413,6 +419,7 @@ int32 fe_start_utt(fe_t *FE /**< Input: A filled FE rountine */
  * complete frame and then process to cepstra. also deactivates
  * start flag of FE, and resets overflow buffer count.
  */
+SPHINXBASE_EXPORT
 int32 fe_end_utt(fe_t *FE,  /**< Input: A filled FE structure */
 		 mfcc_t *cepvector, /**< Input: The cepstral vector */
 		 int32 *nframes /**< Number of frames returned */
@@ -422,12 +429,14 @@ int32 fe_end_utt(fe_t *FE,  /**< Input: A filled FE structure */
  * Close the front end. 
  * Free all allocated memory within FE and destroy FE. 
  */
+SPHINXBASE_EXPORT
 int32 fe_close(fe_t *FE /**< Input, a FE structure */
 	);
 
 /**
  * Process only one frame of samples
  **/
+SPHINXBASE_EXPORT
 int32 fe_process_frame(fe_t *FE,  /**< A FE structure */
 		       int16 *spch, /**< The speech samples */
 		       int32 nsamps, /**< number of samples*/
@@ -437,6 +446,7 @@ int32 fe_process_frame(fe_t *FE,  /**< A FE structure */
 /** 
  * Process a block of samples, returning as many frames as possible
  **/
+SPHINXBASE_EXPORT
 int32 fe_process_utt(fe_t *FE,  /**< A FE structure */
 		     int16 *spch, /**< The speech samples */
 		     int32 nsamps, /**< number of samples*/
@@ -447,11 +457,13 @@ int32 fe_process_utt(fe_t *FE,  /**< A FE structure */
 /**
  * Free the output pointer returned by fe_process_utt().
  **/
+SPHINXBASE_EXPORT
 void fe_free_2d(void *arr);
 
 /**
  * Convert a block of mfcc_t to float32 (can be done in-place)
  **/
+SPHINXBASE_EXPORT
 int32 fe_mfcc_to_float(fe_t *FE,
 		       mfcc_t **input,
 		       float32 **output,
@@ -460,6 +472,7 @@ int32 fe_mfcc_to_float(fe_t *FE,
 /**
  * Convert a block of float32 to mfcc_t (can be done in-place)
  **/
+SPHINXBASE_EXPORT
 int32 fe_float_to_mfcc(fe_t *FE,
 		       float32 **input,
 		       mfcc_t **output,
@@ -488,6 +501,7 @@ int32 fe_float_to_mfcc(fe_t *FE,
  *
  * Also, it normalizes by 1/nfilt rather than 2/nfilt, for some reason.
  **/
+SPHINXBASE_EXPORT
 int32 fe_logspec_to_mfcc(fe_t *FE,  /**< A FE structure */
 			 const mfcc_t *fr_spec, /**< One frame of spectrum */
 			 mfcc_t *fr_cep /**< One frame of cepstrum */
@@ -501,6 +515,7 @@ int32 fe_logspec_to_mfcc(fe_t *FE,  /**< A FE structure */
  * cos(0) basis vector (i.e. the one corresponding to the DC
  * coefficient in the output).
  **/
+SPHINXBASE_EXPORT
 int32 fe_logspec_dct2(fe_t *FE,  /**< A FE structure */
 		      const mfcc_t *fr_spec, /**< One frame of spectrum */
 		      mfcc_t *fr_cep /**< One frame of cepstrum */
@@ -514,6 +529,7 @@ int32 fe_logspec_dct2(fe_t *FE,  /**< A FE structure */
  * cos(0) basis vector (i.e. the one corresponding to the DC
  * coefficient in the input).
  **/
+SPHINXBASE_EXPORT
 int32 fe_mfcc_dct3(fe_t *FE,  /**< A FE structure */
 		   const mfcc_t *fr_cep, /**< One frame of cepstrum */
 		   mfcc_t *fr_spec /**< One frame of spectrum */

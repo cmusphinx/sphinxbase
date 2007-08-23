@@ -117,6 +117,9 @@
 #define S3_RAND_MAX_INT32 0x7fffffff
 #include <stdio.h>
 
+/* Win32/WinCE DLL gunk */
+#include <sphinxbase_export.h>
+
 /** \file genrand.h
  *\brief High performance prortable random generator created by Takuji
  *Nishimura and Makoto Matsumoto.  
@@ -146,21 +149,25 @@ extern "C" {
 /**
  *Initialize the seed of the random generator. 
  */
+SPHINXBASE_EXPORT
 void genrand_seed(unsigned long s);
 
 /**
  *generates a random number on [0,0x7fffffff]-interval 
  */
+SPHINXBASE_EXPORT
 long genrand_int31(void);
 
 /**
  *generates a random number on (0,1)-real-interval 
  */
+SPHINXBASE_EXPORT
 double genrand_real3(void);
 
 /**
  *generates a random number on [0,1) with 53-bit resolution
  */
+SPHINXBASE_EXPORT
 double genrand_res53(void);
 
 #ifdef __cplusplus

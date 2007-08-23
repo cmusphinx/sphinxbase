@@ -87,7 +87,10 @@
 #define _LIBUTIL_CKD_ALLOC_H_
 
 #include <stdlib.h>
-#include "prim_type.h"
+
+/* Win32/WinCE DLL gunk */
+#include <sphinxbase_export.h>
+#include <prim_type.h>
 
 /** \file ckd_alloc.h
  *\brief Sphinx's memory allocation/deallocation routines. 
@@ -111,12 +114,15 @@ extern "C" {
  * All functions print a diagnostic message and exit if any error occurs.
  */
 
+SPHINXBASE_EXPORT
 void *__ckd_calloc__(size_t n_elem, size_t elem_size,
 		     const char *caller_file, int caller_line);
 
+SPHINXBASE_EXPORT
 void *__ckd_malloc__(size_t size,
 		     const char *caller_file, int caller_line);
 
+SPHINXBASE_EXPORT
 void *__ckd_realloc__(void *ptr, size_t new_size,
 		      const char *caller_file, int caller_line);
 
@@ -124,6 +130,7 @@ void *__ckd_realloc__(void *ptr, size_t new_size,
  * Like strdup, except that if an error occurs it prints a diagnostic message
  * and exits.
  */
+SPHINXBASE_EXPORT
 char *__ckd_salloc__(const char *origstr,
 		     const char *caller_file, int32 caller_line);
 
@@ -131,6 +138,7 @@ char *__ckd_salloc__(const char *origstr,
  * Allocate a 2-D array and return ptr to it (ie, ptr to vector of ptrs).
  * The data area is allocated in one block so it can also be treated as a 1-D array.
  */
+SPHINXBASE_EXPORT
 void **__ckd_calloc_2d__(int32 d1, int32 d2,	/* In: #elements in the 2 dimensions */
 			 int32 elemsize,	/* In: Size (#bytes) of each element */
 			 const char *caller_file, int32 caller_line);	/* In */
@@ -139,6 +147,7 @@ void **__ckd_calloc_2d__(int32 d1, int32 d2,	/* In: #elements in the 2 dimension
  * Allocate a 3-D array and return ptr to it.
  * The data area is allocated in one block so it can also be treated as a 1-D array.
  */
+SPHINXBASE_EXPORT
 void ***__ckd_calloc_3d__(int32 d1, int32 d2, int32 d3,	/* In: #elems in the dims */
 			  int32 elemsize,		/* In: Size (#bytes) per element */
 			  const char *caller_file, int32 caller_line);	/* In */
@@ -146,6 +155,7 @@ void ***__ckd_calloc_3d__(int32 d1, int32 d2, int32 d3,	/* In: #elems in the dim
 /**
  * Overlay a 3-D array over a previously allocated storage area.
  **/
+SPHINXBASE_EXPORT
 void *** __ckd_alloc_3d_ptr(int d1,
                             int d2,
                             int d3,
@@ -157,6 +167,7 @@ void *** __ckd_alloc_3d_ptr(int d1,
 /**
  * Overlay a s-D array over a previously allocated storage area.
  **/
+SPHINXBASE_EXPORT
 void ** __ckd_alloc_2d_ptr(int d1,
                            int d2,
                            void *store,
@@ -166,18 +177,20 @@ void ** __ckd_alloc_2d_ptr(int d1,
 
 /** Test and free a 1-D array 
  */
+SPHINXBASE_EXPORT
 void ckd_free(void *ptr);
 
 /**
    Free a 2-D array (ptr) previously allocated by ckd_calloc_2d 
 */
-
+SPHINXBASE_EXPORT
 void ckd_free_2d(void **ptr);
 
 
 /** 
     Free a 3-D array (ptr) previously allocated by ckd_calloc_3d 
 */
+SPHINXBASE_EXPORT
 void ckd_free_3d(void ***ptr);
 
 /**
@@ -229,47 +242,6 @@ void ckd_free_3d(void ***ptr);
  */
 
 #define ckd_alloc_3d_ptr(d1, d2, d3, bf, sz) __ckd_alloc_3d_ptr((d1), (d2), (d3), (bf), (sz), __FILE__, __LINE__)
-
-/*#define ckd_free(ptr)		free(ptr)*/
-
-
-/**
- * Functions for managing graph elements without wasting memory.
- * Allocate and return an element of size elemsize.  elemsize must be a multiple of
- * a pointer size.  The allocated element is not zeroed, unlike calloc.
- * The function internally allocates a block that can accommodate several such elements,
- * anticipating future allocation requests.
- */
-char *__mymalloc__ (int32 elemsize, char *file, int32 line);
-
-/**
- * Free a graph element (of given size) that was previously allocated using mymalloc.
- * The element is not really freed; it is returned to an internally maintained
- * freelist pool.
- */
-void __myfree__ (char *elem, int32 elemsize, char *file, int32 line);
-
-/**
- * Macros to simplify the use of __mymalloc__ and __myfree__.  One should use these, rather
- * than target functions directly.
- * For debugging purposes one can redefine the following to malloc() and free().
- */
-
-/**
- * Macro for mymalloc
- */
-#define mymalloc(sz)		__mymalloc__((sz),__FILE__,__LINE__)
-
-/**
- * Macro for myfree
- */
-
-#define myfree(ptr,sz)		__myfree__(ptr,(sz),__FILE__,__LINE__)
-
-#ifdef DMALLOC
-#include "dmalloc.h"
-#endif
-
 
 #ifdef __cplusplus
 }

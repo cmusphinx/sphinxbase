@@ -155,7 +155,7 @@ CPP=clarm.exe
 # PROP Target_Dir ""
 CPP=clarm.exe
 # ADD BASE CPP /nologo /W3 /Zi /Od /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /YX /M$(CECrtMTDebug) /c
-# ADD CPP /nologo /W3 /Zi /Od /I "../../include/wince" /I "../../include" /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "HAVE_CONFIG_H" /D "FIXED_POINT" /YX /M$(CECrtMTDebug) /c
+# ADD CPP /nologo /W3 /Zi /Od /I "../../include/wince" /I "../../include" /D "DEBUG" /D "FIXED_POINT" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "HAVE_CONFIG_H" /D "LIBPOCKETSPHINX" /YX /M$(CECrtMTDebug) /c
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
@@ -181,7 +181,7 @@ BSC32=bscmake.exe
 # PROP Target_Dir ""
 CPP=clarm.exe
 # ADD BASE CPP /nologo /W3 /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "NDEBUG" /D "ARM" /D "_ARM_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /YX /Oxs /M$(CECrtMT) /c
-# ADD CPP /nologo /W3 /I "../../include/wince" /I "../../include" /D "NDEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "HAVE_CONFIG_H" /D "FIXED_POINT" /YX /Oxs /M$(CECrtMT) /c
+# ADD CPP /nologo /W3 /I "../../include/wince" /I "../../include" /D "NDEBUG" /D "FIXED_POINT" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "HAVE_CONFIG_H" /D "LIBPOCKETSPHINX" /YX /Oxs /M$(CECrtMT) /c
 LIB32=link.exe -lib
 # ADD BASE LIB32 /nologo
 # ADD LIB32 /nologo
@@ -234,6 +234,7 @@ DEP_CPP_ADD_T=\
 
 DEP_CPP_ADD_T=\
 	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	"..\..\include\wince\config.h"\
 	
 
@@ -308,7 +309,10 @@ DEP_CPP_FE_IN=\
 	"..\..\include\fe.h"\
 	"..\..\include\fixpoint.h"\
 	"..\..\include\genrand.h"\
+	"..\..\include\glist.h"\
+	"..\..\include\hash_table.h"\
 	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	"..\..\include\wince\config.h"\
 	"..\..\src\libsphinxfe\fe_internal.h"\
 	
@@ -390,6 +394,7 @@ DEP_CPP_FE_SI=\
 	"..\..\include\fixpoint.h"\
 	"..\..\include\genrand.h"\
 	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	"..\..\include\wince\config.h"\
 	"..\..\src\libsphinxfe\fe_internal.h"\
 	"..\..\src\libsphinxfe\fe_warp.h"\
@@ -474,6 +479,7 @@ DEP_CPP_FE_WA=\
 	"..\..\include\fe.h"\
 	"..\..\include\fixpoint.h"\
 	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	"..\..\src\libsphinxfe\fe_warp.h"\
 	"..\..\src\libsphinxfe\fe_warp_affine.h"\
 	"..\..\src\libsphinxfe\fe_warp_inverse_linear.h"\
@@ -551,6 +557,7 @@ DEP_CPP_FE_WAR=\
 	"..\..\include\fe.h"\
 	"..\..\include\fixpoint.h"\
 	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	"..\..\src\libsphinxfe\fe_warp.h"\
 	"..\..\src\libsphinxfe\fe_warp_affine.h"\
 	
@@ -624,6 +631,7 @@ DEP_CPP_FE_WARP=\
 	"..\..\include\fe.h"\
 	"..\..\include\fixpoint.h"\
 	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	"..\..\src\libsphinxfe\fe_warp.h"\
 	"..\..\src\libsphinxfe\fe_warp_inverse_linear.h"\
 	
@@ -697,6 +705,7 @@ DEP_CPP_FE_WARP_=\
 	"..\..\include\fe.h"\
 	"..\..\include\fixpoint.h"\
 	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	"..\..\src\libsphinxfe\fe_warp.h"\
 	"..\..\src\libsphinxfe\fe_warp_piecewise_linear.h"\
 	
@@ -761,6 +770,7 @@ DEP_CPP_FIXLO=\
 	"..\..\include\fe.h"\
 	"..\..\include\fixpoint.h"\
 	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	"..\..\include\wince\config.h"\
 	"..\..\src\libsphinxfe\fe_internal.h"\
 	

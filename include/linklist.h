@@ -74,10 +74,13 @@ extern "C" {
 }
 #endif
 
+/* Win32/WinCE DLL gunk */
+#include <sphinxbase_export.h>
+
 /** 
     Allocate a link-list element of given size and return pointer to it 
 */
-
+SPHINXBASE_EXPORT
 void *__listelem_alloc__ (int32 elemsize, char *file, int32 line);
 
 /** 
@@ -87,11 +90,13 @@ void *__listelem_alloc__ (int32 elemsize, char *file, int32 line);
 
 /** Free link-list element of given size 
  */
+SPHINXBASE_EXPORT
 void listelem_free (void *elem, int32 elemsize);
 
 /**
    Print number of allocation, numer of free operation stats 
 */
+SPHINXBASE_EXPORT
 void linklist_stats ( void );
 
 

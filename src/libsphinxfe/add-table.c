@@ -53,8 +53,11 @@
 #include <config.h>
 #endif
 
+/* Win32/WinCE DLL gunk */
+#include <sphinxbase_export.h>
 #include "prim_type.h"
 
+SPHINXBASE_EXPORT
 const int16 fe_logadd_table[99042] = {
     6932,
     6931,
@@ -99099,4 +99102,5 @@ const int16 fe_logadd_table[99042] = {
     1,
     0,
 };
+SPHINXBASE_EXPORT
 const int32 fe_logadd_table_size = 99042;

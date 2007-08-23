@@ -41,7 +41,9 @@
 #ifndef _FIXPOINT_H_
 #define _FIXPOINT_H_
 
-#include "prim_type.h"
+/* Win32/WinCE DLL gunk */
+#include <sphinxbase_export.h>
+#include <prim_type.h>
 #include <limits.h>
 
 #define DEFAULT_RADIX (12)
@@ -130,7 +132,9 @@ typedef int32 fixed32;
  *
  * Link with -lsphinxfe if you wish to use these (PocketSphinx does)
  **/
+SPHINXBASE_EXPORT
 extern const int16 fe_logadd_table[];
+SPHINXBASE_EXPORT
 extern const int32 fe_logadd_table_size;
 
 /** Add two numbers in FE_LOG domain. */

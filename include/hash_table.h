@@ -123,8 +123,10 @@
 #ifndef _LIBUTIL_HASH_H_
 #define _LIBUTIL_HASH_H_
 
-#include "prim_type.h"
-#include "glist.h"
+/* Win32/WinCE DLL gunk */
+#include <sphinxbase_export.h>
+#include <prim_type.h>
+#include <glist.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -175,6 +177,7 @@ typedef struct {
  * Allocate a new hash table for a given expected size.
  * Return value: READ-ONLY handle to allocated hash table.
  */
+SPHINXBASE_EXPORT
 hash_table_t * hash_table_new(int32 size,	/**< In: Expected #entries in the table */
                               int32 casearg  	/**< In: Whether case insensitive for key
                                                    comparisons. When 1, case is insentitive,
@@ -188,6 +191,7 @@ hash_table_t * hash_table_new(int32 size,	/**< In: Expected #entries in the tabl
  * Free the specified hash table; the caller is responsible for freeing the key strings
  * pointed to by the table entries.
  */
+SPHINXBASE_EXPORT
 void hash_table_free(hash_table_t *h /**< In: Handle of hash table to free */
     );
 
@@ -198,6 +202,7 @@ void hash_table_free(hash_table_t *h /**< In: Handle of hash table to free */
  * if key already exists, return its existing associated value.  (The hash table is unchanged;
  * it is up to the caller to resolve the conflict.)
  */
+SPHINXBASE_EXPORT
 void *hash_table_enter(hash_table_t *h, /**< In: Handle of hash table in which to create entry */
                        const char *key, /**< In: C-style NULL-terminated key string
                                            for the new entry */
@@ -209,6 +214,7 @@ void *hash_table_enter(hash_table_t *h, /**< In: Handle of hash table in which t
  * key already exists, its value is replaced with the given value, and
  * the previous value is returned, otherwise val is returned.
  */
+SPHINXBASE_EXPORT
 void *hash_table_replace(hash_table_t *h, /**< In: Handle of hash table in which to create entry */
                          const char *key, /**< In: C-style NULL-terminated key string
                                              for the new entry */
@@ -221,6 +227,7 @@ void *hash_table_replace(hash_table_t *h, /**< In: Handle of hash table in which
  * h.  Return the value associated with the key (NULL if it did not exist)
  */
 
+SPHINXBASE_EXPORT
 void *hash_table_delete(hash_table_t *h,    /**< In: Handle of hash table in
                                                which a key will be deleted */
                         const char *key     /**< In: C-style NULL-terminated
@@ -230,6 +237,7 @@ void *hash_table_delete(hash_table_t *h,    /**< In: Handle of hash table in
 /**
  * Delete all entries from a hash_table.
  */
+SPHINXBASE_EXPORT
 void hash_table_empty(hash_table_t *h    /**< In: Handle of hash table */
     );
 
@@ -240,6 +248,7 @@ void hash_table_empty(hash_table_t *h    /**< In: Handle of hash table */
  * should be created with the HASH_CASE_YES option.  Otherwise, the
  * results are unpredictable.
  */
+SPHINXBASE_EXPORT
 void *hash_table_enter_bkey(hash_table_t *h,	/**< In: Handle of hash table
                                                    in which to create entry */
                               const char *key,	/**< In: Key buffer */
@@ -251,6 +260,7 @@ void *hash_table_enter_bkey(hash_table_t *h,	/**< In: Handle of hash table
  * Lookup hash table h for given key and return the associated value in *val.
  * Return value: 0 if key found in hash table, else -1.
  */
+SPHINXBASE_EXPORT
 int32 hash_table_lookup(hash_table_t *h,	/**< In: Handle of hash table being searched */
                         const char *key,	/**< In: C-style NULL-terminated string whose value is sought */
                         void **val	  	/**< Out: *val = value associated with key */
@@ -262,6 +272,7 @@ int32 hash_table_lookup(hash_table_t *h,	/**< In: Handle of hash table being sea
  * such keys should be created with the HASH_CASE_YES option.  Otherwise, the results are
  * unpredictable.
  */
+SPHINXBASE_EXPORT
 int32 hash_table_lookup_bkey(hash_table_t *h,	/**< In: Handle of hash table being searched */
                              const char *key,	/**< In: Key buffer */
                              size_t len,	/**< In: Length of above key buffer */
@@ -271,6 +282,7 @@ int32 hash_table_lookup_bkey(hash_table_t *h,	/**< In: Handle of hash table bein
 /**
  * Build a glist of valid hash_entry_t pointers from the given hash table.  Return the list.
  */
+SPHINXBASE_EXPORT
 glist_t hash_table_tolist(hash_table_t *h,	/**< In: Hash table from which list is to be generated */
                           int32 *count		/**< Out: #entries in the list */
 	);
@@ -280,6 +292,7 @@ glist_t hash_table_tolist(hash_table_t *h,	/**< In: Hash table from which list i
  * Currently, it will only works for situation where hash_enter was
  * used to enter the keys. 
  */
+SPHINXBASE_EXPORT
 void  hash_table_display(hash_table_t *h, /**< In: Hash table to display */
                          int32 showkey    /**< In: Show the string or not,
                                              Use 0 if hash_enter_bkey was
