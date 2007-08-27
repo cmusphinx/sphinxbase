@@ -1,3 +1,9 @@
+sphinxbase (0.3-0svn3) unstable; urgency=low
+
+  * Add manual pages.
+
+ -- David Huggins-Daines <dhuggins@cs.cmu.edu>  Mon, 27 Aug 2007 14:52:56 -0400
+
 sphinxbase (0.3-2) unstable; urgency=low
 
   * Change required debhelper version to 4, so maemo builds work
