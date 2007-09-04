@@ -93,7 +93,7 @@
 #pragma warning (disable: 4996)
 #endif
 
-
+#include "linklist.h"
 #include "ckd_alloc.h"
 #include "err.h"
 
@@ -282,4 +282,17 @@ __ckd_alloc_2d_ptr(int d1,
     }
 
     return out;
+}
+
+char *
+__mymalloc__(int32 elemsize, char *caller_file, int32 caller_line)
+{
+    return __listelem_alloc__(elemsize, caller_file, caller_line);
+}
+
+void
+__myfree__(char *elem, int32 elemsize, char *caller_file,
+           int32 caller_line)
+{
+    return listelem_free(elem, elemsize);
 }

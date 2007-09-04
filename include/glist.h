@@ -176,9 +176,9 @@ gnode_t *glist_insert_float64 (gnode_t *gn, /**< a generic node which a value wi
  * the given generic node gn.  gn cannot be NULL.
  * Return ptr to the newly created gnode_t.
  * It is more a mirror image of glist_add_* family of functions.
+ * FIXME: This description makes no sense, and the function itself doesn't actually work.
  */
 
-SPHINXBASE_EXPORT
 gnode_t *glist_delete (gnode_t *gn /**< a generic node which ptr will be deleted after it. */
 	);
 

@@ -76,6 +76,7 @@ extern "C" {
 
 /* Win32/WinCE DLL gunk */
 #include <sphinxbase_export.h>
+#include <prim_type.h>
 
 /** 
     Allocate a link-list element of given size and return pointer to it 

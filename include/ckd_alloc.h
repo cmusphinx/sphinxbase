@@ -243,6 +243,41 @@ void ckd_free_3d(void ***ptr);
 
 #define ckd_alloc_3d_ptr(d1, d2, d3, bf, sz) __ckd_alloc_3d_ptr((d1), (d2), (d3), (bf), (sz), __FILE__, __LINE__)
 
+/**
+ * Functions for managing graph elements without wasting memory.
+ * Allocate and return an element of size elemsize.  elemsize must be a multiple of
+ * a pointer size.  The allocated element is not zeroed, unlike calloc.
+ * The function internally allocates a block that can accommodate several such elements,
+ * anticipating future allocation requests.
+ */
+SPHINXBASE_EXPORT
+char *__mymalloc__ (int32 elemsize, char *file, int32 line);
+
+/**
+ * Free a graph element (of given size) that was previously allocated using mymalloc.
+ * The element is not really freed; it is returned to an internally maintained
+ * freelist pool.
+ */
+SPHINXBASE_EXPORT
+void __myfree__ (char *elem, int32 elemsize, char *file, int32 line);
+
+/**
+ * Macros to simplify the use of __mymalloc__ and __myfree__.  One should use these, rather
+ * than target functions directly.
+ * For debugging purposes one can redefine the following to malloc() and free().
+ */
+
+/**
+ * Macro for mymalloc
+ */
+#define mymalloc(sz)		__mymalloc__((sz),__FILE__,__LINE__)
+
+/**
+ * Macro for myfree
+ */
+
+#define myfree(ptr,sz)		__myfree__(ptr,(sz),__FILE__,__LINE__)
+
 #ifdef __cplusplus
 }
 #endif
