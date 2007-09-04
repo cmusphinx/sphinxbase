@@ -43,8 +43,8 @@
 #include <err.h>
 
 #include "jsgf.h"
-#include "jsgf.tab.h"
-#include "jsgf.lex.h"
+#include "jsgf_parser.h"
+#include "jsgf_scanner.h"
 
 void yyerror(yyscan_t lex, jsgf_t *jsgf, const char *s);
 

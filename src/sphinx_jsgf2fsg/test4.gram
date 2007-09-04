@@ -1,7 +1,0 @@
-#JSGF;
-
-grammar test4;
-
-public <greeting> = HELLO <there>;
-
-<there> = THERE | <NULL>;

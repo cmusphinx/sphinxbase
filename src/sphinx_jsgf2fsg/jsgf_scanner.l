@@ -37,12 +37,11 @@
 %{
 
 #include "jsgf.h"
-#include "jsgf.tab.h"
+#include "jsgf_parser.h"
 
 %}
 
 %option 8bit reentrant bison-bridge noyywrap
-%option outfile="jsgf.lex.c" header-file="jsgf.lex.h"
 %s COMMENT
 
 ws       [ \t\n]

@@ -1,6 +1,0 @@
-#JSGF;
-
-grammar test10;
-import <test3.list>;
-
-public <greeting> = <list>;
