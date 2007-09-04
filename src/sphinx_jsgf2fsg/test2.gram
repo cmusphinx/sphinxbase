@@ -1,0 +1,11 @@
+#JSGF;
+
+grammar edu.cmu.test;
+
+public <script> = <utterance>*;
+
+<utterance> = <greeting> | <farewell>;
+
+<greeting> = (/2/ hello | /1.5/ hi [there]) {HELLO} {HI};
+
+<farewell> = /2/ goodbye | /1/ bye {BYE};

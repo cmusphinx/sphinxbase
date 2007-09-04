@@ -1,0 +1,7 @@
+#JSGF;
+
+grammar test3;
+
+public <list> = HELLO | <foo>;
+
+<foo> = HELLO <list>;
