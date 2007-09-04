@@ -35,15 +35,18 @@
  *
  */
 
-#include <ckd_alloc.h>
-#include <hash_table.h>
-#include <err.h>
-
 #include <string.h>
+
+#include "ckd_alloc.h"
+#include "strfuncs.h"
+#include "hash_table.h"
+#include "err.h"
 
 #include "jsgf.h"
 #include "jsgf_parser.h"
 #include "jsgf_scanner.h"
+
+int yyparse (yyscan_t yyscanner, jsgf_t *jsgf);
 
 /**
  * \file jsgf.c
@@ -74,10 +77,32 @@ jsgf_grammar_new(jsgf_t *parent)
     if (parent) {
         grammar->rules = parent->rules;
         grammar->imports = parent->imports;
+        grammar->searchpath = parent->searchpath;
+        grammar->parent = parent;
     }
     else {
+        char *jsgf_path;
+
         grammar->rules = hash_table_new(64, 0);
         grammar->imports = hash_table_new(16, 0);
+        if ((jsgf_path = getenv("JSGF_PATH")) != NULL) {
+            char *word, *c;
+
+            /* FIXME: This should be a function in libsphinxbase. */
+            /* FIXME: Also nextword() is totally useless... */
+            word = jsgf_path = ckd_salloc(jsgf_path);
+            while ((c = strchr(word, ':'))) {
+                *c = '\0';
+                grammar->searchpath = glist_add_ptr(grammar->searchpath, word);
+                word = c + 1;
+            }
+            grammar->searchpath = glist_add_ptr(grammar->searchpath, word);
+            grammar->searchpath = glist_reverse(grammar->searchpath);
+        }
+        else {
+            /* Default to current directory. */
+            grammar->searchpath = glist_add_ptr(grammar->searchpath, ckd_salloc("."));
+        }
     }
 
     return grammar;
@@ -90,7 +115,7 @@ jsgf_grammar_free(jsgf_t *jsgf)
     int32 nrules;
 
     rules = hash_table_tolist(jsgf->rules, &nrules);
-    /* FIXME: free rules and symbols and stuff */
+    /* FIXME: free search path, rules, symbols and stuff */
     hash_table_free(jsgf->rules);
     ckd_free(jsgf);
 }
@@ -328,7 +353,7 @@ jsgf_define_rule(jsgf_t *jsgf, char *name, jsgf_rhs_t *rhs, int public)
     void *val;
 
     if (name == NULL) {
-        name = ckd_calloc(strlen(jsgf->name) + 16, 1);
+        name = ckd_malloc(strlen(jsgf->name) + 16);
         sprintf(name, "<%s.g%05d>", jsgf->name, hash_table_inuse(jsgf->rules));
     }
     else {
@@ -355,10 +380,31 @@ jsgf_define_rule(jsgf_t *jsgf, char *name, jsgf_rhs_t *rhs, int public)
     return rule;
 }
 
+/* FIXME: This should go in libsphinxutil */
+static char *
+path_list_search(glist_t paths, char *path)
+{
+    gnode_t *gn;
+
+    for (gn = paths; gn; gn = gnode_next(gn)) {
+        char *fullpath;
+        FILE *tmp;
+
+        fullpath = string_join(gnode_ptr(gn), "/", path, NULL);
+        tmp = fopen(fullpath, "r");
+        fclose(tmp);
+        if (tmp != NULL)
+            return fullpath;
+        else
+            ckd_free(fullpath);
+    }
+    return NULL;
+}
+
 jsgf_rule_t *
 jsgf_import_rule(jsgf_t *jsgf, char *name)
 {
-    char *c, *path;
+    char *c, *path, *newpath;
     size_t l;
     void *val;
     jsgf_t *imp;
@@ -372,12 +418,15 @@ jsgf_import_rule(jsgf_t *jsgf, char *name)
         *c = '\0';
     }
     /* Construct a filename. */
-    /* FIXME: This needs to be made relative to the directory of the
-     * input file and also the classpath or some other environment
-     * variable */
     for (c = path; *c; ++c)
         if (*c == '.') *c = '/';
     strcat(path, ".gram");
+    newpath = path_list_search(jsgf->searchpath, path);
+    ckd_free(path);
+    if (newpath == NULL)
+        return NULL;
+
+    path = newpath;
     E_INFO("Importing %s from %s to %s\n", name, path, jsgf->name);
 
     /* FIXME: Also, we need to make sure that path is fully qualified

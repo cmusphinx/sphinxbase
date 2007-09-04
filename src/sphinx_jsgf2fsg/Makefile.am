@@ -7,7 +7,7 @@ jsgf_scanner.h: jsgf_scanner.c
 BUILT_SOURCES = jsgf_parser.h jsgf_scanner.h
 
 sphinx_jsgf2fsg_SOURCES = main.c \
-	jsgf_impl.c \
+	jsgf.c \
 	jsgf_scanner.l \
 	jsgf_parser.y
 
