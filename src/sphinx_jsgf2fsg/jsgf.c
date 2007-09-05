@@ -36,6 +36,7 @@
  */
 
 #include <string.h>
+#include <assert.h>
 
 #include "ckd_alloc.h"
 #include "strfuncs.h"
@@ -405,18 +406,28 @@ jsgf_rule_t *
 jsgf_import_rule(jsgf_t *jsgf, char *name)
 {
     char *c, *path, *newpath;
-    size_t l;
+    size_t namelen, packlen;
     void *val;
     jsgf_t *imp;
+    int import_all;
 
     /* Trim the leading and trailing <> */
-    l = strlen(name);
-    path = ckd_malloc(l - 2 + 6); /* room for a trailing .gram */
+    namelen = strlen(name);
+    path = ckd_malloc(namelen - 2 + 6); /* room for a trailing .gram */
     strcpy(path, name + 1);
     /* Split off the first part of the name */
-    if ((c = strrchr(path, '.'))) {
-        *c = '\0';
+    c = strrchr(path, '.');
+    if (c == NULL) {
+        E_ERROR("Imported rule is not qualified: %s\n", name);
+        ckd_free(path);
+        return NULL;
     }
+    packlen = c - path;
+    *c = '\0';
+
+    /* Look for import foo.* */
+    import_all = (strlen(name) > 2 && 0 == strcmp(name + namelen - 3, ".*>"));
+
     /* Construct a filename. */
     for (c = path; *c; ++c)
         if (*c == '.') *c = '/';
@@ -455,25 +466,32 @@ jsgf_import_rule(jsgf_t *jsgf, char *name)
         for (gn = rules; gn; gn = gnode_next(gn)) {
             hash_entry_t *he = gnode_ptr(gn);
             jsgf_rule_t *rule = hash_entry_val(he);
+            int rule_matches;
 
-            if (rule->public
-                && 0 == strcmp(name, rule->name)) {
+            if (import_all) {
+                /* Match package name (symbol table is shared) */
+                rule_matches = !strncmp(name, rule->name, packlen + 1);
+            }
+            else {
+                /* Exact match */
+                rule_matches = !strcmp(name, rule->name);
+            }
+            if (rule->public && rule_matches) {
                 void *val;
                 char *newname;
 
                 /* Link this rule into the current namespace. */
-                if ((c = strrchr(name, '.'))) {
-                    newname = jsgf_fullname(jsgf, c);
-                }
-                else {
-                    newname = jsgf_fullname(jsgf, c);
-                }
+                c = strrchr(rule->name, '.');
+                assert(c != NULL);
+                newname = jsgf_fullname(jsgf, c);
+
                 E_INFO("Imported %s\n", newname);
                 val = hash_table_enter(jsgf->rules, newname, rule);
                 if (val != (void *)rule) {
                     E_WARN("Multiply defined symbol: %s\n", newname);
                 }
-                return rule;
+                if (!import_all)
+                    return rule;
             }
         }
     }
