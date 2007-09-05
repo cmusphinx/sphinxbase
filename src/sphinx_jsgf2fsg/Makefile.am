@@ -1,7 +1,6 @@
 bin_PROGRAMS = sphinx_jsgf2fsg
 
 AM_YFLAGS = -d
-AM_LFLAGS = --header-file=jsgf_scanner.h
 
 jsgf_scanner.h: jsgf_scanner.c
 BUILT_SOURCES = jsgf_parser.h jsgf_scanner.h
