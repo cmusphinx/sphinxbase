@@ -29,7 +29,8 @@ esac
 AC_ISC_POSIX
 AC_PROG_CC
 AM_PROG_CC_STDC
-AM_PROG_LEX
+# Don't even bother until the rest of the world has an up-to-date Flex
+#AM_PROG_LEX
 AC_PROG_YACC
 AC_HEADER_STDC
 AC_WORDS_BIGENDIAN
