@@ -329,7 +329,7 @@ extern int yylex \
 #undef YY_DECL
 #endif
 
-#line 75 "jsgf_scanner.l"
+#line 77 "jsgf_scanner.l"
 
 
 #line 336 "jsgf_scanner.h"

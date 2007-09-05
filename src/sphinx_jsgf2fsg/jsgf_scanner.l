@@ -34,6 +34,7 @@
  * ====================================================================
  *
  */
+/* YOU MUST USE FLEX 2.5.33 OR NEWER TO PROCESS THIS FILE!!! */
 %{
 
 #include "jsgf.h"
@@ -42,6 +43,7 @@
 %}
 
 %option 8bit reentrant bison-bridge noyywrap
+%option header-file="jsgf_scanner.h"
 %s COMMENT
 
 ws       [ \t\n]

@@ -541,13 +541,14 @@ static yyconst flex_int16_t yy_chk[218] =
  * ====================================================================
  *
  */
-#line 38 "jsgf_scanner.l"
+/* YOU MUST USE FLEX 2.5.33 OR NEWER TO PROCESS THIS FILE!!! */
+#line 39 "jsgf_scanner.l"
 
 #include "jsgf.h"
 #include "jsgf_parser.h"
 
 
-#line 551 "jsgf_scanner.c"
+#line 552 "jsgf_scanner.c"
 
 #define INITIAL 0
 #define COMMENT 1
@@ -777,10 +778,10 @@ YY_DECL
 	register int yy_act;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-#line 54 "jsgf_scanner.l"
+#line 56 "jsgf_scanner.l"
 
 
-#line 784 "jsgf_scanner.c"
+#line 785 "jsgf_scanner.c"
 
     yylval = yylval_param;
 
@@ -868,89 +869,89 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 56 "jsgf_scanner.l"
+#line 58 "jsgf_scanner.l"
 ;                     /* ignore whitespace */
 	YY_BREAK
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 57 "jsgf_scanner.l"
+#line 59 "jsgf_scanner.l"
 ;        /* single-line comments */
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 58 "jsgf_scanner.l"
+#line 60 "jsgf_scanner.l"
 { BEGIN(COMMENT); } /* C-style comments */
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 59 "jsgf_scanner.l"
+#line 61 "jsgf_scanner.l"
 { BEGIN(INITIAL); }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 60 "jsgf_scanner.l"
+#line 62 "jsgf_scanner.l"
 ;               /* Ignore stuff in comment mode */
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 62 "jsgf_scanner.l"
+#line 64 "jsgf_scanner.l"
 return HEADER;
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 63 "jsgf_scanner.l"
+#line 65 "jsgf_scanner.l"
 return GRAMMAR;
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 64 "jsgf_scanner.l"
+#line 66 "jsgf_scanner.l"
 return IMPORT;
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 65 "jsgf_scanner.l"
+#line 67 "jsgf_scanner.l"
 return PUBLIC;
 	YY_BREAK
 case 10:
 /* rule 10 can match eol */
 YY_RULE_SETUP
-#line 67 "jsgf_scanner.l"
+#line 69 "jsgf_scanner.l"
 { yylval->name = strdup(yytext); return RULENAME; }
 	YY_BREAK
 case 11:
 /* rule 11 can match eol */
 YY_RULE_SETUP
-#line 68 "jsgf_scanner.l"
+#line 70 "jsgf_scanner.l"
 { yylval->name = strdup(yytext); return TAG; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 69 "jsgf_scanner.l"
+#line 71 "jsgf_scanner.l"
 { yylval->name = strdup(yytext); return TOKEN; }
 	YY_BREAK
 case 13:
 /* rule 13 can match eol */
 YY_RULE_SETUP
-#line 70 "jsgf_scanner.l"
+#line 72 "jsgf_scanner.l"
 { yylval->name = strdup(yytext); return TOKEN; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 71 "jsgf_scanner.l"
+#line 73 "jsgf_scanner.l"
 { yylval->weight = atof(yytext+1); return WEIGHT; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 73 "jsgf_scanner.l"
+#line 75 "jsgf_scanner.l"
 return yytext[0];        /* Single-character tokens */
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 75 "jsgf_scanner.l"
+#line 77 "jsgf_scanner.l"
 ECHO;
 	YY_BREAK
-#line 954 "jsgf_scanner.c"
+#line 955 "jsgf_scanner.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(COMMENT):
 	yyterminate();
@@ -2070,7 +2071,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 75 "jsgf_scanner.l"
+#line 77 "jsgf_scanner.l"
 
 
 
