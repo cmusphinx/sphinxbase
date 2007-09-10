@@ -126,7 +126,6 @@ typedef enum argtype_s {
     \brief A structure for storing one argument. 
 */
 
-
 typedef struct {
 	const char *name;   /** Name of the command line switch (case-insensitive) */
 	argtype_t type;     /**<< Variable that could represent any arguments */
@@ -141,7 +140,10 @@ typedef struct {
 #define ARG_STRINGIFY(s) ARG_STRINGIFY1(s)
 #define ARG_STRINGIFY1(s) #s
 
-
+/**
+ * Opaque structure used to hold the results of command-line parsing.
+ **/
+typedef struct cmd_ln_s cmd_ln_t;
 
 /**
  * Parse the given list of arguments (name-value pairs) according to the given definitions.
@@ -159,6 +161,21 @@ int32 cmd_ln_parse (const arg_t *defn,	/**< In: Array of argument name definitio
 	);
 
 /**
+ * Re-entrant version of cmd_ln_parse()
+ *
+ * @return A cmd_ln_t* containing the results of command line parsing, or NULL on failure.
+ **/
+SPHINXBASE_EXPORT
+cmd_ln_t *cmd_ln_parse_r(cmd_ln_t *inout_cmdln, /**< In/Out: Previous command-line to update,
+                                                     or NULL to create a new one. */
+                         const arg_t *defn,	/**< In: Array of argument name definitions */
+                         int32 argc,		/**< In: #Actual arguments */
+                         char *argv[],		/**< In: Actual arguments */
+                         int32 strict           /**< In: Fail on duplicate or unknown
+                                                   arguments, or no arguments? */
+    );
+
+/**
  * Parse an arguments file by deliminating on " \r\t\n" and putting each tokens
  * into an argv[] for cmd_ln_parse().
  */
@@ -168,6 +185,21 @@ int32 cmd_ln_parse_file(const arg_t *defn,   /**< In: Array of argument name def
                         int32 strict         /**< In: Fail on duplicate or unknown
                                                 arguments, or no arguments? */
 	);
+
+/**
+ * Re-entrant version of cmd_ln_parse_file.
+ *
+ * @return A cmd_ln_t containing the results of command line parsing, or NULL on failure.
+ */
+SPHINXBASE_EXPORT
+cmd_ln_t *cmd_ln_parse_file_r(cmd_ln_t *inout_cmdln, /**< In/Out: Previous command-line to update,
+                                                     or NULL to create a new one. */
+                              const arg_t *defn,   /**< In: Array of argument name definitions*/
+                              const char *filename,/**< In: A file that contains all
+                                                     the arguments */ 
+                              int32 strict         /**< In: Fail on duplicate or unknown
+                                                     arguments, or no arguments? */
+    );
 
 
 /**
@@ -200,6 +232,12 @@ void cmd_ln_appl_exit(void);
 SPHINXBASE_EXPORT
 int cmd_ln_exists(const char *name);
 
+/**
+ * Re-entrant version of cmd_ln_exists().
+ */
+SPHINXBASE_EXPORT
+int cmd_ln_exists_r(cmd_ln_t *cmdln, const char *name);
+
 /*
  * Return a pointer to the previously parsed value for the given argument name.
  * And, some convenient wrappers around this function.
@@ -213,6 +251,17 @@ anytype_t *cmd_ln_access (const char *name);/* In: Argument name whose value is 
 #define cmd_ln_boolean(name)	(cmd_ln_access(name)->i_32 != 0)
 
 /**
+ * Re-entrant version of cmd_ln_access().
+ */
+SPHINXBASE_EXPORT
+anytype_t *cmd_ln_access_r (cmd_ln_t *cmdln, const char *name);
+#define cmd_ln_str_r(c,n)	((char *)cmd_ln_access(c,n)->ptr)
+#define cmd_ln_int32_r(c,n)	(cmd_ln_access_r(c,n)->i_32)
+#define cmd_ln_float32_r(c,n)	(cmd_ln_access_r(c,n)->fl_32)
+#define cmd_ln_float64_r(c,n)	(cmd_ln_access_r(c,n)->fl_64)
+#define cmd_ln_boolean_r(c,n)	(cmd_ln_access_r(c,n)->i_32 != 0)
+
+/**
  * Print a help message listing the valid argument names, and the associated
  * attributes as given in defn.
  */
@@ -221,9 +270,23 @@ void  cmd_ln_print_help (FILE *fp,	   /**< In: File to which to print */
 			 const arg_t *defn /**< In: Array of argument name definitions */
 	);
 
+/**
+ * Re-entrant version of cmd_ln_print_help().
+ **/
+SPHINXBASE_EXPORT
+void cmd_ln_print_help_r (cmd_ln_t *cmdln,
+                          FILE *fp,	   /**< In: File to which to print */
+			  const arg_t *defn /**< In: Array of argument name definitions */
+	);
+
 /* RAH, 4.17.01, call this to free memory allocated during cmd_ln_parse() */
 SPHINXBASE_EXPORT
 void cmd_ln_free (void);
+
+/**
+ * Re-entrant version of cmd_ln_free()
+ **/
+void cmd_ln_free_r (cmd_ln_t *cmdln);
 
 #ifdef __cplusplus
 }

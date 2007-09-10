@@ -81,18 +81,22 @@
 #include "hash_table.h"
 #include "case.h"
 
-/* Hash table holding all arguments and their values */
-static hash_table_t *ht;
+/**
+ * (opaque) structure containing a parsed command-line
+ */
+struct cmd_ln_s {
+    /** Hash table holding all arguments and their values */
+    hash_table_t *ht;
+    /**
+     * The true memory reservoir for all the string pointer if the
+     * command line is read as a file.
+     */
+    char **f_argv;
+    uint32 f_argc;
+};
 
-/** Added at 20050701 to keep track of the memory allocated when a file
-    is used in input of the command-line. 
-*/
-
-static char **f_argv; /** The true memory reservoir for all the string
-			  pointer if the command line is read as a
-			  file. */
-
-static uint32 f_argc;
+/** Global command-line, for non-reentrant API. */
+cmd_ln_t *global_cmdln;
 
 
 /*variables that allow redirecting all files to a log file */
@@ -101,7 +105,7 @@ static FILE orig_stdout, orig_stderr;
 #endif
 static FILE *logfp;
 
-static void arg_dump(FILE * fp, const arg_t * defn, int32 doc);
+static void arg_dump_r(cmd_ln_t *cmdln, FILE * fp, const arg_t * defn, int32 doc);
 
 /*
  * Find max length of name and default fields in the given defn array.
@@ -299,7 +303,7 @@ cmd_ln_appl_enter(int argc, char *argv[],
             setbuf(stdout, NULL);
 #endif /* !_WIN32_WCE */
             /* Make sure the arguments go there too. */
-            arg_dump(logfp, defn, 0);
+            arg_dump_r(global_cmdln,logfp, defn, 0);
 
         }
     }
@@ -328,7 +332,7 @@ cmd_ln_appl_exit()
 }
 
 static void
-arg_dump(FILE * fp, const arg_t * defn, int32 doc)
+arg_dump_r(cmd_ln_t *cmdln, FILE * fp, const arg_t * defn, int32 doc)
 {
     int32 *pos;
     int32 i, j, l, n;
@@ -380,7 +384,7 @@ arg_dump(FILE * fp, const arg_t * defn, int32 doc)
                 fprintf(fp, "%s", defn[j].doc);
         }
         else {
-            vp = cmd_ln_access(defn[j].name);
+            vp = cmd_ln_access_r(cmdln, defn[j].name);
             if (vp) {
                 switch (defn[j].type) {
                 case ARG_INT32:
@@ -419,11 +423,12 @@ arg_dump(FILE * fp, const arg_t * defn, int32 doc)
 }
 
 
-int32
-cmd_ln_parse(const arg_t * defn, int32 argc, char *argv[], int strict)
+cmd_ln_t *
+cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv[], int strict)
 {
     int32 i, j, n;
     hash_table_t *defidx = NULL;
+    cmd_ln_t *cmdln;
 
     /* Echo command line */
 #ifndef _WIN32_WCE
@@ -436,6 +441,12 @@ cmd_ln_parse(const arg_t * defn, int32 argc, char *argv[], int strict)
     fprintf(stderr, "\n\n");
     fflush(stderr);
 #endif
+
+    /* Construct command-line object */
+    if (inout_cmdln == NULL)
+        cmdln = ckd_calloc(1, sizeof(*cmdln));
+    else
+        cmdln = inout_cmdln;
 
     /* Build a hash table for argument definitions */
     defidx = hash_table_new(50, 0);
@@ -450,8 +461,8 @@ cmd_ln_parse(const arg_t * defn, int32 argc, char *argv[], int strict)
     }
 
     /* Allocate memory for argument values */
-    if (ht == NULL)
-	ht = hash_table_new(n, 0 /* argument names are case-sensitive */ );
+    if (cmdln->ht == NULL)
+        cmdln->ht = hash_table_new(n, 0 /* argument names are case-sensitive */ );
 
     /* Parse command line arguments (name-value pairs); skip argv[0] if argc is odd */
     for (j = 1; j < argc; j += 2) {
@@ -459,7 +470,7 @@ cmd_ln_parse(const arg_t * defn, int32 argc, char *argv[], int strict)
         void *v, *vv;
 
         if (j + 1 >= argc) {
-            cmd_ln_print_help(stderr, defn);
+            cmd_ln_print_help_r(cmdln, stderr, defn);
             E_ERROR("Argument value for '%s' missing\n", argv[j]);
             goto error;
         }
@@ -475,13 +486,13 @@ cmd_ln_parse(const arg_t * defn, int32 argc, char *argv[], int strict)
 
         /* Enter argument value */
         if ((v = arg_str2val(argdef->type, argv[j + 1])) == NULL) {
-            cmd_ln_print_help(stderr, defn);
+            cmd_ln_print_help_r(cmdln, stderr, defn);
             E_ERROR("Bad argument value for %s: %s\n", argv[j],
                     argv[j + 1]);
             goto error;
         }
 
-        if ((vv = hash_table_enter(ht, argdef->name, v)) != v) {
+        if ((vv = hash_table_enter(cmdln->ht, argdef->name, v)) != v) {
 	    if (strict) {
 		ckd_free(v);
 		E_ERROR("Duplicate argument name in arguments: %s\n",
@@ -489,7 +500,7 @@ cmd_ln_parse(const arg_t * defn, int32 argc, char *argv[], int strict)
 		goto error;
 	    }
 	    else {
-		vv = hash_table_replace(ht, argdef->name, v);
+		vv = hash_table_replace(cmdln->ht, argdef->name, v);
 		ckd_free(vv);
 	    }
         }
@@ -498,14 +509,14 @@ cmd_ln_parse(const arg_t * defn, int32 argc, char *argv[], int strict)
     /* Fill in default values, if any, for unspecified arguments */
     for (i = 0; i < n; i++) {
 	void *v;
-        if (hash_table_lookup(ht, defn[i].name, &v) < 0) {
+        if (hash_table_lookup(cmdln->ht, defn[i].name, &v) < 0) {
             if ((v = arg_str2val(defn[i].type, defn[i].deflt)) == NULL) {
                 E_ERROR
                     ("Bad default argument value for %s: %s\n",
                      defn[i].name, defn[i].deflt);
                 goto error;
             }
-            hash_table_enter(ht, defn[i].name, v);
+            hash_table_enter(cmdln->ht, defn[i].name, v);
         }
     }
 
@@ -514,39 +525,58 @@ cmd_ln_parse(const arg_t * defn, int32 argc, char *argv[], int strict)
     for (i = 0; i < n; i++) {
         if (defn[i].type & ARG_REQUIRED) {
             void *v;
-            if (hash_table_lookup(ht, defn[i].name, &v) != 0)
+            if (hash_table_lookup(cmdln->ht, defn[i].name, &v) != 0)
                 E_ERROR("Missing required argument %s\n", defn[i].name);
         }
     }
     if (j > 0) {
-        cmd_ln_print_help(stderr, defn);
+        cmd_ln_print_help_r(cmdln, stderr, defn);
         goto error;
     }
 
     if (strict && argc == 1) {
 	E_ERROR("No arguments given, exiting\n");
-        cmd_ln_print_help(stderr, defn);
+        cmd_ln_print_help_r(cmdln, stderr, defn);
         goto error;
     }
 
 #ifndef _WIN32_WCE
     /* Print configuration */
     fprintf(stderr, "Current configuration:\n");
-    arg_dump(stderr, defn, 0);
+    arg_dump_r(cmdln, stderr, defn, 0);
 #endif
     hash_table_free(defidx);
-    return 0;
+    return cmdln;
 
   error:
     if (defidx)
 	hash_table_free(defidx);
-    cmd_ln_free();
-    E_ERROR("cmd_ln_parse failed, forced exit\n");
-    exit(-1);
+    if (inout_cmdln == NULL)
+        cmd_ln_free_r(cmdln);
+    E_ERROR("cmd_ln_parse_r failed\n");
+    return NULL;
 }
 
-int32
-cmd_ln_parse_file(const arg_t * defn, const char *filename, int32 strict)
+int
+cmd_ln_parse(const arg_t * defn, int32 argc, char *argv[], int strict)
+{
+    cmd_ln_t *cmdln;
+
+    cmdln = cmd_ln_parse_r(global_cmdln, defn, argc, argv, strict);
+    if (cmdln == NULL) {
+        /* Old, bogus behaviour... */
+        E_ERROR("cmd_ln_parse failed, forced exit\n");
+        exit(-1);
+    }
+    /* Initialize global_cmdln if not present. */
+    if (global_cmdln == NULL) {
+        global_cmdln = cmdln;
+    }
+    return 0;
+}
+
+cmd_ln_t *
+cmd_ln_parse_file_r(cmd_ln_t *inout_cmdln, const arg_t * defn, const char *filename, int32 strict)
 {
     FILE *file;
     char **tmp_argv;
@@ -556,13 +586,14 @@ cmd_ln_parse_file(const arg_t * defn, const char *filename, int32 strict)
     int len = 0;
     int ch;
     int quoting;
-
+    cmd_ln_t *cmdln;
+    char **f_argv;
     int rv = 0;
 
     if ((file = fopen(filename, "r")) == NULL) {
         E_INFO("Cannot open configuration file %s for reading\n",
                filename);
-        return -1;
+        return NULL;
     }
 
     /*
@@ -629,69 +660,134 @@ cmd_ln_parse_file(const arg_t * defn, const char *filename, int32 strict)
             break;
         }
     } while (ch != EOF);
-
-    if (rv == 0) {
-        rv = cmd_ln_parse(defn, argc, f_argv, strict);
-    }
-
-    f_argc = argc;
     fclose(file);
 
-    return rv;
-}
+    cmdln = cmd_ln_parse_r(inout_cmdln, defn, argc, f_argv, strict);
+    if (cmdln == NULL) {
+        int i;
 
-void
-cmd_ln_print_help(FILE * fp, const arg_t * defn)
-{
-    fprintf(fp, "Arguments list definition:\n");
-    arg_dump(fp, defn, 1);
-}
-
-int
-cmd_ln_exists(const char *name)
-{
-    void *val;
-    return (hash_table_lookup(ht, name, &val) == 0);
-}
-
-anytype_t *
-cmd_ln_access(const char *name)
-{
-    void *val;
-    if (hash_table_lookup(ht, name, &val) < 0)
-        E_FATAL("Unknown argument: %s\n", name);
-    return (anytype_t *)val;
-}
-
-/* RAH, 4.17.01, free memory allocated above  */
-void
-cmd_ln_free()
-{
-    int32 i;
-
-    if (ht) {
-        glist_t entries;
-        gnode_t *gn;
-        int32 n;
-
-        entries = hash_table_tolist(ht, &n);
-        for (gn = entries; gn; gn = gnode_next(gn)) {
-	    hash_entry_t *e = gnode_ptr(gn);
-            ckd_free(e->val);
-        }
-	glist_free(entries);
-        hash_table_free(ht);
-    }
-    ht = NULL;
-
-    if (f_argv) {
-        if (f_argc > 1) {
-            for (i = 1; i < f_argc; i++) {
+        /* Clean up allocated strings. */
+        if (argc > 1) {
+            for (i = 1; i < argc; i++) {
                 ckd_free(f_argv[i]);
             }
         }
         ckd_free(f_argv[0]);
         ckd_free(f_argv);
+        /* And ... exit (the old, bogus behaviour) */
+        exit(-1);
+    }
+    else if (cmdln == inout_cmdln) {
+        /* If we are adding to a previously passed-in cmdln, then
+         * store our allocated strings in its f_argv. */
+        cmdln->f_argv = ckd_realloc(cmdln->f_argv, (cmdln->f_argc + argc) * sizeof(*cmdln->f_argv));
+        memcpy(cmdln->f_argv + cmdln->f_argc, f_argv, argc * sizeof(*f_argv));
+        ckd_free(f_argv);
+        cmdln->f_argc = cmdln->f_argc + argc;
+    }
+    else {
+        /* Otherwise, store f_argc and f_argv. */
+        cmdln->f_argc = argc;
+        cmdln->f_argv = f_argv;
     }
 
+    return cmdln;
+}
+
+int
+cmd_ln_parse_file(const arg_t * defn, const char *filename, int32 strict)
+{
+    cmd_ln_t *cmdln;
+
+    cmdln = cmd_ln_parse_file_r(global_cmdln, defn, filename, strict);
+    if (cmdln == NULL) {
+        return -1;
+    }
+    /* Initialize global_cmdln if not present. */
+    if (global_cmdln == NULL) {
+        global_cmdln = cmdln;
+    }
+    return 0;
+}
+
+void
+cmd_ln_print_help_r(cmd_ln_t *cmdln, FILE * fp, const arg_t * defn)
+{
+    fprintf(fp, "Arguments list definition:\n");
+    arg_dump_r(cmdln, fp, defn, 1);
+}
+
+void
+cmd_ln_print_help(FILE * fp, const arg_t * defn)
+{
+    cmd_ln_print_help_r(global_cmdln, fp, defn);
+}
+
+int
+cmd_ln_exists_r(cmd_ln_t *cmdln, const char *name)
+{
+    void *val;
+    return (hash_table_lookup(cmdln->ht, name, &val) == 0);
+}
+
+int
+cmd_ln_exists(const char *name)
+{
+    return cmd_ln_exists_r(global_cmdln, name);
+}
+
+anytype_t *
+cmd_ln_access_r(cmd_ln_t *cmdln, const char *name)
+{
+    void *val;
+    if (hash_table_lookup(cmdln->ht, name, &val) < 0)
+        E_FATAL("Unknown argument: %s\n", name);
+    return (anytype_t *)val;
+}
+
+anytype_t *
+cmd_ln_access(const char *name)
+{
+    return cmd_ln_access_r(global_cmdln, name);
+}
+
+/* RAH, 4.17.01, free memory allocated above  */
+void
+cmd_ln_free_r(cmd_ln_t *cmdln)
+{
+    if (cmdln == NULL)
+        return;
+
+    if (cmdln->ht) {
+        glist_t entries;
+        gnode_t *gn;
+        int32 n;
+
+        entries = hash_table_tolist(cmdln->ht, &n);
+        for (gn = entries; gn; gn = gnode_next(gn)) {
+	    hash_entry_t *e = gnode_ptr(gn);
+            ckd_free(e->val);
+        }
+	glist_free(entries);
+        hash_table_free(cmdln->ht);
+        cmdln->ht = NULL;
+    }
+
+    if (cmdln->f_argv) {
+        int32 i;
+        for (i = 0; i < cmdln->f_argc; ++i) {
+            ckd_free(cmdln->f_argv[i]);
+        }
+        ckd_free(cmdln->f_argv);
+        cmdln->f_argv = NULL;
+        cmdln->f_argc = 0;
+    }
+    ckd_free(cmdln);
+}
+
+void
+cmd_ln_free(void)
+{
+    cmd_ln_free_r(global_cmdln);
+    global_cmdln = NULL;
 }
