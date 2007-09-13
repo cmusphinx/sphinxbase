@@ -294,5 +294,5 @@ void
 __myfree__(char *elem, int32 elemsize, char *caller_file,
            int32 caller_line)
 {
-    return listelem_free(elem, elemsize);
+    listelem_free(elem, elemsize);
 }
