@@ -49,15 +49,15 @@ RSC=rc.exe
 # PROP Target_Dir ""
 # ADD BASE RSC /l 0x409 /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "UNICODE" /d "_UNICODE" /d "NDEBUG" /d "$(CePlatform)" /d "ARM" /d "_ARM_" /r
 # ADD RSC /l 0x409 /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "UNICODE" /d "_UNICODE" /d "NDEBUG" /d "$(CePlatform)" /d "ARM" /d "_ARM_" /r
-# ADD BASE CPP /nologo /W3 /GX- /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "_USRDLL" /D "SPHINXBASE_EXPORTS" /YX /Oxs /M$(CECrtMT)  /c
-# ADD CPP /nologo /W3 /GX- /I "../../include/wince" /I "../../include" /D "NDEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_USRDLL" /D "SPHINXBASE_EXPORTS" /D "FIXED_POINT" /D "HAVE_CONFIG_H" /YX /Oxs /M$(CECrtMT)  /c
+# ADD BASE CPP /nologo /W3 /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "NDEBUG" /D "_USRDLL" /D "SPHINXBASE_EXPORTS" /YX /Oxs /M$(CECrtMT) /c
+# ADD CPP /nologo /W3 /I "../../include/wince" /I "../../include" /D "NDEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_USRDLL" /D "SPHINXBASE_EXPORTS" /D "FIXED_POINT" /D "HAVE_CONFIG_H" /YX /Oxs /M$(CECrtMT) /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /o "NUL" /win32
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LINK32=link.exe
-# ADD BASE LINK32 commctrl.lib coredll.lib   /nologo /base:"0x00100000" /stack:0x10000,0x1000 /entry:"_DllMainCRTStartup" /dll /nodefaultlib:"$(CENoDefaultLib)" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
+# ADD BASE LINK32 commctrl.lib coredll.lib /nologo /base:"0x00100000" /stack:0x10000,0x1000 /entry:"_DllMainCRTStartup" /dll /nodefaultlib:"$(CENoDefaultLib)" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
 # ADD LINK32 coredll.lib /nologo /base:"0x00100000" /stack:0x10000,0x1000 /entry:"_DllMainCRTStartup" /dll /nodefaultlib:"$(CENoDefaultLib)" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
 
 !ELSEIF  "$(CFG)" == "sphinxbase - Win32 (WCE ARM) Debug"
@@ -79,15 +79,15 @@ LINK32=link.exe
 # PROP Target_Dir ""
 # ADD BASE RSC /l 0x409 /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "UNICODE" /d "_UNICODE" /d "DEBUG" /d "$(CePlatform)" /d "ARM" /d "_ARM_" /r
 # ADD RSC /l 0x409 /d UNDER_CE=$(CEVersion) /d _WIN32_WCE=$(CEVersion) /d "UNICODE" /d "_UNICODE" /d "DEBUG" /d "$(CePlatform)" /d "ARM" /d "_ARM_" /r
-# ADD BASE CPP /nologo /W3 /GX- /Zi /Od /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_USRDLL" /D "SPHINXBASE_EXPORTS" /YX /M$(CECrtMTDebug)  /c
-# ADD CPP /nologo /W3 /GX- /Zi /Od /I "../../include/wince" /I "../../include" /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_USRDLL" /D "SPHINXBASE_EXPORTS" /D "FIXED_POINT" /D "HAVE_CONFIG_H" /YX /M$(CECrtMTDebug)  /c
+# ADD BASE CPP /nologo /W3 /Zi /Od /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_USRDLL" /D "SPHINXBASE_EXPORTS" /YX /M$(CECrtMTDebug) /c
+# ADD CPP /nologo /W3 /Zi /Od /I "../../include/wince" /I "../../include" /D "DEBUG" /D _WIN32_WCE=$(CEVersion) /D "$(CePlatform)" /D "ARM" /D "_ARM_" /D UNDER_CE=$(CEVersion) /D "UNICODE" /D "_UNICODE" /D "_USRDLL" /D "SPHINXBASE_EXPORTS" /D "FIXED_POINT" /D "HAVE_CONFIG_H" /YX /M$(CECrtMTDebug) /c
 # ADD BASE MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
 # ADD MTL /nologo /D "_DEBUG" /mktyplib203 /o "NUL" /win32
 BSC32=bscmake.exe
 # ADD BASE BSC32 /nologo
 # ADD BSC32 /nologo
 LINK32=link.exe
-# ADD BASE LINK32 commctrl.lib coredll.lib   /nologo /base:"0x00100000" /stack:0x10000,0x1000 /entry:"_DllMainCRTStartup" /dll /debug /nodefaultlib:"$(CENoDefaultLib)" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
+# ADD BASE LINK32 commctrl.lib coredll.lib /nologo /base:"0x00100000" /stack:0x10000,0x1000 /entry:"_DllMainCRTStartup" /dll /debug /nodefaultlib:"$(CENoDefaultLib)" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
 # ADD LINK32 coredll.lib /nologo /base:"0x00100000" /stack:0x10000,0x1000 /entry:"_DllMainCRTStartup" /dll /debug /nodefaultlib:"$(CENoDefaultLib)" /subsystem:$(CESubsystem) /align:"4096" /MACHINE:ARM
 
 !ENDIF 
@@ -102,210 +102,262 @@ LINK32=link.exe
 # Begin Source File
 
 SOURCE="..\..\src\libsphinxfe\add-table.c"
-NODEP_CPP_ADD_T=\
-	"..\..\src\libsphinxfe\prim_type.h"\
+DEP_CPP_ADD_T=\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
+	"..\..\include\wince\config.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxfeat\agc.c
-NODEP_CPP_AGC_C=\
-	"..\..\src\libsphinxfeat\agc.h"\
-	"..\..\src\libsphinxfeat\ckd_alloc.h"\
-	"..\..\src\libsphinxfeat\err.h"\
+DEP_CPP_AGC_C=\
+	"..\..\include\agc.h"\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\err.h"\
+	"..\..\include\fe.h"\
+	"..\..\include\fixpoint.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
+	"..\..\include\wince\config.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxutil\bio.c
-NODEP_CPP_BIO_C=\
-	"..\..\src\libsphinxutil\bio.h"\
-	"..\..\src\libsphinxutil\ckd_alloc.h"\
-	"..\..\src\libsphinxutil\err.h"\
+DEP_CPP_BIO_C=\
+	"..\..\include\bio.h"\
+	"..\..\include\byteorder.h"\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\err.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxutil\bitvec.c
-NODEP_CPP_BITVE=\
-	"..\..\src\libsphinxutil\bitvec.h"\
+DEP_CPP_BITVE=\
+	"..\..\include\bitvec.h"\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxutil\case.c
-NODEP_CPP_CASE_=\
-	"..\..\src\libsphinxutil\case.h"\
+DEP_CPP_CASE_=\
+	"..\..\include\case.h"\
+	"..\..\include\err.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxutil\ckd_alloc.c
-NODEP_CPP_CKD_A=\
-	"..\..\src\libsphinxutil\ckd_alloc.h"\
-	"..\..\src\libsphinxutil\err.h"\
+DEP_CPP_CKD_A=\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\err.h"\
+	"..\..\include\linklist.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxutil\cmd_ln.c
-NODEP_CPP_CMD_L=\
-	"..\..\src\libsphinxutil\case.h"\
-	"..\..\src\libsphinxutil\ckd_alloc.h"\
-	"..\..\src\libsphinxutil\cmd_ln.h"\
-	"..\..\src\libsphinxutil\err.h"\
-	"..\..\src\libsphinxutil\hash_table.h"\
+DEP_CPP_CMD_L=\
+	"..\..\include\case.h"\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\cmd_ln.h"\
+	"..\..\include\err.h"\
+	"..\..\include\glist.h"\
+	"..\..\include\hash_table.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
+	"..\..\include\wince\config.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxfeat\cmn.c
-NODEP_CPP_CMN_C=\
-	"..\..\src\libsphinxfeat\ckd_alloc.h"\
-	"..\..\src\libsphinxfeat\cmn.h"\
-	"..\..\src\libsphinxfeat\err.h"\
+DEP_CPP_CMN_C=\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\cmn.h"\
+	"..\..\include\err.h"\
+	"..\..\include\fe.h"\
+	"..\..\include\fixpoint.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
+	"..\..\include\wince\config.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxfeat\cmn_prior.c
-NODEP_CPP_CMN_P=\
-	"..\..\src\libsphinxfeat\ckd_alloc.h"\
-	"..\..\src\libsphinxfeat\cmn.h"\
-	"..\..\src\libsphinxfeat\err.h"\
+DEP_CPP_CMN_P=\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\cmn.h"\
+	"..\..\include\err.h"\
+	"..\..\include\fe.h"\
+	"..\..\include\fixpoint.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
+	"..\..\include\wince\config.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxad\cont_ad_base.c
-NODEP_CPP_CONT_=\
-	"..\..\src\libsphinxad\ad.h"\
-	"..\..\src\libsphinxad\cont_ad.h"\
-	"..\..\src\libsphinxad\err.h"\
-	"..\..\src\libsphinxad\prim_type.h"\
+DEP_CPP_CONT_=\
+	"..\..\include\ad.h"\
+	"..\..\include\cont_ad.h"\
+	"..\..\include\err.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
+	"..\..\include\wince\config.h"\
+	"..\..\src\libsphinxad\pablio.h"\
+	"..\..\src\libsphinxad\portaudio.h"\
+	"..\..\src\libsphinxad\ringbuffer.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxutil\err_wince.c
-NODEP_CPP_ERR_W=\
-	"..\..\src\libsphinxutil\ckd_alloc.h"\
-	"..\..\src\libsphinxutil\err.h"\
+DEP_CPP_ERR_W=\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\err.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxfe\fe_interface.c
 DEP_CPP_FE_IN=\
+	"..\..\include\byteorder.h"\
+	"..\..\include\cmd_ln.h"\
+	"..\..\include\err.h"\
+	"..\..\include\fe.h"\
+	"..\..\include\fixpoint.h"\
+	"..\..\include\genrand.h"\
+	"..\..\include\glist.h"\
+	"..\..\include\hash_table.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
+	"..\..\include\wince\config.h"\
 	"..\..\src\libsphinxfe\fe_internal.h"\
-	
-NODEP_CPP_FE_IN=\
-	"..\..\src\libsphinxfe\byteorder.h"\
-	"..\..\src\libsphinxfe\cmd_ln.h"\
-	"..\..\src\libsphinxfe\err.h"\
-	"..\..\src\libsphinxfe\fe.h"\
-	"..\..\src\libsphinxfe\fixpoint.h"\
-	"..\..\src\libsphinxfe\genrand.h"\
-	"..\..\src\libsphinxfe\prim_type.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxfe\fe_sigproc.c
 DEP_CPP_FE_SI=\
+	"..\..\include\err.h"\
+	"..\..\include\fe.h"\
+	"..\..\include\fixpoint.h"\
+	"..\..\include\genrand.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
+	"..\..\include\wince\config.h"\
 	"..\..\src\libsphinxfe\fe_internal.h"\
 	"..\..\src\libsphinxfe\fe_warp.h"\
-	
-NODEP_CPP_FE_SI=\
-	"..\..\src\libsphinxfe\err.h"\
-	"..\..\src\libsphinxfe\fe.h"\
-	"..\..\src\libsphinxfe\fixpoint.h"\
-	"..\..\src\libsphinxfe\genrand.h"\
-	"..\..\src\libsphinxfe\prim_type.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxfe\fe_warp.c
 DEP_CPP_FE_WA=\
+	"..\..\include\err.h"\
+	"..\..\include\fe.h"\
+	"..\..\include\fixpoint.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	"..\..\src\libsphinxfe\fe_warp.h"\
 	"..\..\src\libsphinxfe\fe_warp_affine.h"\
 	"..\..\src\libsphinxfe\fe_warp_inverse_linear.h"\
 	"..\..\src\libsphinxfe\fe_warp_piecewise_linear.h"\
-	
-NODEP_CPP_FE_WA=\
-	"..\..\src\libsphinxfe\err.h"\
-	"..\..\src\libsphinxfe\fe.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxfe\fe_warp_affine.c
 DEP_CPP_FE_WAR=\
+	"..\..\include\err.h"\
+	"..\..\include\fe.h"\
+	"..\..\include\fixpoint.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	"..\..\src\libsphinxfe\fe_warp.h"\
 	"..\..\src\libsphinxfe\fe_warp_affine.h"\
-	
-NODEP_CPP_FE_WAR=\
-	"..\..\src\libsphinxfe\err.h"\
-	"..\..\src\libsphinxfe\fe.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxfe\fe_warp_inverse_linear.c
 DEP_CPP_FE_WARP=\
+	"..\..\include\err.h"\
+	"..\..\include\fe.h"\
+	"..\..\include\fixpoint.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	"..\..\src\libsphinxfe\fe_warp.h"\
 	"..\..\src\libsphinxfe\fe_warp_inverse_linear.h"\
-	
-NODEP_CPP_FE_WARP=\
-	"..\..\src\libsphinxfe\err.h"\
-	"..\..\src\libsphinxfe\fe.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxfe\fe_warp_piecewise_linear.c
 DEP_CPP_FE_WARP_=\
+	"..\..\include\err.h"\
+	"..\..\include\fe.h"\
+	"..\..\include\fixpoint.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	"..\..\src\libsphinxfe\fe_warp.h"\
 	"..\..\src\libsphinxfe\fe_warp_piecewise_linear.h"\
-	
-NODEP_CPP_FE_WARP_=\
-	"..\..\src\libsphinxfe\err.h"\
-	"..\..\src\libsphinxfe\fe.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxfeat\feat.c
-NODEP_CPP_FEAT_=\
-	"..\..\src\libsphinxfeat\agc.h"\
-	"..\..\src\libsphinxfeat\bio.h"\
-	"..\..\src\libsphinxfeat\ckd_alloc.h"\
-	"..\..\src\libsphinxfeat\cmn.h"\
-	"..\..\src\libsphinxfeat\err.h"\
-	"..\..\src\libsphinxfeat\fe.h"\
-	"..\..\src\libsphinxfeat\feat.h"\
-	"..\..\src\libsphinxfeat\pio.h"\
-	"..\..\src\libsphinxfeat\prim_type.h"\
+DEP_CPP_FEAT_=\
+	"..\..\include\agc.h"\
+	"..\..\include\bio.h"\
+	"..\..\include\byteorder.h"\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\cmn.h"\
+	"..\..\include\err.h"\
+	"..\..\include\fe.h"\
+	"..\..\include\feat.h"\
+	"..\..\include\fixpoint.h"\
+	"..\..\include\pio.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
+	"..\..\include\wince\config.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxutil\filename.c
-NODEP_CPP_FILEN=\
-	"..\..\src\libsphinxutil\filename.h"\
+DEP_CPP_FILEN=\
+	"..\..\include\filename.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxfe\fixlog.c
 DEP_CPP_FIXLO=\
+	"..\..\include\fe.h"\
+	"..\..\include\fixpoint.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
+	"..\..\include\wince\config.h"\
 	"..\..\src\libsphinxfe\fe_internal.h"\
-	
-NODEP_CPP_FIXLO=\
-	"..\..\src\libsphinxfe\fe.h"\
-	"..\..\src\libsphinxfe\fixpoint.h"\
-	"..\..\src\libsphinxfe\prim_type.h"\
 	
 # End Source File
 # Begin Source File
@@ -315,128 +367,309 @@ SOURCE=..\..\src\libsphinxutil\genrand.c
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxutil\glist.c
-NODEP_CPP_GLIST=\
-	"..\..\src\libsphinxutil\ckd_alloc.h"\
-	"..\..\src\libsphinxutil\glist.h"\
+DEP_CPP_GLIST=\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\glist.h"\
+	"..\..\include\linklist.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxutil\hash_table.c
-NODEP_CPP_HASH_=\
-	"..\..\src\libsphinxutil\case.h"\
-	"..\..\src\libsphinxutil\ckd_alloc.h"\
-	"..\..\src\libsphinxutil\err.h"\
-	"..\..\src\libsphinxutil\hash_table.h"\
+DEP_CPP_HASH_=\
+	"..\..\include\case.h"\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\err.h"\
+	"..\..\include\glist.h"\
+	"..\..\include\hash_table.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxutil\heap.c
-NODEP_CPP_HEAP_=\
-	"..\..\src\libsphinxutil\ckd_alloc.h"\
-	"..\..\src\libsphinxutil\heap.h"\
+DEP_CPP_HEAP_=\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\heap.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxutil\info.c
-NODEP_CPP_INFO_=\
-	"..\..\src\libsphinxutil\err.h"\
-	"..\..\src\libsphinxutil\info.h"\
+DEP_CPP_INFO_=\
+	"..\..\include\err.h"\
+	"..\..\include\info.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxfeat\lda.c
-NODEP_CPP_LDA_C=\
-	"..\..\src\libsphinxfeat\bio.h"\
-	"..\..\src\libsphinxfeat\ckd_alloc.h"\
-	"..\..\src\libsphinxfeat\err.h"\
-	"..\..\src\libsphinxfeat\feat.h"\
+DEP_CPP_LDA_C=\
+	"..\..\include\agc.h"\
+	"..\..\include\bio.h"\
+	"..\..\include\byteorder.h"\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\cmn.h"\
+	"..\..\include\err.h"\
+	"..\..\include\fe.h"\
+	"..\..\include\feat.h"\
+	"..\..\include\fixpoint.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
+	"..\..\include\wince\config.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxutil\linklist.c
-NODEP_CPP_LINKL=\
-	"..\..\src\libsphinxutil\linklist.h"\
+DEP_CPP_LINKL=\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\err.h"\
+	"..\..\include\linklist.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxutil\matrix.c
-NODEP_CPP_MATRI=\
-	"..\..\src\libsphinxutil\ckd_alloc.h"\
-	"..\..\src\libsphinxutil\clapack_lite.h"\
-	"..\..\src\libsphinxutil\config.h"\
-	"..\..\src\libsphinxutil\err.h"\
-	"..\..\src\libsphinxutil\matrix.h"\
+DEP_CPP_MATRI=\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\clapack_lite.h"\
+	"..\..\include\err.h"\
+	"..\..\include\f2c.h"\
+	"..\..\include\matrix.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
+	"..\..\include\wince\config.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxad\mulaw_base.c
-NODEP_CPP_MULAW=\
-	"..\..\src\libsphinxad\ad.h"\
-	"..\..\src\libsphinxad\mulaw.h"\
-	"..\..\src\libsphinxad\prim_type.h"\
+DEP_CPP_MULAW=\
+	"..\..\include\ad.h"\
+	"..\..\include\mulaw.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
+	"..\..\include\wince\config.h"\
+	"..\..\src\libsphinxad\pablio.h"\
+	"..\..\src\libsphinxad\portaudio.h"\
+	"..\..\src\libsphinxad\ringbuffer.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxutil\pio.c
-NODEP_CPP_PIO_C=\
-	"..\..\src\libsphinxutil\ckd_alloc.h"\
-	"..\..\src\libsphinxutil\err.h"\
-	"..\..\src\libsphinxutil\pio.h"\
+DEP_CPP_PIO_C=\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\err.h"\
+	"..\..\include\pio.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxad\play_win32.c
-NODEP_CPP_PLAY_=\
-	"..\..\src\libsphinxad\ad.h"\
-	"..\..\src\libsphinxad\prim_type.h"\
+DEP_CPP_PLAY_=\
+	"..\..\include\ad.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
+	"..\..\src\libsphinxad\pablio.h"\
+	"..\..\src\libsphinxad\portaudio.h"\
+	"..\..\src\libsphinxad\ringbuffer.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxutil\profile.c
-NODEP_CPP_PROFI=\
-	"..\..\src\libsphinxutil\ckd_alloc.h"\
-	"..\..\src\libsphinxutil\err.h"\
-	"..\..\src\libsphinxutil\profile.h"\
+DEP_CPP_PROFI=\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\err.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\profile.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxad\rec_win32.c
-NODEP_CPP_REC_W=\
-	"..\..\src\libsphinxad\ad.h"\
-	"..\..\src\libsphinxad\prim_type.h"\
+DEP_CPP_REC_W=\
+	"..\..\include\ad.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
+	"..\..\src\libsphinxad\pablio.h"\
+	"..\..\src\libsphinxad\portaudio.h"\
+	"..\..\src\libsphinxad\ringbuffer.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxutil\s3_arraylist.c
-NODEP_CPP_S3_AR=\
-	"..\..\src\libsphinxutil\ckd_alloc.h"\
-	"..\..\src\libsphinxutil\s3_arraylist.h"\
+DEP_CPP_S3_AR=\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\s3_arraylist.h"\
+	"..\..\include\sphinxbase_export.h"\
 	
 # End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxutil\strfuncs.c
-NODEP_CPP_STRFU=\
-	"..\..\src\libsphinxutil\ckd_alloc.h"\
-	"..\..\src\libsphinxutil\strfuncs.h"\
+DEP_CPP_STRFU=\
+	"..\..\include\ckd_alloc.h"\
+	"..\..\include\prim_type.h"\
+	"..\..\include\sphinxbase_export.h"\
+	"..\..\include\strfuncs.h"\
 	
 # End Source File
 # End Group
 # Begin Group "Header Files"
 
 # PROP Default_Filter "h;hpp;hxx;hm;inl"
+# Begin Source File
+
+SOURCE=..\..\include\ad.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\agc.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\bio.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\bitvec.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\byteorder.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\case.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\ckd_alloc.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\clapack_lite.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\cmd_ln.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\cmn.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\cont_ad.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\err.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\f2c.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\fe.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\feat.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\filename.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\fixpoint.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\genrand.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\glist.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\hash_table.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\heap.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\info.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\libutil.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\linklist.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\matrix.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\mulaw.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\pio.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\prim_type.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\profile.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\s3_arraylist.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\sphinx_types.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\sphinxbase_export.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\strfuncs.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\unlimit.h
+# End Source File
 # End Group
 # Begin Group "Resource Files"
 
