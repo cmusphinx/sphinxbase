@@ -16,6 +16,8 @@ pkginclude_HEADERS =				\
 	fe.h					\
 	filename.h				\
 	fixpoint.h				\
+	gau_cb.h				\
+	gau_mix.h				\
 	genrand.h				\
 	glist.h					\
 	hash_table.h				\

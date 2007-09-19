@@ -58,6 +58,8 @@
 #ifndef _LIBUTIL_CMD_LN_H_
 #define _LIBUTIL_CMD_LN_H_
 
+#include <stdio.h>
+
 /* Win32/WinCE DLL gunk */
 #include <sphinxbase_export.h>
 #include <prim_type.h>
@@ -144,6 +146,12 @@ typedef struct {
  * Opaque structure used to hold the results of command-line parsing.
  **/
 typedef struct cmd_ln_s cmd_ln_t;
+
+/**
+ * Retrieve the global cmd_ln_t object used by non-re-entrant functions.
+ **/
+SPHINXBASE_EXPORT
+cmd_ln_t *cmd_ln_get(void);
 
 /**
  * Parse the given list of arguments (name-value pairs) according to the given definitions.

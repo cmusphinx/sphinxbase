@@ -219,6 +219,11 @@ arg_str2val(argtype_t t, const char *str)
     return v;
 }
 
+cmd_ln_t *
+cmd_ln_get(void)
+{
+    return global_cmdln;
+}
 
 void
 cmd_ln_appl_enter(int argc, char *argv[],

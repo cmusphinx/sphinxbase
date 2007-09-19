@@ -1,0 +1,14 @@
+-alpha 0.97
+-dither yes
+-doublebw no
+-nfilt 40
+-ncep 13
+-lowerf 133.33334
+-upperf 6855.4976
+-nfft 512
+-wlen 0.0256
+-transform legacy
+-feat 1s_c_d_dd
+-agc none
+-cmn current
+-varnorm no
