@@ -1,14 +1,14 @@
 Source: sphinxbase
-Priority: extra
+Priority: optional
 Maintainer: David Huggins-Daines <dhuggins@cs.cmu.edu>
 Build-Depends: debhelper (>= 4), autotools-dev, libasound2-dev
 Standards-Version: 3.7.2
 Section: libs
 
-Package: libsphinxbase0-dev
+Package: libsphinxbase-dev
 Section: libdevel
 Architecture: any
-Depends: libsphinxbase0 (= ${Source-Version})
+Depends: libsphinxbase0 (= ${binary:Version})
 Description: Sphinx base libraries - development files
  This package contains development files (headers and static
  libraries) for the audio processing and utility libraries used by
@@ -25,7 +25,7 @@ Description: Sphinx base libraries
 Package: sphinxbase-utils
 Section: sound
 Architecture: any
-Depends: libsphinxbase0 (= ${Source-Version})
+Depends: libsphinxbase0 (= ${binary:Version})
 Description: Sphinx base libraries - utilities
  This package contains the 'sphinx_fe' and 'sphinx_cepview' utilities
  used for all Sphinx speech recognition engines.
