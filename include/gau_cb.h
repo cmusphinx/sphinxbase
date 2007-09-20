@@ -52,6 +52,17 @@
 typedef struct gau_cb_s gau_cb_t;
 
 /**
+ * Gaussian parameter formats
+ **/
+enum gau_fmt_e {
+    GAU_FLOAT32 = 0,
+    GAU_FLOAT64 = 1,
+    GAU_INT8    = 2,
+    GAU_INT16   = 3,
+    GAU_INT32   = 4
+};
+
+/**
  * Read a codebook of Gaussians from mean and variance files.
  **/
 gau_cb_t *gau_cb_read(cmd_ln_t *config, const char *meanfn, const char *varfn);

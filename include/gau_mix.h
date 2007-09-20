@@ -44,6 +44,8 @@
 #ifndef __GAU_MIX_H__
 #define __GAU_MIX_H__
 
+#include <cmd_ln.h>
+
 /**
  * Abstract type representing a set of Gaussian mixtures.
  **/
@@ -52,7 +54,7 @@ typedef struct gau_mix_s gau_mix_t;
 /**
  * Read a set of Gaussian mixtures from a mixture weight file.
  **/
-gau_mix_t *gau_mix_read(const char *mixwfn);
+gau_mix_t *gau_mix_read(cmd_ln_t *config, const char *mixwfn);
 
 /**
  * Read a set of Gaussian mixtures from a senone dump file.

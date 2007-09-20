@@ -44,7 +44,7 @@ struct gau_mix_s {
 };
 
 gau_mix_t *
-gau_mix_read(const char *mixwfn)
+gau_mix_read(cmd_ln_t *config, const char *mixwfn)
 {
     gau_mix_t *mix;
 
