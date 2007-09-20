@@ -23,6 +23,7 @@ libsphinxutil_la_SOURCES = \
         hash_table.c \
         heap.c \
         info.c \
+	mmio.c \
         pio.c \
 	linklist.c \
 	matrix.c \
