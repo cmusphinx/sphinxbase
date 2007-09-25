@@ -44,6 +44,7 @@
 #include "mmio.h"
 
 #include <string.h>
+#include <math.h>
 
 /* Implementation of the gau_cb_t type */
 struct gau_cb_s {
@@ -54,6 +55,9 @@ struct gau_cb_s {
 
     /* Copy-on-write flags for means, vars, norms. */
     uint8 cow_means, cow_vars, cow_norms;
+
+    /* Has precomputation of vars been done yet? */
+    uint8 precomp;
 
     mean_t ****means; /**< Means */
     var_t ****invvars;/**< Inverse scaled variances */
@@ -225,20 +229,25 @@ gau_cb_read(cmd_ln_t *config, const char *meanfn, const char *varfn, const char 
     gau->var_file = gau_file_read(config, varfn);
 
     /* Verify consistency among files. */
-    if (gau_file_compatible(gau->mean_file, gau->var_file)) {
+    if (!gau_file_compatible(gau->mean_file, gau->var_file)) {
         gau_cb_free(gau);
         return NULL;
     }
 
     if (normfn) {
         gau->norm_file = gau_file_read(config, normfn);
-        if (gau_file_compatible(gau->var_file, gau->norm_file)) {
+        if (!gau_file_compatible(gau->var_file, gau->norm_file)) {
             gau_cb_free(gau);
             return NULL;
         }
     }
 
+    gau->precomp = gau_file_get_flag(gau->var_file, GAU_FILE_PRECOMP);
 
+    /* Allocate means, vars, norms arrays (if necessary) */
+    gau_cb_alloc_cow_buffers(gau);
+
+    /* FIXME: Handle fixed-point & quantization somewhere... */
     return gau;
 }
 
@@ -268,15 +277,27 @@ gau_cb_precomp(gau_cb_t *cb)
     int n_mgau, n_feat, n_density;
     int g, f, d, p;
     const int *veclen;
+    float32 varfloor = 1e-5;
 
-    /* Allocate means, vars, norms arrays (if necessary) */
-    gau_cb_alloc_cow_buffers(cb);
+    /* Don't precompute multiple times! */
+    if (cb->precomp)
+        return;
+
+    if (cb->config)
+        varfloor = cmd_ln_float32_r(cb->config, "-varfloor");
 
     gau_cb_get_shape(cb, &n_mgau, &n_feat, &n_density, &veclen);
     for (g = 0; g < n_mgau; ++g) {
         for (f = 0; f < n_feat; ++f) {
             for (d = 0; d < n_density; ++d) {
+                cb->norms[g][f][d] = 0;
                 for (p = 0; p < veclen[f]; ++p) {
+                    if (cb->invvars[g][f][d][p] < varfloor)
+                        cb->invvars[g][f][d][p] = varfloor;
+                    cb->norms[g][f][d] +=
+                        FE_LOG(1 / sqrt(cb->invvars[g][f][d][p] * 2.0 * M_PI));
+                    cb->invvars[g][f][d][p] =
+                        1.0 / (2.0 * cb->invvars[g][f][d][p] * FE_LOG_BASE);
                 }
             }
         }
@@ -286,15 +307,13 @@ gau_cb_precomp(gau_cb_t *cb)
 mean_t ****
 gau_cb_get_means(gau_cb_t *cb)
 {
-    if (cb->means == NULL)
-        gau_cb_precomp(cb);
     return cb->means;
 }
 
 var_t ****
 gau_cb_get_invvars(gau_cb_t *cb)
 {
-    if (cb->invvars == NULL)
+    if (!cb->precomp)
         gau_cb_precomp(cb);
     return cb->invvars;
 }
@@ -302,7 +321,7 @@ gau_cb_get_invvars(gau_cb_t *cb)
 norm_t ***
 gau_cb_get_norms(gau_cb_t *cb)
 {
-    if (cb->norms == NULL)
+    if (!cb->precomp)
         gau_cb_precomp(cb);
     return cb->norms;
 }
