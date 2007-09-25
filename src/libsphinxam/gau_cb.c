@@ -190,7 +190,7 @@ gau_file_read(cmd_ln_t *config, const char *file_name)
 
     /* Check alignment constraints for memory mapping */
     pos = ftell(fp);
-    if (pos & ~((long)gau->width - 1)) {
+    if (pos & ((long)gau->width - 1)) {
         E_ERROR("%s: Data start %ld is not aligned on %d-byte boundary, will not memory map\n",
                 file_name, pos, gau->width);
         gau->do_mmap = 0;
@@ -200,6 +200,13 @@ gau_file_read(cmd_ln_t *config, const char *file_name)
         gau->d.filemap = mmio_file_read(file_name);
     }
     else {
+        gau->d.data = ckd_calloc(n, gau->width);
+        if (bio_fread(gau->d.data, gau->width, n, fp, byteswap, &gau->chksum) != n) {
+            E_ERROR("fread(%s) (%d x %d bytes) failed\n",
+                    file_name, n, gau->width);
+            ckd_free(gau->d.data);
+            goto error_out;
+        }
     }
 
     if (chksum_present)
