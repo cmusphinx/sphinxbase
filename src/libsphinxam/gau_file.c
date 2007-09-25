@@ -256,3 +256,24 @@ gau_file_compatible(gau_file_t *a, gau_file_t *b)
 
     return TRUE;
 }
+
+void
+gau_file_get_shape(gau_file_t *gau, int *out_n_gau, int *out_n_feat,
+                   int *out_n_density, const int **out_veclen)
+{
+    if (out_n_gau) *out_n_gau = gau->n_mgau;
+    if (out_n_feat) *out_n_feat = gau->n_feat;
+    if (out_n_density) *out_n_density = gau->n_density;
+    if (out_veclen) *out_veclen = gau->veclen;
+}
+
+void *
+gau_file_get_data(gau_file_t *gau)
+{
+    if (gau_file_get_flag(gau, GAU_FILE_MMAP)) {
+        return mmio_file_ptr(gau->d.filemap);
+    }
+    else {
+        return gau->d.data;
+    }
+}

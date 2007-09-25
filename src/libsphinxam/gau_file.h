@@ -86,8 +86,32 @@ enum gau_file_flags_e {
 #define gau_file_clear_flag(g,f) ((g)->flags &= ~(f))
 #define gau_file_get_flag(g,f) ((g)->flags & (f))
 
-gau_file_t * gau_file_read(cmd_ln_t *config, const char *file_name);
+/**
+ * Read a Gaussian parameter file.
+ */
+gau_file_t *gau_file_read(cmd_ln_t *config, const char *file_name);
+
+/**
+ * Release a Gaussian parameter file and associated memory.
+ */
 void gau_file_free(gau_file_t *gau);
+
+/**
+ * Retrieve the dimensionality of a Gaussian parameter file.
+ */
+void gau_file_get_shape(gau_file_t *gau, int *out_n_gau, int *out_n_feat,
+                        int *out_n_density, const int **out_veclen);
+
+/**
+ * Verify that two Gaussian parameter files have the same shape.
+ */
 int gau_file_compatible(gau_file_t *a, gau_file_t *b);
+
+/**
+ * Get the raw data pointer for a Gaussian parameter file.
+ *
+ * Do not assume that this pointer is writable!
+ */
+void *gau_file_get_data(gau_file_t *gau);
 
 #endif /* __GAU_FILE_H__ */

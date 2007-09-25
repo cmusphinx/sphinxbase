@@ -54,13 +54,13 @@
 typedef struct gau_cb_s gau_cb_t;
 
 #ifdef FIXED_POINT
-/** Gaussian mean storage type. */
-typedef fixed32 mean_t;
-/** Gaussian precision storage type. */
-typedef int32 var_t;
+typedef fixed32 mean_t; /**< Gaussian mean storage/computation type. */
+typedef int32 var_t;    /**< Gaussian precision storage/computation type. */
+typedef int32 norm_t;   /**< Gaussian normalizing constant type. */
 #else
-typedef float32 mean_t;
-typedef float32 var_t;
+typedef float32 mean_t; /**< Gaussian mean storage/computation type. */
+typedef float32 var_t;  /**< Gaussian precision storage/computation type. */
+typedef float32 norm_t; /**< Gaussian normalizing constant type. */
 #endif
 
 /**
@@ -75,8 +75,8 @@ gau_cb_t *gau_cb_read(cmd_ln_t *config,    /**< Configuration parameters */
 /**
  * Retrieve the dimensionality of a codebook.
  */
-void gau_cb_get_dims(gau_cb_t *cb, int *out_n_gau, int *out_n_feat,
-		     const int **out_veclen);
+void gau_cb_get_shape(gau_cb_t *cb, int *out_n_gau, int *out_n_feat,
+                      int *out_n_density, const int **out_veclen);
 
 /**
  * Precompute normalizing constants and inverse variances, if required.
@@ -86,17 +86,17 @@ void gau_cb_precomp(gau_cb_t *cb);
 /**
  * Retrieve the mean vectors from the codebook.
  */
-mean_t ***gau_cb_get_means(gau_cb_t *cb);
+mean_t ****gau_cb_get_means(gau_cb_t *cb);
 
 /**
  * Retrieve the scaled inverse variance vectors from the codebook.
  */
-var_t ***gau_cb_get_invvars(gau_cb_t *cb);
+var_t ****gau_cb_get_invvars(gau_cb_t *cb);
 
 /**
  * Retrieve the normalization constants from the codebook.
  */
-int32 **gau_cb_get_norms(gau_cb_t *cb);
+norm_t ***gau_cb_get_norms(gau_cb_t *cb);
 
 /**
  * Release memory and/or file descriptors associated with Gaussian codebook
