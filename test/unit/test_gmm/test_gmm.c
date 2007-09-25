@@ -10,7 +10,7 @@ main(int argc, char *argv[])
 	gau_cb_t *cb;
 	gau_mix_t *mix;
 
-	cb = gau_cb_read(NULL, HMMDIR "/means", HMMDIR "/variances");
+	cb = gau_cb_read(NULL, HMMDIR "/means", HMMDIR "/variances", NULL);
 	mix = gau_mix_read(NULL, HMMDIR "/mixture_weights");
 
 	gau_cb_free(cb);

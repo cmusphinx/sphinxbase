@@ -35,72 +35,59 @@
  *
  */
 /**
- * \file gau_cb.h
- * \author David Huggins-Daines <dhuggins@cs.cmu.edu>
- *
- * Gaussian distribution parameters (common functions)
+ * \file gau_file.h
+ * Gaussian parameter file functions.  This is currently a private
+ * interface, as it is subject to change.
  */
 
-#ifndef __GAU_CB_H__
-#define __GAU_CB_H__
+#ifndef __GAU_FILE_H__
+#define __GAU_FILE_H__
 
-#include <sphinx_config.h>
-#include <cmd_ln.h>
-#include <fixpoint.h>
+#include "prim_type.h"
+#include "cmd_ln.h"
+#include "mmio.h"
+
+/* Gaussian parameter file. */
+typedef struct gau_file_s gau_file_t;
+struct gau_file_s {
+    uint8 format;
+    uint8 width;
+    uint16 flags;
+    float32 bias;
+    float32 scale;
+    uint32 chksum;
+    int32 n_mgau, n_feat, n_density;
+    int32 *veclen;
+    union {
+        mmio_file_t *filemap;
+        void *data;
+    } d;
+};
 
 /**
- * Abstract type representing a set (codebook) of Gaussians.
+ * Gaussian parameter formats
  */
-typedef struct gau_cb_s gau_cb_t;
-
-#ifdef FIXED_POINT
-/** Gaussian mean storage type. */
-typedef fixed32 mean_t;
-/** Gaussian precision storage type. */
-typedef int32 var_t;
-#else
-typedef float32 mean_t;
-typedef float32 var_t;
-#endif
+enum gau_fmt_e {
+    GAU_FLOAT32 = 0,
+    GAU_FLOAT64 = 1,
+    GAU_INT8    = 2,
+    GAU_INT16   = 3,
+    GAU_INT32   = 4
+};
 
 /**
- * Read a codebook of Gaussians from mean and variance files.
+ * Values for gau_file_t->flags
  */
-gau_cb_t *gau_cb_read(cmd_ln_t *config,    /**< Configuration parameters */
-                      const char *meanfn,  /**< Filename for means */
-                      const char *varfn,   /**< Filename for variances */
-                      const char *normfn   /**< (optional) Filename for normalization constants  */
-    );
+enum gau_file_flags_e {
+    GAU_FILE_MMAP    = (1<<0), /**< File uses memory-mapped I/O */
+    GAU_FILE_PRECOMP = (1<<1)  /**< Variance file contains 1/2sigma^2 */
+};
+#define gau_file_set_flag(g,f) ((g)->flags |= (f))
+#define gau_file_clear_flag(g,f) ((g)->flags &= ~(f))
+#define gau_file_get_flag(g,f) ((g)->flags & (f))
 
-/**
- * Retrieve the dimensionality of a codebook.
- */
-void gau_cb_get_dims(gau_cb_t *cb, int *out_n_gau, int *out_n_feat,
-		     const int **out_veclen);
+gau_file_t * gau_file_read(cmd_ln_t *config, const char *file_name);
+void gau_file_free(gau_file_t *gau);
+int gau_file_compatible(gau_file_t *a, gau_file_t *b);
 
-/**
- * Precompute normalizing constants and inverse variances, if required.
- */
-void gau_cb_precomp(gau_cb_t *cb);
-
-/**
- * Retrieve the mean vectors from the codebook.
- */
-mean_t ***gau_cb_get_means(gau_cb_t *cb);
-
-/**
- * Retrieve the scaled inverse variance vectors from the codebook.
- */
-var_t ***gau_cb_get_invvars(gau_cb_t *cb);
-
-/**
- * Retrieve the normalization constants from the codebook.
- */
-int32 **gau_cb_get_norms(gau_cb_t *cb);
-
-/**
- * Release memory and/or file descriptors associated with Gaussian codebook
- */
-void gau_cb_free(gau_cb_t *cb);
-
-#endif /* __GAU_CB_H__ */
+#endif /* __GAU_FILE_H__ */
