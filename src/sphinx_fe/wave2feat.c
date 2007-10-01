@@ -556,6 +556,10 @@ fe_parse_options(int32 argc, char **argv)
 
     cmd_ln_parse(defn, argc, argv, TRUE);
 
+    if (cmd_ln_str("-argfile")) {
+        cmd_ln_parse_file(defn, cmd_ln_str("-argfile"), FALSE);
+    }
+
     if ((P = (globals_t *) calloc(1, sizeof(globals_t))) == NULL) {
         E_FATAL("memory alloc failed in fe_parse_options()\n...exiting\n");
     }

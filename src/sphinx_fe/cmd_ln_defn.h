@@ -91,6 +91,11 @@ static arg_t defn[] = {
     "Shows example of how to use the tool"},
 
   waveform_to_cepstral_command_line_macro(),
+
+  { "-argfile",
+    ARG_STRING,
+    NULL,
+    "Argument file (e.g. feat.params from an acoustic model) to read parameters from.  This will override anything set in other command line arguments." },
   
   { "-i",
     ARG_STRING,
