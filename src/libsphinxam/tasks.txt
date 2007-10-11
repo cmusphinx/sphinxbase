@@ -1,0 +1,11 @@
+Gaussian computation (+ unit test)
+
+Precomputed Gaussian files
+  * Precomputation utility
+  * Unit test (reading, computation)
+
+Quantized Gaussian files
+  * Quantization utility
+  * Unit test (reading, computation)
+
+Mixture weight file reading
