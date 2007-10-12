@@ -47,6 +47,7 @@
 #include <sphinx_config.h>
 #include <cmd_ln.h>
 #include <fixpoint.h>
+#include <fe.h>
 
 /**
  * Abstract type representing a set (codebook) of Gaussians.
