@@ -201,7 +201,10 @@ int32 feat_writefile(feat_t *fcb,	/** In: Control block from feat_init() */
 
 /**
  * Read Sphinx-II format mfc file (s2mfc = Sphinx-II format MFC data).
- * Return value: #frames read if successful, -1 if error (e.g., mfc array too small).
+ * Return value: #frames read (plus padding) if successful, -1 if
+ * error (e.g., mfc array too small).  If out_mfc is NULL, no actual
+ * reading will be done, and the number of frames (plus padding) that
+ * would be read is returned.
  */
 SPHINXBASE_EXPORT
 int32 feat_s2mfc_read(char *file,	/** In: Sphinx-II format MFC file to be read */
@@ -214,7 +217,8 @@ int32 feat_s2mfc_read(char *file,	/** In: Sphinx-II format MFC file to be read *
 					    this will be allocated internally and must be
                                             freed with ckd_free_2d(). */
 		int32 maxfr,		/** In: #Frames of mfc array allocated; error if
-					    attempt to read more than this amount. */
+					    attempt to read more than this amount.  Pass -1
+                                            to read as many frames as available. */
 		int32 cepsize		/** In: Length of each MFC vector. */
     );
 
@@ -314,12 +318,14 @@ void feat_print(feat_t *fcb,		/**< In: Descriptor from feat_init() */
 
   
 /**
- * Read a specified MFC file (or given segment within it), perform CMN/AGC as 
- * indicated by * fcb, and compute feature vectors.  Feature vectors are 
- * computed for the entire segment specified, by including additional 
- * surrounding or padding frames to accommodate the feature windows.
- * Return value: #Frames of feature vectors computed if successful; -1 if 
- * any error.
+ * Read a specified MFC file (or given segment within it), perform
+ * CMN/AGC as indicated by * fcb, and compute feature vectors.
+ * Feature vectors are computed for the entire segment specified, by
+ * including additional surrounding or padding frames to accommodate
+ * the feature windows.  Return value: #Frames of feature vectors
+ * computed if successful; -1 if any error.  If feat is NULL, then no
+ * actual computation will be done, and the number of frames which
+ * must be allocated will be returned.
  * 
  * A note on how the file path is constructed: If the control file
  * already specifies extension or absolute path, then these are not
@@ -341,7 +347,8 @@ int32 feat_s2mfc2feat(feat_t *fcb,	/**< In: Descriptor from feat_init() */
 					   caller must allocate this space */
 		      int32 maxfr	/**< In: Available space (#frames) in 
 					   above feat array; it must be 
-					   sufficient to hold the result */
+					   sufficient to hold the result.
+                                           Pass -1 for no limit. */
     );
 
 

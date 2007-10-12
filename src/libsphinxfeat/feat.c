@@ -455,54 +455,53 @@ feat_s2mfc_read(char *file, int32 win,
     /* Limit n if indicated by [sf..ef] */
     if ((ef - sf + 1) < n)
         n = (ef - sf + 1);
-    if (n + start_pad + end_pad > maxfr) {
+    if (maxfr > 0 && n + start_pad + end_pad > maxfr) {
         E_ERROR("%s: Maximum output size(%d frames) < actual #frames(%d)\n",
                 file, maxfr, n + start_pad + end_pad);
         fclose(fp);
         return -1;
     }
 
-    /* Position at desired start frame and read actual MFC data */
-    mfc = (mfcc_t **)ckd_calloc_2d(n + start_pad + end_pad, cepsize, sizeof(mfcc_t));
-    if (sf > 0)
-        fseek(fp, sf * cepsize * sizeof(float32), SEEK_CUR);
-    n_float32 = n * cepsize;
+    /* If no output buffer was supplied, then skip the actual data reading. */
+    if (out_mfc != NULL) {
+        /* Position at desired start frame and read actual MFC data */
+        mfc = (mfcc_t **)ckd_calloc_2d(n + start_pad + end_pad, cepsize, sizeof(mfcc_t));
+        if (sf > 0)
+            fseek(fp, sf * cepsize * sizeof(float32), SEEK_CUR);
+        n_float32 = n * cepsize;
 #ifdef FIXED_POINT
-    float_feat = ckd_calloc(n_float32, sizeof(float32));
+        float_feat = ckd_calloc(n_float32, sizeof(float32));
 #else
-    float_feat = mfc[start_pad];
+        float_feat = mfc[start_pad];
 #endif
-    if (fread_retry(float_feat, sizeof(float32), n_float32, fp) != n_float32) {
-        E_ERROR("%s: fread(%dx%d) (MFC data) failed\n", file, n, cepsize);
-        fclose(fp);
-        return -1;
-    }
-    if (byterev) {
-        for (i = 0; i < n_float32; i++) {
-            SWAP_FLOAT32(&float_feat[i]);
+        if (fread_retry(float_feat, sizeof(float32), n_float32, fp) != n_float32) {
+            E_ERROR("%s: fread(%dx%d) (MFC data) failed\n", file, n, cepsize);
+            fclose(fp);
+            return -1;
         }
-    }
+        if (byterev) {
+            for (i = 0; i < n_float32; i++) {
+                SWAP_FLOAT32(&float_feat[i]);
+            }
+        }
 #ifdef FIXED_POINT
-    for (i = 0; i < n_float32; ++i) {
-        mfc[start_pad][i] = FLOAT2MFCC(float_feat[i]);
-    }
-    ckd_free(float_feat);
+        for (i = 0; i < n_float32; ++i) {
+            mfc[start_pad][i] = FLOAT2MFCC(float_feat[i]);
+        }
+        ckd_free(float_feat);
 #endif
 
-    /* Replicate start and end frames if necessary. */
-    for (i = 0; i < start_pad; ++i)
-        memcpy(mfc[i], mfc[start_pad], cepsize * sizeof(mfcc_t));
-    for (i = 0; i < end_pad; ++i)
-        memcpy(mfc[start_pad + n + i], mfc[start_pad + n - 1],
-               cepsize * sizeof(mfcc_t));
+        /* Replicate start and end frames if necessary. */
+        for (i = 0; i < start_pad; ++i)
+            memcpy(mfc[i], mfc[start_pad], cepsize * sizeof(mfcc_t));
+        for (i = 0; i < end_pad; ++i)
+            memcpy(mfc[start_pad + n + i], mfc[start_pad + n - 1],
+                   cepsize * sizeof(mfcc_t));
 
-    if (out_mfc)
         *out_mfc = mfc;
-    else
-        ckd_free_2d((void **)mfc);
+    }
 
     fclose(fp);
-
     return n + start_pad + end_pad;
 }
 
@@ -1154,17 +1153,29 @@ feat_s2mfc2feat(feat_t * fcb, const char *file, const char *dir, const char *cep
     }
 
     win = feat_window_size(fcb);
+    /* Pad maxfr with win, so we read enough raw feature data to
+     * calculate the requisite number of dynamic features. */
+    if (maxfr >= 0)
+        maxfr += win * 2;
 
-    /* Read mfc file including window or padding if necessary */
-    nfr = feat_s2mfc_read(path, win, sf, ef, &mfc, maxfr, fcb->cepsize);
-    if (nfr < 0) {
+    if (feat != NULL) {
+        /* Read mfc file including window or padding if necessary. */
+        nfr = feat_s2mfc_read(path, win, sf, ef, &mfc, maxfr, fcb->cepsize);
+        if (nfr < 0) {
+            ckd_free_2d((void **) mfc);
+            return -1;
+        }
+        /* Actually compute the features */
+        feat_compute_utt(fcb, mfc, nfr, win, feat);
         ckd_free_2d((void **) mfc);
-        return -1;
+    }
+    else {
+        /* Just calculate the number of frames we would need. */
+        nfr = feat_s2mfc_read(path, win, sf, ef, NULL, maxfr, fcb->cepsize);
+        if (nfr < 0)
+            return nfr;
     }
 
-    /* Actually compute the features */
-    feat_compute_utt(fcb, mfc, nfr, win, feat);
-    ckd_free_2d((void **) mfc);
 
     return (nfr - win * 2);
 }
