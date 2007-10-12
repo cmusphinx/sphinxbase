@@ -1,4 +1,4 @@
-Gaussian computation (+ unit test)
+Gaussian computation (+ unit test) DONE
 
 Precomputed Gaussian files
   * Precomputation utility
@@ -8,4 +8,10 @@ Quantized Gaussian files
   * Quantization utility
   * Unit test (reading, computation)
 
+Compressed GMM scores (16 or 8 bit)
+
 Mixture weight file reading
+
+Mixture computation
+
+Optimized mixture computation
