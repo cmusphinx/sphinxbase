@@ -63,15 +63,6 @@ struct gau_den_s {
     int32 val; /**< Density for this Gaussian. */
 };
 
-/**
- * Type representing a single 16-bit density for computation.
- */
-typedef struct gau_den16_s gau_den16_t;
-struct gau_den16_s {
-    int16 idx; /**< Index of Gaussian to compute. */
-    int16 val; /**< Density for this Gaussian. */
-};
-
 #ifdef FIXED_POINT
 typedef fixed32 mean_t; /**< Gaussian mean storage/computation type. */
 typedef int32 var_t;    /**< Gaussian precision storage/computation type. */
@@ -124,32 +115,17 @@ norm_t ***gau_cb_get_norms(gau_cb_t *cb);
 
 /**
  * Compute all 32-bit densities for a single feature stream in an observation.
- * @return the index of the heighest density
+ * @return the index of the highest density
  */
 int gau_cb_compute_all(gau_cb_t *cb, int mgau, int feat,
-                       mfcc_t *obs, int32 *out_den, int nden);
-
-/**
- * Compute all 16-bit densities for a single feature stream in an observation.
- * @return the index of the heighest density
- */
-int gau_cb_compute_all16(gau_cb_t *cb, int mgau, int feat,
-                         mfcc_t *obs, int16 *out_den, int nden);
+                       mfcc_t *obs, int32 *out_den, int worst);
 
 /**
  * Compute a subset of 32-bit densities for a single feature stream in an observation.
- * @return the offset in inout_den of the highest density
+ * @return the offset in inout_den of the lowest density
  */
 int gau_cb_compute(gau_cb_t *cb, int mgau, int feat,
                    mfcc_t *obs,
                    gau_den_t *inout_den, int nden);
-
-/**
- * Compute a subset of 16-bit densities for a single feature stream in an observation.
- * @return the offset in inout_den of the highest density
- */
-int gau_cb_compute16(gau_cb_t *cb, int mgau, int feat,
-                     mfcc_t *obs,
-                     gau_den16_t *inout_den, int nden);
 
 #endif /* __GAU_CB_H__ */

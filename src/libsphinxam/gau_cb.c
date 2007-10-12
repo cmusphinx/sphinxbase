@@ -45,6 +45,7 @@
 
 #include <string.h>
 #include <math.h>
+#include <limits.h>
 
 /* Implementation of the gau_cb_t type */
 struct gau_cb_s {
@@ -302,6 +303,7 @@ gau_cb_precomp(gau_cb_t *cb)
             }
         }
     }
+    cb->precomp = 1;
 }
 
 mean_t ****
@@ -324,4 +326,65 @@ gau_cb_get_norms(gau_cb_t *cb)
     if (!cb->precomp)
         gau_cb_precomp(cb);
     return cb->norms;
+}
+
+int32
+gau_cb_compute_one(gau_cb_t *cb, int mgau, int feat,
+                   int density, mfcc_t *obs, int32 worst)
+{
+    mean_t *mean = cb->means[mgau][feat][density];
+    var_t *invvar = cb->invvars[mgau][feat][density];
+    int32 d;
+    int ceplen, j;
+
+    d = cb->norms[mgau][feat][density];
+    ceplen = cb->mean_file->veclen[feat];
+    j = 0;
+    while (j++ < ceplen && d > worst) {
+        mean_t diff = *obs++ - *mean++;
+        mean_t sqdiff = diff * diff;
+        mean_t compl = sqdiff * *invvar++;
+        d -= compl;
+    }
+    return d;
+}
+
+int
+gau_cb_compute_all(gau_cb_t *cb, int mgau, int feat,
+                   mfcc_t *obs, int32 *out_den, int32 worst)
+{
+    int max, argmax, i;
+
+    max = INT_MIN;
+    argmax = -1;
+    for (i = 0; i < cb->mean_file->n_density; ++i) {
+        out_den[i] = gau_cb_compute_one(cb, mgau, feat, i, obs, worst);
+        if (out_den[i] > max) {
+            max = out_den[i];
+            argmax = i;
+        }
+    }
+    return argmax;
+}
+
+int
+gau_cb_compute(gau_cb_t *cb, int mgau, int feat,
+               mfcc_t *obs,
+               gau_den_t *inout_den, int nden)
+{
+    int i, argmin;
+    int32 min;
+
+    min = INT_MAX;
+    argmin = -1;
+    for (i = 0; i < nden; ++i) {
+        inout_den[i].val = gau_cb_compute_one(cb, mgau, feat,
+                                              inout_den[i].idx,
+                                              obs, INT_MIN);
+        if (inout_den[i].val < min) {
+            min = inout_den[i].val;
+            argmin = i;
+        }
+    }
+    return argmin;
 }
