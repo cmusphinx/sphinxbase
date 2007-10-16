@@ -263,7 +263,7 @@ anytype_t *cmd_ln_access (const char *name);/* In: Argument name whose value is 
  */
 SPHINXBASE_EXPORT
 anytype_t *cmd_ln_access_r (cmd_ln_t *cmdln, const char *name);
-#define cmd_ln_str_r(c,n)	((char *)cmd_ln_access(c,n)->ptr)
+#define cmd_ln_str_r(c,n)	((char *)cmd_ln_access_r(c,n)->ptr)
 #define cmd_ln_int32_r(c,n)	(cmd_ln_access_r(c,n)->i_32)
 #define cmd_ln_float32_r(c,n)	(cmd_ln_access_r(c,n)->fl_32)
 #define cmd_ln_float64_r(c,n)	(cmd_ln_access_r(c,n)->fl_64)
