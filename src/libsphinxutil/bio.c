@@ -290,11 +290,22 @@ int32
 bio_fwrite(void *buf, int32 el_sz, int32 n_el, FILE *fp,
            int32 swap, uint32 *chksum)
 {
-    if (swap)
-        swap_buf(buf, el_sz, n_el);
     if (chksum)
         *chksum = chksum_accum(buf, el_sz, n_el, *chksum);
-    return fwrite(buf, el_sz, n_el, fp);
+    if (swap) {
+        void *nbuf;
+        int rv;
+
+        nbuf = ckd_calloc(n_el, el_sz);
+        memcpy(nbuf, buf, n_el * el_sz);
+        swap_buf(nbuf, el_sz, n_el);
+        rv = fwrite(nbuf, el_sz, n_el, fp);
+        ckd_free(nbuf);
+        return rv;
+    }
+    else {
+        return fwrite(buf, el_sz, n_el, fp);
+    }
 }
 
 int32
