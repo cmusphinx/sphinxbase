@@ -188,6 +188,7 @@ src/libsphinxam/Makefile
 src/sphinx_fe/Makefile
 src/sphinx_cepview/Makefile
 src/sphinx_jsgf2fsg/Makefile
+src/sphinx_amtools/Makefile
 doc/Makefile
 test/Makefile
 test/unit/testfuncs.sh
