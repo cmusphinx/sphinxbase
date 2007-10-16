@@ -133,8 +133,11 @@ main(int argc, char *argv[])
     gau_cb_get_shape(cb, &out_file.n_mgau,
                      &out_file.n_feat, &out_file.n_density,
                      (const int **)&out_file.veclen);
-    /* FIXME: Also we want to precompile for fixed-point here... */
+#ifdef FIXED_POINT
+    out_file.format = GAU_INT32;
+#else
     out_file.format = GAU_FLOAT32;
+#endif
     out_file.width = 4;
     out_file.flags = GAU_FILE_PRECOMP;
     out_file.scale = 1.0;
