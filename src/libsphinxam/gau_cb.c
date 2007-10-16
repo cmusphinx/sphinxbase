@@ -46,6 +46,7 @@
 #include <string.h>
 #include <math.h>
 #include <limits.h>
+#include <assert.h>
 
 /* Implementation of the gau_cb_t type */
 struct gau_cb_s {
@@ -123,74 +124,95 @@ gau_cb_alloc_cow_buffers(gau_cb_t *cb)
     void *mean_data;
     void *var_data;
     void *norm_data = NULL;
+    int input_format;
+    float32 mean_scale;
 
-    mean_data = gau_file_get_data(cb->mean_file);
-    var_data = gau_file_get_data(cb->var_file);
-    if (cb->norm_file)
-        norm_data = gau_file_get_data(cb->norm_file);
-
-    /* Determine if we need to allocate copy-on-write buffers for mmap data */
-    if (gau_file_get_flag(cb->mean_file, GAU_FILE_MMAP)) {
+    /* Expected input format parameters. */
 #ifdef FIXED_POINT
-        /* Check that this is consistent with our fixed-point parameters. */
-        cb->cow_means = !(cb->mean_file->format == GAU_INT32
-                          && cb->mean_file->scale == (float32)(1<<DEFAULT_RADIX)
-                          && cb->mean_file->bias == 0);
-        /* Check that this is precomputed */
-        cb->cow_vars = !(gau_file_get_flag(cb->var_file, GAU_PRECOMP)
-                         && cb->var_file->format == GAU_INT32
-                         && cb->var_file->scale == 1.0
-                         && cb->var_file->bias == 0);
-        cb->cow_norms = !(cb->norm_file
-                          && cb->norm_file->format == GAU_INT32
-                          && cb->norm_file->scale == 1.0
-                          && cb->norm_file->bias == 0);
+    input_format = GAU_INT32;
+    mean_scale = (float32)(1<<DEFAULT_RADIX);
 #else
-        /* Check that this is plain old floating point */
-        cb->cow_means = !(cb->mean_file->format == GAU_FLOAT32
-                          && cb->mean_file->scale == 1.0
-                          && cb->mean_file->bias == 0);
-        /* Check that this is precomputed */
-        cb->cow_vars = !(gau_file_get_flag(cb->var_file, GAU_FILE_PRECOMP)
-                         && cb->var_file->format == GAU_FLOAT32
-                         && cb->var_file->scale == 1.0
-                         && cb->mean_file->bias == 0);
-        cb->cow_norms = !(cb->norm_file
-                          && cb->norm_file->format == GAU_FLOAT32
-                          && cb->norm_file->scale == 1.0
-                          && cb->norm_file->bias == 0);
+    input_format = GAU_FLOAT32;
+    mean_scale = 1.0;
 #endif
-    }
-    else {
-        /* Just check that they are the same size since they're writable. */
-        cb->cow_means = (cb->mean_file->width != sizeof(mean_t));
-        cb->cow_vars = (cb->var_file->width != sizeof(var_t));
-        cb->cow_norms = !(cb->norm_file
-                          && cb->norm_file->width == sizeof(norm_t));
+
+    if (cb->mean_file) {
+        mean_data = gau_file_get_data(cb->mean_file);
+        /* Determine if we need to allocate copy-on-write buffers for mmap data */
+        /* Check that this is consistent with our internal parameters. */
+        if (gau_file_get_flag(cb->mean_file, GAU_FILE_MMAP)) {
+            cb->cow_means = !(cb->mean_file->format == input_format
+                              && cb->mean_file->scale == mean_scale
+                              && cb->mean_file->bias == 0);
+        }
+        /* Otherwise, just check that it's the same size, since
+         * they're writable. */
+        else {
+            cb->cow_means = (cb->mean_file->width != sizeof(mean_t));
+        }
+
+        if (cb->cow_means) {
+            cb->means = gau_param_alloc(cb, sizeof(****cb->means));
+        }
+        else {
+            cb->means = gau_param_alloc_ptr(cb, mean_data, sizeof(****cb->means));
+        }
     }
 
-    if (cb->cow_means) {
-        cb->means = gau_param_alloc(cb, sizeof(****cb->means));
+    if (cb->var_file) {
+        var_data = gau_file_get_data(cb->var_file);
+        if (gau_file_get_flag(cb->var_file, GAU_FILE_MMAP)) {
+            /* Check that this is precomputed */
+            cb->cow_vars = !(gau_file_get_flag(cb->var_file, GAU_FILE_PRECOMP)
+                             && cb->var_file->logbase == 1.0001 /* FIXME */
+                             && cb->var_file->format == input_format
+                             && cb->var_file->scale == 1.0 /* unscaled */
+                             && cb->var_file->bias == 0);
+        }
+        else {
+            cb->cow_vars = (cb->var_file->width != sizeof(var_t));
+        }
+
+        if (cb->cow_vars) {
+            cb->invvars = gau_param_alloc(cb, sizeof(****cb->invvars));
+        }
+        else {
+            cb->invvars = gau_param_alloc_ptr(cb, var_data, sizeof(****cb->invvars));
+        }
+    }
+
+    if (cb->norm_file) {
+        norm_data = gau_file_get_data(cb->norm_file);
+        if (gau_file_get_flag(cb->norm_file, GAU_FILE_MMAP)) {
+            /* Check that this is precomputed */
+            cb->cow_norms = !(cb->norm_file
+                              && gau_file_get_flag(cb->norm_file, GAU_FILE_PRECOMP)
+                              && cb->norm_file->logbase == 1.0001 /* FIXME */
+                              && cb->norm_file->format == input_format
+                              && cb->norm_file->scale == 1.0 /* unscaled */
+                              && cb->norm_file->bias == 0);
+        }
+        else {
+            cb->cow_norms = !(cb->norm_file->width == sizeof(norm_t));
+        }
     }
     else {
-        cb->means = gau_param_alloc_ptr(cb, mean_data, sizeof(****cb->means));
+        cb->cow_norms = TRUE;
     }
-    if (cb->cow_vars) {
-        cb->invvars = gau_param_alloc(cb, sizeof(****cb->invvars));
-    }
-    else {
-        cb->invvars = gau_param_alloc_ptr(cb, var_data, sizeof(****cb->invvars));
-    }
+
     if (cb->cow_norms) {
-        cb->norms = (norm_t ***) ckd_calloc_3d(cb->var_file->n_mgau,
-                                               cb->var_file->n_feat,
-                                               cb->var_file->n_density,
-                                               sizeof(***cb->norms));
+        if (cb->var_file) {
+            cb->norms = (norm_t ***) ckd_calloc_3d(cb->var_file->n_mgau,
+                                                   cb->var_file->n_feat,
+                                                   cb->var_file->n_density,
+                                                   sizeof(***cb->norms));
+        }
     }
     else {
-        cb->norms = (norm_t ***) ckd_alloc_3d_ptr(cb->var_file->n_mgau,
-                                                  cb->var_file->n_feat,
-                                                  cb->var_file->n_density,
+        assert(cb->norm_file != NULL);
+        cb->norms = (norm_t ***) ckd_alloc_3d_ptr(cb->norm_file->n_mgau,
+                                                  cb->norm_file->n_feat,
+                                                  cb->norm_file->n_density,
                                                   norm_data,
                                                   sizeof(***cb->norms));
     }
@@ -226,27 +248,35 @@ gau_cb_read(cmd_ln_t *config, const char *meanfn, const char *varfn, const char 
 
     gau = ckd_calloc(1, sizeof(*gau));
     gau->config = config;
-    gau->mean_file = gau_file_read(config, meanfn);
-    gau->var_file = gau_file_read(config, varfn);
-
-    /* Verify consistency among files. */
-    if (!gau_file_compatible(gau->mean_file, gau->var_file)) {
-        gau_cb_free(gau);
-        return NULL;
-    }
-
+    if (meanfn)
+        gau->mean_file = gau_file_read(config, meanfn, 4);
+    if (varfn)
+        gau->var_file = gau_file_read(config, varfn, 4);
     if (normfn) {
-        gau->norm_file = gau_file_read(config, normfn);
-        if (!gau_file_compatible(gau->var_file, gau->norm_file)) {
+        gau->norm_file = gau_file_read(config, normfn, 3);
+        if (varfn && !gau_file_compatible(gau->var_file, gau->norm_file)) {
             gau_cb_free(gau);
             return NULL;
         }
     }
 
-    gau->precomp = gau_file_get_flag(gau->var_file, GAU_FILE_PRECOMP);
+    /* Verify consistency among files. */
+    if (meanfn && varfn) {
+        if (!gau_file_compatible(gau->mean_file, gau->var_file)) {
+            gau_cb_free(gau);
+            return NULL;
+        }
+    }
 
     /* Allocate means, vars, norms arrays (if necessary) */
     gau_cb_alloc_cow_buffers(gau);
+
+    /* Now precompute things. */
+    if (varfn) {
+        gau->precomp = gau_file_get_flag(gau->var_file, GAU_FILE_PRECOMP);
+        if (!gau->precomp)
+            gau_cb_precomp(gau);
+    }
 
     /* FIXME: Handle fixed-point & quantization somewhere... */
     return gau;
@@ -268,8 +298,15 @@ void
 gau_cb_get_shape(gau_cb_t *cb, int *out_n_gau, int *out_n_feat,
                  int *out_n_density, const int **out_veclen)
 {
-    gau_file_get_shape(cb->mean_file, out_n_gau, out_n_feat,
-                       out_n_density, out_veclen);
+    if (cb->mean_file)
+        gau_file_get_shape(cb->mean_file, out_n_gau, out_n_feat,
+                           out_n_density, out_veclen);
+    else if (cb->var_file)
+        gau_file_get_shape(cb->var_file, out_n_gau, out_n_feat,
+                           out_n_density, out_veclen);
+    else {
+        E_FATAL("gau_cb_get_shape() called on uninitialized codebook!\n");
+    }
 }
 
 void
@@ -315,16 +352,12 @@ gau_cb_get_means(gau_cb_t *cb)
 var_t ****
 gau_cb_get_invvars(gau_cb_t *cb)
 {
-    if (!cb->precomp)
-        gau_cb_precomp(cb);
     return cb->invvars;
 }
 
 norm_t ***
 gau_cb_get_norms(gau_cb_t *cb)
 {
-    if (!cb->precomp)
-        gau_cb_precomp(cb);
     return cb->norms;
 }
 

@@ -88,7 +88,7 @@ enum gau_file_flags_e {
 /**
  * Read a Gaussian parameter file.
  */
-gau_file_t *gau_file_read(cmd_ln_t *config, const char *file_name);
+gau_file_t *gau_file_read(cmd_ln_t *config, const char *file_name, int ndim);
 
 /**
  * Release a Gaussian parameter file and associated memory.

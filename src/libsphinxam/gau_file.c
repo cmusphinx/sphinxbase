@@ -72,7 +72,7 @@ format_tag_to_flag(gau_file_t *gau, const char *tag)
 }
 
 gau_file_t *
-gau_file_read(cmd_ln_t *config, const char *file_name)
+gau_file_read(cmd_ln_t *config, const char *file_name, int ndim)
 {
     gau_file_t *gau;
     FILE *fp;
@@ -81,7 +81,7 @@ gau_file_read(cmd_ln_t *config, const char *file_name)
     int32 byteswap, i, blk, n;
     int chksum_present = 0;
 
-    E_INFO("Reading S3 mixture gaussian file '%s'\n", file_name);
+    E_INFO("Reading S3 Gaussian parameter file '%s'\n", file_name);
     if ((fp = fopen(file_name, "rb")) == NULL) {
         E_ERROR("fopen(%s,rb) failed\n", file_name);
         return NULL;
@@ -136,29 +136,32 @@ gau_file_read(cmd_ln_t *config, const char *file_name)
         goto error_out;
     }
 
-    /* #Features/codebook */
-    if (bio_fread(&gau->n_feat, sizeof(int32), 1,
-                  fp, byteswap, &gau->chksum) != 1) {
-        E_ERROR("fread(%s) (#features) failed\n", file_name);
-        goto error_out;
+    if (ndim > 1) {
+        /* #Features/codebook */
+        if (bio_fread(&gau->n_feat, sizeof(int32), 1,
+                      fp, byteswap, &gau->chksum) != 1) {
+            E_ERROR("fread(%s) (#features) failed\n", file_name);
+            goto error_out;
+        }
     }
 
-    /* #Gaussian densities/feature in each codebook */
-    if (bio_fread(&gau->n_density, sizeof(int32), 1, fp,
-                  byteswap, &gau->chksum) != 1) {
-        E_ERROR("fread(%s) (#density/codebook) failed\n", file_name);
-        goto error_out;
+    if (ndim > 2) {
+        /* #Gaussian densities/feature in each codebook */
+        if (bio_fread(&gau->n_density, sizeof(int32), 1, fp,
+                      byteswap, &gau->chksum) != 1) {
+            E_ERROR("fread(%s) (#density/codebook) failed\n", file_name);
+            goto error_out;
+        }
     }
 
-    /* Vector length of feature stream */
-    gau->veclen = ckd_calloc(gau->n_feat, sizeof(int32));
-    if (bio_fread(gau->veclen, sizeof(int32), gau->n_feat,
-                  fp, byteswap, &gau->chksum) != gau->n_feat) {
-        E_ERROR("fread(%s) (feature vector-length) failed\n", file_name);
-        goto error_out;
-    }
-    for (i = 0, blk = 0; i < gau->n_feat; ++i) {
-        blk += gau->veclen[i];
+    if (ndim > 3) {
+        /* Vector length of feature stream */
+        gau->veclen = ckd_calloc(gau->n_feat, sizeof(int32));
+        if (bio_fread(gau->veclen, sizeof(int32), gau->n_feat,
+                      fp, byteswap, &gau->chksum) != gau->n_feat) {
+            E_ERROR("fread(%s) (feature vector-length) failed\n", file_name);
+            goto error_out;
+        }
     }
 
     /* #Values to follow; for the ENTIRE SET of CODEBOOKS */
@@ -166,11 +169,36 @@ gau_file_read(cmd_ln_t *config, const char *file_name)
         E_ERROR("fread(%s) (total #values) failed\n", file_name);
         goto error_out;
     }
-    if (n != gau->n_mgau * gau->n_density * blk) {
-        E_ERROR
-            ("%s: #values(%d) doesn't match dimensions: %d x %d x %d\n",
-             file_name, n, gau->n_mgau, gau->n_density, blk);
-        goto error_out;
+    /* Check expected number of values vs. actual. */
+    blk = 1; /* a default value, not actually used. */
+    { 
+        int expected_size = 0;
+        switch (ndim) {
+        case 1:
+            expected_size = gau->n_mgau;
+            break;
+        case 2:
+            expected_size = gau->n_mgau * gau->n_feat;
+            break;
+        case 3:
+            expected_size = gau->n_mgau * gau->n_feat * gau->n_density;
+            break;
+        case 4:
+            for (i = 0, blk = 0; i < gau->n_feat; ++i) {
+                blk += gau->veclen[i];
+            }
+            expected_size = gau->n_mgau * gau->n_density * blk;
+            break;
+        default:
+            E_FATAL("gau_file_read_internal() called with unknown #dimensions: %d\n",
+                    ndim);
+        }
+        if (n != expected_size) {
+            E_ERROR
+                ("%s: #values(%d) doesn't match dimensions: %d x %d x (%d)%d\n",
+                 file_name, n, gau->n_mgau, gau->n_density, gau->n_feat, blk);
+            goto error_out;
+        }
     }
 
     /* Check alignment constraints for memory mapping */
@@ -262,12 +290,17 @@ gau_file_compatible(gau_file_t *a, gau_file_t *b)
         return FALSE;
     }
 
-    for (feat = 0; feat < a->n_feat; ++feat) {
-        if (a->veclen[feat] != b->veclen[feat]) {
-            E_ERROR("Inconsistent Gaussian parameter files: veclen[%d] %d != %d\n",
-                    feat, a->veclen[feat], b->veclen[feat]);
-            return FALSE;
+    if (a->veclen && b->veclen) {
+        for (feat = 0; feat < a->n_feat; ++feat) {
+            if (a->veclen[feat] != b->veclen[feat]) {
+                E_ERROR("Inconsistent Gaussian parameter files: veclen[%d] %d != %d\n",
+                        feat, a->veclen[feat], b->veclen[feat]);
+                return FALSE;
+            }
         }
+    }
+    else if (a->veclen || b->veclen) {
+        E_ERROR("Dimensionality of Gaussian parameter files is different!\n");
     }
 
     return TRUE;
