@@ -1,12 +1,14 @@
-check_PROGRAMS = test_gmm_read test_gmm_mmap test_gmm_compute
-TESTS = test_gmm_read test_gmm_mmap test_gmm_compute
+check_PROGRAMS = test_gmm_read test_gmm_mmap test_gmm_compute test_gau_file
+TESTS = test_gmm_read test_gmm_mmap test_gmm_compute test_gau_file
 
 test_gmm_read_SRCS = test_gmm_read.c
 test_gmm_mmap_SRCS = test_gmm_mmap.c
 test_gmm_compute_SRCS = test_gmm_compute.c
+test_gau_file_SRCS = test_gau_file.c
 
 INCLUDES = \
 	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/src/libsphinxam \
 	-I$(top_builddir)/include \
 	-DHMMDIR=\"${srcdir}/an4.cd_cont_200\"
 

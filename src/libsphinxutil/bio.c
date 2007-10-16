@@ -286,6 +286,16 @@ bio_fread(void *buf, int32 el_sz, int32 n_el, FILE * fp, int32 swap,
     return n_el;
 }
 
+int32
+bio_fwrite(void *buf, int32 el_sz, int32 n_el, FILE *fp,
+           int32 swap, uint32 *chksum)
+{
+    if (swap)
+        swap_buf(buf, el_sz, n_el);
+    if (chksum)
+        *chksum = chksum_accum(buf, el_sz, n_el, *chksum);
+    return fwrite(buf, el_sz, n_el, fp);
+}
 
 int32
 bio_fread_1d(void **buf, size_t el_sz, uint32 * n_el, FILE * fp,

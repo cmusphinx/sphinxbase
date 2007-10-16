@@ -249,11 +249,11 @@ gau_cb_read(cmd_ln_t *config, const char *meanfn, const char *varfn, const char 
     gau = ckd_calloc(1, sizeof(*gau));
     gau->config = config;
     if (meanfn)
-        gau->mean_file = gau_file_read(config, meanfn, 4);
+        gau->mean_file = gau_file_read(config, meanfn, GAU_FILE_MEAN);
     if (varfn)
-        gau->var_file = gau_file_read(config, varfn, 4);
+        gau->var_file = gau_file_read(config, varfn, GAU_FILE_VAR);
     if (normfn) {
-        gau->norm_file = gau_file_read(config, normfn, 3);
+        gau->norm_file = gau_file_read(config, normfn, GAU_FILE_NORM);
         if (varfn && !gau_file_compatible(gau->var_file, gau->norm_file)) {
             gau_cb_free(gau);
             return NULL;

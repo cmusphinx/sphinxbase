@@ -86,9 +86,25 @@ enum gau_file_flags_e {
 #define gau_file_get_flag(g,f) ((g)->flags & (f))
 
 /**
+ * Values for ndim in gau_file_read.
+ */
+enum gau_file_dimension_e {
+    GAU_FILE_MEAN = 4,
+    GAU_FILE_VAR  = 4,
+    GAU_FILE_NORM = 3,
+    GAU_FILE_MIXW = 3
+};
+
+/**
  * Read a Gaussian parameter file.
  */
 gau_file_t *gau_file_read(cmd_ln_t *config, const char *file_name, int ndim);
+
+/**
+ * Write a Gaussian parameter file.
+ */
+int gau_file_write(gau_file_t *gau, const char *file_name, int byteswap);
+
 
 /**
  * Release a Gaussian parameter file and associated memory.

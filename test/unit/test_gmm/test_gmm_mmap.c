@@ -30,7 +30,7 @@ main(int argc, char *argv[])
 	norm_t ***norms;
 	cmd_ln_t *config;
 
-	config = cmd_ln_parse_r(NULL, &defn, 0, NULL, FALSE);
+	config = cmd_ln_parse_r(NULL, defn, 0, NULL, FALSE);
 
 	cb = gau_cb_read(config, HMMDIR "/means", HMMDIR "/variances", NULL);
 	mix = gau_mix_read(config, HMMDIR "/mixture_weights");

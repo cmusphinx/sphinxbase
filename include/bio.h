@@ -158,6 +158,19 @@ int32 bio_fread (void *buf,
 		 );
 
 /**
+ * Like fwrite but perform byteswapping and accumulate checksum (the 2 extra arguments).
+ * @return the number of elemens written (like fwrite).
+ */
+SPHINXBASE_EXPORT
+int32 bio_fwrite(void *buf,
+		 int32 el_sz,
+		 int32 n_el,
+		 FILE *fp,              /**< In: An input file pointer */
+		 int32 swap,		/**< In: Byteswap iff (swap != 0) */
+		 uint32 *chksum	/**< In/Out: Accumulated checksum */
+		 );
+
+/**
  * Read a 1-d array (fashioned after fread):
  *     4-byte array size (returned in n_el)
  *     memory allocated for the array and read (returned in buf)

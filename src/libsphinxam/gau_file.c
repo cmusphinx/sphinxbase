@@ -1,42 +1,42 @@
-/* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
-/* ====================================================================
- * Copyright (c) 2007 Carnegie Mellon University.  All rights
- * reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * This work was supported in part by funding from the Defense Advanced 
- * Research Projects Agency and the National Science Foundation of the 
- * United States of America, and the CMU Sphinx Speech Consortium.
- *
- * THIS SOFTWARE IS PROVIDED BY CARNEGIE MELLON UNIVERSITY ``AS IS'' AND 
- * ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL CARNEGIE MELLON UNIVERSITY
- * NOR ITS EMPLOYEES BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY 
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * ====================================================================
- *
- */
-/**
- * \file gau_file.c Gaussian parameter file functions
- **/
+ /* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
+ /* ====================================================================
+  * Copyright (c) 2007 Carnegie Mellon University.  All rights
+  * reserved.
+  *
+  * Redistribution and use in source and binary forms, with or without
+  * modification, are permitted provided that the following conditions
+  * are met:
+  *
+  * 1. Redistributions of source code must retain the above copyright
+  *    notice, this list of conditions and the following disclaimer. 
+  *
+  * 2. Redistributions in binary form must reproduce the above copyright
+  *    notice, this list of conditions and the following disclaimer in
+  *    the documentation and/or other materials provided with the
+  *    distribution.
+  *
+  * This work was supported in part by funding from the Defense Advanced 
+  * Research Projects Agency and the National Science Foundation of the 
+  * United States of America, and the CMU Sphinx Speech Consortium.
+  *
+  * THIS SOFTWARE IS PROVIDED BY CARNEGIE MELLON UNIVERSITY ``AS IS'' AND 
+  * ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
+  * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+  * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL CARNEGIE MELLON UNIVERSITY
+  * NOR ITS EMPLOYEES BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+  * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
+  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
+  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY 
+  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
+  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  *
+  * ====================================================================
+  *
+  */
+ /**
+  * \file gau_file.c Gaussian parameter file functions
+  **/
 
 #include "gau_cb.h"
 #include "gau_file.h"
@@ -45,6 +45,7 @@
 #include "bio.h"
 
 #include <string.h>
+#include <assert.h>
 
 static void
 format_tag_to_flag(gau_file_t *gau, const char *tag)
@@ -69,6 +70,24 @@ format_tag_to_flag(gau_file_t *gau, const char *tag)
         gau->format = GAU_INT8;
         gau->width = 1;
     }
+}
+
+static const char *
+format_flag_to_tag(gau_file_t *gau)
+{
+    switch (gau->format) {
+    case GAU_FLOAT32:
+        return "float32";
+    case GAU_FLOAT64:
+        return "float64";
+    case GAU_INT32:
+        return "int32";
+    case GAU_INT16:
+        return "int16";
+    case GAU_INT8:
+        return "int8";
+    }
+    return "unknown";
 }
 
 gau_file_t *
@@ -249,9 +268,122 @@ error_out:
 }
 
 int
-gau_file_write(gau_file_t *gau, const char *filename)
+gau_file_write(gau_file_t *gau, const char *file_name, int byteswap)
 {
+    FILE *fp;
+    long pos;
+    uint32 chksum;
+    int32 ndim, outsize, blk, i;
+
+    E_INFO("Writing S3 Gaussian parameter file '%s'\n", file_name);
+    if ((fp = fopen(file_name, "wb")) == NULL) {
+        E_ERROR("fopen(%s,wb) failed\n", file_name);
+        return -1;
+    }
+
+    /* For whatever reason, we have to do this manually at the
+     * moment. FIXME: fix bio.c so this works... */
+    fprintf(fp, "s3\nversion 1.0\nchksum0 yes\n");
+    fprintf(fp, "format %s\n", format_flag_to_tag(gau));
+    if (gau->bias != 0.0f)
+        fprintf(fp, "bias %f\n", gau->bias);
+    if (gau->scale != 1.0f)
+        fprintf(fp, "scale %f\n", gau->scale);
+    if (gau_file_get_flag(gau, GAU_FILE_PRECOMP))
+        fprintf(fp, "logbase %f\n", gau->logbase);
+    /* Pad it out to ensure alignment. */
+    pos = ftell(fp) + strlen("endhdr\n");
+    if (pos & ((long)gau->width - 1)) {
+        size_t align = gau->width - (pos & ((long)gau->width - 1));
+        assert(gau->width <= 8);
+        fwrite("        " /* 8 spaces */, 1, align, fp);
+    }
+    fprintf(fp, "endhdr\n");
+
+    /* Now write the binary data. */
+    chksum = (uint32)BYTE_ORDER_MAGIC;
+    fwrite(&chksum, sizeof(uint32), 1, fp);
+    chksum = 0;
+    /* #Codebooks */
+    if (bio_fwrite(&gau->n_mgau, sizeof(int32), 1, fp, byteswap, &chksum) != 1) {
+        E_ERROR("fwrite(%s) (#codebooks) failed\n", file_name); 
+        goto error_out;
+    }
+    ndim = 1;
+
+    if (gau->n_feat != 0) {
+        /* #Features/codebook */
+        if (bio_fwrite(&gau->n_feat, sizeof(int32), 1,
+                       fp, byteswap, &chksum) != 1) {
+            E_ERROR("fwrite(%s) (#features) failed\n", file_name);
+            goto error_out;
+        }
+        ++ndim;
+    }
+
+
+    if (gau->n_density != 0) {
+        /* #Gaussian densities/feature in each codebook */
+        if (bio_fwrite(&gau->n_density, sizeof(int32), 1, fp,
+                       byteswap, &chksum) != 1) {
+            E_ERROR("fwrite(%s) (#density/codebook) failed\n", file_name);
+            goto error_out;
+        }
+        ++ndim;
+    }
+
+    if (gau->veclen) {
+        /* Vector length of feature stream */
+        if (bio_fwrite(gau->veclen, sizeof(int32), gau->n_feat,
+                       fp, byteswap, &chksum) != gau->n_feat) {
+            E_ERROR("fwrite(%s) (feature vector-length) failed\n", file_name);
+            goto error_out;
+        }
+        ++ndim;
+    }
+
+    switch (ndim) {
+    case 1:
+        outsize = gau->n_mgau;
+        break;
+    case 2:
+        outsize = gau->n_mgau * gau->n_feat;
+        break;
+    case 3:
+        outsize = gau->n_mgau * gau->n_feat * gau->n_density;
+        break;
+    case 4:
+        for (i = 0, blk = 0; i < gau->n_feat; ++i) {
+            blk += gau->veclen[i];
+        }
+        outsize = gau->n_mgau * gau->n_density * blk;
+        break;
+    default:
+        E_FATAL("gau_file_write() called on gau_file with unknown #dimensions: %d\n",
+                ndim);
+    }
+    /* #Values to follow; for the ENTIRE SET of CODEBOOKS */
+    if (bio_fwrite(&outsize, sizeof(int32), 1, fp, byteswap, &chksum) != 1) {
+        E_ERROR("fwrite(%s) (total #values) failed\n", file_name);
+        goto error_out;
+    }
+
+    if (bio_fwrite(gau->data, gau->width, outsize, fp, byteswap, &chksum) != outsize) {
+        E_ERROR("fwrite(%s) (%d x %d bytes) failed\n",
+                file_name, outsize, gau->width);
+        goto error_out;
+    }
+    if (bio_fwrite(&chksum, sizeof(uint32), 1, fp, byteswap, NULL) != 1) {
+        E_ERROR("fwrite(%s) checksum failed\n", file_name);
+        goto error_out;
+    }
+
+    fclose(fp);
     return 0;
+
+error_out:
+    fclose(fp);
+    return -1;
 }
 
 void
