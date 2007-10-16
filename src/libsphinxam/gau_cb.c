@@ -139,25 +139,25 @@ gau_cb_alloc_cow_buffers(gau_cb_t *cb)
         /* Check that this is precomputed */
         cb->cow_vars = !(gau_file_get_flag(cb->var_file, GAU_PRECOMP)
                          && cb->var_file->format == GAU_INT32
-                         && cb->var_file->scale == 0
+                         && cb->var_file->scale == 1.0
                          && cb->var_file->bias == 0);
         cb->cow_norms = !(cb->norm_file
                           && cb->norm_file->format == GAU_INT32
-                          && cb->norm_file->scale == 0
+                          && cb->norm_file->scale == 1.0
                           && cb->norm_file->bias == 0);
 #else
         /* Check that this is plain old floating point */
         cb->cow_means = !(cb->mean_file->format == GAU_FLOAT32
-                          && cb->mean_file->scale == 0
+                          && cb->mean_file->scale == 1.0
                           && cb->mean_file->bias == 0);
         /* Check that this is precomputed */
         cb->cow_vars = !(gau_file_get_flag(cb->var_file, GAU_FILE_PRECOMP)
                          && cb->var_file->format == GAU_FLOAT32
-                         && cb->var_file->scale == 0
+                         && cb->var_file->scale == 1.0
                          && cb->mean_file->bias == 0);
         cb->cow_norms = !(cb->norm_file
                           && cb->norm_file->format == GAU_FLOAT32
-                          && cb->norm_file->scale == 0
+                          && cb->norm_file->scale == 1.0
                           && cb->norm_file->bias == 0);
 #endif
     }

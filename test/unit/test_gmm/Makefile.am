@@ -1,7 +1,8 @@
-check_PROGRAMS = test_gmm_read test_gmm_compute
-TESTS = test_gmm_read test_gmm_compute
+check_PROGRAMS = test_gmm_read test_gmm_mmap test_gmm_compute
+TESTS = test_gmm_read test_gmm_mmap test_gmm_compute
 
 test_gmm_read_SRCS = test_gmm_read.c
+test_gmm_mmap_SRCS = test_gmm_mmap.c
 test_gmm_compute_SRCS = test_gmm_compute.c
 
 INCLUDES = \

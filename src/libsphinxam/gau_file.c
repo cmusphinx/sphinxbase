@@ -177,24 +177,24 @@ gau_file_read(cmd_ln_t *config, const char *file_name)
     }
 
     if (gau_file_get_flag(gau, GAU_FILE_MMAP)) {
-        gau->d.filemap = mmio_file_read(file_name);
+        gau->filemap = mmio_file_read(file_name);
+        gau->data = (char *)mmio_file_ptr(gau->filemap) + pos;
     }
     else {
-        gau->d.data = ckd_calloc(n, gau->width);
-        if (bio_fread(gau->d.data, gau->width, n, fp, byteswap, &gau->chksum) != n) {
+        gau->data = ckd_calloc(n, gau->width);
+        if (bio_fread(gau->data, gau->width, n, fp, byteswap, &gau->chksum) != n) {
             E_ERROR("fread(%s) (%d x %d bytes) failed\n",
                     file_name, n, gau->width);
-            ckd_free(gau->d.data);
+            ckd_free(gau->data);
             goto error_out;
         }
-    }
+        if (chksum_present)
+            bio_verify_chksum(fp, byteswap, gau->chksum);
 
-    if (chksum_present)
-        bio_verify_chksum(fp, byteswap, gau->chksum);
-
-    if (fread(&i, 1, 1, fp) == 1) {
-        E_ERROR("%s: More data than expected\n", file_name);
-        goto error_out;
+        if (fread(&i, 1, 1, fp) == 1) {
+            E_ERROR("%s: More data than expected\n", file_name);
+            goto error_out;
+        }
     }
 
     fclose(fp);
@@ -210,16 +210,22 @@ error_out:
     return NULL;
 }
 
+int
+gau_file_write(gau_file_t *gau, const char *filename)
+{
+    return 0;
+}
+
 void
 gau_file_free(gau_file_t *gau)
 {
     if (gau == NULL)
         return;
     if (gau_file_get_flag(gau, GAU_FILE_MMAP)) {
-        mmio_file_unmap(gau->d.filemap);
+        mmio_file_unmap(gau->filemap);
     }
     else {
-        ckd_free(gau->d.data);
+        ckd_free(gau->data);
     }
     ckd_free(gau->veclen);
     ckd_free(gau);
@@ -270,10 +276,5 @@ gau_file_get_shape(gau_file_t *gau, int *out_n_gau, int *out_n_feat,
 void *
 gau_file_get_data(gau_file_t *gau)
 {
-    if (gau_file_get_flag(gau, GAU_FILE_MMAP)) {
-        return mmio_file_ptr(gau->d.filemap);
-    }
-    else {
-        return gau->d.data;
-    }
+    return gau->data;
 }

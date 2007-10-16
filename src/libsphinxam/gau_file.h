@@ -58,10 +58,8 @@ struct gau_file_s {
     uint32 chksum;
     int32 n_mgau, n_feat, n_density;
     int32 *veclen;
-    union {
-        mmio_file_t *filemap;
-        void *data;
-    } d;
+    mmio_file_t *filemap;
+    void *data;
 };
 
 /**
