@@ -1,5 +1,4 @@
 #include <gau_cb.h>
-#include <gau_mix.h>
 #include <feat.h>
 #include <strfuncs.h>
 
@@ -16,7 +15,6 @@ int
 main(int argc, char *argv[])
 {
 	gau_cb_t *cb;
-	gau_mix_t *mix;
 	mfcc_t ***feats;
 	feat_t *fcb;
 	int nfr;
@@ -24,7 +22,6 @@ main(int argc, char *argv[])
 	int32 out_den[4];
 
 	cb = gau_cb_read(NULL, HMMDIR "/means", HMMDIR "/variances", NULL);
-	mix = gau_mix_read(NULL, HMMDIR "/mixture_weights");
 
 	fcb = feat_init("1s_c_d_dd", CMN_CURRENT, FALSE, AGC_NONE, TRUE, 13);
 	nfr = feat_s2mfc2feat(fcb, HMMDIR "/pittsburgh.mfc", NULL, NULL,
@@ -33,7 +30,6 @@ main(int argc, char *argv[])
 	nfr = feat_s2mfc2feat(fcb, HMMDIR "/pittsburgh.mfc", NULL, NULL,
 			      0, -1, feats, nfr);
 
-        gau_cb_precomp(cb);
 	best = gau_cb_compute_all(cb, 190, 0, feats[30][0], out_den, INT_MIN);
 	for (i = 0; i < 4; ++i) {
 		printf("%d: %d\n", i, out_den[i]);
@@ -44,7 +40,6 @@ main(int argc, char *argv[])
 	TEST_EQUAL_FLOAT(out_den[best], -107958);
 
 	gau_cb_free(cb);
-	gau_mix_free(mix);
 
 	return 0;
 }
