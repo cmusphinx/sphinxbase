@@ -175,6 +175,11 @@ gau_file_read(cmd_ln_t *config, const char *file_name)
                 file_name, pos, gau->width);
         gau_file_clear_flag(gau, GAU_FILE_MMAP);
     }
+    /* Check byte order for memory mapping */
+    if (byteswap) {
+        E_ERROR("%s: Data is wrong-endian, will not memory map\n", file_name);
+        gau_file_clear_flag(gau, GAU_FILE_MMAP);
+    }
 
     if (gau_file_get_flag(gau, GAU_FILE_MMAP)) {
         gau->filemap = mmio_file_read(file_name);
