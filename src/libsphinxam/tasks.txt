@@ -1,8 +1,8 @@
 Gaussian computation (+ unit test) DONE
 
-Precomputed Gaussian files
-  * Precomputation utility
-  * Unit test (reading, computation)
+Precomputed Gaussian files DONE
+  * Precomputation utility DONE
+  * Unit test (reading, computation) DONE
 
 Quantized Gaussian files
   * Quantization utility

@@ -282,7 +282,7 @@ gau_file_write(gau_file_t *gau, const char *file_name, int byteswap)
     }
 
     /* For whatever reason, we have to do this manually at the
-     * moment. FIXME: fix bio.c so this works... */
+     * moment. */
     fprintf(fp, "s3\nversion 1.0\nchksum0 yes\n");
     fprintf(fp, "format %s\n", format_flag_to_tag(gau));
     if (gau->bias != 0.0f)
@@ -302,6 +302,8 @@ gau_file_write(gau_file_t *gau, const char *file_name, int byteswap)
 
     /* Now write the binary data. */
     chksum = (uint32)BYTE_ORDER_MAGIC;
+    if (byteswap)
+        SWAP_INT32(&chksum);
     fwrite(&chksum, sizeof(uint32), 1, fp);
     chksum = 0;
     /* #Codebooks */

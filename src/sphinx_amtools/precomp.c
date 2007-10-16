@@ -119,9 +119,9 @@ main(int argc, char *argv[])
     outnorm = cmd_ln_str_r(config, "-outnorm");
 
 #ifdef WORDS_BIGENDIAN
-    byteswap = !strcmp(cmd_ln_str_r(config, "-output_endian"), "big");
-#else
     byteswap = !strcmp(cmd_ln_str_r(config, "-output_endian"), "little");
+#else
+    byteswap = !strcmp(cmd_ln_str_r(config, "-output_endian"), "big");
 #endif
 
     cb = gau_cb_read(config, NULL, invar, NULL);
