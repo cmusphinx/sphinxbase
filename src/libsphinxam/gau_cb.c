@@ -248,22 +248,36 @@ gau_cb_read(cmd_ln_t *config, const char *meanfn, const char *varfn, const char 
 
     gau = ckd_calloc(1, sizeof(*gau));
     gau->config = config;
-    if (meanfn)
-        gau->mean_file = gau_file_read(config, meanfn, GAU_FILE_MEAN);
-    if (varfn)
-        gau->var_file = gau_file_read(config, varfn, GAU_FILE_VAR);
+    if (meanfn) {
+        if ((gau->mean_file = gau_file_read(config, meanfn, GAU_FILE_MEAN)) == NULL)
+            return NULL;
+    }
+    if (varfn) {
+        if ((gau->var_file = gau_file_read(config, varfn, GAU_FILE_VAR)) == NULL) {
+            gau_file_free(gau->mean_file);
+            return NULL;
+        }
+    }
     if (normfn) {
-        gau->norm_file = gau_file_read(config, normfn, GAU_FILE_NORM);
-        if (varfn && !gau_file_compatible(gau->var_file, gau->norm_file)) {
-            gau_cb_free(gau);
+        if ((gau->norm_file = gau_file_read(config, normfn, GAU_FILE_NORM)) == NULL) {
+            gau_file_free(gau->mean_file);
+            gau_file_free(gau->var_file);
             return NULL;
         }
     }
 
     /* Verify consistency among files. */
-    if (meanfn && varfn) {
+    if (gau->mean_file && gau->var_file) {
         if (!gau_file_compatible(gau->mean_file, gau->var_file)) {
             gau_cb_free(gau);
+            return NULL;
+        }
+    }
+    if (gau->var_file && gau->norm_file) {
+        if (gau->var_file->n_mgau != gau->norm_file->n_mgau
+            || gau->var_file->n_feat != gau->norm_file->n_feat
+            || gau->var_file->n_density != gau->norm_file->n_density) {
+            E_ERROR("Precomputed variances and norms have different size!\n");
             return NULL;
         }
     }
@@ -272,7 +286,7 @@ gau_cb_read(cmd_ln_t *config, const char *meanfn, const char *varfn, const char 
     gau_cb_alloc_cow_buffers(gau);
 
     /* Now precompute things. */
-    if (varfn) {
+    if (gau->var_file) {
         gau->precomp = gau_file_get_flag(gau->var_file, GAU_FILE_PRECOMP);
         if (!gau->precomp)
             gau_cb_precomp(gau);
