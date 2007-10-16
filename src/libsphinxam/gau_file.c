@@ -120,6 +120,11 @@ gau_file_read(cmd_ln_t *config, const char *file_name)
         else if (strcmp(argname[i], "scale") == 0) {
             gau->scale = atof(argval[i]);
         }
+        /* Logbase indicates precomputation of variances/norms */
+        else if (strcmp(argname[i], "logbase") == 0) {
+            gau->logbase = atof(argval[i]);
+            gau_file_set_flag(gau, GAU_FILE_PRECOMP);
+        }
     }
     bio_hdrarg_free(argname, argval);
     gau->chksum = 0;
