@@ -112,10 +112,15 @@ int gau_file_write(gau_file_t *gau, const char *file_name, int byteswap);
 void gau_file_free(gau_file_t *gau);
 
 /**
- * Retrieve the dimensionality of a Gaussian parameter file.
+ * Retrieve the dimensionality of a Gaussian parameter file and number of elements.
  */
-void gau_file_get_shape(gau_file_t *gau, int *out_n_gau, int *out_n_feat,
-                        int *out_n_density, const int **out_veclen);
+size_t gau_file_get_shape(gau_file_t *gau, int *out_n_gau, int *out_n_feat,
+                          int *out_n_density, const int **out_veclen);
+
+/**
+ * Retrieve the number of elements in a Gaussian parameter file and their size.
+ */
+void gau_file_get_size(gau_file_t *gau, size_t *out_nelem, size_t *out_width);
 
 /**
  * Verify that two Gaussian parameter files have the same shape.
@@ -128,5 +133,10 @@ int gau_file_compatible(gau_file_t *a, gau_file_t *b);
  * Do not assume that this pointer is writable!
  */
 void *gau_file_get_data(gau_file_t *gau);
+
+/**
+ * Undo quantization.
+ */
+void gau_file_dequantize(gau_file_t *file, void *outmem, float32 outscale);
 
 #endif /* __GAU_FILE_H__ */

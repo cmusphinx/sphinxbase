@@ -1,6 +1,8 @@
 #include <gau_cb.h>
 #include <feat.h>
 #include <strfuncs.h>
+#include <ckd_alloc.h>
+#include <fe.h>
 
 #include "gau_file.h"
 #include "test_macros.h"
@@ -12,15 +14,16 @@ int
 main(int argc, char *argv[])
 {
 	gau_cb_t *cb;
-	var_t ****invvars;
-	norm_t ***norms;
+	mean_t *mptr, *means;
+	int16 *qptr, *qmeans;
 	gau_file_t out_file;
-	float32 invvar, norm;
 	mfcc_t ***feats;
 	feat_t *fcb;
 	int nfr;
 	int best, i;
 	int32 out_den[4];
+	size_t nelem, n;
+	float32 min, max;
 
 	cb = gau_cb_read(NULL, HMMDIR "/means", HMMDIR "/variances", NULL);
 	fcb = feat_init("1s_c_d_dd", CMN_CURRENT, FALSE, AGC_NONE, TRUE, 13);
@@ -38,40 +41,39 @@ main(int argc, char *argv[])
 	TEST_EQUAL(best, 1);
 	TEST_EQUAL_LOG(out_den[best], -107958);
 
-	invvars = gau_cb_get_invvars(cb);
-	norms = gau_cb_get_norms(cb);
+	/* Create a new gau_file_t to hold quantized data. */
+	nelem = gau_cb_get_shape(cb, &out_file.n_mgau,
+				 &out_file.n_feat, &out_file.n_density,
+				 (const int **)&out_file.veclen);
 
-	invvar = invvars[3][0][2][2];
-	norm = norms[3][0][2];
-
-	/* Create a new gau_file_t to write out precompiled data. */
-	gau_cb_get_shape(cb, &out_file.n_mgau,
-			 &out_file.n_feat, &out_file.n_density,
-			 (const int **)&out_file.veclen);
-	out_file.format = GAU_FLOAT32;
-	out_file.width = 4;
-	out_file.flags = GAU_FILE_PRECOMP;
-	out_file.scale = 1.0;
-	out_file.bias = 0.0;
-	out_file.logbase = 1.0001;
-	out_file.data = invvars[0][0][0];
-	gau_file_write(&out_file, "tmp.variances", FALSE);
-
-	/* Now modify it to be 3-dimensional for the normalizers. */
-	out_file.veclen = NULL;
-	out_file.data = norms[0][0];
-	gau_file_write(&out_file, "tmp.norms", FALSE);
-
+	/* Quantize data. */
+	mptr = means = gau_cb_get_means(cb)[0][0][0];
+	min = 1e+50;
+	max = -1e+50;
+	for (n = 0; n < nelem; ++n) {
+		if (*mptr < min) min = *mptr;
+		if (*mptr > max) max = *mptr;
+		++mptr;
+	}
+	out_file.scale = (max - min) / 2;
+	out_file.bias = min + out_file.scale;
+	out_file.scale = 32767 / out_file.scale;
+	mptr = means;
+	qptr = qmeans = ckd_calloc(nelem, sizeof(*qmeans));
+	printf("min %f max %f bias %f scale %f\n",
+	       min, max, out_file.bias, out_file.scale);
+	for (n = 0; n < nelem; ++n) {
+		*qptr++ = (int16)((*mptr++ - out_file.bias) * out_file.scale);
+	}
+	out_file.format = GAU_INT16;
+	out_file.width = 2;
+	out_file.data = qmeans;
+	gau_file_write(&out_file, "tmp.means", FALSE);
 	gau_cb_free(cb);
+	ckd_free(qmeans);
 
-	/* Finally reload it with the precomputed data, and verify
-	 * that it is the same (we hope) */
-	cb = gau_cb_read(NULL, HMMDIR "/means", "tmp.variances", "tmp.norms");
-	invvars = gau_cb_get_invvars(cb);
-	norms = gau_cb_get_norms(cb);
-
-	TEST_EQUAL_FLOAT(invvar, invvars[3][0][2][2]);
-	TEST_EQUAL_FLOAT(norm, norms[3][0][2]);
+	/* Finally reload it with the precomputed data, and verify it. */
+	cb = gau_cb_read(NULL, "tmp.means", HMMDIR "/variances", NULL);
 
 	best = gau_cb_compute_all(cb, 190, 0, feats[30][0], out_den, INT_MIN);
 	for (i = 0; i < 4; ++i) {

@@ -88,15 +88,10 @@ gau_cb_t *gau_cb_read(cmd_ln_t *config,    /**< Configuration parameters */
 void gau_cb_free(gau_cb_t *cb);
 
 /**
- * Retrieve the dimensionality of a codebook.
+ * Retrieve the dimensionality of a codebook and number of elements.
  */
-void gau_cb_get_shape(gau_cb_t *cb, int *out_n_gau, int *out_n_feat,
-                      int *out_n_density, const int **out_veclen);
-
-/**
- * Precompute normalizing constants and inverse variances, if required.
- */
-void gau_cb_precomp(gau_cb_t *cb);
+size_t gau_cb_get_shape(gau_cb_t *cb, int *out_n_gau, int *out_n_feat,
+                        int *out_n_density, const int **out_veclen);
 
 /**
  * Retrieve the mean vectors from the codebook.

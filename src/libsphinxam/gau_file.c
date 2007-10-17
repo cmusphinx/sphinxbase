@@ -440,14 +440,42 @@ gau_file_compatible(gau_file_t *a, gau_file_t *b)
     return TRUE;
 }
 
-void
+size_t
 gau_file_get_shape(gau_file_t *gau, int *out_n_gau, int *out_n_feat,
                    int *out_n_density, const int **out_veclen)
 {
+    size_t nelem;
+
+    if (gau->veclen) {
+        int blk, i;
+        for (blk = i = 0; i < gau->n_feat; ++i) {
+            blk += gau->veclen[i];
+        }
+        nelem = blk * gau->n_mgau * gau->n_feat * gau->n_density;
+    }
+    else {
+        nelem = gau->n_mgau;
+        if (gau->n_feat != 0)
+            nelem *= gau->n_feat;
+        if (gau->n_density != 0)
+            nelem *= gau->n_density;
+    }
+
     if (out_n_gau) *out_n_gau = gau->n_mgau;
     if (out_n_feat) *out_n_feat = gau->n_feat;
     if (out_n_density) *out_n_density = gau->n_density;
     if (out_veclen) *out_veclen = gau->veclen;
+
+    return nelem;
+}
+
+void
+gau_file_get_size(gau_file_t *gau, size_t *out_nelem, size_t *out_width)
+{
+    if (out_nelem)
+        *out_nelem = gau_file_get_shape(gau, NULL, NULL, NULL, NULL);
+    if (out_width)
+        *out_width = gau->width;
 }
 
 void *
@@ -455,3 +483,47 @@ gau_file_get_data(gau_file_t *gau)
 {
     return gau->data;
 }
+
+void
+gau_file_dequantize(gau_file_t *file, void *outmem, float32 outscale)
+{
+    size_t nparams, pwidth;
+#ifdef FIXED_POINT
+    int32 *outptr = (int32 *)outmem;
+#else
+    float32 *outptr = (float32 *)outmem;
+#endif
+    char *inptr = file->data;
+    float32 scale = outscale / file->scale;
+    size_t i;
+
+    gau_file_get_size(file, &nparams, &pwidth);
+
+    for (i = 0; i < nparams; ++i) {
+        /* FIXME: Maybe optimize this later */
+        switch (file->format) {
+        case GAU_FLOAT32:
+            *outptr = *(float32 *)inptr * scale;
+            break;
+        case GAU_FLOAT64:
+            *outptr = *(float64 *)inptr * scale;
+            break;
+        case GAU_INT32:
+            *outptr = *(float32 *)inptr * scale;
+            break;
+        case GAU_INT16:
+            *outptr = *(int16 *)inptr * scale;
+            break;
+        case GAU_INT8:
+            *outptr = *(int8 *)inptr * scale;
+            break;
+        }
+        *outptr += file->bias;
+
+        inptr += pwidth;
+        ++outptr;
+    }
+    file->bias = 0;
+    file->scale = outscale;
+}
+

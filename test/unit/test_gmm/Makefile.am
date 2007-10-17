@@ -1,11 +1,9 @@
-check_PROGRAMS = test_gmm_read test_gmm_mmap test_gmm_compute test_gau_file test_gmm_precomp
-TESTS = test_gmm_read test_gmm_mmap test_gmm_compute test_gau_file test_gmm_precomp
-
-test_gmm_read_SRCS = test_gmm_read.c
-test_gmm_mmap_SRCS = test_gmm_mmap.c
-test_gmm_compute_SRCS = test_gmm_compute.c
-test_gau_file_SRCS = test_gau_file.c
-test_gmm_precomp_SRCS = test_gmm_precomp.c
+check_PROGRAMS = test_gmm_read test_gmm_mmap \
+	test_gmm_compute test_gau_file \
+	test_gmm_precomp test_gmm_quantize
+TESTS = test_gmm_read test_gmm_mmap \
+	test_gmm_compute test_gau_file \
+	test_gmm_precomp test_gmm_quantize
 
 INCLUDES = \
 	-I$(top_srcdir)/include \
@@ -26,5 +24,7 @@ EXTRA_DIST = $(TESTS) $(wildcard $(srcdir)/_*.res)	\
 	an4.cd_cont_200/means				\
 	an4.cd_cont_200/variances			\
 	an4.cd_cont_200/pittsburgh.mfc
+
+noinst_HEADERS = test_macros.h
 
 CLEANFILES = *.out tmp.*

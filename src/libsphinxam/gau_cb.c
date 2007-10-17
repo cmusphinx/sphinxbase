@@ -67,6 +67,17 @@ struct gau_cb_s {
 };
 
 /**
+ * Copy parameters and dequantize them if necessary.
+ */
+static void gau_cb_dequantize(gau_cb_t *cb);
+
+/**
+ * Precompute normalizing constants and inverse variances, if required.
+ */
+static void gau_cb_precomp(gau_cb_t *cb);
+
+
+/**
  * Allocate a 4-D array for Gaussian parameters using existing backing memory.
  */
 static void *
@@ -241,6 +252,23 @@ gau_cb_free_cow_buffers(gau_cb_t *cb)
     }
 }
 
+static void
+gau_cb_dequantize(gau_cb_t *cb)
+{
+#ifdef FIXED_POINT
+    float32 mscale = (float32)(1<<DEFAULT_RADIX);
+#else
+    float32 mscale = 1.0;
+#endif
+
+    if (cb->mean_file && cb->cow_means)
+        gau_file_dequantize(cb->mean_file, cb->means[0][0][0], mscale);
+    if (cb->var_file && cb->cow_vars)
+        gau_file_dequantize(cb->var_file, cb->invvars[0][0][0], 1.0f);
+    if (cb->norm_file && cb->cow_norms)
+        gau_file_dequantize(cb->norm_file, cb->norms[0][0], 1.0f);
+}
+
 gau_cb_t *
 gau_cb_read(cmd_ln_t *config, const char *meanfn, const char *varfn, const char *normfn)
 {
@@ -285,6 +313,9 @@ gau_cb_read(cmd_ln_t *config, const char *meanfn, const char *varfn, const char 
     /* Allocate means, vars, norms arrays (if necessary) */
     gau_cb_alloc_cow_buffers(gau);
 
+    /* Copy and de-quantize things (in the future this won't be necessary). */
+    gau_cb_dequantize(gau);
+
     /* Now precompute things. */
     if (gau->var_file) {
         gau->precomp = gau_file_get_flag(gau->var_file, GAU_FILE_PRECOMP);
@@ -308,22 +339,23 @@ gau_cb_free(gau_cb_t *cb)
     ckd_free(cb);
 }
 
-void
+size_t
 gau_cb_get_shape(gau_cb_t *cb, int *out_n_gau, int *out_n_feat,
                  int *out_n_density, const int **out_veclen)
 {
     if (cb->mean_file)
-        gau_file_get_shape(cb->mean_file, out_n_gau, out_n_feat,
-                           out_n_density, out_veclen);
+        return gau_file_get_shape(cb->mean_file, out_n_gau, out_n_feat,
+                                  out_n_density, out_veclen);
     else if (cb->var_file)
-        gau_file_get_shape(cb->var_file, out_n_gau, out_n_feat,
-                           out_n_density, out_veclen);
+        return gau_file_get_shape(cb->var_file, out_n_gau, out_n_feat,
+                                  out_n_density, out_veclen);
     else {
         E_FATAL("gau_cb_get_shape() called on uninitialized codebook!\n");
+        return 0;
     }
 }
 
-void
+static void
 gau_cb_precomp(gau_cb_t *cb)
 {
     int n_mgau, n_feat, n_density;
