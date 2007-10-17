@@ -4,9 +4,9 @@ Precomputed Gaussian files DONE
   * Precomputation utility DONE
   * Unit test (reading, computation) DONE
 
-Quantized Gaussian files
-  * Quantization utility
-  * Unit test (reading, computation)
+Quantized Gaussian files DONE
+  * Quantization utility DONE
+  * Unit test (reading, computation) DONE
 
 Fixed-point computation
 
