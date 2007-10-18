@@ -66,6 +66,14 @@ format_tag_to_flag(gau_file_t *gau, const char *tag)
         gau->format = GAU_INT16;
         gau->width = 2;
     }
+    if (strcmp(tag, "uint32") == 0) {
+        gau->format = GAU_UINT32;
+        gau->width = 4;
+    }
+    if (strcmp(tag, "uint16") == 0) {
+        gau->format = GAU_UINT16;
+        gau->width = 2;
+    }
     if (strcmp(tag, "uint8") == 0) {
         gau->format = GAU_UINT8;
         gau->width = 1;
@@ -84,6 +92,10 @@ format_flag_to_tag(gau_file_t *gau)
         return "int32";
     case GAU_INT16:
         return "int16";
+    case GAU_UINT32:
+        return "uint32";
+    case GAU_UINT16:
+        return "uint16";
     case GAU_UINT8:
         return "uint8";
     }
@@ -129,7 +141,7 @@ gau_file_read(cmd_ln_t *config, const char *file_name, int ndim)
             if (strcmp(argval[i], "yes") == 0)
                 chksum_present = 1;
         }
-        /* Format: one of float64, float32, int32, int16, uint8 */
+        /* Format: one of float64, float32, int32, int16, uint8, etc */
         else if (strcmp(argname[i], "format") == 0) {
             format_tag_to_flag(gau, argval[i]);
         }

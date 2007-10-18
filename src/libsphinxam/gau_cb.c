@@ -144,7 +144,7 @@ gau_cb_alloc_cow_buffers(gau_cb_t *cb)
     mean_scale = (float32)(1<<DEFAULT_RADIX);
 #else
     input_format = GAU_FLOAT32;
-    mean_scale = 1.0;
+    mean_scale = 1.0f;
 #endif
 
     if (cb->mean_file) {
@@ -154,12 +154,12 @@ gau_cb_alloc_cow_buffers(gau_cb_t *cb)
         if (gau_file_get_flag(cb->mean_file, GAU_FILE_MMAP)) {
             cb->cow_means = !(cb->mean_file->format == input_format
                               && cb->mean_file->scale == mean_scale
-                              && cb->mean_file->bias == 0);
+                              && cb->mean_file->bias == 0.0f);
         }
         /* Otherwise, just check that it's the same size, since
          * they're writable. */
         else {
-            cb->cow_means = (cb->mean_file->width != sizeof(mean_t));
+            cb->cow_means = (cb->mean_file->width != sizeof(****cb->means));
         }
 
         if (cb->cow_means) {
@@ -175,10 +175,10 @@ gau_cb_alloc_cow_buffers(gau_cb_t *cb)
         if (gau_file_get_flag(cb->var_file, GAU_FILE_MMAP)) {
             /* Check that this is precomputed */
             cb->cow_vars = !(gau_file_get_flag(cb->var_file, GAU_FILE_PRECOMP)
-                             && cb->var_file->logbase == 1.0001 /* FIXME */
+                             && cb->var_file->logbase == 1.0001f /* FIXME */
                              && cb->var_file->format == input_format
-                             && cb->var_file->scale == 1.0 /* unscaled */
-                             && cb->var_file->bias == 0);
+                             && cb->var_file->scale == 1.0f /* unscaled */
+                             && cb->var_file->bias == 0.0f);
         }
         else {
             cb->cow_vars = (cb->var_file->width != sizeof(var_t));
@@ -198,10 +198,10 @@ gau_cb_alloc_cow_buffers(gau_cb_t *cb)
             /* Check that this is precomputed */
             cb->cow_norms = !(cb->norm_file
                               && gau_file_get_flag(cb->norm_file, GAU_FILE_PRECOMP)
-                              && cb->norm_file->logbase == 1.0001 /* FIXME */
+                              && cb->norm_file->logbase == 1.0001f /* FIXME */
                               && cb->norm_file->format == input_format
-                              && cb->norm_file->scale == 1.0 /* unscaled */
-                              && cb->norm_file->bias == 0);
+                              && cb->norm_file->scale == 1.0f /* unscaled */
+                              && cb->norm_file->bias == 0.0f);
         }
         else {
             cb->cow_norms = !(cb->norm_file->width == sizeof(norm_t));
