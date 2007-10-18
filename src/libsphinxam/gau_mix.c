@@ -36,11 +36,16 @@
  */
 
 #include "gau_mix.h"
+#include "gau_file.h"
 #include "ckd_alloc.h"
 #include "err.h"
 
 /* Implementation of gau_mix_t type */
 struct gau_mix_s {
+    cmd_ln_t *config;
+    gau_file_t *mixw_file;
+    int32 ***mixw;
+    uint8 cow;
 };
 
 gau_mix_t *
@@ -49,6 +54,40 @@ gau_mix_read(cmd_ln_t *config, const char *mixwfn)
     gau_mix_t *mix;
 
     mix = ckd_calloc(1, sizeof(*mix));
+
+    if ((mix->mixw_file = gau_file_read(config, mixwfn, GAU_FILE_MIXW)) == NULL) {
+        ckd_free(mix);
+        return NULL;
+    }
+
+    /* Allocate copy-on-write buffer if necessary */
+    if (gau_file_get_flag(mix->mixw_file, GAU_FILE_MMAP)) {
+        mix->cow = !(gau_file_get_flag(mix->mixw_file, GAU_FILE_PRECOMP)
+                     && gau_file_get_flag(mix->mixw_file, GAU_FILE_TRANSPOSED)
+                     && mix->mixw_file->logbase == 1.0001f /* FIXME */
+                     && mix->mixw_file->format == GAU_INT32
+                     && mix->mixw_file->scale == 1.0f
+                     && mix->mixw_file->bias == 0.0f);
+    }
+    else {
+        mix->cow = (mix->mixw_file->width != sizeof(***mix->mixw));
+    }
+
+    if (mix->cow) {
+        mix->mixw = (int32 ***)ckd_calloc_3d(mix->mixw_file->n_mgau,
+                                             mix->mixw_file->n_feat,
+                                             mix->mixw_file->n_density,
+                                             sizeof(***mix->mixw));
+    }
+    else {
+        mix->mixw = (int32 ***)ckd_alloc_3d_ptr(mix->mixw_file->n_mgau,
+                                                mix->mixw_file->n_feat,
+                                                mix->mixw_file->n_density,
+                                                gau_file_get_data(mix->mixw_file),
+                                                sizeof(***mix->mixw));
+    }
+    gau_file_dequantize_log(mix->mixw_file, mix->mixw[0][0], 1.0f,
+                            1.0001f /* FIXME */);
 
     return mix;
 }
@@ -63,13 +102,29 @@ gau_mix_read_sendump(const char *sendumpfn)
     return mix;
 }
 
-void
-gau_mix_get_dims(gau_mix_t *cb, int *out_n_mix, int *out_max_n_gau)
+size_t
+gau_mix_get_shape(gau_mix_t *mix, int *out_n_mix,
+                  int *out_n_feat, int *out_n_density, int *out_is_transposed)
 {
+    size_t nelem;
+
+    nelem = gau_file_get_shape(mix->mixw_file, out_n_mix, out_n_feat, out_n_density, NULL);
+    if (out_is_transposed)
+        *out_is_transposed = gau_file_get_flag(mix->mixw_file, GAU_FILE_TRANSPOSED);
+    return nelem;
+}
+
+int32 ***
+gau_mix_get_mixw(gau_mix_t *mix)
+{
+    return mix->mixw;
 }
 
 void
 gau_mix_free(gau_mix_t *mix)
 {
+    if (mix->cow)
+        ckd_free_3d((void ***)mix->mixw);
+    gau_file_free(mix->mixw_file);
     ckd_free(mix);
 }

@@ -134,7 +134,6 @@ gau_cb_alloc_cow_buffers(gau_cb_t *cb)
 {
     void *mean_data;
     void *var_data;
-    void *norm_data = NULL;
     int input_format;
     float32 mean_scale;
 
@@ -193,7 +192,6 @@ gau_cb_alloc_cow_buffers(gau_cb_t *cb)
     }
 
     if (cb->norm_file) {
-        norm_data = gau_file_get_data(cb->norm_file);
         if (gau_file_get_flag(cb->norm_file, GAU_FILE_MMAP)) {
             /* Check that this is precomputed */
             cb->cow_norms = !(cb->norm_file
@@ -220,7 +218,10 @@ gau_cb_alloc_cow_buffers(gau_cb_t *cb)
         }
     }
     else {
+        void *norm_data;
+
         assert(cb->norm_file != NULL);
+        norm_data = gau_file_get_data(cb->norm_file);
         cb->norms = (norm_t ***) ckd_alloc_3d_ptr(cb->norm_file->n_mgau,
                                                   cb->norm_file->n_feat,
                                                   cb->norm_file->n_density,
@@ -256,17 +257,21 @@ static void
 gau_cb_dequantize(gau_cb_t *cb)
 {
 #ifdef FIXED_POINT
-    float32 mscale = (float32)(1<<DEFAULT_RADIX);
-#else
-    float32 mscale = 1.0;
-#endif
-
     if (cb->mean_file && cb->cow_means)
-        gau_file_dequantize(cb->mean_file, cb->means[0][0][0], mscale);
+        gau_file_dequantize_int32(cb->mean_file, cb->means[0][0][0],
+                                  (float32)(1<<DEFAULT_RADIX));
     if (cb->var_file && cb->cow_vars)
-        gau_file_dequantize(cb->var_file, cb->invvars[0][0][0], 1.0f);
+        gau_file_dequantize_int32(cb->var_file, cb->invvars[0][0][0], 1.0f);
     if (cb->norm_file && cb->cow_norms)
-        gau_file_dequantize(cb->norm_file, cb->norms[0][0], 1.0f);
+        gau_file_dequantize_int32(cb->norm_file, cb->norms[0][0], 1.0f);
+#else
+    if (cb->mean_file && cb->cow_means)
+        gau_file_dequantize_float32(cb->mean_file, cb->means[0][0][0], 1.0f);
+    if (cb->var_file && cb->cow_vars)
+        gau_file_dequantize_float32(cb->var_file, cb->invvars[0][0][0], 1.0f);
+    if (cb->norm_file && cb->cow_norms)
+        gau_file_dequantize_float32(cb->norm_file, cb->norms[0][0], 1.0f);
+#endif
 }
 
 gau_cb_t *
@@ -302,10 +307,8 @@ gau_cb_read(cmd_ln_t *config, const char *meanfn, const char *varfn, const char 
         }
     }
     if (gau->var_file && gau->norm_file) {
-        if (gau->var_file->n_mgau != gau->norm_file->n_mgau
-            || gau->var_file->n_feat != gau->norm_file->n_feat
-            || gau->var_file->n_density != gau->norm_file->n_density) {
-            E_ERROR("Precomputed variances and norms have different size!\n");
+        if (!gau_file_compatible(gau->var_file, gau->norm_file)) {
+            gau_cb_free(gau);
             return NULL;
         }
     }

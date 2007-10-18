@@ -104,7 +104,7 @@ mean_t ****gau_cb_get_means(gau_cb_t *cb);
 var_t ****gau_cb_get_invvars(gau_cb_t *cb);
 
 /**
- * Retrieve the normalization constants from the codebook.
+ * Retrieve the log normalization constants from the codebook.
  */
 norm_t ***gau_cb_get_norms(gau_cb_t *cb);
 

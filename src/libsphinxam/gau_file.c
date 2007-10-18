@@ -46,6 +46,7 @@
 
 #include <string.h>
 #include <assert.h>
+#include <math.h>
 
 static void
 format_tag_to_flag(gau_file_t *gau, const char *tag)
@@ -204,6 +205,19 @@ gau_file_read(cmd_ln_t *config, const char *file_name, int ndim)
             E_ERROR("fread(%s) (feature vector-length) failed\n", file_name);
             goto error_out;
         }
+    }
+
+    /* If file is transposed, switch up the dimensions */
+    if (gau_file_get_flag(gau, GAU_FILE_TRANSPOSED)) {
+        /* Transposed files go n_feat, n_density, n_senone */
+        int32 dim[3];
+        dim[0] = gau->n_mgau;
+        dim[1] = gau->n_feat;
+        dim[2] = gau->n_density;
+
+        gau->n_feat = dim[0];
+        gau->n_density = dim[1];
+        gau->n_mgau = dim[2];
     }
 
     /* #Values to follow; for the ENTIRE SET of CODEBOOKS */
@@ -456,9 +470,6 @@ gau_file_compatible(gau_file_t *a, gau_file_t *b)
             }
         }
     }
-    else if (a->veclen || b->veclen) {
-        E_ERROR("Dimensionality of Gaussian parameter files is different!\n");
-    }
 
     return TRUE;
 }
@@ -507,48 +518,123 @@ gau_file_get_data(gau_file_t *gau)
     return gau->data;
 }
 
+/* NOTE: This is not a reason to use C++ */
+#define DEFINE_GAU_FILE_DEQUANTIZE(T)                                   \
+void                                                                    \
+gau_file_dequantize_##T(gau_file_t *file, T *outptr, float32 outscale)  \
+{                                                                       \
+    size_t nparams, pwidth;                                             \
+    float32 scale = outscale / file->scale;                             \
+    char *inptr = file->data;                                           \
+    size_t i;                                                           \
+                                                                        \
+    gau_file_get_size(file, &nparams, &pwidth);                         \
+                                                                        \
+    for (i = 0; i < nparams; ++i) {                                     \
+        /* FIXME: Maybe optimize this later */                          \
+        switch (file->format) {                                         \
+        case GAU_FLOAT32:                                               \
+            *outptr = *(float32 *)inptr * scale;                        \
+            break;                                                      \
+        case GAU_FLOAT64:                                               \
+            *outptr = *(float64 *)inptr * scale;                        \
+            break;                                                      \
+        case GAU_INT32:                                                 \
+            *outptr = *(int32 *)inptr * scale;                          \
+            break;                                                      \
+        case GAU_INT16:                                                 \
+            *outptr = *(int16 *)inptr * scale;                          \
+            break;                                                      \
+        case GAU_UINT32:                                                \
+            *outptr = *(uint32 *)inptr * scale;                         \
+            break;                                                      \
+        case GAU_UINT16:                                                \
+            *outptr = *(uint16 *)inptr * scale;                         \
+            break;                                                      \
+        case GAU_UINT8:                                                 \
+            *outptr = *(uint8 *)inptr * scale;                          \
+            break;                                                      \
+        }                                                               \
+        *outptr += file->bias;                                          \
+        if (gau_file_get_flag(file, GAU_FILE_NEGATIVE))                 \
+            *outptr = -*outptr;                                         \
+                                                                        \
+        inptr += pwidth;                                                \
+        ++outptr;                                                       \
+    }                                                                   \
+    file->bias = 0;                                                     \
+    file->scale = outscale;                                             \
+}
+
+DEFINE_GAU_FILE_DEQUANTIZE(float32)
+DEFINE_GAU_FILE_DEQUANTIZE(int32)
+
 void
-gau_file_dequantize(gau_file_t *file, void *outmem, float32 outscale)
+gau_file_dequantize_log(gau_file_t *file, int32 *outptr,
+                        float32 outscale, float32 logbase)
 {
     size_t nparams, pwidth;
-#ifdef FIXED_POINT
-    int32 *outptr = (int32 *)outmem;
-#else
-    float32 *outptr = (float32 *)outmem;
-#endif
     char *inptr = file->data;
     float32 scale = outscale / file->scale;
     size_t i;
 
     gau_file_get_size(file, &nparams, &pwidth);
 
-    for (i = 0; i < nparams; ++i) {
-        /* FIXME: Maybe optimize this later */
-        switch (file->format) {
-        case GAU_FLOAT32:
-            *outptr = *(float32 *)inptr * scale;
-            break;
-        case GAU_FLOAT64:
-            *outptr = *(float64 *)inptr * scale;
-            break;
-        case GAU_INT32:
-            *outptr = *(int32 *)inptr * scale;
-            break;
-        case GAU_INT16:
-            *outptr = *(int16 *)inptr * scale;
-            break;
-        case GAU_UINT8:
-            *outptr = *(uint8 *)inptr * scale;
-            break;
-        }
-        *outptr += file->bias;
-        if (gau_file_get_flag(file, GAU_FILE_NEGATIVE))
-            *outptr = -*outptr;
+    if (file->logbase) {
+        /* Deal with data that is already in logarithmic form. */
+        int32 logscale = (int32)(log(file->logbase) / log(logbase));
+        for (i = 0; i < nparams; ++i) {
+#define COPY_VALUE(out)                                 \
+            switch (file->format) {                     \
+            case GAU_FLOAT32:                           \
+                out = *(float32 *)inptr * scale;        \
+                break;                                  \
+            case GAU_FLOAT64:                           \
+                out = *(float64 *)inptr * scale;        \
+                break;                                  \
+            case GAU_INT32:                             \
+                out = *(int32 *)inptr * scale;          \
+                break;                                  \
+            case GAU_INT16:                             \
+                out = *(int16 *)inptr * scale;          \
+                break;                                  \
+            case GAU_UINT32:                            \
+                out = *(uint32 *)inptr * scale;         \
+                break;                                  \
+            case GAU_UINT16:                            \
+                out = *(uint16 *)inptr * scale;         \
+                break;                                  \
+            case GAU_UINT8:                             \
+                out = *(uint8 *)inptr * scale;          \
+                break;                                  \
+            }
+            COPY_VALUE(*outptr);
+            *outptr += file->bias;
+            if (gau_file_get_flag(file, GAU_FILE_NEGATIVE))
+                *outptr = -*outptr;
+            /* Note that this gets applied after the quantization scaling. */
+            *outptr *= logscale;
 
-        inptr += pwidth;
-        ++outptr;
+            inptr += pwidth;
+            ++outptr;
+        }
+    }
+    else {
+        float32 log_of_base = log(logbase);
+        for (i = 0; i < nparams; ++i) {
+            float32 outf = 1e-10;
+
+            /* Copy it to a floating point value first. */
+            COPY_VALUE(outf);
+            outf += file->bias;
+            *outptr = (int32)(log(outf) / log_of_base);
+
+            inptr += pwidth;
+            ++outptr;
+        }
     }
     file->bias = 0;
+    file->logbase = logbase;
     file->scale = outscale;
 }
 

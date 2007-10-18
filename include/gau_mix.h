@@ -57,14 +57,16 @@ typedef struct gau_mix_s gau_mix_t;
 gau_mix_t *gau_mix_read(cmd_ln_t *config, const char *mixwfn);
 
 /**
- * Read a set of Gaussian mixtures from a senone dump file.
+ * Retrieve the dimensionality and total number of elements in a set of mixtures.
  **/
-gau_mix_t *gau_mix_read_sendump(const char *sendumpfn);
+size_t gau_mix_get_shape(gau_mix_t *mix, int *out_n_mixw,
+                         int *out_n_feat, int *out_n_density,
+                         int *out_is_transposed);
 
 /**
- * Retrieve the dimensionality of a set of mixtures.
+ * Retrieve the log mixture weights from the set of mixtures.
  **/
-void gau_mix_get_dims(gau_mix_t *cb, int *out_n_mix, int *out_max_n_gau);
+int32 ***gau_mix_get_mixw(gau_mix_t *mix);
 
 /**
  * Release memory and/or file descriptors associated with Gaussian mixtures.

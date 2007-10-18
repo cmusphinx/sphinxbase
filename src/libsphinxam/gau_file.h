@@ -143,8 +143,19 @@ int gau_file_compatible(gau_file_t *a, gau_file_t *b);
 void *gau_file_get_data(gau_file_t *gau);
 
 /**
- * Undo quantization.
+ * Expand quantized data to linear float32.
  */
-void gau_file_dequantize(gau_file_t *file, void *outmem, float32 outscale);
+void gau_file_dequantize_float32(gau_file_t *file, float32 *outmem, float32 outscale);
+
+/**
+ * Expand quantized data to linear int32.
+ */
+void gau_file_dequantize_int32(gau_file_t *file, int32 *outmem, float32 outscale);
+
+/**
+ * Expand quantized data to logarithmic int32.
+ */
+void gau_file_dequantize_log(gau_file_t *file, int32 *outptr,
+                             float32 outscale, float32 logbase);
 
 #endif /* __GAU_FILE_H__ */
