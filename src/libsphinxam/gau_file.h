@@ -69,17 +69,25 @@ struct gau_file_s {
 enum gau_fmt_e {
     GAU_FLOAT32 = 0,
     GAU_FLOAT64 = 1,
-    GAU_INT8    = 2,
-    GAU_INT16   = 3,
-    GAU_INT32   = 4
+    GAU_INT16   = 2,
+    GAU_INT32   = 3,
+    GAU_UINT8   = 4,
+    GAU_UINT16  = 5,
+    GAU_UINT32  = 6
 };
 
 /**
  * Values for gau_file_t->flags
  */
 enum gau_file_flags_e {
-    GAU_FILE_MMAP    = (1<<0), /**< File uses memory-mapped I/O */
-    GAU_FILE_PRECOMP = (1<<1)  /**< Variance file contains 1/2sigma^2 */
+    GAU_FILE_MMAP       = (1<<0), /**< File uses memory-mapped I/O */
+    GAU_FILE_PRECOMP    = (1<<1), /**< Variance file contains 1/2sigma^2 */
+    /**
+     * Dimensions are "transposed", i.e. they go (feature, component,
+     * codebook) rather than (codebook, feature, component)
+     */
+    GAU_FILE_TRANSPOSED = (1<<2),
+    GAU_FILE_NEGATIVE   = (1<<3), /**< Unsigned values are negative*/
 };
 #define gau_file_set_flag(g,f) ((g)->flags |= (f))
 #define gau_file_clear_flag(g,f) ((g)->flags &= ~(f))

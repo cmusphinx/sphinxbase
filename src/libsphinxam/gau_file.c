@@ -66,8 +66,8 @@ format_tag_to_flag(gau_file_t *gau, const char *tag)
         gau->format = GAU_INT16;
         gau->width = 2;
     }
-    if (strcmp(tag, "int8") == 0) {
-        gau->format = GAU_INT8;
+    if (strcmp(tag, "uint8") == 0) {
+        gau->format = GAU_UINT8;
         gau->width = 1;
     }
 }
@@ -84,8 +84,8 @@ format_flag_to_tag(gau_file_t *gau)
         return "int32";
     case GAU_INT16:
         return "int16";
-    case GAU_INT8:
-        return "int8";
+    case GAU_UINT8:
+        return "uint8";
     }
     return "unknown";
 }
@@ -100,7 +100,7 @@ gau_file_read(cmd_ln_t *config, const char *file_name, int ndim)
     int32 byteswap, i, blk, n;
     int chksum_present = 0;
 
-    E_INFO("Reading S3 Gaussian parameter file '%s'\n", file_name);
+    E_INFO("Reading S3 parameter file '%s'\n", file_name);
     if ((fp = fopen(file_name, "rb")) == NULL) {
         E_ERROR("fopen(%s,rb) failed\n", file_name);
         return NULL;
@@ -126,9 +126,10 @@ gau_file_read(cmd_ln_t *config, const char *file_name, int ndim)
         if (strcmp(argname[i], "version") == 0) {
         }
         else if (strcmp(argname[i], "chksum0") == 0) {
-            chksum_present = 1;
+            if (strcmp(argval[i], "yes") == 0)
+                chksum_present = 1;
         }
-        /* Format: one of float64, float32, int32, int16, int8 */
+        /* Format: one of float64, float32, int32, int16, uint8 */
         else if (strcmp(argname[i], "format") == 0) {
             format_tag_to_flag(gau, argval[i]);
         }
@@ -143,6 +144,16 @@ gau_file_read(cmd_ln_t *config, const char *file_name, int ndim)
         else if (strcmp(argname[i], "logbase") == 0) {
             gau->logbase = atof(argval[i]);
             gau_file_set_flag(gau, GAU_FILE_PRECOMP);
+        }
+        /* Ordering of dimensions, either 'mfcd' or 'fcmd' */
+        else if (strcmp(argname[i], "ordering") == 0) {
+            if (strcmp(argval[i], "fcmd"))
+                gau_file_set_flag(gau, GAU_FILE_TRANSPOSED);
+        }
+        /* Unsigned valures are interpreted as negative */
+        else if (strcmp(argname[i], "negative") == 0) {
+            if (strcmp(argval[i], "yes") == 0)
+                gau_file_set_flag(gau, GAU_FILE_NEGATIVE);
         }
     }
     bio_hdrarg_free(argname, argval);
@@ -509,16 +520,18 @@ gau_file_dequantize(gau_file_t *file, void *outmem, float32 outscale)
             *outptr = *(float64 *)inptr * scale;
             break;
         case GAU_INT32:
-            *outptr = *(float32 *)inptr * scale;
+            *outptr = *(int32 *)inptr * scale;
             break;
         case GAU_INT16:
             *outptr = *(int16 *)inptr * scale;
             break;
-        case GAU_INT8:
-            *outptr = *(int8 *)inptr * scale;
+        case GAU_UINT8:
+            *outptr = *(uint8 *)inptr * scale;
             break;
         }
         *outptr += file->bias;
+        if (gau_file_get_flag(file, GAU_FILE_NEGATIVE))
+            *outptr = -*outptr;
 
         inptr += pwidth;
         ++outptr;
