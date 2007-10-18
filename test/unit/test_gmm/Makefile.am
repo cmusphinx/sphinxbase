@@ -1,9 +1,9 @@
 check_PROGRAMS = test_gmm_read test_gmm_mmap \
-	test_gmm_compute test_gau_file \
-	test_gmm_precomp test_gmm_quantize
+	test_gau_compute test_gau_file \
+	test_gau_precomp test_gau_quantize
 TESTS = test_gmm_read test_gmm_mmap \
-	test_gmm_compute test_gau_file \
-	test_gmm_precomp test_gmm_quantize
+	test_gau_compute test_gau_file \
+	test_gau_precomp test_gau_quantize
 
 INCLUDES = \
 	-I$(top_srcdir)/include \

@@ -12,7 +12,7 @@ Fixed-point computation
 
 Compressed GMM scores (16 or 8 bit)
 
-Mixture weight file reading
+Mixture weight file reading DONE
 
 Mixture computation
 
