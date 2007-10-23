@@ -260,13 +260,13 @@ gau_file_read(cmd_ln_t *config, const char *file_name, int ndim)
     /* Check alignment constraints for memory mapping */
     pos = ftell(fp);
     if (pos & ((long)gau->width - 1)) {
-        E_ERROR("%s: Data start %ld is not aligned on %d-byte boundary, will not memory map\n",
-                file_name, pos, gau->width);
+        E_WARN("%s: Data start %ld is not aligned on %d-byte boundary, will not memory map\n",
+                  file_name, pos, gau->width);
         gau_file_clear_flag(gau, GAU_FILE_MMAP);
     }
     /* Check byte order for memory mapping */
     if (byteswap) {
-        E_ERROR("%s: Data is wrong-endian, will not memory map\n", file_name);
+        E_WARN("%s: Data is wrong-endian, will not memory map\n", file_name);
         gau_file_clear_flag(gau, GAU_FILE_MMAP);
     }
 
