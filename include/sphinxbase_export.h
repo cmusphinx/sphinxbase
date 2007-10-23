@@ -3,7 +3,7 @@
 
 /* Win32/WinCE DLL gunk */
 #if (defined(_WIN32) || defined(_WIN32_WCE)) \
-	&& !defined(LIBPOCKETSPHINX) && !defined(CYGWIN)
+	&& defined(SPHINXDLL) && !defined(CYGWIN)
 #ifdef SPHINXBASE_EXPORTS
 #define SPHINXBASE_EXPORT __declspec(dllexport)
 #else
