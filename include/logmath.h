@@ -38,6 +38,22 @@
  * \file logmath.h
  *
  * \brief Fast integer logarithmic addition operations.
+ *
+ * In evaluating HMM models, probability values are often kept in log domain,
+ * to avoid overflow.  Furthermore, to enable these logprob values to be held
+ * in int32 variables without significant loss of precision, a logbase of
+ * (1+epsilon), epsilon<<1, is used.  This module maintains this logbase (B).
+ * 
+ * More important, maintaining probabilities in log domain creates a problem when
+ * adding two probability values: difficult in the log domain.
+ * Suppose P = Q+R (0 <= P,Q,R,Q+R <= 1), and we have to compute:
+ *   logB(P), given logB(Q) and logB(R).  Assume Q >= R.
+ *   Let z = logB(P), x = logB(Q), y = logB(R).
+ *   Therefore, B^z = B^x + B^y = B^x(1 + B^(y-x)).
+ *   Therefore, z = x + logB(1+B^(y-x)).
+ * Since the latter term only depends on y-x, and log probs are kept in integer
+ * variables, it can be precomputed into a table for y-x = 0, -1, -2, -3... until
+ * logB(1+B^(y-x)) = (int32) 0.
  */
 
 #ifndef __LOGMATH_H__
