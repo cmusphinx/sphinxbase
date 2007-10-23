@@ -103,12 +103,18 @@ feat_read_lda(feat_t *feat, const char *ldafile, int32 dim)
     if (feat->lda)
         ckd_free_3d((void ***)feat->lda);
 
-    if (bio_fread_3d((void ****)&feat->lda, sizeof(float32),
-                     &feat->n_lda, &m, &n,
-                     fh, byteswap, &chksum) < 0) {
-        E_ERROR_SYSTEM("%s: bio_fread_3d(lda) failed\n", ldafile);
-        fclose(fh);
-        return -1;
+    {
+        /* Use a temporary variable to avoid strict-aliasing problems. */
+        void ***outlda;
+
+        if (bio_fread_3d(&outlda, sizeof(float32),
+                         &feat->n_lda, &m, &n,
+                         fh, byteswap, &chksum) < 0) {
+            E_ERROR_SYSTEM("%s: bio_fread_3d(lda) failed\n", ldafile);
+            fclose(fh);
+            return -1;
+        }
+        feat->lda = (void *)outlda;
     }
 #ifdef FIXED_POINT
     /* FIXME: This is a fragile hack that depends on mfcc_t and
