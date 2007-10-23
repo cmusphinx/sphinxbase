@@ -17,6 +17,9 @@ pkginclude_HEADERS =				\
 	filename.h				\
 	fixpoint.h				\
 	gau_cb.h				\
+	gau_cb_int32.h				\
+	gau_cb_float64.h			\
+	gau_file.h				\
 	gau_mix.h				\
 	genrand.h				\
 	glist.h					\
@@ -25,6 +28,7 @@ pkginclude_HEADERS =				\
 	info.h					\
 	libutil.h				\
 	linklist.h				\
+	logmath.h				\
 	matrix.h				\
 	mmio.h                                  \
 	mulaw.h					\

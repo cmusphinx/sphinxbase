@@ -1,4 +1,4 @@
-#include <gau_cb.h>
+#include <gau_cb_int32.h>
 #include <feat.h>
 #include <strfuncs.h>
 #include <ckd_alloc.h>
@@ -14,7 +14,7 @@ int
 main(int argc, char *argv[])
 {
 	gau_cb_t *cb;
-	mean_t *mptr, *means;
+	float32 *mptr, *means;
 	int16 *qptr, *qmeans;
 	gau_file_t out_file;
 	mfcc_t ***feats;
@@ -25,7 +25,7 @@ main(int argc, char *argv[])
 	size_t nelem, n;
 	float32 min, max;
 
-	cb = gau_cb_read(NULL, HMMDIR "/means", HMMDIR "/variances", NULL);
+	cb = gau_cb_int32_read(NULL, HMMDIR "/means", HMMDIR "/variances", NULL);
 	fcb = feat_init("1s_c_d_dd", CMN_CURRENT, FALSE, AGC_NONE, TRUE, 13);
 	nfr = feat_s2mfc2feat(fcb, HMMDIR "/pittsburgh.mfc", NULL, NULL,
 			      0, -1, NULL, -1);
@@ -33,7 +33,7 @@ main(int argc, char *argv[])
 	nfr = feat_s2mfc2feat(fcb, HMMDIR "/pittsburgh.mfc", NULL, NULL,
 			      0, -1, feats, nfr);
 
-	best = gau_cb_compute_all(cb, 190, 0, feats[30][0], out_den, INT_MIN);
+	best = gau_cb_int32_compute_all(cb, 190, 0, feats[30][0], out_den, INT_MIN);
 	for (i = 0; i < 4; ++i) {
 		printf("%d: %d\n", i, out_den[i]);
 	}
@@ -47,7 +47,7 @@ main(int argc, char *argv[])
 				 (const int **)&out_file.veclen);
 
 	/* Quantize data. */
-	mptr = means = gau_cb_get_means(cb)[0][0][0];
+	mptr = means = gau_cb_int32_get_means(cb)[0][0][0];
 	min = 1e+50;
 	max = -1e+50;
 	for (n = 0; n < nelem; ++n) {
@@ -69,13 +69,13 @@ main(int argc, char *argv[])
 	out_file.width = 2;
 	out_file.data = qmeans;
 	gau_file_write(&out_file, "tmp.means", FALSE);
-	gau_cb_free(cb);
+	gau_cb_int32_free(cb);
 	ckd_free(qmeans);
 
 	/* Finally reload it with the precomputed data, and verify it. */
-	cb = gau_cb_read(NULL, "tmp.means", HMMDIR "/variances", NULL);
+	cb = gau_cb_int32_read(NULL, "tmp.means", HMMDIR "/variances", NULL);
 
-	best = gau_cb_compute_all(cb, 190, 0, feats[30][0], out_den, INT_MIN);
+	best = gau_cb_int32_compute_all(cb, 190, 0, feats[30][0], out_den, INT_MIN);
 	for (i = 0; i < 4; ++i) {
 		printf("%d: %d\n", i, out_den[i]);
 	}
@@ -83,7 +83,7 @@ main(int argc, char *argv[])
 	TEST_EQUAL(best, 1);
 	TEST_EQUAL_LOG(out_den[best], -107958);
 
-	gau_cb_free(cb);
+	gau_cb_int32_free(cb);
 
 	return 0;
 }

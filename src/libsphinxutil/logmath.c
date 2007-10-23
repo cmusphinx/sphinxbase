@@ -1,6 +1,6 @@
 /* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* ====================================================================
- * Copyright (c) 2007 Carnegie Mellon University.  All rights
+ * Copyright (c) 1999-2007 Carnegie Mellon University.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,57 +34,87 @@
  * ====================================================================
  *
  */
-/**
- * \file gau_cb.h
- * \author David Huggins-Daines <dhuggins@cs.cmu.edu>
- *
- * Gaussian distribution parameters (common functions)
- */
 
-#ifndef __GAU_CB_H__
-#define __GAU_CB_H__
+#include <logmath.h>
 
-#include <sphinx_config.h>
-#include <cmd_ln.h>
-#include <gau_file.h>
-
-/**
- * Abstract type representing a set (codebook) of Gaussians.  This is
- * a "base class" which is built upon by gau_cb_int32 and
- * gau_cb_float64 among others.
- */
-typedef struct gau_cb_s gau_cb_t;
-struct gau_cb_s {
-    cmd_ln_t *config;
-    gau_file_t *mean_file;
-    gau_file_t *norm_file;
-    gau_file_t *var_file;
+struct logmath_s {
+    float64 base;
+    uint8 width;
+    uint8 shift;
 };
 
-/**
- * Retrieve the dimensionality of a codebook and number of elements.
- */
-size_t gau_cb_get_shape(gau_cb_t *cb, int *out_n_gau, int *out_n_feat,
-                        int *out_n_density, const int **out_veclen);
+logmath_t *
+logmath_init(float64 base, int width, int shift)
+{
+    logmath_t *lmath;
 
-/**
- * Allocate a 4-D array for Gaussian parameters.
- */
-void * gau_param_alloc(gau_cb_t *cb, size_t n);
+    if (base <= 1.0) {
+        E_ERROR("Base must be greater than 1.0\n");
+        return NULL;
+    }
 
-/**
- * Allocate a 4-D array for Gaussian parameters using existing backing memory.
- */
-void *gau_param_alloc_ptr(gau_cb_t *cb, char *mem, size_t n);
+    
+}
 
-/**
- * Free a Gaussian parameter array.
- */
-void gau_param_free(void *p);
+logmath_t *
+logmath_read(const char *filename)
+{
+}
 
-/**
- * Free an array of pointers overlaid on backing memory.
- */
-#define gau_param_free_ptr(p) ckd_free_3d((void ***)p)
+void
+logmath_free(logmath_t *lmath)
+{
+}
 
-#endif /* __GAU_CB_H__ */
+float64
+logmath_get_base(logmath_t *lmath)
+{
+    return lmath->base;
+}
+
+int
+logmath_get_width(logmath_t *lmath)
+{
+    return lmath->width;
+}
+
+int
+logmath_get_shift(logmath_t *lmath)
+{
+    return lmath->shift;
+}
+
+int
+logmath_add(logmath_t *lmath, int logb_p, int logb_q)
+{
+}
+
+int
+logmath_log(logmath_t *lmath, float64 p)
+{
+}
+
+float64
+logmath_exp(logmath_t *lmath, int logb_p)
+{
+}
+
+int
+logmath_ln_to_log(logmath_t *lmath, float64 log_p)
+{
+}
+
+float64
+logmath_log_to_ln(logmath_t *lmath, int logb_p)
+{
+}
+
+int
+logmath_log10_to_log(logmath_t *lmath, float64 log_p)
+{
+}
+
+float64
+logmath_log_to_log10(logmath_t *lmath, int logb_p)
+{
+}

@@ -39,8 +39,7 @@
  * GMM precomputation tool.
  */
 #include <gau_cb.h>
-#include <gau_mix.h>
-
+#include <gau_cb_int32.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -107,8 +106,8 @@ main(int argc, char *argv[])
     gau_cb_t *cb;
     gau_file_t out_file;
     int byteswap;
-    var_t ****invvars;
-    norm_t ***norms;
+    float32 ****invvars;
+    float32 ***norms;
 
     config = cmd_ln_parse_r(NULL, defn, argc, argv, TRUE);
     if (config == NULL) {
@@ -124,10 +123,10 @@ main(int argc, char *argv[])
     byteswap = !strcmp(cmd_ln_str_r(config, "-output_endian"), "big");
 #endif
 
-    cb = gau_cb_read(config, NULL, invar, NULL);
+    cb = gau_cb_int32_read(config, NULL, invar, NULL);
 
-    invvars = gau_cb_get_invvars(cb);
-    norms = gau_cb_get_norms(cb);
+    invvars = gau_cb_int32_get_invvars(cb);
+    norms = gau_cb_int32_get_norms(cb);
 
     /* Create a new gau_file_t to write out precompiled data. */
     gau_cb_get_shape(cb, &out_file.n_mgau,
@@ -153,7 +152,7 @@ main(int argc, char *argv[])
     /* Write out normalizers. */
     gau_file_write(&out_file, outnorm, byteswap);
 
-    gau_cb_free(cb);
+    gau_cb_int32_free(cb);
     
     return 0;
 }

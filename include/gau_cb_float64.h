@@ -38,53 +38,69 @@
  * \file gau_cb.h
  * \author David Huggins-Daines <dhuggins@cs.cmu.edu>
  *
- * Gaussian distribution parameters (common functions)
+ * Gaussian distribution parameters (linear floating-point computation)
  */
 
-#ifndef __GAU_CB_H__
-#define __GAU_CB_H__
+#ifndef __GAU_CB_FLOAT64_H__
+#define __GAU_CB_FLOAT64_H__
 
 #include <sphinx_config.h>
 #include <cmd_ln.h>
-#include <gau_file.h>
+#include <gau_cb.h>
 
 /**
- * Abstract type representing a set (codebook) of Gaussians.  This is
- * a "base class" which is built upon by gau_cb_int32 and
- * gau_cb_float64 among others.
+ * Type representing a single density for computation.
  */
-typedef struct gau_cb_s gau_cb_t;
-struct gau_cb_s {
-    cmd_ln_t *config;
-    gau_file_t *mean_file;
-    gau_file_t *norm_file;
-    gau_file_t *var_file;
+typedef struct gau_den_float64_s gau_den_float64_t;
+struct gau_den_s {
+    int32 idx;   /**< Index of Gaussian to compute. */
+    float64 val; /**< Density for this Gaussian. */
 };
 
 /**
- * Retrieve the dimensionality of a codebook and number of elements.
+ * Read a codebook of Gaussians from mean and variance files and
+ * precompute for linear float64 computation.
  */
-size_t gau_cb_get_shape(gau_cb_t *cb, int *out_n_gau, int *out_n_feat,
-                        int *out_n_density, const int **out_veclen);
+gau_cb_t *gau_cb_float64_read(
+	cmd_ln_t *config,    /**< Configuration parameters */
+	const char *meanfn,  /**< Filename for means */
+	const char *varfn,   /**< Filename for variances */
+	const char *normfn   /**< (optional) Filename for normalization
+				constants  */
+	);
 
 /**
- * Allocate a 4-D array for Gaussian parameters.
+ * Compute all floating point densities for a single feature stream in
+ * an observation.
+ *
+ * @return the index of the highest density
  */
-void * gau_param_alloc(gau_cb_t *cb, size_t n);
+int gau_cb_float64_compute_all(gau_cb_t *cb, int mgau, int feat,
+                       mfcc_t *obs, float64 *out_den, int worst);
 
 /**
- * Allocate a 4-D array for Gaussian parameters using existing backing memory.
+ * Compute a subset of floating point densities for a single feature
+ * stream in an observation.
+ *
+ * @return the offset in inout_den of the lowest density
  */
-void *gau_param_alloc_ptr(gau_cb_t *cb, char *mem, size_t n);
+int gau_cb_float64_compute(gau_cb_t *cb, int mgau, int feat,
+			   mfcc_t *obs,
+			   gau_den_float64_t *inout_den, int nden);
 
 /**
- * Free a Gaussian parameter array.
+ * Retrieve the mean vectors from the codebook.
  */
-void gau_param_free(void *p);
+float32 ****gau_cb_float64_get_means(gau_cb_t *cb);
 
 /**
- * Free an array of pointers overlaid on backing memory.
+ * Retrieve the scaled inverse variance vectors from the codebook.
  */
-#define gau_param_free_ptr(p) ckd_free_3d((void ***)p)
+float32 ****gau_cb_float64_get_invvars(gau_cb_t *cb);
 
-#endif /* __GAU_CB_H__ */
+/**
+ * Retrieve the normalization constants from the codebook.
+ */
+float32 ***gau_cb_float64_get_norms(gau_cb_t *cb);
+
+#endif /* __GAU_CB_FLOAT64_H__ */
