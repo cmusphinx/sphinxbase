@@ -199,6 +199,7 @@ test/unit/test_cmdln/Makefile
 test/unit/test_hash/Makefile
 test/unit/test_matrix/Makefile
 test/unit/test_feat/Makefile
+test/unit/test_logmath/Makefile
 test/unit/test_gmm/Makefile
 test/regression/testfuncs.sh
 test/regression/Makefile
