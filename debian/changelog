@@ -1,3 +1,9 @@
+sphinxbase (0.4-0svn1) unstable; urgency=low
+
+  * Snapshot version!
+
+ -- David Huggins-Daines <dhdfoo@gmail.com>  Mon, 22 Oct 2007 23:42:22 -0400
+
 sphinxbase (0.3-0svn4) unstable; urgency=low
 
   * Merge changes from Ubuntu packaging.
