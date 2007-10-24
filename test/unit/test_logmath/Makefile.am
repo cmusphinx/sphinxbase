@@ -1,5 +1,5 @@
-check_PROGRAMS = test_log_int16 test_log_int8
-TESTS = test_log_int16 test_log_int8
+check_PROGRAMS = test_log_int16 test_log_int8 test_log_shifted
+TESTS = test_log_int16 test_log_int8 test_log_shifted
 
 INCLUDES = \
 	-I$(top_srcdir)/include \

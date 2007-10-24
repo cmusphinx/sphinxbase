@@ -349,6 +349,10 @@ logmath_add(logmath_t *lmath, int logb_x, int logb_y)
         r = logb_y;
     }
 
+    /* FIXME: The tables are indexed by the full (unshifted)
+     * difference, which is very wasteful of memory. */
+    d <<= lmath->shift;
+
     if (d < 0 || d > lmath->table_size) {
         E_WARN("Overflow in logmath_add: d = %d\n", d);
         return r;
@@ -373,35 +377,36 @@ logmath_log(logmath_t *lmath, float64 p)
          * for the table width. */
         return ((int)0xe0000000) >> ((4 - lmath->width) * 8);
     }
-    return (int)(log(p) * lmath->inv_log_of_base);
+    /* FIXME: This truncates when it probably should be rounding. */
+    return (int)(log(p) * lmath->inv_log_of_base) >> lmath->shift;
 }
 
 float64
 logmath_exp(logmath_t *lmath, int logb_p)
 {
-    return pow(lmath->base, (float64)logb_p);
+    return pow(lmath->base, (float64)(logb_p << lmath->shift));
 }
 
 int
 logmath_ln_to_log(logmath_t *lmath, float64 log_p)
 {
-    return (int)(log_p * lmath->inv_log_of_base);
+    return (int)(log_p * lmath->inv_log_of_base) >> lmath->shift;
 }
 
 float64
 logmath_log_to_ln(logmath_t *lmath, int logb_p)
 {
-    return (float64)logb_p * lmath->log_of_base;
+    return (float64)(logb_p << lmath->shift) * lmath->log_of_base;
 }
 
 int
 logmath_log10_to_log(logmath_t *lmath, float64 log_p)
 {
-    return (int)(log_p * lmath->inv_log10_of_base);
+    return (int)(log_p * lmath->inv_log10_of_base) >> lmath->shift;
 }
 
 float64
 logmath_log_to_log10(logmath_t *lmath, int logb_p)
 {
-    return (float64)logb_p * lmath->log10_of_base;
+    return (float64)(logb_p << lmath->shift) * lmath->log10_of_base;
 }

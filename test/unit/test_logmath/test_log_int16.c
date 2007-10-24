@@ -19,7 +19,8 @@ main(int argc, char *argv[])
 	printf("exp(log(42)) = %f\n",logmath_exp(lmath, 37378));
 	TEST_EQUAL_FLOAT(logmath_exp(lmath, 37378), 42);
 	TEST_EQUAL_LOG(logmath_add(lmath, logmath_log(lmath, 1e-48),
-				   logmath_log(lmath, 5e-48)), -1087377);
+				   logmath_log(lmath, 5e-48)),
+		       logmath_log(lmath, 6e-48));
 	TEST_EQUAL_LOG(logmath_add(lmath, logmath_log(lmath, 1e-48),
 				   logmath_log(lmath, 42)), 37378);
 
@@ -31,7 +32,8 @@ main(int argc, char *argv[])
 	TEST_EQUAL_LOG(logmath_log(lmath, 1e-48), -1105296);
 	TEST_EQUAL_LOG(logmath_log(lmath, 42), 37378);
 	TEST_EQUAL_LOG(logmath_add(lmath, logmath_log(lmath, 1e-48),
-				   logmath_log(lmath, 5e-48)), -1087377);
+				   logmath_log(lmath, 5e-48)),
+		       logmath_log(lmath, 6e-48));
 	TEST_EQUAL_LOG(logmath_add(lmath, logmath_log(lmath, 1e-48),
 				   logmath_log(lmath, 42)), 37378);
 	logmath_free(lmath);
