@@ -100,7 +100,7 @@ logmath_init(float64 base, int width, int shift)
                 * are dealing with very small positive numbers). */
     for (i = 0;; ++i) {
         float64 lobyx = log(1.0 + byx) * lmath->inv_log_of_base; /* log_{base}(1 + base^{y-x}); */
-        int32 k = (int32) (lobyx + 0.5); /* Round to integer */
+        int32 k = (int32) (lobyx + 0.5 * (1<<shift)) >> shift; /* Round to shift */
 
         /* base^{y-x} has reached the smallest representable value. */
         if (k <= 0)
@@ -109,6 +109,7 @@ logmath_init(float64 base, int width, int shift)
         /* Decay base^{y-x} exponentially according to base. */
         byx /= base;
     }
+    i >>= shift;
 
     lmath->table = ckd_calloc(i+1, width);
     lmath->table_size = i + 1;
@@ -116,18 +117,34 @@ logmath_init(float64 base, int width, int shift)
     byx = 1.0;
     for (i = 0;; ++i) {
         float64 lobyx = log(1.0 + byx) * lmath->inv_log_of_base;
-        int32 k = (int32) (lobyx + 0.5); /* Round to integer */
+        int32 k = (int32) (lobyx + 0.5 * (1<<shift)) >> shift; /* Round to shift */
+        uint32 prev = 0;
 
+        /* Check any previous value - if there is a shift, we want to
+         * only store the highest one. */
         switch (width) {
         case 1:
-            ((uint8 *)lmath->table)[i] = (uint8) (k >> shift);
+            prev = ((uint8 *)lmath->table)[i >> shift];
             break;
         case 2:
-            ((uint16 *)lmath->table)[i] = (uint16) (k >> shift);
+            prev = ((uint16 *)lmath->table)[i >> shift];
             break;
         case 4:
-            ((uint32 *)lmath->table)[i] = (uint32) (k >> shift);
+            prev = ((uint32 *)lmath->table)[i >> shift];
             break;
+        }
+        if (prev == 0) {
+            switch (width) {
+            case 1:
+                ((uint8 *)lmath->table)[i >> shift] = (uint8) k;
+                break;
+            case 2:
+                ((uint16 *)lmath->table)[i >> shift] = (uint16) k;
+                break;
+            case 4:
+                ((uint32 *)lmath->table)[i >> shift] = (uint32) k;
+                break;
+            }
         }
         if (k <= 0)
             break;
@@ -349,10 +366,6 @@ logmath_add(logmath_t *lmath, int logb_x, int logb_y)
         r = logb_y;
     }
 
-    /* FIXME: The tables are indexed by the full (unshifted)
-     * difference, which is very wasteful of memory. */
-    d <<= lmath->shift;
-
     if (d < 0 || d > lmath->table_size) {
         E_WARN("Overflow in logmath_add: d = %d\n", d);
         return r;
@@ -377,7 +390,6 @@ logmath_log(logmath_t *lmath, float64 p)
          * for the table width. */
         return ((int)0xe0000000) >> ((4 - lmath->width) * 8);
     }
-    /* FIXME: This truncates when it probably should be rounding. */
     return (int)(log(p) * lmath->inv_log_of_base) >> lmath->shift;
 }
 
