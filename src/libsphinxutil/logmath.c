@@ -72,17 +72,25 @@ logmath_init(float64 base, int width, int shift)
     }
 
     /* Width must be 1,2,or 4! */
-    if (!(width == 1 || width == 2 || width == 4)) {
-        E_ERROR("Width must be a small power of 2 (1, 2, or 4)\n");
+    if (!(width == 0 || width == 1 || width == 2 || width == 4)) {
+        E_ERROR("Width must be 0 or a small power of 2 (1, 2, or 4)\n");
         return NULL;
     }
 
     /* Check to make sure that we can create a logadd table for this width/shift */
     maxyx = (uint32) (log(2.0) / log(base) + 0.5);
-    if ((maxyx >> shift) > ((uint32)0xffffffff >> ((4 - width) * 8))) {
-        E_ERROR("Log-add table cannot be represented in %d bytes >> %d bits (max value %d > %d)\n",
-                width, shift, maxyx >> shift, ((uint32)0xffffffff >> ((4 - width) * 8)));
-        return NULL;
+    if (width) {
+        if ((maxyx >> shift) > ((uint32)0xffffffff >> ((4 - width) * 8))) {
+            E_ERROR("Log-add table cannot be represented in %d bytes >> %d bits (max value %d > %d)\n",
+                    width, shift, maxyx >> shift, ((uint32)0xffffffff >> ((4 - width) * 8)));
+            return NULL;
+        }
+    }
+    else {
+        /* Poor man's log2 */
+        if (maxyx < 256) width = 1;
+        else if (maxyx < 65536) width = 2;
+        else width = 4;
     }
 
     /* Set up various necessary constants. */

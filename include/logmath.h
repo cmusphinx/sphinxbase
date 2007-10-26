@@ -71,7 +71,9 @@ typedef struct logmath_s logmath_t;
 /**
  * Initialize a log math computation table.
  * @param logbase The base B in which computation is to be done.
- * @param width The width of the integers used to store logarithmic values.
+ * @param width The width of the integers used to store logarithmic
+ *              values.  If this is zero, it will be determined
+ *              automatically from logbase.
  * @param shift The right shift (scaling factor) applied to values.
  * @return The newly created log math table.
  */
