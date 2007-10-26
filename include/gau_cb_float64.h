@@ -35,7 +35,7 @@
  *
  */
 /**
- * \file gau_cb.h
+ * \file gau_cb_float64.h
  * \author David Huggins-Daines <dhuggins@cs.cmu.edu>
  *
  * Gaussian distribution parameters (linear floating-point computation)
@@ -47,12 +47,13 @@
 #include <sphinx_config.h>
 #include <cmd_ln.h>
 #include <gau_cb.h>
+#include <fe.h>
 
 /**
  * Type representing a single density for computation.
  */
 typedef struct gau_den_float64_s gau_den_float64_t;
-struct gau_den_s {
+struct gau_den_float64_s {
     int32 idx;   /**< Index of Gaussian to compute. */
     float64 val; /**< Density for this Gaussian. */
 };
@@ -70,13 +71,18 @@ gau_cb_t *gau_cb_float64_read(
 	);
 
 /**
+ * Free a codebook loaded with gau_cb_float64_read().
+ */
+void gau_cb_float64_free(gau_cb_t *gau);
+
+/**
  * Compute all floating point densities for a single feature stream in
  * an observation.
  *
  * @return the index of the highest density
  */
 int gau_cb_float64_compute_all(gau_cb_t *cb, int mgau, int feat,
-                       mfcc_t *obs, float64 *out_den, int worst);
+                       mfcc_t *obs, float64 *out_den, float64 worst);
 
 /**
  * Compute a subset of floating point densities for a single feature
