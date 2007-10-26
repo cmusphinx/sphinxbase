@@ -51,6 +51,7 @@ struct logmath_s {
     float64 log10_of_base;
     float64 inv_log_of_base;
     float64 inv_log10_of_base;
+    int32 zero;
     uint8 width;
     uint8 shift;
     uint32 table_size;
@@ -102,7 +103,7 @@ logmath_init(float64 base, int width, int shift)
     lmath->inv_log10_of_base = 1.0/lmath->log10_of_base;
     lmath->width = width;
     lmath->shift = shift;
-
+    lmath->zero = logmath_log(lmath, 1e-300);
     /* Figure out size of add table required. */
     byx = 1.0; /* Maximum possible base^{y-x} value (this assumes we
                 * are dealing with very small positive numbers). */
@@ -348,6 +349,12 @@ logmath_get_base(logmath_t *lmath)
 }
 
 int
+logmath_get_zero(logmath_t *lmath)
+{
+    return lmath->zero;
+}
+
+int
 logmath_get_width(logmath_t *lmath)
 {
     return lmath->width;
@@ -394,9 +401,7 @@ int
 logmath_log(logmath_t *lmath, float64 p)
 {
     if (p <= 0) {
-        /* Return the appropriate approximation of negative infinity
-         * for the table width. */
-        return ((int)0xe0000000) >> ((4 - lmath->width) * 8);
+        return lmath->zero;
     }
     return (int)(log(p) * lmath->inv_log_of_base) >> lmath->shift;
 }

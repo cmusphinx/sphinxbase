@@ -95,6 +95,11 @@ int32 logmath_write(logmath_t *lmath, const char *filename);
 float64 logmath_get_base(logmath_t *lmath);
 
 /**
+ * Get the smallest possible value represented in this base.
+ */
+int logmath_get_zero(logmath_t *lmath);
+
+/**
  * Get the width of the values in a log table.
  */
 int logmath_get_width(logmath_t *lmath);
