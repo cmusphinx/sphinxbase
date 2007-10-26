@@ -381,8 +381,11 @@ logmath_add(logmath_t *lmath, int logb_x, int logb_y)
         r = logb_y;
     }
 
-    if (d < 0 || d > lmath->table_size) {
-        E_WARN("Overflow in logmath_add: d = %d\n", d);
+    assert(d >= 0);
+    if (d > lmath->table_size) {
+        /* If this happens, it's not actually an error, because the
+         * last entry in the logadd table is guaranteed to be zero.
+         * Therefore we just return the larger of the two values. */
         return r;
     }
 
