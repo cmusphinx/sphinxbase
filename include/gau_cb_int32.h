@@ -47,6 +47,7 @@
 #include <sphinx_config.h>
 #include <cmd_ln.h>
 #include <gau_cb.h>
+#include <fixpoint.h>
 #include <fe.h>
 
 /**
@@ -94,20 +95,30 @@ int gau_cb_int32_compute(gau_cb_t *gau, int mgau, int feat,
 			 mfcc_t *obs,
 			 gau_den_int32_t *inout_den, int nden);
 
+#ifdef FIXED_POINT
+typedef fixed32 int32_mean_t; /**< Type of precomputed means for gau_cb_int32. */
+typedef int32 int32_var_t; /**< Type of precomputed invvars for gau_cb_int32. */
+typedef int32 int32_norm_t; /**< Type of precomputed norms for gau_cb_int32. */
+#else
+typedef float32 int32_mean_t; /**< Type of precomputed means for gau_cb_int32. */
+typedef float32 int32_var_t; /**< Type of precomputed invvars for gau_cb_int32. */
+typedef float32 int32_norm_t; /**< Type of precomputed norms for gau_cb_int32. */
+#endif
+
 /**
  * Retrieve the mean vectors from the codebook.
  */
-float32 ****gau_cb_int32_get_means(gau_cb_t *gau);
+int32_mean_t ****gau_cb_int32_get_means(gau_cb_t *gau);
 
 /**
  * Retrieve the scaled inverse variance vectors from the codebook.
  */
-float32 ****gau_cb_int32_get_invvars(gau_cb_t *gau);
+int32_var_t ****gau_cb_int32_get_invvars(gau_cb_t *gau);
 
 /**
  * Retrieve the log normalization constants from the codebook.
  */
-float32 ***gau_cb_int32_get_norms(gau_cb_t *gau);
+int32_norm_t ***gau_cb_int32_get_norms(gau_cb_t *gau);
 
 
 #endif /* __GAU_CB_INT32_H__ */

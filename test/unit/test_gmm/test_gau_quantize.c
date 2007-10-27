@@ -14,7 +14,7 @@ int
 main(int argc, char *argv[])
 {
 	gau_cb_t *cb;
-	float32 *mptr, *means;
+	int32_mean_t *mptr, *means;
 	int16 *qptr, *qmeans;
 	gau_file_t out_file;
 	mfcc_t ***feats;
@@ -23,7 +23,8 @@ main(int argc, char *argv[])
 	int best, i;
 	int32 out_den[4];
 	size_t nelem, n;
-	float32 min, max;
+	int32_mean_t min, max;
+	float32 halfrange;
 
 	cb = gau_cb_int32_read(NULL, HMMDIR "/means", HMMDIR "/variances", NULL);
 	fcb = feat_init("1s_c_d_dd", CMN_CURRENT, FALSE, AGC_NONE, TRUE, 13);
@@ -48,23 +49,35 @@ main(int argc, char *argv[])
 
 	/* Quantize data. */
 	mptr = means = gau_cb_int32_get_means(cb)[0][0][0];
+#ifdef FIXED_POINT
+	min = INT_MAX;
+	max = INT_MIN;
+#else
 	min = 1e+50;
 	max = -1e+50;
+#endif
 	for (n = 0; n < nelem; ++n) {
 		if (*mptr < min) min = *mptr;
 		if (*mptr > max) max = *mptr;
 		++mptr;
 	}
-	out_file.scale = (max - min) / 2;
-	out_file.bias = min + out_file.scale;
-	out_file.scale = 32767 / out_file.scale;
+	halfrange = (float32)(max - min) / 2;
+	out_file.bias = (float32)min + halfrange;
+	out_file.scale = (32767.0 / halfrange);
 	mptr = means;
 	qptr = qmeans = ckd_calloc(nelem, sizeof(*qmeans));
+#ifdef FIXED_POINT
+	printf("min %d max %d bias %f scale %f\n",
+	       min, max, out_file.bias, out_file.scale);
+#else
 	printf("min %f max %f bias %f scale %f\n",
 	       min, max, out_file.bias, out_file.scale);
+#endif
 	for (n = 0; n < nelem; ++n) {
 		*qptr++ = (int16)((*mptr++ - out_file.bias) * out_file.scale);
 	}
+	/* Now incorporate any previous scaling before writing the file. */
+	out_file.scale *= cb->mean_file->scale;
 	out_file.format = GAU_INT16;
 	out_file.width = 2;
 	out_file.data = qmeans;

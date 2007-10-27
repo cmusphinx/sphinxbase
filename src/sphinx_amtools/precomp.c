@@ -106,8 +106,8 @@ main(int argc, char *argv[])
     gau_cb_t *cb;
     gau_file_t out_file;
     int byteswap;
-    float32 ****invvars;
-    float32 ***norms;
+    int32_var_t ****invvars;
+    int32_norm_t ***norms;
 
     config = cmd_ln_parse_r(NULL, defn, argc, argv, TRUE);
     if (config == NULL) {

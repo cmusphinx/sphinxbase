@@ -12,10 +12,11 @@ int
 main(int argc, char *argv[])
 {
 	gau_cb_t *cb;
-	float32 ****invvars;
-	float32 ***norms;
+	int32_var_t ****invvars;
+	int32_norm_t ***norms;
 	gau_file_t out_file;
-	float32 invvar, norm;
+	int32_var_t invvar;
+	int32_norm_t norm;
 
 	mfcc_t ***feats;
 	feat_t *fcb;
@@ -49,7 +50,11 @@ main(int argc, char *argv[])
 	gau_cb_get_shape(cb, &out_file.n_mgau,
 			 &out_file.n_feat, &out_file.n_density,
 			 (const int **)&out_file.veclen);
+#ifdef FIXED_POINT
+	out_file.format = GAU_INT32;
+#else
 	out_file.format = GAU_FLOAT32;
+#endif
 	out_file.width = 4;
 	out_file.flags = GAU_FILE_PRECOMP;
 	out_file.scale = 1.0;
