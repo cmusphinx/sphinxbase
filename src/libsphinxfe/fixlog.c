@@ -125,7 +125,7 @@ fixlog2(uint32 x)
     uint32 y;
 
     if (x == 0)
-        return INT_MIN;
+        return MIN_FIXLOG2;
 
     /* Get the exponent. */
 #ifdef __i386__
@@ -156,6 +156,9 @@ int
 fixlog(uint32 x)
 {
     int32 y;
+
+    if (x == 0)
+        return MIN_FIXLOG;
 
     y = fixlog2(x);
     return FIXMUL(y, FIXLN_2);

@@ -23,8 +23,10 @@ main(int argc, char *argv[])
 	int nfr;
 	int best, i;
 	int32 out_den[4];
+	logmath_t *lmath;
 
-	cb = gau_cb_int32_read(NULL, HMMDIR "/means", HMMDIR "/variances", NULL);
+	lmath = logmath_init(1.0001, 0);
+	cb = gau_cb_int32_read(NULL, HMMDIR "/means", HMMDIR "/variances", NULL, lmath);
 	fcb = feat_init("1s_c_d_dd", CMN_CURRENT, FALSE, AGC_NONE, TRUE, 13);
 	nfr = feat_s2mfc2feat(fcb, HMMDIR "/pittsburgh.mfc", NULL, NULL,
 			      0, -1, NULL, -1);
@@ -72,7 +74,7 @@ main(int argc, char *argv[])
 
 	/* Finally reload it with the precomputed data, and verify
 	 * that it is the same (we hope) */
-	cb = gau_cb_int32_read(NULL, HMMDIR "/means", "tmp.variances", "tmp.norms");
+	cb = gau_cb_int32_read(NULL, HMMDIR "/means", "tmp.variances", "tmp.norms", lmath);
 	invvars = gau_cb_int32_get_invvars(cb);
 	norms = gau_cb_int32_get_norms(cb);
 

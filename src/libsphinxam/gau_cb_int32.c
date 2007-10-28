@@ -74,6 +74,9 @@ struct gau_cb_int32_s {
     int32_mean_t ****means; /**< Means */
     int32_var_t ****invvars; /**< Inverse scaled variances */
     int32_norm_t ***norms;    /**< Normalizing constants */
+
+    /** Log-math table (not owned by this object, do not free. */
+    logmath_t *lmath;
 };
 
 /** Flags for gau_cb_int32_t->flags. */
@@ -142,7 +145,7 @@ gau_cb_int32_alloc_cow_buffers(gau_cb_int32_t *cb)
     if (gau->var_file) {
         gau_cb_int32_set_flag(cb, DEQ_VARS, 
                               !(gau_file_get_flag(gau->var_file, GAU_FILE_PRECOMP)
-                                && gau->var_file->logbase == 1.0001f /* FIXME */
+                                && gau->var_file->logbase == logmath_get_base(cb->lmath)
                                 && gau->var_file->format == PARAM_FORMAT
                                 && gau->var_file->scale == 1.0f /* unscaled */
                                 && gau->var_file->bias == 0.0f));
@@ -169,7 +172,7 @@ gau_cb_int32_alloc_cow_buffers(gau_cb_int32_t *cb)
         gau_cb_int32_set_flag(cb, DEQ_NORMS,
                               !(gau->norm_file
                                 && gau_file_get_flag(gau->norm_file, GAU_FILE_PRECOMP)
-                                && gau->norm_file->logbase == 1.0001f /* FIXME */
+                                && gau->norm_file->logbase == logmath_get_base(cb->lmath)
                                 && gau->norm_file->format == PARAM_FORMAT
                                 && gau->norm_file->scale == 1.0f /* unscaled */
                                 && gau->norm_file->bias == 0.0f));
@@ -264,12 +267,17 @@ gau_cb_int32_dequantize(gau_cb_int32_t *cb)
 }
 
 gau_cb_t *
-gau_cb_int32_read(cmd_ln_t *config, const char *meanfn, const char *varfn, const char *normfn)
+gau_cb_int32_read(cmd_ln_t *config,
+                  const char *meanfn,
+                  const char *varfn,
+                  const char *normfn,
+                  logmath_t *lmath)
 {
     gau_cb_int32_t *cb;
     gau_cb_t *gau;
 
     cb = ckd_calloc(1, sizeof(*cb));
+    cb->lmath = lmath;
     gau = (gau_cb_t *)cb;
     gau->config = config;
     if (meanfn) {
@@ -354,9 +362,11 @@ gau_cb_int32_precomp(gau_cb_int32_t *cb)
                     if (((float32 *)cb->invvars[g][f][d])[p] < varfloor)
                         ((float32 *)cb->invvars[g][f][d])[p] = varfloor;
                     cb->norms[g][f][d] += (int32_var_t)
-                        FE_LOG(1 / sqrt(((float32 *)cb->invvars[g][f][d])[p] * 2.0 * M_PI));
+                        logmath_log(cb->lmath,
+                                    1 / sqrt(((float32 *)cb->invvars[g][f][d])[p] * 2.0 * M_PI));
                     cb->invvars[g][f][d][p] = (int32_norm_t)
-                        (1.0 / (2.0 * ((float32 *)cb->invvars[g][f][d])[p] * FE_LOG_BASE));
+                        logmath_ln_to_log(cb->lmath,
+                                          1.0 / (2.0 * ((float32 *)cb->invvars[g][f][d])[p]));
                 }
             }
         }

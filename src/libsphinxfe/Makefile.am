@@ -5,7 +5,6 @@ libsphinxfe_la_LDFLAGS = -version-info 0:0:0
 libsphinxfe_la_LIBADD = $(top_builddir)/src/libsphinxutil/libsphinxutil.la
 
 libsphinxfe_la_SOURCES =			\
-	add-table.c				\
 	fe_interface.c				\
 	fe_sigproc.c				\
 	fe_warp_affine.c			\

@@ -87,5 +87,3 @@ void *fe_create_2d(int32 d1, int32 d2, int32 elem_size);
 void fe_print_current(fe_t const *FE);
 void fe_parse_general_params(param_t const *P, fe_t *FE);
 void fe_parse_melfb_params(param_t const *P, melfb_t *MEL);
-int32 fixlog(uint32 x);
-int32 fixlog2(uint32 x);

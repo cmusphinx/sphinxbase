@@ -25,8 +25,10 @@ main(int argc, char *argv[])
 	size_t nelem, n;
 	int32_mean_t min, max;
 	float32 halfrange;
+	logmath_t *lmath;
 
-	cb = gau_cb_int32_read(NULL, HMMDIR "/means", HMMDIR "/variances", NULL);
+	lmath = logmath_init(1.0001, 0);
+	cb = gau_cb_int32_read(NULL, HMMDIR "/means", HMMDIR "/variances", NULL, lmath);
 	fcb = feat_init("1s_c_d_dd", CMN_CURRENT, FALSE, AGC_NONE, TRUE, 13);
 	nfr = feat_s2mfc2feat(fcb, HMMDIR "/pittsburgh.mfc", NULL, NULL,
 			      0, -1, NULL, -1);
@@ -86,7 +88,7 @@ main(int argc, char *argv[])
 	ckd_free(qmeans);
 
 	/* Finally reload it with the precomputed data, and verify it. */
-	cb = gau_cb_int32_read(NULL, "tmp.means", HMMDIR "/variances", NULL);
+	cb = gau_cb_int32_read(NULL, "tmp.means", HMMDIR "/variances", NULL, lmath);
 
 	best = gau_cb_int32_compute_all(cb, 190, 0, feats[30][0], out_den, INT_MIN);
 	for (i = 0; i < 4; ++i) {

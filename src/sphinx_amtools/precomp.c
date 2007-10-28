@@ -108,6 +108,7 @@ main(int argc, char *argv[])
     int byteswap;
     int32_var_t ****invvars;
     int32_norm_t ***norms;
+    logmath_t *lmath;
 
     config = cmd_ln_parse_r(NULL, defn, argc, argv, TRUE);
     if (config == NULL) {
@@ -123,7 +124,8 @@ main(int argc, char *argv[])
     byteswap = !strcmp(cmd_ln_str_r(config, "-output_endian"), "big");
 #endif
 
-    cb = gau_cb_int32_read(config, NULL, invar, NULL);
+    lmath = logmath_init(cmd_ln_float32("-logbase"), 0);
+    cb = gau_cb_int32_read(config, NULL, invar, NULL, lmath);
 
     invvars = gau_cb_int32_get_invvars(cb);
     norms = gau_cb_int32_get_norms(cb);

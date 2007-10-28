@@ -48,6 +48,7 @@
 #include <cmd_ln.h>
 #include <gau_cb.h>
 #include <fixpoint.h>
+#include <logmath.h>
 #include <fe.h>
 
 /**
@@ -67,8 +68,9 @@ gau_cb_t *gau_cb_int32_read(
 	cmd_ln_t *config,    /**< Configuration parameters */
 	const char *meanfn,  /**< Filename for means */
 	const char *varfn,   /**< Filename for variances */
-	const char *normfn   /**< (optional) Filename for normalization
+	const char *normfn,  /**< (optional) Filename for normalization
 				constants  */
+        logmath_t *lmath     /**< Log-math table (for logbase, etc) */
 	);
 
 /**

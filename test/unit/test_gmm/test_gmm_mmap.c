@@ -26,10 +26,13 @@ main(int argc, char *argv[])
 	int32_norm_t ***norms;
 	int32 ***mixw;
 	cmd_ln_t *config;
+	logmath_t *lmath;
+
+	lmath = logmath_init(1.0001, 0);
 
 	config = cmd_ln_parse_r(NULL, defn, 0, NULL, FALSE);
 
-	cb = gau_cb_int32_read(config, HMMDIR "/means", HMMDIR "/variances", NULL);
+	cb = gau_cb_int32_read(config, HMMDIR "/means", HMMDIR "/variances", NULL, lmath);
 	mix = gau_mix_read(config, HMMDIR "/mixture_weights");
 
 	means = gau_cb_int32_get_means(cb);
