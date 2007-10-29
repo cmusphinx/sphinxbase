@@ -20,5 +20,5 @@ for i in range(0,len(logtab),10):
     if i+10 <= len(logtab):
         print ", ".join(str(x) for x in logtab[i:i+10]) + ","
     else:
-        print ", ".join(str(x) for x in logtab[i:]) + ","
+        print ", ".join(str(x) for x in logtab[i:])
 print "};"

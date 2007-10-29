@@ -67,8 +67,9 @@
 #define COSMUL(x,y) ((x)*(y))
 #endif
 
+#ifdef FIXED_POINT
 /* Internal log-addition table for natural log with radix point at 8
- * bits.  Each entry is 256 * log(1 + exp(-i)).  This is used in the
+ * bits.  Each entry is 256 * log(1 + e^{-n/256}).  This is used in the
  * log-add computation:
  *
  * e^z = e^x + e^y
@@ -258,7 +259,7 @@ fe_log_add(fixed32 x, fixed32 y)
     if (d > fe_logadd_table_size)
         return r;
     else {
-        r += (fe_logadd_table[d] << (DEFAULT_RADIX - 8));
+        r += ((fixed32)fe_logadd_table[d] << (DEFAULT_RADIX - 8));
 /*
         printf("%d + %d = %d | %f + %f = %f | %f + %f = %f\n",
                x, y, r, FIX2FLOAT(x), FIX2FLOAT(y), FIX2FLOAT(r),
@@ -278,6 +279,7 @@ fe_log(float32 x)
         return FLOAT2FIX(log(x));
     }
 }
+#endif
 
 int32
 fe_build_melfilters(melfb_t *MEL_FB)
