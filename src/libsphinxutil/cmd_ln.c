@@ -732,6 +732,8 @@ int
 cmd_ln_exists_r(cmd_ln_t *cmdln, const char *name)
 {
     void *val;
+    if (cmdln == NULL)
+        return FALSE;
     return (hash_table_lookup(cmdln->ht, name, &val) == 0);
 }
 

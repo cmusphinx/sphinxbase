@@ -97,6 +97,12 @@ logmath_t *logmath_read(const char *filename);
 int32 logmath_write(logmath_t *lmath, const char *filename);
 
 /**
+ * Get the log table size and dimensions.
+ */
+int32 logmath_get_table_shape(logmath_t *lmath, uint32 *out_size,
+                              uint32 *out_width, uint32 *out_shift);
+
+/**
  * Get the log base.
  */
 float64 logmath_get_base(logmath_t *lmath);

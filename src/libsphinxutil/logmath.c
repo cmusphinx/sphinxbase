@@ -329,6 +329,17 @@ logmath_free(logmath_t *lmath)
     ckd_free(lmath);
 }
 
+int32
+logmath_get_table_shape(logmath_t *lmath, uint32 *out_size,
+                        uint32 *out_width, uint32 *out_shift)
+{
+    if (out_size) *out_size = lmath->table_size;
+    if (out_width) *out_width = lmath->width;
+    if (out_shift) *out_shift = lmath->shift;
+
+    return lmath->table_size * lmath->width;
+}
+
 float64
 logmath_get_base(logmath_t *lmath)
 {
