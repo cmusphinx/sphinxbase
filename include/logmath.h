@@ -60,6 +60,10 @@
  * The first entry in logadd_table is simply log_b(2.0), for the case
  * where y == x and thus z = log_b(2x) = log_b(2) + x.  The last entry
  * is zero, where log_b(x+y) = x = y due to loss of precision.
+ *
+ * Since this table can be quite large particularly for small
+ * logbases, an option is provided to compress it by dropping the
+ * least significant bits of the table.
  */
 
 #ifndef __LOGMATH_H__
@@ -77,7 +81,7 @@ typedef struct logmath_s logmath_t;
 /**
  * Initialize a log math computation table.
  * @param logbase The base B in which computation is to be done.
- * @param shift The right shift (scaling factor) applied to values.
+ * @param shift Number of least-significant bits to drop from the logadd table.
  * @return The newly created log math table.
  */
 logmath_t *logmath_init(float64 base, int shift);

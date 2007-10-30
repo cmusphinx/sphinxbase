@@ -360,11 +360,11 @@ logmath_add(logmath_t *lmath, int logb_x, int logb_y)
 
     /* d must be positive, obviously. */
     if (logb_x > logb_y) {
-        d = logb_x - logb_y;
+        d = (logb_x - logb_y) >> lmath->shift;
         r = logb_x;
     }
     else {
-        d = logb_y - logb_x;
+        d = (logb_y - logb_x) >> lmath->shift;
         r = logb_y;
     }
 
@@ -378,11 +378,11 @@ logmath_add(logmath_t *lmath, int logb_x, int logb_y)
 
     switch (lmath->width) {
     case 1:
-        return r + ((uint8 *)lmath->table)[d];
+        return r + (((uint8 *)lmath->table)[d] << lmath->shift);
     case 2:
-        return r + ((uint16 *)lmath->table)[d];
+        return r + (((uint16 *)lmath->table)[d] << lmath->shift);
     case 4:
-        return r + ((uint32 *)lmath->table)[d];
+        return r + (((uint32 *)lmath->table)[d] << lmath->shift);
     }
     return r;
 }
@@ -393,35 +393,35 @@ logmath_log(logmath_t *lmath, float64 p)
     if (p <= 0) {
         return lmath->zero;
     }
-    return (int)(log(p) * lmath->inv_log_of_base) >> lmath->shift;
+    return (int)(log(p) * lmath->inv_log_of_base);
 }
 
 float64
 logmath_exp(logmath_t *lmath, int logb_p)
 {
-    return pow(lmath->base, (float64)(logb_p << lmath->shift));
+    return pow(lmath->base, (float64)(logb_p));
 }
 
 int
 logmath_ln_to_log(logmath_t *lmath, float64 log_p)
 {
-    return (int)(log_p * lmath->inv_log_of_base) >> lmath->shift;
+    return (int)(log_p * lmath->inv_log_of_base);
 }
 
 float64
 logmath_log_to_ln(logmath_t *lmath, int logb_p)
 {
-    return (float64)(logb_p << lmath->shift) * lmath->log_of_base;
+    return (float64)(logb_p) * lmath->log_of_base;
 }
 
 int
 logmath_log10_to_log(logmath_t *lmath, float64 log_p)
 {
-    return (int)(log_p * lmath->inv_log10_of_base) >> lmath->shift;
+    return (int)(log_p * lmath->inv_log10_of_base);
 }
 
 float64
 logmath_log_to_log10(logmath_t *lmath, int logb_p)
 {
-    return (float64)(logb_p << lmath->shift) * lmath->log10_of_base;
+    return (float64)(logb_p) * lmath->log10_of_base;
 }
