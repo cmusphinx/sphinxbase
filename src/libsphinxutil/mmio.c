@@ -71,10 +71,11 @@
 
 #if defined(UNDER_CE) || defined(GNUWINCE)
 struct mmio_file_s {
+	int dummy;
 };
 
 void *
-map_file(const char *filename)
+mmio_file_read(const char *filename)
 {
     HANDLE ffm, fd;
     WCHAR *wfilename;
@@ -126,10 +127,11 @@ mmio_file_unmap(mmio_file_t *mf)
 #elif defined(WIN32)
 
 struct mmio_file_s {
+	int dummy;
 };
 
 mmio_file_t *
-map_file(const char *filename)
+mmio_file_read(const char *filename)
 {
     HANDLE ffm, fd;
     void *rv;

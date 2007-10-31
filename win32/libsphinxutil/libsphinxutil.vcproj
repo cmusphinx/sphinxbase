@@ -502,6 +502,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\src\libsphinxutil\logmath.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\libsphinxutil\matrix.c"
 				>
 				<FileConfiguration
@@ -522,6 +526,10 @@
 						PreprocessorDefinitions=""
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\src\libsphinxutil\mmio.c"
+				>
 			</File>
 			<File
 				RelativePath="..\..\src\libsphinxutil\pio.c"

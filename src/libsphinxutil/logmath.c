@@ -361,6 +361,9 @@ logmath_get_shift(logmath_t *lmath)
     return lmath->t.shift;
 }
 
+#ifdef _MSC_VER
+int logmath_add(logmath_t *lmath, int logb_x, int logb_y);
+#else
 int
 logmath_add(logmath_t *lmath, int logb_x, int logb_y)
 {
@@ -394,6 +397,7 @@ logmath_add(logmath_t *lmath, int logb_x, int logb_y)
     }
     return r;
 }
+#endif
 
 int
 logmath_log(logmath_t *lmath, float64 p)

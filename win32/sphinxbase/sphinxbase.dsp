@@ -43,7 +43,7 @@ RSC=rc.exe
 # PROP Ignore_Export_Lib 0
 # PROP Target_Dir ""
 # ADD BASE CPP /nologo /MT /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SPHINXBASE_EXPORTS" /YX /FD /c
-# ADD CPP /nologo /MD /W3 /GX /O2 /I "../../include/win32" /I "../../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SPHINXDLL"  /D "SPHINXBASE_EXPORTS" /D "HAVE_CONFIG_H" /YX /FD /c
+# ADD CPP /nologo /MD /W3 /GX /O2 /I "../../include/win32" /I "../../include" /D "NDEBUG" /D "WIN32" /D "_WINDOWS" /D "_MBCS" /D "_USRDLL" /D "SPHINXDLL" /D "SPHINXBASE_EXPORTS" /D "HAVE_CONFIG_H" /YX /FD /c
 # ADD BASE MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD MTL /nologo /D "NDEBUG" /mktyplib203 /win32
 # ADD BASE RSC /l 0x409 /d "NDEBUG"
@@ -90,10 +90,6 @@ LINK32=link.exe
 # Begin Group "Source Files"
 
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
-# Begin Source File
-
-SOURCE="..\..\src\libsphinxfe\add-table.c"
-# End Source File
 # Begin Source File
 
 SOURCE=..\..\src\libsphinxfeat\agc.c
@@ -208,7 +204,15 @@ SOURCE=..\..\src\libsphinxutil\linklist.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\src\libsphinxutil\logmath.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\src\libsphinxutil\matrix.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\src\libsphinxutil\mmio.c
 # End Source File
 # Begin Source File
 
@@ -376,7 +380,15 @@ SOURCE=..\..\include\linklist.h
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\include\logmath.h
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\include\matrix.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\mmio.h
 # End Source File
 # Begin Source File
 
@@ -405,6 +417,10 @@ SOURCE=..\..\include\win32\sphinx_config.h
 # Begin Source File
 
 SOURCE=..\..\include\sphinx_types.h
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\include\sphinxbase_export.h
 # End Source File
 # Begin Source File
 

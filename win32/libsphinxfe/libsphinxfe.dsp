@@ -85,10 +85,6 @@ LIB32=link.exe -lib
 # PROP Default_Filter "cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 # Begin Source File
 
-SOURCE="..\..\src\libsphinxfe\add-table.c"
-# End Source File
-# Begin Source File
-
 SOURCE=..\..\src\libsphinxfe\fe_interface.c
 # End Source File
 # Begin Source File

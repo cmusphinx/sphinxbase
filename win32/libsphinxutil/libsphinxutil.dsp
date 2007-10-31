@@ -145,7 +145,15 @@ SOURCE=..\..\src\libsphinxutil\linklist.c
 # End Source File
 # Begin Source File
 
+SOURCE=..\..\src\libsphinxutil\logmath.c
+# End Source File
+# Begin Source File
+
 SOURCE=..\..\src\libsphinxutil\matrix.c
+# End Source File
+# Begin Source File
+
+SOURCE=..\..\src\libsphinxutil\mmio.c
 # End Source File
 # Begin Source File
 
