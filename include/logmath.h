@@ -75,8 +75,26 @@
 
 /**
  * Integer log math computation table.
+ *
+ * This is exposed here to allow log-add computations to be inlined.
+ */
+typedef struct logadd_s logadd_t;
+struct logadd_s {
+    void *table;
+    uint32 table_size;
+    uint8 width;
+    uint8 shift;
+};
+
+/**
+ * Integer log math computation class.
  */
 typedef struct logmath_s logmath_t;
+
+/**
+ * Obtain the log-add table from a logmath_t *
+ */
+#define LOGMATH_TABLE(lm) ((logadd_t *)lm)
 
 /**
  * Initialize a log math computation table.
@@ -127,10 +145,60 @@ int logmath_get_shift(logmath_t *lmath);
  */
 void logmath_free(logmath_t *lmath);
 
+/*
+ * Fast inlined version of logmath_add.  Arguably we should do this
+ * the standard C99 way but Visual C++ 6.0 is still around...
+ */
+#if defined(__GNUC__)
+#define LOGMATH_INLINE extern inline
+#elif defined(_MSC_VER)
+#define LOGMATH_INLINE __inline
+#endif
+#ifdef LOGMATH_INLINE
+#include <assert.h>
+/**
+ * Add two values in log space (i.e. return log(exp(p)+exp(q)))
+ */
+LOGMATH_INLINE int
+logmath_add(logmath_t *lmath, int logb_x, int logb_y)
+{
+    logadd_t *t = LOGMATH_TABLE(lmath);
+    int d, r;
+
+    /* d must be positive, obviously. */
+    if (logb_x > logb_y) {
+        d = (logb_x - logb_y) >> t->shift;
+        r = logb_x;
+    }
+    else {
+        d = (logb_y - logb_x) >> t->shift;
+        r = logb_y;
+    }
+
+    assert(d >= 0);
+    if (d >= t->table_size) {
+        /* If this happens, it's not actually an error, because the
+         * last entry in the logadd table is guaranteed to be zero.
+         * Therefore we just return the larger of the two values. */
+        return r;
+    }
+
+    switch (t->width) {
+    case 1:
+        return r + (((uint8 *)t->table)[d] << t->shift);
+    case 2:
+        return r + (((uint16 *)t->table)[d] << t->shift);
+    case 4:
+        return r + (((uint32 *)t->table)[d] << t->shift);
+    }
+    return r;
+}
+#else /* ! __GNUC__ */
 /**
  * Add two values in log space (i.e. return log(exp(p)+exp(q)))
  */
 int logmath_add(logmath_t *lmath, int logb_p, int logb_q);
+#endif /* ! __GNUC__ */
 
 /**
  * Convert linear floating point number to integer log in base B.

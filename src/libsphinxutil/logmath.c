@@ -46,17 +46,14 @@
 #include <assert.h>
 
 struct logmath_s {
+    logadd_t t;
+    mmio_file_t *filemap;
     float64 base;
     float64 log_of_base;
     float64 log10_of_base;
     float64 inv_log_of_base;
     float64 inv_log10_of_base;
     int32 zero;
-    uint8 width;
-    uint8 shift;
-    uint32 table_size;
-    void *table;
-    mmio_file_t *filemap;
 };
 
 logmath_t *
@@ -87,8 +84,8 @@ logmath_init(float64 base, int shift)
     lmath->log10_of_base = log10(base);
     lmath->inv_log_of_base = 1.0/lmath->log_of_base;
     lmath->inv_log10_of_base = 1.0/lmath->log10_of_base;
-    lmath->width = width;
-    lmath->shift = shift;
+    lmath->t.width = width;
+    lmath->t.shift = shift;
     lmath->zero = logmath_log(lmath, 1e-300);
     /* Figure out size of add table required. */
     byx = 1.0; /* Maximum possible base^{y-x} value - note that this implies that y-x == 0 */
@@ -107,8 +104,8 @@ logmath_init(float64 base, int shift)
     }
     i >>= shift;
 
-    lmath->table = ckd_calloc(i+1, width);
-    lmath->table_size = i + 1;
+    lmath->t.table = ckd_calloc(i+1, width);
+    lmath->t.table_size = i + 1;
     /* Create the add table (see above). */
     byx = 1.0;
     for (i = 0;; ++i) {
@@ -120,25 +117,25 @@ logmath_init(float64 base, int shift)
          * only store the highest one. */
         switch (width) {
         case 1:
-            prev = ((uint8 *)lmath->table)[i >> shift];
+            prev = ((uint8 *)lmath->t.table)[i >> shift];
             break;
         case 2:
-            prev = ((uint16 *)lmath->table)[i >> shift];
+            prev = ((uint16 *)lmath->t.table)[i >> shift];
             break;
         case 4:
-            prev = ((uint32 *)lmath->table)[i >> shift];
+            prev = ((uint32 *)lmath->t.table)[i >> shift];
             break;
         }
         if (prev == 0) {
             switch (width) {
             case 1:
-                ((uint8 *)lmath->table)[i >> shift] = (uint8) k;
+                ((uint8 *)lmath->t.table)[i >> shift] = (uint8) k;
                 break;
             case 2:
-                ((uint16 *)lmath->table)[i >> shift] = (uint16) k;
+                ((uint16 *)lmath->t.table)[i >> shift] = (uint16) k;
                 break;
             case 4:
-                ((uint32 *)lmath->table)[i >> shift] = (uint32) k;
+                ((uint32 *)lmath->t.table)[i >> shift] = (uint32) k;
                 break;
             }
         }
@@ -178,8 +175,8 @@ logmath_read(const char *file_name)
 
     lmath = ckd_calloc(1, sizeof(*lmath));
     /* Default values. */
-    lmath->shift = 0;
-    lmath->width = 2;
+    lmath->t.shift = 0;
+    lmath->t.width = 2;
     lmath->base = 1.0001;
 
     /* Parse argument-value list */
@@ -192,10 +189,10 @@ logmath_read(const char *file_name)
                 chksum_present = 1;
         }
         else if (strcmp(argname[i], "width") == 0) {
-            lmath->width = atoi(argval[i]);
+            lmath->t.width = atoi(argval[i]);
         }
         else if (strcmp(argname[i], "shift") == 0) {
-            lmath->shift = atoi(argval[i]);
+            lmath->t.shift = atoi(argval[i]);
         }
         else if (strcmp(argname[i], "logbase") == 0) {
             lmath->base = atof(argval[i]);
@@ -212,7 +209,7 @@ logmath_read(const char *file_name)
 
 
     /* #Values to follow */
-    if (bio_fread(&lmath->table_size, sizeof(int32), 1, fp, byteswap, &chksum) != 1) {
+    if (bio_fread(&lmath->t.table_size, sizeof(int32), 1, fp, byteswap, &chksum) != 1) {
         E_ERROR("fread(%s) (total #values) failed\n", file_name);
         goto error_out;
     }
@@ -220,9 +217,9 @@ logmath_read(const char *file_name)
     /* Check alignment constraints for memory mapping */
     do_mmap = 1;
     pos = ftell(fp);
-    if (pos & ((long)lmath->width - 1)) {
+    if (pos & ((long)lmath->t.width - 1)) {
         E_WARN("%s: Data start %ld is not aligned on %d-byte boundary, will not memory map\n",
-                  file_name, pos, lmath->width);
+                  file_name, pos, lmath->t.width);
         do_mmap = 0;
     }
     /* Check byte order for memory mapping */
@@ -233,14 +230,14 @@ logmath_read(const char *file_name)
 
     if (do_mmap) {
         lmath->filemap = mmio_file_read(file_name);
-        lmath->table = (char *)mmio_file_ptr(lmath->filemap) + pos;
+        lmath->t.table = (char *)mmio_file_ptr(lmath->filemap) + pos;
     }
     else {
-        lmath->table = ckd_calloc(lmath->table_size, lmath->width);
-        if (bio_fread(lmath->table, lmath->width, lmath->table_size,
-                      fp, byteswap, &chksum) != lmath->table_size) {
+        lmath->t.table = ckd_calloc(lmath->t.table_size, lmath->t.width);
+        if (bio_fread(lmath->t.table, lmath->t.width, lmath->t.table_size,
+                      fp, byteswap, &chksum) != lmath->t.table_size) {
             E_ERROR("fread(%s) (%d x %d bytes) failed\n",
-                    file_name, lmath->table_size, lmath->width);
+                    file_name, lmath->t.table_size, lmath->t.width);
             goto error_out;
         }
         if (chksum_present)
@@ -275,14 +272,14 @@ logmath_write(logmath_t *lmath, const char *file_name)
     /* For whatever reason, we have to do this manually at the
      * moment. */
     fprintf(fp, "s3\nversion 1.0\nchksum0 yes\n");
-    fprintf(fp, "width %d\n", lmath->width);
-    fprintf(fp, "shift %d\n", lmath->shift);
+    fprintf(fp, "width %d\n", lmath->t.width);
+    fprintf(fp, "shift %d\n", lmath->t.shift);
     fprintf(fp, "logbase %f\n", lmath->base);
     /* Pad it out to ensure alignment. */
     pos = ftell(fp) + strlen("endhdr\n");
-    if (pos & ((long)lmath->width - 1)) {
-        size_t align = lmath->width - (pos & ((long)lmath->width - 1));
-        assert(lmath->width <= 8);
+    if (pos & ((long)lmath->t.width - 1)) {
+        size_t align = lmath->t.width - (pos & ((long)lmath->t.width - 1));
+        assert(lmath->t.width <= 8);
         fwrite("        " /* 8 spaces */, 1, align, fp);
     }
     fprintf(fp, "endhdr\n");
@@ -292,16 +289,16 @@ logmath_write(logmath_t *lmath, const char *file_name)
     fwrite(&chksum, sizeof(uint32), 1, fp);
     chksum = 0;
     /* #Values to follow */
-    if (bio_fwrite(&lmath->table_size, sizeof(uint32),
+    if (bio_fwrite(&lmath->t.table_size, sizeof(uint32),
                    1, fp, 0, &chksum) != 1) {
         E_ERROR("fwrite(%s) (total #values) failed\n", file_name);
         goto error_out;
     }
 
-    if (bio_fwrite(lmath->table, lmath->width, lmath->table_size,
-                   fp, 0, &chksum) != lmath->table_size) {
+    if (bio_fwrite(lmath->t.table, lmath->t.width, lmath->t.table_size,
+                   fp, 0, &chksum) != lmath->t.table_size) {
         E_ERROR("fwrite(%s) (%d x %d bytes) failed\n",
-                file_name, lmath->table_size, lmath->width);
+                file_name, lmath->t.table_size, lmath->t.width);
         goto error_out;
     }
     if (bio_fwrite(&chksum, sizeof(uint32), 1, fp, 0, NULL) != 1) {
@@ -325,7 +322,7 @@ logmath_free(logmath_t *lmath)
     if (lmath->filemap)
         mmio_file_unmap(lmath->filemap);
     else
-        ckd_free(lmath->table);
+        ckd_free(lmath->t.table);
     ckd_free(lmath);
 }
 
@@ -333,11 +330,11 @@ int32
 logmath_get_table_shape(logmath_t *lmath, uint32 *out_size,
                         uint32 *out_width, uint32 *out_shift)
 {
-    if (out_size) *out_size = lmath->table_size;
-    if (out_width) *out_width = lmath->width;
-    if (out_shift) *out_shift = lmath->shift;
+    if (out_size) *out_size = lmath->t.table_size;
+    if (out_width) *out_width = lmath->t.width;
+    if (out_shift) *out_shift = lmath->t.shift;
 
-    return lmath->table_size * lmath->width;
+    return lmath->t.table_size * lmath->t.width;
 }
 
 float64
@@ -355,13 +352,13 @@ logmath_get_zero(logmath_t *lmath)
 int
 logmath_get_width(logmath_t *lmath)
 {
-    return lmath->width;
+    return lmath->t.width;
 }
 
 int
 logmath_get_shift(logmath_t *lmath)
 {
-    return lmath->shift;
+    return lmath->t.shift;
 }
 
 int
@@ -371,29 +368,29 @@ logmath_add(logmath_t *lmath, int logb_x, int logb_y)
 
     /* d must be positive, obviously. */
     if (logb_x > logb_y) {
-        d = (logb_x - logb_y) >> lmath->shift;
+        d = (logb_x - logb_y) >> lmath->t.shift;
         r = logb_x;
     }
     else {
-        d = (logb_y - logb_x) >> lmath->shift;
+        d = (logb_y - logb_x) >> lmath->t.shift;
         r = logb_y;
     }
 
     assert(d >= 0);
-    if (d > lmath->table_size) {
+    if (d >= lmath->t.table_size) {
         /* If this happens, it's not actually an error, because the
          * last entry in the logadd table is guaranteed to be zero.
          * Therefore we just return the larger of the two values. */
         return r;
     }
 
-    switch (lmath->width) {
+    switch (lmath->t.width) {
     case 1:
-        return r + (((uint8 *)lmath->table)[d] << lmath->shift);
+        return r + (((uint8 *)lmath->t.table)[d] << lmath->t.shift);
     case 2:
-        return r + (((uint16 *)lmath->table)[d] << lmath->shift);
+        return r + (((uint16 *)lmath->t.table)[d] << lmath->t.shift);
     case 4:
-        return r + (((uint32 *)lmath->table)[d] << lmath->shift);
+        return r + (((uint32 *)lmath->t.table)[d] << lmath->t.shift);
     }
     return r;
 }
