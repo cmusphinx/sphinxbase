@@ -45,6 +45,7 @@
 #define __GAU_MIX_H__
 
 #include <cmd_ln.h>
+#include <gau_cb.h>
 
 /**
  * Abstract type representing a set of Gaussian mixtures.
@@ -64,9 +65,17 @@ size_t gau_mix_get_shape(gau_mix_t *mix, int *out_n_mixw,
                          int *out_is_transposed);
 
 /**
- * Retrieve the log mixture weights from the set of mixtures.
- **/
-int32 ***gau_mix_get_mixw(gau_mix_t *mix);
+ * Compute all mixture densities for a single feature stream
+ * @return the index of the highest mixture density
+ */
+int gau_mix_compute_all(gau_mix_t *mix, gau_cb_t *cb, int *ts2cb, int32 *out_den);
+
+/**
+ * Compute a subset of mixture densities for a single feature stream
+ * @return the index of the highest mixture density in active
+ */
+int gau_mix_compute(gau_mix_t *mix, gau_cb_t *cb, int *ts2cb,
+                    int32 *active, int32 n_active, int32 *out_den);
 
 /**
  * Release memory and/or file descriptors associated with Gaussian mixtures.

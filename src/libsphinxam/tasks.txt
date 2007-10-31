@@ -8,12 +8,12 @@ Quantized Gaussian files DONE
   * Quantization utility DONE
   * Unit test (reading, computation) DONE
 
-Fixed-point computation
-
-Compressed GMM scores (16 or 8 bit)
-
 Mixture weight file reading DONE
 
 Mixture computation
+
+Fixed-point computation
+
+Compressed GMM scores (16 or 8 bit)
 
 Optimized mixture computation

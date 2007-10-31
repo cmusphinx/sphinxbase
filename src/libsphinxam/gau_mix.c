@@ -92,16 +92,6 @@ gau_mix_read(cmd_ln_t *config, const char *mixwfn)
     return mix;
 }
 
-gau_mix_t *
-gau_mix_read_sendump(const char *sendumpfn)
-{
-    gau_mix_t *mix;
-
-    mix = ckd_calloc(1, sizeof(*mix));
-
-    return mix;
-}
-
 size_t
 gau_mix_get_shape(gau_mix_t *mix, int *out_n_mix,
                   int *out_n_feat, int *out_n_density, int *out_is_transposed)
