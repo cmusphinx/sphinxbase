@@ -56,6 +56,8 @@ if test x$use_lapack = xtrue; then
    AC_CHECK_LIB(blas, sgemm_)
    AC_CHECK_LIB(lapack, sgesv_,,use_internal_lapack=true)
    AC_DEFINE(WITH_LAPACK, [], [Enable matrix algebra with LAPACK])
+else
+   AC_CHECK_LIB(m, log)
 fi
 AM_CONDITIONAL(LAPACK_LITE, test x$use_internal_lapack = xtrue)
 
