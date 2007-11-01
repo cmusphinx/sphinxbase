@@ -80,10 +80,14 @@
  */
 typedef struct logadd_s logadd_t;
 struct logadd_s {
+    /** Table, in unsigned integers of (width) bytes. */
     void *table;
+    /** Number of elements in (table).  This is never smaller than 256 (important!) */
     uint32 table_size;
+    /** Width of elements of (table). */
     uint8 width;
-    uint8 shift;
+    /** Right shift applied to elements in (table). */
+    int8 shift;
 };
 
 /**

@@ -77,6 +77,7 @@ logmath_init(float64 base, int shift, int use_table)
     lmath->log10_of_base = log10(base);
     lmath->inv_log_of_base = 1.0/lmath->log_of_base;
     lmath->inv_log10_of_base = 1.0/lmath->log10_of_base;
+    lmath->t.shift = shift;
     lmath->zero = logmath_log(lmath, 1e-300);
 
     if (!use_table)
@@ -90,7 +91,6 @@ logmath_init(float64 base, int shift, int use_table)
     else width = 4;
 
     lmath->t.width = width;
-    lmath->t.shift = shift;
     /* Figure out size of add table required. */
     byx = 1.0; /* Maximum possible base^{y-x} value - note that this implies that y-x == 0 */
     for (i = 0;; ++i) {
@@ -107,6 +107,9 @@ logmath_init(float64 base, int shift, int use_table)
         byx /= base;
     }
     i >>= shift;
+
+    /* Never produce a table smaller than 256 entries. */
+    if (i < 255) i = 255;
 
     lmath->t.table = ckd_calloc(i+1, width);
     lmath->t.table_size = i + 1;
