@@ -25,7 +25,7 @@ main(int argc, char *argv[])
 	int32 out_den[4];
 	logmath_t *lmath;
 
-	lmath = logmath_init(1.0001, 0);
+	lmath = logmath_init(1.0001, 0, 0);
 	cb = gau_cb_int32_read(NULL, HMMDIR "/means", HMMDIR "/variances", NULL, lmath);
 	fcb = feat_init("1s_c_d_dd", CMN_CURRENT, FALSE, AGC_NONE, TRUE, 13);
 	nfr = feat_s2mfc2feat(fcb, HMMDIR "/pittsburgh.mfc", NULL, NULL,

@@ -28,7 +28,7 @@ main(int argc, char *argv[])
 	cmd_ln_t *config;
 	logmath_t *lmath;
 
-	lmath = logmath_init(1.0001, 0);
+	lmath = logmath_init(1.0001, 0, 0);
 
 	config = cmd_ln_parse_r(NULL, defn, 0, NULL, FALSE);
 

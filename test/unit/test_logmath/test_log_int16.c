@@ -10,7 +10,7 @@ main(int argc, char *argv[])
 	logmath_t *lmath;
 	int32 rv;
 
-	lmath = logmath_init(1.0001, 0);
+	lmath = logmath_init(1.0001, 0, 1);
 	TEST_ASSERT(lmath);
 	printf("log(1e-150) = %d\n", logmath_log(lmath, 1e-150));
 	TEST_EQUAL_LOG(logmath_log(lmath, 1e-150), -3454050);

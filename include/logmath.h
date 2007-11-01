@@ -99,11 +99,12 @@ typedef struct logmath_s logmath_t;
 /**
  * Initialize a log math computation table.
  * @param logbase The base B in which computation is to be done.
- * @param shift Number of least-significant bits to drop from the logadd table.
+ * @param shift Log values are shifted right by this many bits.
+ * @param use_table Whether to use an add table or not
  * @return The newly created log math table.
  */
 SPHINXBASE_EXPORT
-logmath_t *logmath_init(float64 base, int shift);
+logmath_t *logmath_init(float64 base, int shift, int use_table);
 
 /**
  * Memory-map (or read) a log table from a file.
@@ -154,12 +155,19 @@ int logmath_get_shift(logmath_t *lmath);
 SPHINXBASE_EXPORT
 void logmath_free(logmath_t *lmath);
 
-/*
- * Fast inlined version of logmath_add.  Arguably we should do this
- * the standard C99 way but Visual C++ 6.0 is still around...
+/**
+ * Add two values in log space exactly and slowly (without using add table).
  */
-#if defined(__GNUC__)
-#define LOGMATH_INLINE extern inline
+SPHINXBASE_EXPORT
+int logmath_add_exact(logmath_t *lmath, int logb_p, int logb_q);
+
+/*
+ * Fast inlined version of logmath_add.
+ */
+#if defined(__STDC_VERSION__) && (__STDC_VERSION__ == 199901L)
+#define LOGMATH_INLINE inline
+#elif defined(__GNUC__)
+#define LOGMATH_INLINE static inline
 #elif defined(_MSC_VER)
 #define LOGMATH_INLINE __inline
 #endif
@@ -174,13 +182,17 @@ logmath_add(logmath_t *lmath, int logb_x, int logb_y)
     logadd_t *t = LOGMATH_TABLE(lmath);
     int d, r;
 
+    if (t->table == NULL) {
+        return logmath_add_exact(lmath, logb_x, logb_y);
+    }
+
     /* d must be positive, obviously. */
     if (logb_x > logb_y) {
-        d = (logb_x - logb_y) >> t->shift;
+        d = (logb_x - logb_y);
         r = logb_x;
     }
     else {
-        d = (logb_y - logb_x) >> t->shift;
+        d = (logb_y - logb_x);
         r = logb_y;
     }
 
@@ -194,11 +206,11 @@ logmath_add(logmath_t *lmath, int logb_x, int logb_y)
 
     switch (t->width) {
     case 1:
-        return r + (((uint8 *)t->table)[d] << t->shift);
+        return r + (((uint8 *)t->table)[d]);
     case 2:
-        return r + (((uint16 *)t->table)[d] << t->shift);
+        return r + (((uint16 *)t->table)[d]);
     case 4:
-        return r + (((uint32 *)t->table)[d] << t->shift);
+        return r + (((uint32 *)t->table)[d]);
     }
     return r;
 }

@@ -57,7 +57,7 @@ struct logmath_s {
 };
 
 logmath_t *
-logmath_init(float64 base, int shift)
+logmath_init(float64 base, int shift, int use_table)
 {
     logmath_t *lmath;
     uint32 maxyx, i;
@@ -70,13 +70,6 @@ logmath_init(float64 base, int shift)
         return NULL;
     }
     
-    /* Create a logadd table with the appropriate width */
-    maxyx = (uint32) (log(2.0) / log(base) + 0.5) >> shift;
-    /* Poor man's log2 */
-    if (maxyx < 256) width = 1;
-    else if (maxyx < 65536) width = 2;
-    else width = 4;
-
     /* Set up various necessary constants. */
     lmath = ckd_calloc(1, sizeof(*lmath));
     lmath->base = base;
@@ -84,9 +77,20 @@ logmath_init(float64 base, int shift)
     lmath->log10_of_base = log10(base);
     lmath->inv_log_of_base = 1.0/lmath->log_of_base;
     lmath->inv_log10_of_base = 1.0/lmath->log10_of_base;
+    lmath->zero = logmath_log(lmath, 1e-300);
+
+    if (!use_table)
+        return lmath;
+
+    /* Create a logadd table with the appropriate width */
+    maxyx = (uint32) (log(2.0) / log(base) + 0.5) >> shift;
+    /* Poor man's log2 */
+    if (maxyx < 256) width = 1;
+    else if (maxyx < 65536) width = 2;
+    else width = 4;
+
     lmath->t.width = width;
     lmath->t.shift = shift;
-    lmath->zero = logmath_log(lmath, 1e-300);
     /* Figure out size of add table required. */
     byx = 1.0; /* Maximum possible base^{y-x} value - note that this implies that y-x == 0 */
     for (i = 0;; ++i) {
@@ -263,6 +267,11 @@ logmath_write(logmath_t *lmath, const char *file_name)
     long pos;
     uint32 chksum;
 
+    if (lmath->t.table == NULL) {
+        E_ERROR("No log table to write!\n");
+        return -1;
+    }
+
     E_INFO("Writing log table file '%s'\n", file_name);
     if ((fp = fopen(file_name, "wb")) == NULL) {
         E_ERROR("fopen(%s,wb) failed\n", file_name);
@@ -361,43 +370,54 @@ logmath_get_shift(logmath_t *lmath)
     return lmath->t.shift;
 }
 
-#ifdef _MSC_VER
-int logmath_add(logmath_t *lmath, int logb_x, int logb_y);
-#else
+#ifndef LOGMATH_INLINE
 int
 logmath_add(logmath_t *lmath, int logb_x, int logb_y)
 {
+    logadd_t *t = LOGMATH_TABLE(lmath);
     int d, r;
+
+    if (t->table == NULL) {
+        return logmath_add_exact(lmath, logb_x, logb_y);
+    }
 
     /* d must be positive, obviously. */
     if (logb_x > logb_y) {
-        d = (logb_x - logb_y) >> lmath->t.shift;
+        d = (logb_x - logb_y);
         r = logb_x;
     }
     else {
-        d = (logb_y - logb_x) >> lmath->t.shift;
+        d = (logb_y - logb_x);
         r = logb_y;
     }
 
     assert(d >= 0);
-    if (d >= lmath->t.table_size) {
+    if (d >= t->table_size) {
         /* If this happens, it's not actually an error, because the
          * last entry in the logadd table is guaranteed to be zero.
          * Therefore we just return the larger of the two values. */
         return r;
     }
 
-    switch (lmath->t.width) {
+    switch (t->width) {
     case 1:
-        return r + (((uint8 *)lmath->t.table)[d] << lmath->t.shift);
+        return r + (((uint8 *)t->table)[d]);
     case 2:
-        return r + (((uint16 *)lmath->t.table)[d] << lmath->t.shift);
+        return r + (((uint16 *)t->table)[d]);
     case 4:
-        return r + (((uint32 *)lmath->t.table)[d] << lmath->t.shift);
+        return r + (((uint32 *)t->table)[d]);
     }
     return r;
 }
 #endif
+
+int
+logmath_add_exact(logmath_t *lmath, int logb_p, int logb_q)
+{
+    return logmath_log(lmath,
+                       logmath_exp(lmath, logb_p)
+                       + logmath_exp(lmath, logb_q));
+}
 
 int
 logmath_log(logmath_t *lmath, float64 p)
@@ -405,35 +425,35 @@ logmath_log(logmath_t *lmath, float64 p)
     if (p <= 0) {
         return lmath->zero;
     }
-    return (int)(log(p) * lmath->inv_log_of_base);
+    return (int)(log(p) * lmath->inv_log_of_base) >> lmath->t.shift;
 }
 
 float64
 logmath_exp(logmath_t *lmath, int logb_p)
 {
-    return pow(lmath->base, (float64)(logb_p));
+    return pow(lmath->base, (float64)(logb_p << lmath->t.shift));
 }
 
 int
 logmath_ln_to_log(logmath_t *lmath, float64 log_p)
 {
-    return (int)(log_p * lmath->inv_log_of_base);
+    return (int)(log_p * lmath->inv_log_of_base) >> lmath->t.shift;
 }
 
 float64
 logmath_log_to_ln(logmath_t *lmath, int logb_p)
 {
-    return (float64)(logb_p) * lmath->log_of_base;
+    return (float64)(logb_p << lmath->t.shift) * lmath->log_of_base;
 }
 
 int
 logmath_log10_to_log(logmath_t *lmath, float64 log_p)
 {
-    return (int)(log_p * lmath->inv_log10_of_base);
+    return (int)(log_p * lmath->inv_log10_of_base) >> lmath->t.shift;
 }
 
 float64
 logmath_log_to_log10(logmath_t *lmath, int logb_p)
 {
-    return (float64)(logb_p) * lmath->log10_of_base;
+    return (float64)(logb_p << lmath->t.shift) * lmath->log10_of_base;
 }
