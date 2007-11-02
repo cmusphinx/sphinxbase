@@ -165,69 +165,11 @@ void logmath_free(logmath_t *lmath);
 SPHINXBASE_EXPORT
 int logmath_add_exact(logmath_t *lmath, int logb_p, int logb_q);
 
-/*
- * Fast inlined version of logmath_add.
- */
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ == 199901L)
-#define LOGMATH_INLINE inline
-#elif defined(__GNUC__)
-#define LOGMATH_INLINE static inline
-#elif defined(_MSC_VER)
-#define LOGMATH_INLINE __inline
-#endif
-#ifdef LOGMATH_INLINE
-#include <assert.h>
-/**
- * Add two values in log space (i.e. return log(exp(p)+exp(q)))
- */
-LOGMATH_INLINE int
-logmath_add(logmath_t *lmath, int logb_x, int logb_y)
-{
-    logadd_t *t = LOGMATH_TABLE(lmath);
-    int d, r;
-
-    if (t->table == NULL) {
-        return logmath_add_exact(lmath, logb_x, logb_y);
-    }
-
-    /* d must be positive, obviously. */
-    if (logb_x > logb_y) {
-        d = (logb_x - logb_y);
-        r = logb_x;
-    }
-    else {
-        d = (logb_y - logb_x);
-        r = logb_y;
-    }
-
-    if (d < 0) {
-        /* Some kind of overflow has occurred, fail gracefully. */
-        return r;
-    }
-    if (d >= t->table_size) {
-        /* If this happens, it's not actually an error, because the
-         * last entry in the logadd table is guaranteed to be zero.
-         * Therefore we just return the larger of the two values. */
-        return r;
-    }
-
-    switch (t->width) {
-    case 1:
-        return r + (((uint8 *)t->table)[d]);
-    case 2:
-        return r + (((uint16 *)t->table)[d]);
-    case 4:
-        return r + (((uint32 *)t->table)[d]);
-    }
-    return r;
-}
-#else /* ! LOGMATH_INLINE */
 /**
  * Add two values in log space (i.e. return log(exp(p)+exp(q)))
  */
 SPHINXBASE_EXPORT
 int logmath_add(logmath_t *lmath, int logb_p, int logb_q);
-#endif /* ! LOGMATH_INLINE */
 
 /**
  * Convert linear floating point number to integer log in base B.

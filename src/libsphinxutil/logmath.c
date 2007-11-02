@@ -373,7 +373,6 @@ logmath_get_shift(logmath_t *lmath)
     return lmath->t.shift;
 }
 
-#ifndef LOGMATH_INLINE
 int
 logmath_add(logmath_t *lmath, int logb_x, int logb_y)
 {
@@ -415,7 +414,6 @@ logmath_add(logmath_t *lmath, int logb_x, int logb_y)
     }
     return r;
 }
-#endif
 
 int
 logmath_add_exact(logmath_t *lmath, int logb_p, int logb_q)
