@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="sphinxbase"
 	ProjectGUID="{2F025EAD-99BD-40F5-B2CC-F0A28CAD7F2D}"
+	RootNamespace="sphinxbase"
 	>
 	<Platforms>
 		<Platform
@@ -49,7 +50,7 @@
 				Optimization="2"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="../../include/win32,../../include"
-				PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;_USRDLL;SPHINXBASE_EXPORTS;HAVE_CONFIG_H;SPHINXDLL"
+				PreprocessorDefinitions="NDEBUG;WIN32;_WINDOWS;_USRDLL;SPHINXBASE_EXPORTS;HAVE_CONFIG_H;SPHINXDLL;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -143,7 +144,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../include/win32,../../include"
-				PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS;_USRDLL;SPHINXBASE_EXPORTS;HAVE_CONFIG_H;SPHINXDLL"
+				PreprocessorDefinitions="_DEBUG;WIN32;_WINDOWS;_USRDLL;SPHINXBASE_EXPORTS;HAVE_CONFIG_H;SPHINXDLL;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
