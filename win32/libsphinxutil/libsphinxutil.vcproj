@@ -4,6 +4,7 @@
 	Version="8.00"
 	Name="libsphinxutil"
 	ProjectGUID="{BD87B57E-4A79-47CA-8667-9F10E0529549}"
+	RootNamespace="libsphinxutil"
 	>
 	<Platforms>
 		<Platform
@@ -43,7 +44,7 @@
 				Optimization="2"
 				InlineFunctionExpansion="1"
 				AdditionalIncludeDirectories="../../include/win32,../../include"
-				PreprocessorDefinitions="NDEBUG;_LIB;WIN32;HAVE_CONFIG_H"
+				PreprocessorDefinitions="NDEBUG;_LIB;WIN32;HAVE_CONFIG_H;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -117,7 +118,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="../../include/win32,../../include"
-				PreprocessorDefinitions="_DEBUG;_LIB;WIN32;HAVE_CONFIG_H"
+				PreprocessorDefinitions="_DEBUG;_LIB;WIN32;HAVE_CONFIG_H;_CRT_SECURE_NO_WARNINGS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
