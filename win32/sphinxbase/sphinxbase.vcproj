@@ -1209,6 +1209,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\include\mmio.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\include\mulaw.h"
 				>
 			</File>

@@ -53,16 +53,19 @@ typedef struct mmio_file_s mmio_file_t;
  * Memory-map a file for reading.
  * @return a mmio_file_t * or NULL for failure.
  **/
+SPHINXBASE_EXPORT
 mmio_file_t *mmio_file_read(const char *filename);
 
 /**
  * Get a pointer to the memory mapped for a file.
  **/
+SPHINXBASE_EXPORT
 void *mmio_file_ptr(mmio_file_t *mf);
 
 /**
  * Unmap a file, releasing memory associated with it.
  **/
+SPHINXBASE_EXPORT
 void mmio_file_unmap(mmio_file_t *mf);
 
 #endif /* __MMIO_H__ */
