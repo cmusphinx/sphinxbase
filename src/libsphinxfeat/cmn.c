@@ -172,6 +172,10 @@ cmn(cmn_t *cmn, mfcc_t ** mfc, int32 varnorm, int32 n_frame)
     for (i = 0; i < cmn->veclen; i++)
         cmn->cmn_mean[i] /= n_frame;
 
+    E_INFO("CMN: ");
+    for (i = 0; i < cmn->veclen; i++)
+        E_INFOCONT("%5.2f ", MFCC2FLOAT(cmn->cmn_mean[i]));
+    E_INFOCONT("\n");
     if (!varnorm) {
         /* Subtract mean from each cep vector */
         for (f = 0; f < n_frame; f++) {
