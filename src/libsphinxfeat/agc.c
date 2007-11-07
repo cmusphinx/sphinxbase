@@ -120,6 +120,7 @@ agc_max(agc_t *agc, mfcc_t **mfc, int32 n_frame)
         }
     }
 
+    E_INFO("AGCMax: obs=max= %.2f\n", agc->obs_max);
     for (i = 0; i < n_frame; i++)
         mfc[i][0] -= agc->obs_max;
 }
@@ -128,7 +129,7 @@ void
 agc_emax_set(agc_t *agc, float32 m)
 {
     agc->max = FLOAT2MFCC(m);
-    E_INFO("AGCEMax: %.2f\n", m);
+    E_INFO("AGCEMax: max= %.2f\n", m);
 }
 
 float32
@@ -144,7 +145,6 @@ agc_emax(agc_t *agc, mfcc_t **mfc, int32 n_frame)
 
     if (n_frame <= 0)
         return;
-    agc->obs_max = mfc[0][0];
     for (i = 1; i < n_frame; ++i) {
         if (mfc[i][0] > agc->obs_max) {
             agc->obs_max = mfc[i][0];
@@ -169,10 +169,11 @@ agc_emax_update(agc_t *agc)
             agc->obs_utt = 4;
         }
     }
-    E_INFO("C0Max: obs= %.2f, new= %.2f\n", agc->obs_max, agc->max);
+    E_INFO("AGCEMax: obs= %.2f, new= %.2f\n", agc->obs_max, agc->max);
 
-    agc->obs_max = FLOAT2MFCC(-1000.0);      /* Less than any real C0 value (hopefully!!) */
+    /* Reset the accumulators for the next utterance. */
     agc->obs_frame = 0;
+    agc->obs_max = FLOAT2MFCC(-1000.0); /* Less than any real C0 value (hopefully!!) */
 }
 
 void
@@ -204,7 +205,7 @@ agc_noise(agc_t *agc,
     }
     noise_level /= noise_frames;
 
-    E_INFO("%6.3f = AGC NOISE\n", MFCC2FLOAT(noise_level));
+    E_INFO("AGC NOISE: max= %6.3f\n", MFCC2FLOAT(noise_level));
 
     /* Subtract noise_level from all log_energy values */
     for (i = 0; i < nfr; ++i)
