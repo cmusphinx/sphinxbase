@@ -141,6 +141,15 @@
 
 #include <prim_type.h>
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#if 0
+/* Fool Emacs. */
+}
+#endif
+
 #define AD_SAMPLE_SIZE		(sizeof(int16))
 #define DEFAULT_SAMPLES_PER_SEC	16000
 
@@ -415,5 +424,10 @@ SPHINXBASE_EXPORT
 void ad_mu2li (int16 *outbuf,		/* Out: PCM data placed here (allocated by user) */
 	       unsigned char *inbuf,	/* In: Input buffer with mulaw data */
 	       int32 n_samp);		/* In: #Samples in inbuf */
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif

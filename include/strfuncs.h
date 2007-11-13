@@ -47,6 +47,15 @@
 #include <sphinxbase_export.h>
 #include <prim_type.h>
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#if 0
+/* Fool Emacs. */
+}
+#endif
+
 /**
  * Concatenate a NULL-terminated argument list of strings, returning a
  * newly allocated string.
@@ -108,5 +117,10 @@ int32 nextword (char *line, /**< Input: String being searched for next word.
 				    of the word.  (This way, the caller can restore the
 				    delimiter, preserving the original string.) */
 	);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* __SB_STRFUNCS_H__ */

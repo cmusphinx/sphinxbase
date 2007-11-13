@@ -47,6 +47,15 @@
 #include "cmd_ln.h"
 #include "mmio.h"
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#if 0
+/* Fool Emacs. */
+}
+#endif
+
 /* Gaussian parameter file. */
 typedef struct gau_file_s gau_file_t;
 struct gau_file_s {
@@ -157,5 +166,10 @@ void gau_file_dequantize_int32(gau_file_t *file, int32 *outmem, float32 outscale
  */
 void gau_file_dequantize_log(gau_file_t *file, int32 *outptr,
                              float32 outscale, float32 logbase);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* __GAU_FILE_H__ */

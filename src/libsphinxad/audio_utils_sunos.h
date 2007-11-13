@@ -62,6 +62,14 @@
 #include <sys/filio.h>
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+#if 0
+/* Fool Emacs. */
+}
+#endif
+
 int	audioOpen(const char *dev, int rate);
 void	audioPause(void);
 void	audioFlush(void);
@@ -69,3 +77,8 @@ void	audioStartRecord(void);
 void	audioStopRecord(void);
 void	audioClose(void);
 int	audioSetRecordGain(int gain);
+
+#ifdef __cplusplus
+}
+#endif
+

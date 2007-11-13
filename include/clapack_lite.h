@@ -4,6 +4,15 @@
 
 #include "f2c.h"
  
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#if 0
+/* Fool Emacs. */
+}
+#endif
+
 /* Subroutine */ int sgemm_(char *transa, char *transb, integer *m, integer *
                             n, integer *k, real *alpha, real *a, integer *lda, real *b, integer *
                             ldb, real *beta, real *c__, integer *ldc);
@@ -18,5 +27,10 @@
                             integer *lda, real *b, integer *ldb, integer *info);
 /* Subroutine */ int spotrf_(char *uplo, integer *n, real *a, integer *lda,
                              integer *info);
+
+#ifdef __cplusplus
+}
+#endif
+
  
 #endif /* __CLAPACK_LITE_H */

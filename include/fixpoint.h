@@ -46,6 +46,15 @@
 #include <prim_type.h>
 #include <limits.h>
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#if 0
+/* Fool Emacs. */
+}
+#endif
+
 #define DEFAULT_RADIX (12)
 
 /** Fixed-point computation type. */
@@ -124,5 +133,10 @@ int32 fixlog(uint32 x);
  * with DEFAULT_RADIX as radix point.
  */
 int32 fixlog2(uint32 x);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* _FIXPOINT_H_ */

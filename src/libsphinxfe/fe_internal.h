@@ -41,6 +41,15 @@
 #include "fe.h"
 #include "fixpoint.h"
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#if 0
+/* Fool Emacs. */
+}
+#endif
+
 #ifdef FIXED_POINT
 #ifdef FIXED16
 typedef int16 frame_t;
@@ -87,3 +96,8 @@ void *fe_create_2d(int32 d1, int32 d2, int32 elem_size);
 void fe_print_current(fe_t const *FE);
 void fe_parse_general_params(param_t const *P, fe_t *FE);
 void fe_parse_melfb_params(param_t const *P, melfb_t *MEL);
+
+#ifdef __cplusplus
+}
+#endif
+

@@ -49,6 +49,15 @@
 #include <glist.h>
 #include <stdio.h>
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#if 0
+/* Fool Emacs. */
+}
+#endif
+
 typedef struct jsgf_s jsgf_t;
 typedef struct jsgf_rule_s jsgf_rule_t;
 typedef struct jsgf_rhs_s jsgf_rhs_t;
@@ -110,6 +119,10 @@ jsgf_atom_t *jsgf_kleene_new(jsgf_t *jsgf, jsgf_atom_t *atom, int plus);
 jsgf_rule_t *jsgf_optional_new(jsgf_t *jsgf, jsgf_rhs_t *exp);
 jsgf_rule_t *jsgf_define_rule(jsgf_t *jsgf, char *name, jsgf_rhs_t *rhs, int public);
 jsgf_rule_t *jsgf_import_rule(jsgf_t *jsgf, char *name);
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* __JSGF_H__ */

@@ -60,6 +60,15 @@
 #include <sphinxbase_export.h>
 #include <fixpoint.h>
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#if 0
+/* Fool Emacs. */
+}
+#endif
+
 #ifdef WORDS_BIGENDIAN
 #define NATIVE_ENDIAN "big"
 #else
@@ -534,5 +543,10 @@ int32 fe_mfcc_dct3(fe_t *FE,  /**< A FE structure */
 		   const mfcc_t *fr_cep, /**< One frame of cepstrum */
 		   mfcc_t *fr_spec /**< One frame of spectrum */
         );
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif

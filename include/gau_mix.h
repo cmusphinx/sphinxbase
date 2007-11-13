@@ -47,6 +47,15 @@
 #include <cmd_ln.h>
 #include <gau_cb.h>
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#if 0
+/* Fool Emacs. */
+}
+#endif
+
 /**
  * Abstract type representing a set of Gaussian mixtures.
  **/
@@ -81,5 +90,10 @@ int gau_mix_compute(gau_mix_t *mix, gau_cb_t *cb, int *ts2cb,
  * Release memory and/or file descriptors associated with Gaussian mixtures.
  **/
 void gau_mix_free(gau_mix_t *mix);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* __GAU_MIX_H__ */

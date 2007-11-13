@@ -39,6 +39,15 @@
 
 #include "fe.h"
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#if 0
+/* Fool Emacs. */
+}
+#endif
+
 const char *
 fe_warp_inverse_linear_doc(void);
 
@@ -59,6 +68,11 @@ fe_warp_inverse_linear_unwarped_to_warped(float linear);
 
 void
 fe_warp_inverse_linear_print(const char *label);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* FE_WARP_inverse_linear_H */ 
 

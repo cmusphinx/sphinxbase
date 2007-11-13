@@ -109,6 +109,14 @@
 #include <stdio.h>
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+#if 0
+/* Fool Emacs. */
+}
+#endif
+
 /* States of continuous listening module */
 #define CONT_AD_STATE_SIL	0
 #define CONT_AD_STATE_SPEECH	1
@@ -413,6 +421,10 @@ int32 cont_ad_set_logfp (cont_ad_t *c,	/* The cont_ad object being addressed */
  */
 SPHINXBASE_EXPORT
 int32 cont_set_thresh(cont_ad_t *r, int32 silence, int32 speech);
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif

@@ -48,6 +48,15 @@
 #include <cmd_ln.h>
 #include <gau_file.h>
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#if 0
+/* Fool Emacs. */
+}
+#endif
+
 /**
  * Abstract type representing a set (codebook) of Gaussians.  This is
  * a "base class" which is built upon by gau_cb_int32 and
@@ -86,5 +95,10 @@ void gau_param_free(void *p);
  * Free an array of pointers overlaid on backing memory.
  */
 #define gau_param_free_ptr(p) ckd_free_3d((void ***)p)
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* __GAU_CB_H__ */

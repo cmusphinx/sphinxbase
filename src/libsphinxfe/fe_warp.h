@@ -39,6 +39,15 @@
 
 #include "fe.h"
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#if 0
+/* Fool Emacs. */
+}
+#endif
+
 #define FE_WARP_ID_INVERSE_LINEAR	0
 #define FE_WARP_ID_AFFINE	        1
 #define FE_WARP_ID_PIECEWISE_LINEAR	2
@@ -81,6 +90,11 @@ void
 fe_warp_print(const char *label);
 
 #define FE_WARP_NO_SIZE	0xffffffff
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* FE_WARP_H */ 
 

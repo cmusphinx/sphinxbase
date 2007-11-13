@@ -49,6 +49,15 @@
 #include <gau_cb.h>
 #include <fe.h>
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#if 0
+/* Fool Emacs. */
+}
+#endif
+
 /**
  * Type representing a single density for computation.
  */
@@ -108,5 +117,10 @@ float32 ****gau_cb_float64_get_invvars(gau_cb_t *cb);
  * Retrieve the normalization constants from the codebook.
  */
 float32 ***gau_cb_float64_get_norms(gau_cb_t *cb);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* __GAU_CB_FLOAT64_H__ */

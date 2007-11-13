@@ -73,6 +73,15 @@
 #include <prim_type.h>
 #include <cmd_ln.h>
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#if 0
+/* Fool Emacs. */
+}
+#endif
+
 /**
  * Integer log math computation table.
  *
@@ -206,6 +215,10 @@ int logmath_log10_to_log(logmath_t *lmath, float64 log_p);
  */
 SPHINXBASE_EXPORT
 float64 logmath_log_to_log10(logmath_t *lmath, int logb_p);
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /*  __LOGMATH_H__ */

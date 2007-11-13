@@ -44,6 +44,15 @@
 #ifndef __MMIO_H__
 #define __MMIO_H__
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#if 0
+/* Fool Emacs. */
+}
+#endif
+
 /**
  * Abstract structure representing a memory-mapped file.
  **/
@@ -67,5 +76,10 @@ void *mmio_file_ptr(mmio_file_t *mf);
  **/
 SPHINXBASE_EXPORT
 void mmio_file_unmap(mmio_file_t *mf);
+
+#ifdef __cplusplus
+}
+#endif
+
 
 #endif /* __MMIO_H__ */

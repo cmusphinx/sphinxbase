@@ -51,6 +51,15 @@
 #include <logmath.h>
 #include <fe.h>
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+#if 0
+/* Fool Emacs. */
+}
+#endif
+
 /**
  * Type representing a single density for computation.
  */
@@ -121,6 +130,10 @@ int32_var_t ****gau_cb_int32_get_invvars(gau_cb_t *gau);
  * Retrieve the log normalization constants from the codebook.
  */
 int32_norm_t ***gau_cb_int32_get_norms(gau_cb_t *gau);
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* __GAU_CB_INT32_H__ */
