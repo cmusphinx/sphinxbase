@@ -1,6 +1,6 @@
 lib_LTLIBRARIES = libsphinxfe.la
 
-libsphinxfe_la_LDFLAGS = -version-info 0:0:0
+libsphinxfe_la_LDFLAGS = -version-info 1:0:0
 
 libsphinxfe_la_LIBADD = $(top_builddir)/src/libsphinxutil/libsphinxutil.la
 
