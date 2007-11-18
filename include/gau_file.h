@@ -43,10 +43,9 @@
 #ifndef __GAU_FILE_H__
 #define __GAU_FILE_H__
 
-#include "prim_type.h"
-#include "cmd_ln.h"
-#include "mmio.h"
-
+#include <prim_type.h>
+#include <cmd_ln.h>
+#include <mmio.h>
 
 #ifdef __cplusplus
 extern "C" {
