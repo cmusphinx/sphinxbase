@@ -257,6 +257,12 @@ anytype_t *cmd_ln_access (const char *name);/* In: Argument name whose value is 
 #define cmd_ln_float64(name)	(cmd_ln_access(name)->fl_64)
 #define cmd_ln_boolean(name)	(cmd_ln_access(name)->i_32 != 0)
 
+#define cmd_ln_set_str(n,s) (cmd_ln_access(n)->ptr = s)
+#define cmd_ln_set_int32(n,i) (cmd_ln_access(n)->i_32 = (int32)i)
+#define cmd_ln_set_float32(n,f) (cmd_ln_access(n)->fl_32 = (float32)f)
+#define cmd_ln_set_float64(n,f) (cmd_ln_access(n)->fl_64 = (float64)f)
+#define cmd_ln_set_boolean(n,b) (cmd_ln_access(n)->i_32 = (int32)(b != 0))
+
 /**
  * Re-entrant version of cmd_ln_access().
  */
@@ -267,6 +273,12 @@ anytype_t *cmd_ln_access_r (cmd_ln_t *cmdln, const char *name);
 #define cmd_ln_float32_r(c,n)	(cmd_ln_access_r(c,n)->fl_32)
 #define cmd_ln_float64_r(c,n)	(cmd_ln_access_r(c,n)->fl_64)
 #define cmd_ln_boolean_r(c,n)	(cmd_ln_access_r(c,n)->i_32 != 0)
+
+#define cmd_ln_set_str_r(c,n,s) (cmd_ln_access_r(c,n)->ptr = s)
+#define cmd_ln_set_int32_r(c,n,i) (cmd_ln_access_r(c,n)->i_32 = (int32)i)
+#define cmd_ln_set_float32_r(c,n,f) (cmd_ln_access_r(c,n)->fl_32 = (float32)f)
+#define cmd_ln_set_float64_r(c,n,f) (cmd_ln_access_r(c,n)->fl_64 = (float64)f)
+#define cmd_ln_set_boolean_r(c,n,b) (cmd_ln_access_r(c,n)->i_32 = (int32)(b != 0))
 
 /**
  * Print a help message listing the valid argument names, and the associated
