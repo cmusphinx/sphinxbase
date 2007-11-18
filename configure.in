@@ -187,6 +187,7 @@ src/libsphinxfeat/Makefile
 src/libsphinxad/Makefile
 src/libsphinxutil/Makefile
 src/libsphinxam/Makefile
+src/libsphinxlm/Makefile
 src/sphinx_fe/Makefile
 src/sphinx_cepview/Makefile
 src/sphinx_jsgf2fsg/Makefile
@@ -203,6 +204,7 @@ test/unit/test_matrix/Makefile
 test/unit/test_feat/Makefile
 test/unit/test_logmath/Makefile
 test/unit/test_gmm/Makefile
+test/unit/test_ngram/Makefile
 test/regression/testfuncs.sh
 test/regression/Makefile
 ])

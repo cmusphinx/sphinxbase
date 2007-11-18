@@ -25,17 +25,17 @@ main(int argc, char *argv[])
 	config = cmd_ln_parse_r(NULL, defn, 0, NULL, FALSE);
 
 	/* Read a language model (this won't mmap) */
-	model = ngram_model_read(config, LMDIR "/100.arpa.gz");
+	model = ngram_model_read(config, LMDIR "/100.arpa.gz", lmath);
 	TEST_ASSERT(model);
 
 	ngram_model_free(model);
 
 	/* Read a language model (this will mmap) */
-	model = ngram_model_read(config, LMDIR "/100.arpa.DMP");
+	model = ngram_model_read(config, LMDIR "/100.arpa.DMP", lmath);
 	TEST_ASSERT(model);
 
 	ngram_model_free(model);
-	lmath_free(lmath);
+	logmath_free(lmath);
 
 	return 0;
 }

@@ -48,6 +48,7 @@
 #include <cmd_ln.h>
 #include <logmath.h>
 #include <mmio.h>
+#include <stdarg.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -67,12 +68,16 @@ typedef struct ngram_model_s ngram_model_t;
  */
 typedef enum ngram_file_type_e ngram_file_type_t;
 enum ngram_file_type_e {
-	NGRAM_ARPA = 0,  /**< ARPABO text format (the standard) */
-	NGRAM_DMP = 1,   /**< Sphinx .DMP format */
-	NGRAM_DMP32 = 2, /**< Sphinx .DMP32 format */
-	NGRAM_FST = 3,   /**< AT&T FSM format */
-	NGRAM_HTK = 4    /**< HTK SLF format (not implemented yet) */
+    NGRAM_ARPA = 0,  /**< ARPABO text format (the standard) */
+    NGRAM_DMP = 1,   /**< Sphinx .DMP format */
+    NGRAM_DMP32 = 2, /**< Sphinx .DMP32 format */
+    NGRAM_FST = 3,   /**< AT&T FSM format */
+    NGRAM_HTK = 4    /**< HTK SLF format (not implemented yet) */
 };
+
+#define NGRAM_SCORE_ERROR 1  /**< Impossible log probability */
+#define NGRAM_INVALID_WID -1 /**< Impossible word ID */
+#define NGRAM_UNKNOWN_WID 0  /**< ID of unknown word <UNK> */
 
 /**
  * Read an N-Gram model from a file on disk.
@@ -86,6 +91,11 @@ ngram_model_t *ngram_model_read(cmd_ln_t *config,
  */
 int ngram_model_write(ngram_model_t *model, const char *file_name,
 		      ngram_file_type_t format);
+
+/**
+ * Release memory associated with an N-Gram model.
+ */
+void ngram_model_free(ngram_model_t *model);
 
 /**
  * Re-encode word strings in an N-Gram model.
@@ -120,11 +130,12 @@ int ngram_apply_weights(ngram_model_t *model,
  * Get the score (scaled, interpolated log-probability) for a general
  * N-Gram.
  *
- * The argument list consists of the words (as null-terminated
- * strings) of the N-Gram, followed by NULL.  Therefore, if you wanted
- * to get the N-Gram score for "a whole joy", you would call:
+ * The argument list consists of the history words (as null-terminated
+ * strings) of the N-Gram, <b>in reverse order</b>, followed by NULL.
+ * Therefore, if you wanted to get the N-Gram score for "a whole joy",
+ * you would call:
  *
- *  score = ngram_score(model, "a", "whole", "joy", NULL);
+ *  score = ngram_score(model, "joy", "whole", "a", NULL);
  *
  * This is not the function to use in decoding, because it has some
  * overhead for looking up words.  Use ngram_tg_score() or
@@ -132,34 +143,34 @@ int ngram_apply_weights(ngram_model_t *model,
  * version that takes a general language model state object, to
  * support suffix-array LM and things like that.
  */
-int32 ngram_score(ngram_model_t *model, ...);
+int32 ngram_score(ngram_model_t *model, const char *word, ...);
 
 /**
  * Explicit va_list version of ngram_score().
  */
-int32 ngram_score_v(ngram_model_t *model, va_list args);
+int32 ngram_score_v(ngram_model_t *model, const char *word, va_list history);
 
 /**
  * Quick trigram score lookup.
  */
-int32 ngram_tg_score(ngram_model_t *model, int32 w1, int32 w2, int32 w3);
+int32 ngram_tg_score(ngram_model_t *model, int32 w3, int32 w2, int32 w1);
 
 /**
  * Quick bigram score lookup.
  */
-int32 ngram_bg_score(ngram_model_t *model, int32 w1, int32 w2);
+int32 ngram_bg_score(ngram_model_t *model, int32 w2, int32 w1);
 
 /**
  * Get the "raw" log-probability for a general N-Gram.
  *
  * See documentation for ngram_score() for an explanation of this.
  */
-int32 ngram_prob(ngram_model_t *model, ...);
+int32 ngram_prob(ngram_model_t *model, const char *word, ...);
 
 /**
  * Explicit va_list version of ngram_prob().
  */
-int32 ngram_prob_v(ngram_model_t *model, va_list args);
+int32 ngram_prob_v(ngram_model_t *model, const char *word, va_list history);
 
 /**
  * Look up numerical word ID.
