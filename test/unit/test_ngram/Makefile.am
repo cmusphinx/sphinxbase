@@ -10,5 +10,7 @@ INCLUDES = \
 LDADD = ${top_builddir}/src/libsphinxutil/libsphinxutil.la  \
 	${top_builddir}/src/libsphinxlm/libsphinxlm.la -lm
 
+noinst_HEADERS = test_macros.h
+
 EXTRA_DIST = 100.arpa.gz \
 	100.arpa.DMP

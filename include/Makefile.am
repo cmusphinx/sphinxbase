@@ -32,6 +32,7 @@ pkginclude_HEADERS =				\
 	matrix.h				\
 	mmio.h                                  \
 	mulaw.h					\
+	ngram_model.h				\
 	pio.h					\
 	prim_type.h				\
 	profile.h				\
