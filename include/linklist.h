@@ -64,7 +64,7 @@
 #define _LIBUTIL_LINKLIST_H_
 
 /** \file linklist.h
-    \brief generic linklist used by s3.0 family of tools. 
+    \brief This is *not* a linked list object!  It is actually a fast memory allocator.
  */
 #ifdef __cplusplus
 extern "C" {
@@ -77,6 +77,18 @@ extern "C" {
 /* Win32/WinCE DLL gunk */
 #include <sphinxbase_export.h>
 #include <prim_type.h>
+
+/**
+ * Initialize the linklist allocator.
+ *
+ * The Win32 API is really stupid and won't allow CRITICAL_SECTIONS to
+ * be initialized statically.  Therefore, this function has to be
+ * called before your program uses listelem_alloc().  In general there
+ * isn't any great need to worry about this since any code that is
+ * going to use the linklist functions will do this for you.
+ */
+SPHINXBASE_EXPORT
+void linklist_init(void);
 
 /** 
     Allocate a link-list element of given size and return pointer to it 

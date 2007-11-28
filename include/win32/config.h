@@ -30,6 +30,9 @@
 /* Default radix point for fixed-point */
 /* #undef DEFAULT_RADIX */
 
+/* Enable thread safety */
+#define ENABLE_THREADS 
+
 /* Use Q15 fixed-point computation */
 /* #undef FIXED16 */
 

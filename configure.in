@@ -62,6 +62,23 @@ fi
 AM_CONDITIONAL(LAPACK_LITE, test x$use_internal_lapack = xtrue)
 
 dnl
+dnl Enable thread-safe versions of some internal functions
+dnl
+threadsafe=true
+AC_ARG_ENABLE(threads,
+	AC_HELP_STRING([--disable-threads],
+		       [Disable thread-safe versions of memory allocation functions]),[
+if test x$enableval = xno; then
+   threadsafe=false
+fi
+])
+if test x$threadsafe = xtrue; then
+   AC_CHECK_HEADERS([pthread.h])
+   AC_CHECK_LIB(pthread, pthread_mutex_lock)
+   AC_DEFINE(ENABLE_THREADS, [], [Enable thread safety])
+fi
+
+dnl
 dnl Allow compilation for fixed or floating-point MFCC and GMM computation
 dnl
 fixed_point=false

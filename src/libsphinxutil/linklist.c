@@ -105,6 +105,37 @@ static list_t *head = NULL;
 
 #define MIN_ALLOC	50      /* Min #elements to allocate in one block */
 
+/* Definitions for thread safety. */
+#ifdef ENABLE_THREADS
+# ifdef HAVE_PTHREAD_H /* pthreads are available */
+#  include <pthread.h>
+static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
+#  define ACQUIRE_LINKLIST_MUTEX pthread_mutex_lock(&mtx)
+#  define RELEASE_LINKLIST_MUTEX pthread_mutex_unlock(&mtx)
+# elif defined(WIN32)
+#  include <windows.h>
+static CRITICAL_SECTION mtx;
+#  define ACQUIRE_LINKLIST_MUTEX EnterCriticalSection(&mtx)
+#  define RELEASE_LINKLIST_MUTEX LeaveCriticalSection(&mtx)
+# else /* Unknown thread model... */
+#  error Unknown threading model, please configure with --disable-threads
+# endif /* HAVE_PTHREAD_H, WIN32, whatever */
+#else /* !ENABLE_THREADS */
+#define ACQUIRE_LINKLIST_MUTEX
+#define RELEASE_LINKLIST_MUTEX
+#endif /* !ENABLE_THREADS */
+
+void
+linklist_init(void)
+{
+#if defined(ENABLE_THREADS) && defined(WIN32)
+    static LONG inited = 0;
+
+    if (InterlockedTestExchange(&inited, 0, 1) == 0) {
+        InitializeCriticalSection(&mtx);
+    }
+#endif
+}
 
 void *
 __listelem_alloc__(int32 elemsize, char *caller_file, int32 caller_line)
@@ -112,6 +143,8 @@ __listelem_alloc__(int32 elemsize, char *caller_file, int32 caller_line)
     int32 j;
     char **cpp, *cp;
     list_t *prev, *list;
+
+    ACQUIRE_LINKLIST_MUTEX;
 
     /* Find list for elemsize, if existing */
     prev = NULL;
@@ -175,6 +208,7 @@ __listelem_alloc__(int32 elemsize, char *caller_file, int32 caller_line)
     list->freelist = (char **) (*(list->freelist));
     (list->n_alloc)++;
 
+    RELEASE_LINKLIST_MUTEX;
     return (cp);
 }
 
@@ -185,6 +219,7 @@ listelem_free(void *elem, int32 elemsize)
     char **cpp;
     list_t *prev, *list;
 
+    ACQUIRE_LINKLIST_MUTEX;
     /* Find list for elemsize */
     prev = NULL;
     for (list = head; list && (list->elemsize != elemsize);
@@ -209,6 +244,7 @@ listelem_free(void *elem, int32 elemsize)
     *cpp = (char *) list->freelist;
     list->freelist = cpp;
     (list->n_freed)++;
+    RELEASE_LINKLIST_MUTEX;
 }
 
 
