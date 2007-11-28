@@ -1,8 +1,4 @@
-lib_LTLIBRARIES = libsphinxfeat.la
-
-libsphinxfeat_la_LDFLAGS = -version-info 0:0:0
-
-libsphinxfeat_la_LIBADD = $(top_builddir)/src/libsphinxutil/libsphinxutil.la
+noinst_LTLIBRARIES = libsphinxfeat.la
 
 libsphinxfeat_la_SOURCES =			\
 	agc.c					\

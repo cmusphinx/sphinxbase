@@ -9,7 +9,7 @@ sphinx_jsgf2fsg_SOURCES = main.c \
 	jsgf_parser.y
 
 sphinx_jsgf2fsg_LDADD = \
-	$(top_builddir)/src/libsphinxutil/libsphinxutil.la
+	$(top_builddir)/src/libsphinxbase/libsphinxbase.la
 
 noinst_HEADERS = jsgf.h jsgf_scanner.h jsgf_parser.h
 

@@ -1,6 +1,4 @@
-lib_LTLIBRARIES = libsphinxutil.la
-
-libsphinxutil_la_LDFLAGS = -version-info 0:1:0
+noinst_LTLIBRARIES = libsphinxutil.la
 
 if LAPACK_LITE
 LAPACK_LITE_SRCS = \

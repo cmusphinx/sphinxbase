@@ -7,8 +7,7 @@ INCLUDES = \
 	-I$(top_builddir)/include \
 	-DLMDIR=\"${srcdir}\"
 
-LDADD = ${top_builddir}/src/libsphinxutil/libsphinxutil.la  \
-	${top_builddir}/src/libsphinxlm/libsphinxlm.la -lm
+LDADD = ${top_builddir}/src/libsphinxbase/libsphinxbase.la
 
 noinst_HEADERS = test_macros.h
 

@@ -8,6 +8,6 @@ Name: SphinxBase
 Description: Shared components for Sphinx speech recognition
 Version: @VERSION@
 URL: http://www.cmusphinx.org/
-Libs: -L${libdir} -lsphinxad -lsphinxfe -lsphinxfeat -lsphinxutil
+Libs: -L${libdir} -lsphinxbase -lsphinxad
 Libs.private: ${libs}
 Cflags: -I${includedir}/sphinxbase

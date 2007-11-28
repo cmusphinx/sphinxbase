@@ -1,6 +1,4 @@
-lib_LTLIBRARIES = libsphinxlm.la
-
-libsphinxlm_la_LDFLAGS = -version-info 0:0:0
+noinst_LTLIBRARIES = libsphinxlm.la
 
 libsphinxlm_la_SOURCES = \
 	ngram_model.c

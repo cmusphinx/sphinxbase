@@ -34,6 +34,7 @@ noinst_HEADERS = audio_utils_sunos.h \
 
 libsphinxad_la_DEPENDENCIES = @ad_files@
 
-libsphinxad_la_LIBADD = @ad_files@ @ad_libs@ $(top_builddir)/src/libsphinxutil/libsphinxutil.la
+libsphinxad_la_LIBADD = @ad_files@ @ad_libs@ \
+	$(top_builddir)/src/libsphinxbase/libsphinxbase.la
 
 INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include
