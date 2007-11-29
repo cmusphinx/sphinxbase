@@ -192,7 +192,9 @@ ngram_model_dmp_read(cmd_ln_t *config,
     base->n_counts[2] = n_trigram;
     /* Allocate space for word strings. */
     base->word_str = ckd_calloc(n_unigram, sizeof(char *));
-    base->wid = hash_table_new(n_unigram, TRUE);
+    /* NOTE: They are no longer case-insensitive since we are allowing
+     * other encodings for word strings.  Beware. */
+    base->wid = hash_table_new(n_unigram, FALSE);
 
     /* read unigrams (always in memory, as they contain dictionary
      * mappings that can't be precomputed, and also could have OOVs added) */

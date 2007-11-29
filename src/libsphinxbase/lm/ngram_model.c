@@ -40,14 +40,17 @@
  * Author: David Huggins-Daines, much code taken from sphinx3/src/libs3decoder/liblm
  */
 
+#include "config.h"
 #include "ngram_model.h"
 #include "ngram_model_internal.h"
 #include "ckd_alloc.h"
 #include "filename.h"
 #include "bio.h"
+#include "err.h"
 #include "logmath.h"
 
 #include <string.h>
+#include <iconv.h>
 
 ngram_file_type_t
 ngram_file_name_to_type(const char *file_name)
@@ -138,15 +141,141 @@ ngram_model_write(ngram_model_t *model, const char *file_name,
 void
 ngram_model_free(ngram_model_t *model)
 {
+    if (model->writable) {
+        int i;
+        for (i = 0; i < model->n_counts[0]; ++i) {
+            ckd_free(model->word_str[i]);
+        }
+    }
+    ckd_free(model->word_str);
     ckd_free(model);
 }
 
 
+#ifdef HAVE_ICONV
+int
+ngram_model_recode(ngram_model_t *model, const char *from, const char *to)
+{
+    iconv_t ic;
+    char *outbuf;
+    size_t maxlen;
+    int i, writable;
+    hash_table_t *new_wid;
+
+    /* FIXME: Need to do a special case thing for the GB-HEX encoding
+     * used in Sphinx3 Mandarin models. */
+    if ((ic = iconv_open(to, from)) == (iconv_t)-1) {
+        E_ERROR_SYSTEM("iconv_open() failed");
+        return -1;
+    }
+    /* iconv(3) is a piece of crap and won't accept a NULL out buffer,
+     * unlike wcstombs(3). So we have to either call it over and over
+     * again until our buffer is big enough, or call it with a huge
+     * buffer and then copy things back to the output.  We will use a
+     * mix of these two approaches here.  We'll keep a single big
+     * buffer around, and expand it as necessary.
+     */
+    maxlen = 0;
+    for (i = 0; i < model->n_counts[0]; ++i) {
+        if (strlen(model->word_str[i]) > maxlen)
+            maxlen = strlen(model->word_str[i]);
+    }
+    /* Were word strings already allocated? */
+    writable = model->writable;
+    /* Either way, we are going to allocate some word strings. */
+    model->writable = TRUE;
+    /* Really should be big enough except for pathological cases. */
+    outbuf = ckd_calloc(maxlen * sizeof(int) + 15, 1);
+    /* And, don't forget, we need to rebuild the word to unigram ID
+     * mapping. */
+    new_wid = hash_table_new(model->n_counts[0], FALSE);
+    for (i = 0; i < model->n_counts[0]; ++i) {
+        ICONV_CONST char *in;
+        char *out;
+        size_t inleft, outleft, result;
+
+    start_conversion:
+        in = (ICONV_CONST char *)model->word_str[i];
+        /* Yes, this assumes that we don't have any NUL bytes. */
+        inleft = strlen(in);
+        out = outbuf;
+        outleft = maxlen;
+
+        while ((result = iconv(ic, &in, &inleft, &out, &outleft)) == (size_t)-1) {
+            if (errno != E2BIG) {
+                /* FIXME: if we already converted any words, then they
+                 * are going to be in an inconsistent state. */
+                E_ERROR_SYSTEM("iconv() failed");
+                ckd_free(outbuf);
+                hash_table_free(new_wid);
+                return -1;
+            }
+            /* Reset the internal state of conversion. */
+            iconv(ic, NULL, NULL, NULL, NULL);
+            /* Make everything bigger. */
+            maxlen *= 2;
+            out = outbuf = ckd_realloc(outbuf, maxlen);
+            /* Reset the input pointers. */
+            in = (ICONV_CONST char *)model->word_str[i];
+            inleft = strlen(in);
+        }
+
+        /* Now flush a shift-out sequence, if any. */
+        if ((result = iconv(ic, NULL, NULL, &out, &outleft)) == (size_t)-1) {
+            if (errno != E2BIG) {
+                /* FIXME: if we already converted any words, then they
+                 * are going to be in an inconsistent state. */
+                E_ERROR_SYSTEM("iconv() failed (state reset sequence)");
+                ckd_free(outbuf);
+                hash_table_free(new_wid);
+                return -1;
+            }
+            /* Reset the internal state of conversion. */
+            iconv(ic, NULL, NULL, NULL, NULL);
+            /* Make everything bigger. */
+            maxlen *= 2;
+            outbuf = ckd_realloc(outbuf, maxlen);
+            /* Be very evil. */
+            goto start_conversion;
+        }
+
+        result = maxlen - outleft;
+        /* Okay, that was hard, now let's go shopping. */
+        if (writable) {
+            /* Grow or shrink the output string as necessary. */
+            model->word_str[i] = ckd_realloc(model->word_str[i], result + 1);
+            model->word_str[result] = '\0';
+        }
+        else {
+            /* It actually was not allocated previously, so do that now. */
+            model->word_str[i] = ckd_calloc(result + 1, 1);
+        }
+        /* Copy the new thing in. */
+        memcpy(model->word_str[i], outbuf, result);
+
+        /* Now update the hash table.  We might have terrible
+         * collisions if a non-reversible conversion was requested.,
+         * so warn about them. */
+        if (hash_table_enter(new_wid, model->word_str[i],
+                             (void *)i) != (void *)i) {
+            E_WARN("Duplicate word in dictionary after conversion: %s\n",
+                   model->word_str[i]);
+        }
+    }
+    iconv_close(ic);
+    /* Swap out the hash table. */
+    hash_table_free(model->wid);
+    model->wid = new_wid;
+
+    return 0;
+}
+#else /* !HAVE_ICONV */
 int
 ngram_model_recode(ngram_model_t *model, const char *from, const char *to)
 {
     return -1;
 }
+#endif /* !HAVE_ICONV */
 
 int
 ngram_apply_weights(ngram_model_t *model,

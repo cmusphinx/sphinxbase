@@ -53,9 +53,10 @@
  * somewhat depending on the file format in use.
  */
 struct ngram_model_s {
-    int32 n;            /**< This is an n-gram model (1, 2, 3, ...). */
     int32 *n_counts;    /**< Counts for 1, 2, 3, ... grams */
     int32 n_1g_alloc;   /**< Number of allocated unigrams (for new word addition) */
+    uint8 n;            /**< This is an n-gram model (1, 2, 3, ...). */
+    uint8 writable;     /**< Are word strings writable? */
     char **word_str;    /**< Unigram names */
     hash_table_t *wid;  /**< Mapping of unigram names to word IDs. */
     logmath_t *lmath;   /**< Log-math object */

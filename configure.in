@@ -37,6 +37,7 @@ AC_WORDS_BIGENDIAN
 AC_TYPE_SIGNAL
 AC_CHECK_TYPES(long long)
 AC_CHECK_SIZEOF(long long)
+AM_ICONV
 
 dnl
 dnl Check for Lapack stuff unless disabled

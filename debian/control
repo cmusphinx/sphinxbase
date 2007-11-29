@@ -1,7 +1,7 @@
 Source: sphinxbase
 Priority: optional
 Maintainer: David Huggins-Daines <dhuggins@cs.cmu.edu>
-Build-Depends: debhelper (>= 4), autotools-dev, libasound2-dev
+Build-Depends: debhelper (>= 4), autotools-dev, libasound2-dev, gettext
 Standards-Version: 3.7.2
 Section: libs
 
