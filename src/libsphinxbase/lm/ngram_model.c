@@ -41,41 +41,98 @@
  */
 
 #include "ngram_model.h"
+#include "ngram_model_internal.h"
 #include "ckd_alloc.h"
+#include "filename.h"
 #include "bio.h"
 #include "logmath.h"
 
-/** In-memory representation of language model probabilities. */
-typedef union {
-    float32 f;
-    int32   l;
-} lmprob_t;
+#include <string.h>
 
-/** Base implementation of ngram_model_t. */
-struct ngram_model_s {
-    int32 n;            /**< This is an n-gram model (1, 2, 3, ...). */
-    int32 *n_counts;    /**< Counts for 1, 2, 3, ... grams */
-    int32 n_1g_alloc;   /**< Number of allocated unigrams (for new word addition) */
-    char **wordstr;     /**< Unigram names */
-    logmath_t *lmath;   /**< Log-math object */
-};
+ngram_file_type_t
+ngram_file_name_to_type(const char *file_name)
+{
+    const char *ext;
+
+    ext = strrchr(file_name, '.');
+    if (ext == NULL) {
+        return NGRAM_ARPA; /* Default file type */
+    }
+    if (0 == strcasecmp(ext, ".gz")) {
+        while (--ext >= file_name) {
+            if (*ext == '.') break;
+        }
+        if (ext < file_name) {
+            return NGRAM_ARPA; /* Default file type */
+        }
+    }
+    if (0 == strncasecmp(ext, ".ARPA", 5))
+        return NGRAM_ARPA;
+    if (0 == strncasecmp(ext, ".DMP", 4))
+        return NGRAM_DMP;
+    if (0 == strncasecmp(ext, ".DMP32", 6))
+        return NGRAM_DMP32;
+    if (0 == strncasecmp(ext, ".FST", 4))
+        return NGRAM_FST;
+    if (0 == strncasecmp(ext, ".SLF", 4))
+        return NGRAM_HTK;
+    return NGRAM_ARPA; /* Default file type */
+}
 
 ngram_model_t *
 ngram_model_read(cmd_ln_t *config,
 		 const char *file_name,
+                 ngram_file_type_t file_type,
 		 logmath_t *lmath)
 {
-    ngram_model_t *model;
+    switch (file_type) {
+    case NGRAM_AUTO: {
+        ngram_model_t *model;
 
-    model = ckd_calloc(1, sizeof(*model));
-    return model;
+        if ((model = ngram_model_arpa_read(config, file_name, lmath)) != NULL)
+            return model;
+        if ((model = ngram_model_dmp_read(config, file_name, lmath)) != NULL)
+            return model;
+        if ((model = ngram_model_dmp32_read(config, file_name, lmath)) != NULL)
+            return model;
+        return NULL;
+    }
+    case NGRAM_ARPA:
+        return ngram_model_arpa_read(config, file_name, lmath);
+    case NGRAM_DMP:
+        return ngram_model_dmp_read(config, file_name, lmath);
+    case NGRAM_DMP32:
+        return ngram_model_dmp32_read(config, file_name, lmath);
+    case NGRAM_FST:
+    case NGRAM_HTK:
+        return NULL; /* Unsupported format for reading. */
+    }
+
+    return NULL; /* In case your compiler is really stupid. */
 }
 
 int
 ngram_model_write(ngram_model_t *model, const char *file_name,
-		  ngram_file_type_t format)
+		  ngram_file_type_t file_type)
 {
-    return -1;
+    switch (file_type) {
+    case NGRAM_AUTO: {
+        file_type = ngram_file_name_to_type(file_name);
+        return ngram_model_write(model, file_name, file_type);
+    }
+    case NGRAM_ARPA:
+        return ngram_model_arpa_write(model, file_name);
+    case NGRAM_DMP:
+        return ngram_model_dmp_write(model, file_name);
+    case NGRAM_DMP32:
+        return ngram_model_dmp32_write(model, file_name);
+    case NGRAM_FST:
+        return ngram_model_fst_write(model, file_name);
+    case NGRAM_HTK:
+        return ngram_model_htk_write(model, file_name);
+    }
+
+    return -1; /* In case your compiler is really stupid. */
 }
 
 void

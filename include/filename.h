@@ -81,7 +81,7 @@ extern "C" {
  * Caller must have allocated base.
  */
 SPHINXBASE_EXPORT
-void path2basename (char *path, char *base);
+void path2basename (const char *path, char *base);
 
 
 /**
@@ -90,7 +90,7 @@ void path2basename (char *path, char *base);
  * allocated root.
  */
 SPHINXBASE_EXPORT
-void strip_fileext (char *file, char *root);
+void strip_fileext (const char *file, char *root);
 
 #ifdef __cplusplus
 }

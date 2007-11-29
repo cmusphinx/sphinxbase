@@ -1,6 +1,6 @@
 /* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* ====================================================================
- * Copyright (c) 1999-2004 Carnegie Mellon University.  All rights
+ * Copyright (c) 1999-2007 Carnegie Mellon University.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -35,68 +35,24 @@
  *
  */
 /*
- * filename.c -- File and path name operations.
+ * \file ngram_model_htk.c HTK format language models
  *
- * **********************************************
- * CMU ARPA Speech Project
- *
- * Copyright (c) 1999 Carnegie Mellon University.
- * ALL RIGHTS RESERVED.
- * **********************************************
- * 
- * HISTORY
- * $Log: filename.c,v $
- * Revision 1.5  2005/06/22 03:01:07  arthchan2003
- * Added  keyword
- *
- * Revision 1.3  2005/03/30 01:22:48  archan
- * Fixed mistakes in last updates. Add
- *
- * 
- * 30-Oct-1997	M K Ravishankar (rkm@cs.cmu.edu) at Carnegie Mellon University.
- * 		Started.
+ * Author: David Huggins-Daines <dhuggins@cs.cmu.edu>
  */
 
+#include "ngram_model_internal.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-
-#include "filename.h"
-
-#ifdef _WIN32
-#pragma warning (disable: 4996)
-#endif
-
-
-/* Strip off all leading pathname components */
-void
-path2basename(const char *path, char *base)
+ngram_model_t *
+ngram_model_htk_read(cmd_ln_t *config,
+                     const char *file_name,
+                     logmath_t *lmath)
 {
-    int32 i, l;
-
-    l = strlen(path);
-#ifdef WIN32
-    for (i = l - 1; (i >= 0) && !(path[i] == '/' || path[i] == '\\'); --i);
-#else
-    for (i = l - 1; (i >= 0) && !(path[i] == '/'); --i);
-#endif
-    strcpy(base, path + i + 1);
+    return NULL;
 }
 
-
-/* Strip off the shortest trailing .xyz suffix */
-void
-strip_fileext(const char *path, char *root)
+int
+ngram_model_htk_write(ngram_model_t *model,
+                      const char *file_name)
 {
-    int32 i, l;
-
-    l = strlen(path);
-    for (i = l - 1; (i >= 0) && (path[i] != '.'); --i);
-    if (i < 0)
-        strcpy(root, path);     /* Didn't find a . */
-    else {
-        strncpy(root, path, i);
-    }
+    return -1;
 }

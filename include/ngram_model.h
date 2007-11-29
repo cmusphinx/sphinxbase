@@ -68,11 +68,12 @@ typedef struct ngram_model_s ngram_model_t;
  */
 typedef enum ngram_file_type_e ngram_file_type_t;
 enum ngram_file_type_e {
-    NGRAM_ARPA = 0,  /**< ARPABO text format (the standard) */
-    NGRAM_DMP = 1,   /**< Sphinx .DMP format */
-    NGRAM_DMP32 = 2, /**< Sphinx .DMP32 format */
-    NGRAM_FST = 3,   /**< AT&T FSM format */
-    NGRAM_HTK = 4    /**< HTK SLF format (not implemented yet) */
+    NGRAM_AUTO,  /**< Determine file type automatically */
+    NGRAM_ARPA,  /**< ARPABO text format (the standard) */
+    NGRAM_DMP,   /**< Sphinx .DMP format */
+    NGRAM_DMP32, /**< Sphinx .DMP32 format */
+    NGRAM_FST,   /**< AT&T FSM format (write only) */
+    NGRAM_HTK    /**< HTK SLF format (write only) */
 };
 
 #define NGRAM_SCORE_ERROR 1  /**< Impossible log probability */
@@ -84,6 +85,7 @@ enum ngram_file_type_e {
  */
 ngram_model_t *ngram_model_read(cmd_ln_t *config,
 				const char *file_name,
+                                ngram_file_type_t file_type,
 				logmath_t *lmath);
 
 /**
