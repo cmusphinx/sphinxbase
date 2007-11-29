@@ -187,7 +187,8 @@ ngram_model_recode(ngram_model_t *model, const char *from, const char *to)
     /* Either way, we are going to allocate some word strings. */
     model->writable = TRUE;
     /* Really should be big enough except for pathological cases. */
-    outbuf = ckd_calloc(maxlen * sizeof(int) + 15, 1);
+    maxlen = maxlen * sizeof(int) + 15;
+    outbuf = ckd_calloc(maxlen, 1);
     /* And, don't forget, we need to rebuild the word to unigram ID
      * mapping. */
     new_wid = hash_table_new(model->n_counts[0], FALSE);
