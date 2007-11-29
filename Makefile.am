@@ -22,6 +22,8 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = sphinxbase.pc
 CLEANFILES = sphinxbase.pc
 
+ACLOCAL_AMFLAGS = -I m4
+
 etags:
 	etags `find . -name "*.[ch]"`
 
