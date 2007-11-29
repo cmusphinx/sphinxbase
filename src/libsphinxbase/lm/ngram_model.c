@@ -50,7 +50,9 @@
 #include "logmath.h"
 
 #include <string.h>
+#ifdef HAVE_ICONV
 #include <iconv.h>
+#endif
 
 ngram_file_type_t
 ngram_file_name_to_type(const char *file_name)
