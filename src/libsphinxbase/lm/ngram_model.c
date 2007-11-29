@@ -262,6 +262,7 @@ ngram_model_recode(ngram_model_t *model, const char *from, const char *to)
                    model->word_str[i]);
         }
     }
+    ckd_free(outbuf);
     iconv_close(ic);
     /* Swap out the hash table. */
     hash_table_free(model->wid);
