@@ -5,6 +5,7 @@
 #include "test_macros.h"
 
 #include <stdio.h>
+#include <string.h>
 #include <math.h>
 
 static const arg_t defn[] = {
@@ -34,7 +35,8 @@ main(int argc, char *argv[])
 	/* Read a language model (this will mmap) */
 	model = ngram_model_read(config, LMDIR "/100.arpa.DMP", NGRAM_DMP, lmath);
 	TEST_ASSERT(model);
-	/* TEST_EQUAL(ngram_wid(model, "<UNK>"), 0); */
+	TEST_EQUAL(ngram_wid(model, "<UNK>"), 0);
+	TEST_EQUAL(strcmp(ngram_word(model, 0), "<UNK>"), 0);
 
 	ngram_model_free(model);
 	logmath_free(lmath);

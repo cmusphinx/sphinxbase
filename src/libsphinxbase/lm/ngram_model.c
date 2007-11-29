@@ -194,11 +194,18 @@ ngram_prob_v(ngram_model_t *model, const char *word, va_list history)
 int32
 ngram_wid(ngram_model_t *model, const char *word)
 {
-    return -1;
+    void *val;
+
+    if (hash_table_lookup(model->wid, word, &val) == -1)
+        return -1;
+    else
+        return (int32)val;
 }
 
 const char *
 ngram_word(ngram_model_t *model, int32 wid)
 {
-    return NULL;
+    if (wid >= model->n_counts[0])
+        return NULL;
+    return model->word_str[wid];
 }

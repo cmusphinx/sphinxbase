@@ -44,19 +44,20 @@
 #define __NGRAM_MODEL_INTERNAL_H__
 
 #include "ngram_model.h"
+#include "hash_table.h"
 
-/** In-memory representation of language model probabilities. */
-typedef union {
-    float32 f;
-    int32   l;
-} lmprob_t;
-
-/** Base implementation of ngram_model_t. */
+/**
+ * Common implementation of ngram_model_t.
+ *
+ * The details of unigram, bigram, and trigram storage can vary
+ * somewhat depending on the file format in use.
+ */
 struct ngram_model_s {
     int32 n;            /**< This is an n-gram model (1, 2, 3, ...). */
     int32 *n_counts;    /**< Counts for 1, 2, 3, ... grams */
     int32 n_1g_alloc;   /**< Number of allocated unigrams (for new word addition) */
-    char **wordstr;     /**< Unigram names */
+    char **word_str;    /**< Unigram names */
+    hash_table_t *wid;  /**< Mapping of unigram names to word IDs. */
     logmath_t *lmath;   /**< Log-math object */
 };
 
