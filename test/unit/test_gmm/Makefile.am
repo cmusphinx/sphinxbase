@@ -11,7 +11,8 @@ INCLUDES = \
 	-I$(top_builddir)/include \
 	-DHMMDIR=\"${srcdir}/an4.cd_cont_200\"
 
-LDADD = ${top_builddir}/src/libsphinxbase/libsphinxbase.la
+LDADD = ${top_builddir}/src/libsphinxbase/libsphinxbase.la \
+	 ${top_builddir}/src/libsphinxbase/am/libsphinxam.la
 
 EXTRA_DIST =					\
 	an4.cd_cont_200/mdef			\
