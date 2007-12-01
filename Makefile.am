@@ -16,7 +16,11 @@ EXTRA_DIST = autogen.sh				\
 	win32/libsphinxutil/libsphinxutil.dsp	\
 	win32/libsphinxutil/libsphinxutil.vcp	\
 	win32/sphinx_cepview/sphinx_cepview.dsp	\
-	win32/sphinx_fe/sphinx_fe.dsp
+	win32/sphinx_fe/sphinx_fe.dsp		\
+	m4/iconv.m4				\
+	m4/lib-ld.m4				\
+	m4/lib-link.m4				\
+	m4/lib-prefix.m4
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = sphinxbase.pc
