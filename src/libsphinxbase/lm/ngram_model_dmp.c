@@ -45,6 +45,7 @@
 #include "pio.h"
 #include "err.h"
 #include "byteorder.h"
+#include "linklist.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -291,6 +292,9 @@ ngram_model_dmp_read(cmd_ln_t *config,
             }
         }
         E_INFO("%8d = LM.trigrams read\n", base->n_counts[2]);
+        /* Initialize tginfo */
+        model->tginfo =
+            ckd_calloc(base->n_1g_alloc, sizeof(tginfo_t *));
     }
 
     /* read n_prob2 and prob2 array (in memory, should be pre-scaled on disk) */
@@ -388,7 +392,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
         for (i = 0; i < base->n_counts[0]; i++) {
             base->word_str[i] = tmp_word_str + j;
             if (hash_table_enter(base->wid, base->word_str[i],
-                                 (void *)i) != (void *)i) {
+                                 (void *)(long)i) != (void *)(long)i) {
                 E_WARN("Duplicate word in dictionary: %s\n", base->word_str[i]);
             }
             j += strlen(base->word_str[i]) + 1;
@@ -399,7 +403,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
         for (i = 0; i < base->n_counts[0]; i++) {
             base->word_str[i] = ckd_salloc(tmp_word_str + j);
             if (hash_table_enter(base->wid, base->word_str[i],
-                                 (void *)i) != (void *)i) {
+                                 (void *)(long)i) != (void *)(long)i) {
                 E_WARN("Duplicate word in dictionary: %s\n", base->word_str[i]);
             }
             j += strlen(base->word_str[i]) + 1;
@@ -408,7 +412,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
     }
     E_INFO("%8d = ascii word strings read\n", i);
 
-    fclose(fp);
+    fclose_comp(fp, is_pipe);
     return base;
 }
 
@@ -433,7 +437,40 @@ ngram_model_dmp_score(ngram_model_t *model, int32 wid,
     return NGRAM_SCORE_ERROR;
 }
 
+static void
+ngram_model_dmp_free(ngram_model_t *base)
+{
+    ngram_model_dmp_t *model = (ngram_model_dmp_t *)base;
+    int32 u;
+
+    ckd_free(model->unigrams);
+    ckd_free(model->prob2);
+    if (model->dump_mmap == NULL) {
+        ckd_free(model->bigrams);
+        if (base->n > 2) {
+            ckd_free(model->trigrams);
+            ckd_free(model->tseg_base);
+        }
+    }
+    if (base->n > 2) {
+        ckd_free(model->bo_wt2);
+        ckd_free(model->prob3);
+    }
+
+    if (model->tginfo) {
+        for (u = 0; u < base->n_1g_alloc; u++) {
+            tginfo_t *tginfo, *next_tginfo;
+            for (tginfo = model->tginfo[u]; tginfo; tginfo = next_tginfo) {
+                next_tginfo = tginfo->next;
+                listelem_free(tginfo, sizeof(*tginfo));
+            }
+        }
+        ckd_free(model->tginfo);
+    }
+}
+
 static ngram_funcs_t ngram_model_dmp_funcs = {
     ngram_model_dmp_apply_weights, /* apply_weights */
-    ngram_model_dmp_score          /* score */
+    ngram_model_dmp_score,         /* score */
+    ngram_model_dmp_free           /* free */
 };

@@ -66,6 +66,7 @@ struct ngram_model_s {
 typedef struct ngram_funcs_s {
     int (*apply_weights)(ngram_model_t *model, float32 lw, float32 wip, float32 uw);
     int32 (*score)(ngram_model_t *model, int32 wid, int32 *history, int32 n_hist);
+    void (*free)(ngram_model_t *model);
 } ngram_funcs_t;
 
 /**

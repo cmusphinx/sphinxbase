@@ -143,6 +143,8 @@ ngram_model_write(ngram_model_t *model, const char *file_name,
 void
 ngram_model_free(ngram_model_t *model)
 {
+    if (model->funcs && model->funcs->free)
+        (*model->funcs->free)(model);
     if (model->writable) {
         int i;
         for (i = 0; i < model->n_counts[0]; ++i) {
