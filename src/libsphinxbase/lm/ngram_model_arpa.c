@@ -43,6 +43,8 @@
 #include "ckd_alloc.h"
 #include "ngram_model_internal.h"
 
+static ngram_funcs_t ngram_model_arpa_funcs;
+
 ngram_model_t *
 ngram_model_arpa_read(cmd_ln_t *config,
 		      const char *file_name,
@@ -51,6 +53,7 @@ ngram_model_arpa_read(cmd_ln_t *config,
     ngram_model_t *model;
 
     model = ckd_calloc(1, sizeof(*model));
+    model->funcs = &ngram_model_arpa_funcs;
     return model;
 }
 
@@ -60,3 +63,22 @@ ngram_model_arpa_write(ngram_model_t *model,
 {
     return -1;
 }
+
+static int
+ngram_model_arpa_apply_weights(ngram_model_t *model, float32 lw,
+                              float32 wip, float32 uw)
+{
+    return 0;
+}
+
+static int32
+ngram_model_arpa_score(ngram_model_t *model, int32 wid,
+                      int32 *history, int32 n_hist)
+{
+    return NGRAM_SCORE_ERROR;
+}
+
+static ngram_funcs_t ngram_model_arpa_funcs = {
+    ngram_model_arpa_apply_weights, /* apply_weights */
+    ngram_model_arpa_score          /* score */
+};

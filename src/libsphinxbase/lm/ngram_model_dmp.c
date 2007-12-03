@@ -51,6 +51,7 @@
 #include <stdlib.h>
 
 static const char darpa_hdr[] = "Darpa Trigram LM";
+static ngram_funcs_t ngram_model_dmp_funcs;
 
 static unigram_t *
 new_unigram_table(int32 n_ug)
@@ -180,6 +181,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
     /* Allocate space for LM, including initial OOVs and placeholders; initialize it */
     model = ckd_calloc(1, sizeof(*model));
     base = &model->base;
+    base->funcs = &ngram_model_dmp_funcs;
     if (n_trigram > 0)
         base->n = 3;
     else if (n_bigram > 0)
@@ -416,3 +418,22 @@ ngram_model_dmp_write(ngram_model_t *model,
 {
     return -1;
 }
+
+static int
+ngram_model_dmp_apply_weights(ngram_model_t *model, float32 lw,
+                              float32 wip, float32 uw)
+{
+    return 0;
+}
+
+static int32
+ngram_model_dmp_score(ngram_model_t *model, int32 wid,
+                      int32 *history, int32 n_hist)
+{
+    return NGRAM_SCORE_ERROR;
+}
+
+static ngram_funcs_t ngram_model_dmp_funcs = {
+    ngram_model_dmp_apply_weights, /* apply_weights */
+    ngram_model_dmp_score          /* score */
+};

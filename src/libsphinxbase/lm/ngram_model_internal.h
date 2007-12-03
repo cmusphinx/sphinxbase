@@ -60,7 +60,13 @@ struct ngram_model_s {
     char **word_str;    /**< Unigram names */
     hash_table_t *wid;  /**< Mapping of unigram names to word IDs. */
     logmath_t *lmath;   /**< Log-math object */
+    struct ngram_funcs_s *funcs; /**< Implementation-specific methods. */
 };
+
+typedef struct ngram_funcs_s {
+    int (*apply_weights)(ngram_model_t *model, float32 lw, float32 wip, float32 uw);
+    int32 (*score)(ngram_model_t *model, int32 wid, int32 *history, int32 n_hist);
+} ngram_funcs_t;
 
 /**
  * Read an N-Gram model from an ARPABO text file.
