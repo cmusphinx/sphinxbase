@@ -42,14 +42,6 @@
 
 #include "ngram_model_internal.h"
 
-ngram_model_t *
-ngram_model_fst_read(cmd_ln_t *config,
-                     const char *file_name,
-                     logmath_t *lmath)
-{
-    return NULL;
-}
-
 int
 ngram_model_fst_write(ngram_model_t *model,
                       const char *file_name)
