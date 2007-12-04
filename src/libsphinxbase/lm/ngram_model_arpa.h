@@ -77,6 +77,7 @@ typedef struct unigram_s {
  */
 #define BG_SEG_SZ	512	/* chosen so that #trigram/segment <= 2**16 */
 #define LOG_BG_SEG_SZ	9
+#define TSEG_BASE(m,b)		((m)->tseg_base[(b)>>LOG_BG_SEG_SZ])
 
 /**
  * Bigram structure.
@@ -108,7 +109,6 @@ typedef struct trigram_s {
  * tree to locate trigrams for a given bigram (lw1,lw2).  The organization is optimized
  * for locality of access (to the same lw1), given lw2.
  */
-#define TSEG_BASE(m,b)		((m)->tseg_base[(b)>>LOG_BG_SEG_SZ])
 typedef struct tginfo_s {
     int32 w1;			/**< lw1 component of bigram lw1,lw2.  All bigrams with
 				   same lw2 linked together (see lm_t.tginfo). */
@@ -165,7 +165,11 @@ typedef struct ngram_model_arpa_s {
     int32 *tseg_base;	/* tseg_base[i>>LOG_BG_SEG_SZ] = index of 1st
 			   trigram for bigram segment (i>>LOG_BG_SEG_SZ) */
 
-    /* Arrays of unique bigram probs and bo-wts, and trigram probs */
+    tginfo_t **tginfo;	/* tginfo[lw2] is head of linked list of trigram information for
+			   some cached subset of bigrams (*,lw2). */
+
+    /* Arrays of unique bigram probs and bo-wts, and trigram probs
+     * (these are temporary, actually) */
     sorted_list_t sorted_prob2;
     sorted_list_t sorted_bo_wt2;
     sorted_list_t sorted_prob3;

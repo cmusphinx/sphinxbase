@@ -106,7 +106,7 @@ void ngram_model_free(ngram_model_t *model);
  * your system does not have iconv, this function may fail.  Also,
  * because all file formats consist of 8-bit character streams,
  * attempting to convert to or from UTF-16 (or any other encoding
- * which contains null bytes) is a recipe for total disaster.
+ * which contains null bytes) is a recipe for total desaster.
  *
  * We have no interest in supporting UTF-16, so don't ask.
  *
@@ -118,12 +118,16 @@ void ngram_model_free(ngram_model_t *model);
 int ngram_model_recode(ngram_model_t *model, const char *from, const char *to);
 
 /**
- * Apply a language weight, insertion penalty, and unigram weight internally.
+ * Irreversibly apply a language weight, insertion penalty, and
+ * unigram weight internally.
  *
  * This will change the values output by ngram_score() and friends.
  * This is done for efficiency since in decoding, these are the only
  * values we actually need.  Call ngram_prob() if you want the "raw"
  * N-Gram probability estimate.
+ *
+ * Note that the unigram probability will still be interpolated in the
+ * output of ngram_prob(), which may be a bug.
  */
 int ngram_apply_weights(ngram_model_t *model,
 			float32 lw, float32 wip, float32 uw);
@@ -140,17 +144,12 @@ int ngram_apply_weights(ngram_model_t *model,
  *  score = ngram_score(model, "joy", "whole", "a", NULL);
  *
  * This is not the function to use in decoding, because it has some
- * overhead for looking up words.  Use ngram_tg_score() or
- * ngram_bg_score() instead.  In the future there will probably be a
- * version that takes a general language model state object, to
- * support suffix-array LM and things like that.
+ * overhead for looking up words.  Use ngram_ng_score(),
+ * ngram_tg_score(), or ngram_bg_score() instead.  In the future there
+ * will probably be a version that takes a general language model
+ * state object, to support suffix-array LM and things like that.
  */
 int32 ngram_score(ngram_model_t *model, const char *word, ...);
-
-/**
- * Explicit va_list version of ngram_score().
- */
-int32 ngram_score_v(ngram_model_t *model, const char *word, va_list history);
 
 /**
  * Quick trigram score lookup.
@@ -163,16 +162,25 @@ int32 ngram_tg_score(ngram_model_t *model, int32 w3, int32 w2, int32 w1);
 int32 ngram_bg_score(ngram_model_t *model, int32 w2, int32 w1);
 
 /**
+ * Quick general N-Gram score lookup.
+ */
+int32 ngram_ng_score(ngram_model_t *model, int32 wid, int32 *history, int32 n_hist);
+
+/**
  * Get the "raw" log-probability for a general N-Gram.
  *
- * See documentation for ngram_score() for an explanation of this.
+ * See documentation for ngram_score() and ngram_apply_weights() for
+ * an explanation of this.
  */
 int32 ngram_prob(ngram_model_t *model, const char *word, ...);
 
 /**
- * Explicit va_list version of ngram_prob().
+ * Quick "raw" probability lookup for a general N-Gram.
+ *
+ * See documentation for ngram_ng_score() and ngram_apply_weights()
+ * for an explanation of this.
  */
-int32 ngram_prob_v(ngram_model_t *model, const char *word, va_list history);
+int32 ngram_ng_prob(ngram_model_t *model, int32 wid, int32 *history, int32 n_hist);
 
 /**
  * Look up numerical word ID.

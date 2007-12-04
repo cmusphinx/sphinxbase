@@ -44,6 +44,7 @@
 #include "ngram_model_arpa.h"
 #include "err.h"
 #include "pio.h"
+#include "linklist.h"
 
 #include <string.h>
 
@@ -467,6 +468,9 @@ ngram_model_arpa_read(cmd_ln_t *config,
     base->n_1g_alloc = base->n_counts[0] = n_unigram;
     base->n_counts[1] = n_bigram;
     base->n_counts[2] = n_trigram;
+    base->lw = 1.0;
+    base->wip = 1.0;
+    base->uw = 1.0;
     /* Allocate space for word strings. */
     base->word_str = ckd_calloc(n_unigram, sizeof(char *));
     /* NOTE: They are no longer case-insensitive since we are allowing
@@ -523,6 +527,10 @@ ngram_model_arpa_read(cmd_ln_t *config,
         E_INFO("%8d = #prob3 entries\n", model->n_prob3);
 
         free_sorted_list(&model->sorted_prob3);
+
+        /* Initialize tginfo */
+        model->tginfo =
+            ckd_calloc(base->n_1g_alloc, sizeof(tginfo_t *));
     }
 
     fclose_comp(fp, is_pipe);
@@ -540,12 +548,245 @@ static int
 ngram_model_arpa_apply_weights(ngram_model_t *base, float32 lw,
                               float32 wip, float32 uw)
 {
+    ngram_model_arpa_t *model = (ngram_model_arpa_t *)base;
+    int32 log_wip, log_uw, log_uniform;
+    int i;
+
+    /* Precalculate some log values we will like. */
+    log_wip = logmath_log(base->lmath, wip);
+    log_uw = logmath_log(base->lmath, uw);
+    log_uniform = logmath_log(base->lmath, 1.0 / (base->n_counts[0] - 1))
+        + logmath_log(base->lmath, 1.0 - uw);
+
+    for (i = 0; i < base->n_counts[0]; ++i) {
+        model->unigrams[i].bo_wt1.l *= lw;
+
+        if (strcmp(base->word_str[i], "<s>") == 0) { /* FIXME: configurable start_sym */
+            /* Apply language weight and WIP */
+            model->unigrams[i].prob1.l *= lw;
+            model->unigrams[i].prob1.l += log_wip;
+        }
+        else {
+            /* Interpolate unigram probability with uniform. */
+            model->unigrams[i].prob1.l += log_uw;
+            model->unigrams[i].prob1.l =
+                logmath_add(base->lmath,
+                            model->unigrams[i].prob1.l,
+                            log_uniform);
+            /* Apply language weight and WIP */
+            model->unigrams[i].prob1.l *= lw;
+            model->unigrams[i].prob1.l += log_wip;
+        }
+    }
+
+    for (i = 0; i < model->n_prob2; ++i) {
+        model->prob2[i].l *= lw;
+        model->prob2[i].l += log_wip;
+    }
+
+    if (base->n > 2) {
+        for (i = 0; i < model->n_bo_wt2; ++i) {
+            model->bo_wt2[i].l *= lw;
+        }
+        for (i = 0; i < model->n_prob3; i++) {
+            model->prob3[i].l *= lw;
+            model->prob3[i].l += log_wip;
+        }
+    }
     return 0;
+}
+
+static int32
+lm3g_ug_score(ngram_model_arpa_t *model, int32 lwid)
+{
+    return model->unigrams[lwid].prob1.l;
+}
+
+/* Locate a specific bigram within a bigram list */
+#define BINARY_SEARCH_THRESH	16
+static int32
+find_bg(bigram_t * bg, int32 n, int32 w)
+{
+    int32 i, b, e;
+
+    /* Binary search until segment size < threshold */
+    b = 0;
+    e = n;
+    while (e - b > BINARY_SEARCH_THRESH) {
+        i = (b + e) >> 1;
+        if (bg[i].wid < w)
+            b = i + 1;
+        else if (bg[i].wid > w)
+            e = i;
+        else
+            return i;
+    }
+
+    /* Linear search within narrowed segment */
+    for (i = b; (i < e) && (bg[i].wid != w); i++);
+    return ((i < e) ? i : -1);
+}
+
+static int32
+lm3g_bg_score(ngram_model_arpa_t *model, int32 lw1, int32 lw2)
+{
+    int32 i, n, b, score;
+    bigram_t *bg;
+
+    b = FIRST_BG(model, lw1);
+    n = FIRST_BG(model, lw1 + 1) - b;
+    bg = model->bigrams + b;
+
+    if ((i = find_bg(bg, n, lw2)) >= 0) {
+        score = model->prob2[bg[i].prob2].l;
+    }
+    else {
+        score = model->unigrams[lw1].bo_wt1.l + model->unigrams[lw2].prob1.l;
+    }
+
+    return (score);
+}
+
+static void
+load_tginfo(ngram_model_arpa_t *model, int32 lw1, int32 lw2)
+{
+    int32 i, n, b, t;
+    bigram_t *bg;
+    tginfo_t *tginfo;
+
+    /* First allocate space for tg information for bg lw1,lw2 */
+    tginfo = (tginfo_t *) listelem_alloc(sizeof(tginfo_t));
+    tginfo->w1 = lw1;
+    tginfo->tg = NULL;
+    tginfo->next = model->tginfo[lw2];
+    model->tginfo[lw2] = tginfo;
+
+    /* Locate bigram lw1,lw2 */
+
+    b = model->unigrams[lw1].bigrams;
+    n = model->unigrams[lw1 + 1].bigrams - b;
+    bg = model->bigrams + b;
+
+    if ((n > 0) && ((i = find_bg(bg, n, lw2)) >= 0)) {
+        tginfo->bowt = model->bo_wt2[bg[i].bo_wt2].l;
+
+        /* Find t = Absolute first trigram index for bigram lw1,lw2 */
+        b += i;                 /* b = Absolute index of bigram lw1,lw2 on disk */
+        t = FIRST_TG(model, b);
+
+        tginfo->tg = model->trigrams + t;
+
+        /* Find #tg for bigram w1,w2 */
+        tginfo->n_tg = FIRST_TG(model, b + 1) - t;
+    }
+    else {                      /* No bigram w1,w2 */
+        tginfo->bowt = 0;
+        tginfo->n_tg = 0;
+    }
+}
+
+/* Similar to find_bg */
+static int32
+find_tg(trigram_t * tg, int32 n, int32 w)
+{
+    int32 i, b, e;
+
+    b = 0;
+    e = n;
+    while (e - b > BINARY_SEARCH_THRESH) {
+        i = (b + e) >> 1;
+        if (tg[i].wid < w)
+            b = i + 1;
+        else if (tg[i].wid > w)
+            e = i;
+        else
+            return i;
+    }
+
+    for (i = b; (i < e) && (tg[i].wid != w); i++);
+    return ((i < e) ? i : -1);
+}
+
+static int32
+lm3g_tg_score(ngram_model_arpa_t *model, int32 lw1, int32 lw2, int32 lw3)
+{
+    ngram_model_t *base = &model->base;
+    int32 i, n, score;
+    trigram_t *tg;
+    tginfo_t *tginfo, *prev_tginfo;
+
+    if ((base->n < 3) || (lw1 < 0))
+        return (lm3g_bg_score(model, lw2, lw3));
+
+    prev_tginfo = NULL;
+    for (tginfo = model->tginfo[lw2]; tginfo; tginfo = tginfo->next) {
+        if (tginfo->w1 == lw1)
+            break;
+        prev_tginfo = tginfo;
+    }
+
+    if (!tginfo) {
+        load_tginfo(model, lw1, lw2);
+        tginfo = model->tginfo[lw2];
+    }
+    else if (prev_tginfo) {
+        prev_tginfo->next = tginfo->next;
+        tginfo->next = model->tginfo[lw2];
+        model->tginfo[lw2] = tginfo;
+    }
+
+    tginfo->used = 1;
+
+    /* Trigrams for w1,w2 now pointed to by tginfo */
+    n = tginfo->n_tg;
+    tg = tginfo->tg;
+    if ((i = find_tg(tg, n, lw3)) >= 0) {
+        score = model->prob3[tg[i].prob3].l;
+    }
+    else {
+        score = tginfo->bowt + lm3g_bg_score(model, lw2, lw3);
+    }
+
+    return (score);
+}
+
+static void
+lm3g_cache_reset(ngram_model_arpa_t *model)
+{
+    ngram_model_t *base = &model->base;
+    int32 i;
+    tginfo_t *tginfo, *next_tginfo, *prev_tginfo;
+
+    for (i = 0; i < base->n_counts[0]; i++) {
+        prev_tginfo = NULL;
+        for (tginfo = model->tginfo[i]; tginfo; tginfo = next_tginfo) {
+            next_tginfo = tginfo->next;
+
+            if (!tginfo->used) {
+                listelem_free((void *) tginfo, sizeof(tginfo_t));
+                if (prev_tginfo)
+                    prev_tginfo->next = next_tginfo;
+                else
+                    model->tginfo[i] = next_tginfo;
+            }
+            else {
+                tginfo->used = 0;
+                prev_tginfo = tginfo;
+            }
+        }
+    }
 }
 
 static int32
 ngram_model_arpa_score(ngram_model_t *base, int32 wid,
                       int32 *history, int32 n_hist)
+{
+    return NGRAM_SCORE_ERROR;
+}
+
+static int32
+ngram_model_arpa_raw_score(ngram_model_t *base, int32 wid,
+                           int32 *history, int32 n_hist)
 {
     return NGRAM_SCORE_ERROR;
 }
@@ -561,11 +802,23 @@ ngram_model_arpa_free(ngram_model_t *base)
     ckd_free(model->prob2);
     ckd_free(model->bo_wt2);
     ckd_free(model->prob3);
+    if (model->tginfo) {
+        int32 u;
+        for (u = 0; u < base->n_1g_alloc; u++) {
+            tginfo_t *tginfo, *next_tginfo;
+            for (tginfo = model->tginfo[u]; tginfo; tginfo = next_tginfo) {
+                next_tginfo = tginfo->next;
+                listelem_free(tginfo, sizeof(*tginfo));
+            }
+        }
+        ckd_free(model->tginfo);
+    }
     ckd_free(model->tseg_base);
 }
 
 static ngram_funcs_t ngram_model_arpa_funcs = {
     ngram_model_arpa_apply_weights, /* apply_weights */
     ngram_model_arpa_score,         /* score */
+    ngram_model_arpa_raw_score,     /* raw_score */
     ngram_model_arpa_free           /* free */
 };

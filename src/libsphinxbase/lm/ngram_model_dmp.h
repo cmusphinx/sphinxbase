@@ -46,17 +46,19 @@
 #include "ngram_model_internal.h"
 #include "mmio.h"
 
-/** On-disk representation of language model probabilities. */
+/**
+ * Language model probabilities.
+ */
 typedef union {
     float32 f;
     int32 l;
 } lmprob_t;
 
 /**
- * On-disk representation of unigrams.
+ * Unigram objects.
  */
 typedef struct unigram_s {
-    int32 mapid;        /**< Holds dictionary ID or whatever. */
+    int32 mapid;        /**< UNUSED. */
     lmprob_t prob1;     /**< Unigram probability. */
     lmprob_t bo_wt1;    /**< Unigram backoff weight. */
     int32 bigrams;	/**< Index of 1st entry in lm_t.bigrams[] */

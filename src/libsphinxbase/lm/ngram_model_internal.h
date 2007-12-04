@@ -60,12 +60,16 @@ struct ngram_model_s {
     char **word_str;    /**< Unigram names */
     hash_table_t *wid;  /**< Mapping of unigram names to word IDs. */
     logmath_t *lmath;   /**< Log-math object */
+    float32 lw;         /**< Language model scaling factor */
+    float32 wip;        /**< Word insertion penalty */
+    float32 uw;         /**< Unigram weight */
     struct ngram_funcs_s *funcs; /**< Implementation-specific methods. */
 };
 
 typedef struct ngram_funcs_s {
     int (*apply_weights)(ngram_model_t *model, float32 lw, float32 wip, float32 uw);
     int32 (*score)(ngram_model_t *model, int32 wid, int32 *history, int32 n_hist);
+    int32 (*raw_score)(ngram_model_t *model, int32 wid, int32 *history, int32 n_hist);
     void (*free)(ngram_model_t *model);
 } ngram_funcs_t;
 

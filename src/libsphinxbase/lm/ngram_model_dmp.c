@@ -437,6 +437,13 @@ ngram_model_dmp_score(ngram_model_t *model, int32 wid,
     return NGRAM_SCORE_ERROR;
 }
 
+static int32
+ngram_model_dmp_raw_score(ngram_model_t *model, int32 wid,
+                          int32 *history, int32 n_hist)
+{
+    return NGRAM_SCORE_ERROR;
+}
+
 static void
 ngram_model_dmp_free(ngram_model_t *base)
 {
@@ -472,5 +479,6 @@ ngram_model_dmp_free(ngram_model_t *base)
 static ngram_funcs_t ngram_model_dmp_funcs = {
     ngram_model_dmp_apply_weights, /* apply_weights */
     ngram_model_dmp_score,         /* score */
+    ngram_model_dmp_raw_score,     /* raw_score */
     ngram_model_dmp_free           /* free */
 };

@@ -287,43 +287,58 @@ int
 ngram_apply_weights(ngram_model_t *model,
 		    float32 lw, float32 wip, float32 uw)
 {
-    return -1;
+    return (*model->funcs->apply_weights)(model, lw, wip, uw);
 }
 
 int32
 ngram_score(ngram_model_t *model, const char *word, ...)
 {
-    return NGRAM_SCORE_ERROR;
-}
+    va_list history;
+    int32 prob;
 
-int32
-ngram_score_v(ngram_model_t *model, const char *word, va_list history)
-{
-    return NGRAM_SCORE_ERROR;
+    va_start(history, word);
+
+    va_end(history);
+
+    return prob;
 }
 
 int32
 ngram_tg_score(ngram_model_t *model, int32 w3, int32 w2, int32 w1)
 {
-    return NGRAM_SCORE_ERROR;
+    int32 hist[2] = { w1, w2 };
+    return (*model->funcs->score)(model, w3, hist, 2);
 }
 
 int32
 ngram_bg_score(ngram_model_t *model, int32 w2, int32 w1)
 {
-    return NGRAM_SCORE_ERROR;
+    return (*model->funcs->score)(model, w2, &w1, 1);
+}
+
+int32
+ngram_ng_score(ngram_model_t *model, int32 wid, int32 *history, int32 n_hist)
+{
+    return (*model->funcs->score)(model, wid, history, n_hist);
 }
 
 int32
 ngram_prob(ngram_model_t *model, const char *word, ...)
 {
-    return NGRAM_SCORE_ERROR;
+    va_list history;
+    int32 prob;
+
+    va_start(history, word);
+
+    va_end(history);
+
+    return prob;
 }
 
 int32
-ngram_prob_v(ngram_model_t *model, const char *word, va_list history)
+ngram_ng_prob(ngram_model_t *model, int32 wid, int32 *history, int32 n_hist)
 {
-    return NGRAM_SCORE_ERROR;
+    return (*model->funcs->raw_score)(model, wid, history, n_hist);
 }
 
 int32
