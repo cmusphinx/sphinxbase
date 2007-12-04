@@ -294,19 +294,36 @@ int32
 ngram_score(ngram_model_t *model, const char *word, ...)
 {
     va_list history;
+    const char *hword;
+    int32 *histid;
+    int32 n_hist;
     int32 prob;
 
     va_start(history, word);
-
+    n_hist = 0;
+    while ((hword = va_arg(history, const char *)) != NULL)
+        ++n_hist;
     va_end(history);
 
+    histid = ckd_calloc(n_hist, sizeof(*histid));
+    va_start(history, word);
+    n_hist = 0;
+    while ((hword = va_arg(history, const char *)) != NULL) {
+        histid[n_hist] = ngram_wid(model, hword);
+        ++n_hist;
+    }
+    va_end(history);
+
+    prob = (*model->funcs->score)(model, ngram_wid(model, word),
+                                  histid, n_hist);
+    ckd_free(histid);
     return prob;
 }
 
 int32
 ngram_tg_score(ngram_model_t *model, int32 w3, int32 w2, int32 w1)
 {
-    int32 hist[2] = { w1, w2 };
+    int32 hist[2] = { w2, w1 };
     return (*model->funcs->score)(model, w3, hist, 2);
 }
 
@@ -326,12 +343,29 @@ int32
 ngram_prob(ngram_model_t *model, const char *word, ...)
 {
     va_list history;
+    const char *hword;
+    int32 *histid;
+    int32 n_hist;
     int32 prob;
 
     va_start(history, word);
-
+    n_hist = 0;
+    while ((hword = va_arg(history, const char *)) != NULL)
+        ++n_hist;
     va_end(history);
 
+    histid = ckd_calloc(n_hist, sizeof(*histid));
+    va_start(history, word);
+    n_hist = 0;
+    while ((hword = va_arg(history, const char *)) != NULL) {
+        histid[n_hist] = ngram_wid(model, hword);
+        ++n_hist;
+    }
+    va_end(history);
+
+    prob = (*model->funcs->raw_score)(model, ngram_wid(model, word),
+                                      histid, n_hist);
+    ckd_free(histid);
     return prob;
 }
 

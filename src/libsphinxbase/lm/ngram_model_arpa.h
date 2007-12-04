@@ -46,13 +46,11 @@
 #include "ngram_model_internal.h"
 
 #define MAX_SORTED_ENTRIES	65534
-#define MIN_PROB_F		-99.0
 
-/** On-disk representation of language model probabilities. */
-typedef union {
-    float32 f;
-    int32 l;
-} lmprob_t;
+/**
+ * Type used to store language model probabilities
+ */
+typedef int32 lmprob_t;
 
 /**
  * Unigram structure.
@@ -173,6 +171,10 @@ typedef struct ngram_model_arpa_s {
     sorted_list_t sorted_prob2;
     sorted_list_t sorted_bo_wt2;
     sorted_list_t sorted_prob3;
+
+    /* Language model weights in the appropriate form. */
+    float32 lw;
+    int32 log_wip;
 } ngram_model_arpa_t;
 
 #endif /* __NGRAM_MODEL_ARPA_H__ */

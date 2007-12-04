@@ -47,6 +47,7 @@
 #include "linklist.h"
 
 #include <string.h>
+#include <limits.h>
 
 static ngram_funcs_t ngram_model_arpa_funcs;
 
@@ -60,7 +61,7 @@ init_sorted_list(sorted_list_t * l)
     /* FIXME FIXME FIXME: Fixed size array!??! */
     l->list = ckd_calloc(MAX_SORTED_ENTRIES,
                          sizeof(sorted_entry_t));
-    l->list[0].val.f = MIN_PROB_F;
+    l->list[0].val = INT_MIN;
     l->list[0].lower = 0;
     l->list[0].higher = 0;
     l->free = 1;
@@ -80,19 +81,19 @@ vals_in_sorted_list(sorted_list_t * l)
 
     vals = ckd_calloc(l->free, sizeof(lmprob_t));
     for (i = 0; i < l->free; i++)
-        vals[i].f = l->list[i].val.f;
+        vals[i] = l->list[i].val;
     return (vals);
 }
 
 static int32
-sorted_id(sorted_list_t * l, float *val)
+sorted_id(sorted_list_t * l, int32 *val)
 {
     int32 i = 0;
 
     for (;;) {
-        if (*val == l->list[i].val.f)
+        if (*val == l->list[i].val)
             return (i);
-        if (*val < l->list[i].val.f) {
+        if (*val < l->list[i].val) {
             if (l->list[i].lower == 0) {
                 if (l->free >= MAX_SORTED_ENTRIES)
                     E_FATAL("sorted list overflow\n"); /* FIXME FIXME FIXME */
@@ -100,7 +101,7 @@ sorted_id(sorted_list_t * l, float *val)
                 l->list[i].lower = l->free;
                 (l->free)++;
                 i = l->list[i].lower;
-                l->list[i].val.f = *val;
+                l->list[i].val = *val;
                 return (i);
             }
             else
@@ -114,7 +115,7 @@ sorted_id(sorted_list_t * l, float *val)
                 l->list[i].higher = l->free;
                 (l->free)++;
                 i = l->list[i].higher;
-                l->list[i].val.f = *val;
+                l->list[i].val = *val;
                 return (i);
             }
             else
@@ -204,8 +205,8 @@ ReadUnigrams(FILE * fp, ngram_model_arpa_t * model)
             != (void *)(long)wcnt) {
                 E_WARN("Duplicate word in dictionary: %s\n", base->word_str[wcnt]);
         }
-        model->unigrams[wcnt].prob1.f = p1;
-        model->unigrams[wcnt].bo_wt1.f = bo_wt;
+        model->unigrams[wcnt].prob1 = logmath_log10_to_log(base->lmath, p1);
+        model->unigrams[wcnt].bo_wt1 = logmath_log10_to_log(base->lmath, bo_wt);
         wcnt++;
     }
 
@@ -225,9 +226,8 @@ ReadBigrams(FILE * fp, ngram_model_arpa_t * model)
 {
     ngram_model_t *base = &model->base;
     char string[1024], word1[256], word2[256];
-    int32 w1, w2, prev_w1, bgcount, p;
+    int32 w1, w2, prev_w1, bgcount;
     bigram_t *bgptr;
-    float p2, bo_wt;
     int32 n_fld, n;
 
     E_INFO("Reading bigrams\n");
@@ -237,26 +237,30 @@ ReadBigrams(FILE * fp, ngram_model_arpa_t * model)
     prev_w1 = -1;
     n_fld = (base->n_counts[2] > 0) ? 4 : 3;
 
-    bo_wt = 0.0;
     while (fgets(string, sizeof(string), fp) != NULL) {
+        float32 p, bo_wt;
+        int32 p2, bo_wt2;
         /* FIXME: unsafe use of sscanf()!!! */
-        n = sscanf(string, "%f %s %s %f", &p2, word1, word2, &bo_wt);
+        n = sscanf(string, "%f %s %s %f", &p, word1, word2, &bo_wt);
         if (n < n_fld) {
             if (string[0] != '\n')
                 break;
             continue;
         }
 
+        /* FIXME: Should NOT be fatal errors! */
         if ((w1 = ngram_wid(base, word1)) == NGRAM_INVALID_WID)
             E_FATAL("Unknown word: %s\n", word1);
         if ((w2 = ngram_wid(base, word2)) == NGRAM_INVALID_WID)
             E_FATAL("Unknown word: %s\n", word2);
 
+        /* FIXME: Should use logmath_t quantization here. */
         /* HACK!! to quantize probs to 4 decimal digits */
-        p = p2 * 10000;
-        p2 = p * 0.0001;
-        p = bo_wt * 10000;
-        bo_wt = p * 0.0001;
+        p = (float32)((int32)(p * 10000)) / 10000;
+        bo_wt = (float32)((int32)(bo_wt * 10000)) / 10000;
+
+        p2 = logmath_log10_to_log(base->lmath, p);
+        bo_wt2 = logmath_log10_to_log(base->lmath, bo_wt);
 
         if (bgcount >= base->n_counts[1])
             E_FATAL("Too many bigrams\n");
@@ -264,7 +268,7 @@ ReadBigrams(FILE * fp, ngram_model_arpa_t * model)
         bgptr->wid = w2;
         bgptr->prob2 = sorted_id(&model->sorted_prob2, &p2);
         if (base->n_counts[2] > 0)
-            bgptr->bo_wt2 = sorted_id(&model->sorted_bo_wt2, &bo_wt);
+            bgptr->bo_wt2 = sorted_id(&model->sorted_bo_wt2, &bo_wt2);
 
         if (w1 != prev_w1) {
             if (w1 < prev_w1)
@@ -298,12 +302,10 @@ ReadTrigrams(FILE * fp, ngram_model_arpa_t * model)
 {
     ngram_model_t *base = &model->base;
     char string[1024], word1[256], word2[256], word3[256];
-    int32 i, n, w1, w2, w3, prev_w1, prev_w2, tgcount, prev_bg, bg, endbg,
-        p;
+    int32 i, n, w1, w2, w3, prev_w1, prev_w2, tgcount, prev_bg, bg, endbg;
     int32 seg, prev_seg, prev_seg_lastbg;
     trigram_t *tgptr;
     bigram_t *bgptr;
-    float p3;
 
     E_INFO("Reading trigrams\n");
 
@@ -315,8 +317,10 @@ ReadTrigrams(FILE * fp, ngram_model_arpa_t * model)
     prev_seg = -1;
 
     while (fgets(string, sizeof(string), fp) != NULL) {
+        float32 p;
+        int32 p3;
         /* FIXME: unsafe use of sscanf()!!! */
-        n = sscanf(string, "%f %s %s %s", &p3, word1, word2, word3);
+        n = sscanf(string, "%f %s %s %s", &p, word1, word2, word3);
         if (n != 4) {
             if (string[0] != '\n')
                 break;
@@ -330,9 +334,10 @@ ReadTrigrams(FILE * fp, ngram_model_arpa_t * model)
         if ((w3 = ngram_wid(base, word3)) == NGRAM_INVALID_WID)
             E_FATAL("Unknown word: %s\n", word3);
 
+        /* FIXME: Should use logmath_t quantization here. */
         /* HACK!! to quantize probs to 4 decimal digits */
-        p = p3 * 10000;
-        p3 = p * 0.0001;
+        p = (float32)((int32)(p * 10000)) / 10000;
+        p3 = logmath_log10_to_log(base->lmath, p);
 
         if (tgcount >= base->n_counts[2])
             E_FATAL("Too many trigrams\n");
@@ -423,8 +428,8 @@ new_unigram_table(int32 n_ug)
 
     table = ckd_calloc(n_ug, sizeof(unigram_t));
     for (i = 0; i < n_ug; i++) {
-        table[i].prob1.f = -99.0;
-        table[i].bo_wt1.f = -99.0;
+        table[i].prob1 = INT_MIN;
+        table[i].bo_wt1 = INT_MIN;
     }
     return table;
 }
@@ -471,6 +476,7 @@ ngram_model_arpa_read(cmd_ln_t *config,
     base->lw = 1.0;
     base->wip = 1.0;
     base->uw = 1.0;
+    base->lmath = lmath;
     /* Allocate space for word strings. */
     base->word_str = ckd_calloc(n_unigram, sizeof(char *));
     /* NOTE: They are no longer case-insensitive since we are allowing
@@ -506,7 +512,7 @@ ngram_model_arpa_read(cmd_ln_t *config,
     model->n_prob2 = model->sorted_prob2.free;
     model->prob2 = vals_in_sorted_list(&model->sorted_prob2);
     free_sorted_list(&model->sorted_prob2);
-    E_INFO("\n%8d = #bigrams created\n", base->n_counts[1]);
+    E_INFO("%8d = #bigrams created\n", base->n_counts[1]);
     E_INFO("%8d = #prob2 entries\n", model->n_prob2);
 
     if (base->n_counts[2] > 0) {
@@ -523,7 +529,7 @@ ngram_model_arpa_read(cmd_ln_t *config,
         base->n_counts[2] = FIRST_TG(model, base->n_counts[1]);
         model->n_prob3 = model->sorted_prob3.free;
         model->prob3 = vals_in_sorted_list(&model->sorted_prob3);
-        E_INFO("\n%8d = #trigrams created\n", base->n_counts[2]);
+        E_INFO("%8d = #trigrams created\n", base->n_counts[2]);
         E_INFO("%8d = #prob3 entries\n", model->n_prob3);
 
         free_sorted_list(&model->sorted_prob3);
@@ -559,47 +565,37 @@ ngram_model_arpa_apply_weights(ngram_model_t *base, float32 lw,
         + logmath_log(base->lmath, 1.0 - uw);
 
     for (i = 0; i < base->n_counts[0]; ++i) {
-        model->unigrams[i].bo_wt1.l *= lw;
+        model->unigrams[i].bo_wt1 = (lmprob_t)(model->unigrams[i].bo_wt1 * lw);
 
         if (strcmp(base->word_str[i], "<s>") == 0) { /* FIXME: configurable start_sym */
             /* Apply language weight and WIP */
-            model->unigrams[i].prob1.l *= lw;
-            model->unigrams[i].prob1.l += log_wip;
+            model->unigrams[i].prob1 = (lmprob_t)(model->unigrams[i].prob1 * lw) + log_wip;
         }
         else {
             /* Interpolate unigram probability with uniform. */
-            model->unigrams[i].prob1.l += log_uw;
-            model->unigrams[i].prob1.l =
+            model->unigrams[i].prob1 += log_uw;
+            model->unigrams[i].prob1 =
                 logmath_add(base->lmath,
-                            model->unigrams[i].prob1.l,
+                            model->unigrams[i].prob1,
                             log_uniform);
             /* Apply language weight and WIP */
-            model->unigrams[i].prob1.l *= lw;
-            model->unigrams[i].prob1.l += log_wip;
+            model->unigrams[i].prob1 = (lmprob_t)(model->unigrams[i].prob1 * lw) + log_wip;
         }
     }
 
     for (i = 0; i < model->n_prob2; ++i) {
-        model->prob2[i].l *= lw;
-        model->prob2[i].l += log_wip;
+        model->prob2[i] = (lmprob_t)(model->prob2[i] * lw) + log_wip;
     }
 
     if (base->n > 2) {
         for (i = 0; i < model->n_bo_wt2; ++i) {
-            model->bo_wt2[i].l *= lw;
+            model->bo_wt2[i] = (lmprob_t)(model->bo_wt2[i] * lw);
         }
         for (i = 0; i < model->n_prob3; i++) {
-            model->prob3[i].l *= lw;
-            model->prob3[i].l += log_wip;
+            model->prob3[i] = (lmprob_t)(model->prob3[i] * lw) + log_wip;
         }
     }
     return 0;
-}
-
-static int32
-lm3g_ug_score(ngram_model_arpa_t *model, int32 lwid)
-{
-    return model->unigrams[lwid].prob1.l;
 }
 
 /* Locate a specific bigram within a bigram list */
@@ -638,10 +634,10 @@ lm3g_bg_score(ngram_model_arpa_t *model, int32 lw1, int32 lw2)
     bg = model->bigrams + b;
 
     if ((i = find_bg(bg, n, lw2)) >= 0) {
-        score = model->prob2[bg[i].prob2].l;
+        score = model->prob2[bg[i].prob2];
     }
     else {
-        score = model->unigrams[lw1].bo_wt1.l + model->unigrams[lw2].prob1.l;
+        score = model->unigrams[lw1].bo_wt1 + model->unigrams[lw2].prob1;
     }
 
     return (score);
@@ -668,7 +664,7 @@ load_tginfo(ngram_model_arpa_t *model, int32 lw1, int32 lw2)
     bg = model->bigrams + b;
 
     if ((n > 0) && ((i = find_bg(bg, n, lw2)) >= 0)) {
-        tginfo->bowt = model->bo_wt2[bg[i].bo_wt2].l;
+        tginfo->bowt = model->bo_wt2[bg[i].bo_wt2];
 
         /* Find t = Absolute first trigram index for bigram lw1,lw2 */
         b += i;                 /* b = Absolute index of bigram lw1,lw2 on disk */
@@ -741,7 +737,7 @@ lm3g_tg_score(ngram_model_arpa_t *model, int32 lw1, int32 lw2, int32 lw3)
     n = tginfo->n_tg;
     tg = tginfo->tg;
     if ((i = find_tg(tg, n, lw3)) >= 0) {
-        score = model->prob3[tg[i].prob3].l;
+        score = model->prob3[tg[i].prob3];
     }
     else {
         score = tginfo->bowt + lm3g_bg_score(model, lw2, lw3);
@@ -781,14 +777,32 @@ static int32
 ngram_model_arpa_score(ngram_model_t *base, int32 wid,
                       int32 *history, int32 n_hist)
 {
-    return NGRAM_SCORE_ERROR;
+    ngram_model_arpa_t *model = (ngram_model_arpa_t *)base;
+    switch (n_hist) {
+    case 0:
+        return model->unigrams[wid].prob1;
+    case 1:
+        return lm3g_bg_score(model, history[0], wid);
+    case 2:
+        return lm3g_tg_score(model, history[1], history[0], wid);
+    default:
+        E_ERROR("%d-grams not supported", n_hist + 1);
+        return NGRAM_SCORE_ERROR;
+    }
 }
 
 static int32
 ngram_model_arpa_raw_score(ngram_model_t *base, int32 wid,
                            int32 *history, int32 n_hist)
 {
-    return NGRAM_SCORE_ERROR;
+    ngram_model_arpa_t *model = (ngram_model_arpa_t *)base;
+    int32 score;
+
+    score = ngram_model_arpa_score(base, wid, history, n_hist);
+    if (score == NGRAM_SCORE_ERROR)
+        return score;
+    /* FIXME: No way to undo unigram weight interpolation. */
+    return (score - model->log_wip) / model->lw;
 }
 
 static void

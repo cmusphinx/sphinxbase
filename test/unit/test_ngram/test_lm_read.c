@@ -21,6 +21,19 @@ main(int argc, char *argv[])
 	TEST_ASSERT(model);
 	TEST_EQUAL(ngram_wid(model, "<UNK>"), 0);
 	TEST_EQUAL(strcmp(ngram_word(model, 0), "<UNK>"), 0);
+	TEST_EQUAL(ngram_wid(model, "absolute"), 13);
+	TEST_EQUAL(strcmp(ngram_word(model, 13), "absolute"), 0);
+	/* Test unigrams. */
+	TEST_EQUAL(ngram_score(model, "<UNK>", NULL), -75346);
+	TEST_EQUAL(ngram_bg_score(model, ngram_wid(model, "<UNK>"),
+				  NGRAM_INVALID_WID), -75346);
+	TEST_EQUAL(ngram_score(model, "sphinxtrain", NULL), -64208);
+	TEST_EQUAL(ngram_bg_score(model, ngram_wid(model, "sphinxtrain"),
+				  NGRAM_INVALID_WID), -64208);
+	/* Test bigrams. */
+	TEST_EQUAL(ngram_score(model, "huggins", "david", NULL), -831);
+	/* Test trigrams. */
+	TEST_EQUAL(ngram_score(model, "daines", "huggins", "david", NULL), -9450);
 
 	ngram_model_free(model);
 
