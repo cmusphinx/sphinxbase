@@ -46,9 +46,7 @@
 #include "ngram_model_internal.h"
 #include "mmio.h"
 
-/**
- * Language model probabilities.
- */
+/** On-disk representation of language model probabilities. */
 typedef union {
     float32 f;
     int32 l;
@@ -78,6 +76,7 @@ typedef struct unigram_s {
  */
 #define BG_SEG_SZ	512	/* chosen so that #trigram/segment <= 2**16 */
 #define LOG_BG_SEG_SZ	9
+#define TSEG_BASE(m,b)		((m)->tseg_base[(b)>>LOG_BG_SEG_SZ])
 
 /**
  * On-disk representation of bigrams.
@@ -140,6 +139,10 @@ typedef struct ngram_model_dmp_s {
     tginfo_t **tginfo;   /**< tginfo[lw2] is head of linked list of trigram information for
                             some cached subset of bigrams (*,lw2). */
     mmio_file_t *dump_mmap; /**< mmap() of dump file (or NULL if none) */
+
+    /* Language model weights in the appropriate form. */
+    float32 lw;
+    int32 log_wip;
 } ngram_model_dmp_t;
 
 #endif /*  __NGRAM_MODEL_DMP_H__ */

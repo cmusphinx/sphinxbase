@@ -50,6 +50,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <limits.h>
 
 static const char darpa_hdr[] = "Darpa Trigram LM";
 static ngram_funcs_t ngram_model_dmp_funcs;
@@ -182,6 +183,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
     /* Allocate space for LM, including initial OOVs and placeholders; initialize it */
     model = ckd_calloc(1, sizeof(*model));
     base = &model->base;
+    base->lmath = lmath;
     base->funcs = &ngram_model_dmp_funcs;
     if (n_trigram > 0)
         base->n = 3;
@@ -216,6 +218,9 @@ ngram_model_dmp_read(cmd_ln_t *config,
         }
     }
     for (i = 0, ugptr = model->unigrams; i < base->n_counts[0]; i++, ugptr++) {
+        /* Convert values to log. */
+        ugptr->prob1.l = logmath_log10_to_log(lmath, ugptr->prob1.f);
+        ugptr->bo_wt1.l = logmath_log10_to_log(lmath, ugptr->bo_wt1.f);
         if (ugptr->mapid != i)
             err = 1;
         ugptr->mapid = i;
@@ -297,7 +302,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
             ckd_calloc(base->n_1g_alloc, sizeof(tginfo_t *));
     }
 
-    /* read n_prob2 and prob2 array (in memory, should be pre-scaled on disk) */
+    /* read n_prob2 and prob2 array (in memory) */
     if (do_mmap)
         fseek(fp, offset, SEEK_SET);
     fread(&k, sizeof(k), 1, fp);
@@ -306,36 +311,45 @@ ngram_model_dmp_read(cmd_ln_t *config,
     model->prob2 = ckd_calloc(k, sizeof(*model->prob2));
     if (fread(model->prob2, sizeof(*model->prob2), k, fp) != (size_t) k)
         E_FATAL("fread(prob2) failed\n");
-    if (do_swap)
-        for (i = 0; i < k; i++)
+    for (i = 0; i < k; i++) {
+        if (do_swap)
             SWAP_INT32(&model->prob2[i].l);
+        /* Convert values to log. */
+        model->prob2[i].l = logmath_log10_to_log(lmath, model->prob2[i].f);
+    }
     E_INFO("%8d = LM.prob2 entries read\n", k);
 
     /* read n_bo_wt2 and bo_wt2 array (in memory) */
-    if (base->n_counts[2] > 0) {
+    if (base->n > 2) {
         fread(&k, sizeof(k), 1, fp);
         if (do_swap) SWAP_INT32(&k);
         model->n_bo_wt2 = k;
         model->bo_wt2 = ckd_calloc(k, sizeof(*model->bo_wt2));
         if (fread(model->bo_wt2, sizeof(*model->bo_wt2), k, fp) != (size_t) k)
             E_FATAL("fread(bo_wt2) failed\n");
-        if (do_swap)
-            for (i = 0; i < k; i++)
+        for (i = 0; i < k; i++) {
+            if (do_swap)
                 SWAP_INT32(&model->bo_wt2[i].l);
+            /* Convert values to log. */
+            model->bo_wt2[i].l = logmath_log10_to_log(lmath, model->bo_wt2[i].f);
+        }
         E_INFO("%8d = LM.bo_wt2 entries read\n", k);
     }
 
     /* read n_prob3 and prob3 array (in memory) */
-    if (base->n_counts[2] > 0) {
+    if (base->n > 2) {
         fread(&k, sizeof(k), 1, fp);
         if (do_swap) SWAP_INT32(&k);
         model->n_prob3 = k;
         model->prob3 = ckd_calloc(k, sizeof(*model->prob3));
         if (fread(model->prob3, sizeof(*model->prob3), k, fp) != (size_t) k)
             E_FATAL("fread(prob3) failed\n");
-        if (do_swap)
-            for (i = 0; i < k; i++)
+        for (i = 0; i < k; i++) {
+            if (do_swap)
                 SWAP_INT32(&model->prob3[i].l);
+            /* Convert values to log. */
+            model->prob3[i].l = logmath_log10_to_log(lmath, model->prob3[i].f);
+        }
         E_INFO("%8d = LM.prob3 entries read\n", k);
     }
 
@@ -424,24 +438,261 @@ ngram_model_dmp_write(ngram_model_t *model,
 }
 
 static int
-ngram_model_dmp_apply_weights(ngram_model_t *model, float32 lw,
+ngram_model_dmp_apply_weights(ngram_model_t *base, float32 lw,
                               float32 wip, float32 uw)
 {
+    ngram_model_dmp_t *model = (ngram_model_dmp_t *)base;
+    int32 log_wip, log_uw, log_uniform;
+    int i;
+
+    /* Precalculate some log values we will like. */
+    log_wip = logmath_log(base->lmath, wip);
+    log_uw = logmath_log(base->lmath, uw);
+    log_uniform = logmath_log(base->lmath, 1.0 / (base->n_counts[0] - 1))
+        + logmath_log(base->lmath, 1.0 - uw);
+
+    for (i = 0; i < base->n_counts[0]; ++i) {
+        model->unigrams[i].bo_wt1.l = (int32)(model->unigrams[i].bo_wt1.l * lw);
+
+        if (strcmp(base->word_str[i], "<s>") == 0) { /* FIXME: configurable start_sym */
+            /* Apply language weight and WIP */
+            model->unigrams[i].prob1.l = (int32)(model->unigrams[i].prob1.l * lw) + log_wip;
+        }
+        else {
+            /* Interpolate unigram probability with uniform. */
+            model->unigrams[i].prob1.l += log_uw;
+            model->unigrams[i].prob1.l =
+                logmath_add(base->lmath,
+                            model->unigrams[i].prob1.l,
+                            log_uniform);
+            /* Apply language weight and WIP */
+            model->unigrams[i].prob1.l = (int32)(model->unigrams[i].prob1.l * lw) + log_wip;
+        }
+    }
+
+    for (i = 0; i < model->n_prob2; ++i) {
+        model->prob2[i].l = (int32)(model->prob2[i].l * lw) + log_wip;
+    }
+
+    if (base->n > 2) {
+        for (i = 0; i < model->n_bo_wt2; ++i) {
+            model->bo_wt2[i].l = (int32)(model->bo_wt2[i].l * lw);
+        }
+        for (i = 0; i < model->n_prob3; i++) {
+            model->prob3[i].l = (int32)(model->prob3[i].l * lw) + log_wip;
+        }
+    }
     return 0;
 }
 
+/* Locate a specific bigram within a bigram list */
+#define BINARY_SEARCH_THRESH	16
 static int32
-ngram_model_dmp_score(ngram_model_t *model, int32 wid,
-                      int32 *history, int32 n_hist)
+find_bg(bigram_t * bg, int32 n, int32 w)
 {
-    return NGRAM_SCORE_ERROR;
+    int32 i, b, e;
+
+    /* Binary search until segment size < threshold */
+    b = 0;
+    e = n;
+    while (e - b > BINARY_SEARCH_THRESH) {
+        i = (b + e) >> 1;
+        if (bg[i].wid < w)
+            b = i + 1;
+        else if (bg[i].wid > w)
+            e = i;
+        else
+            return i;
+    }
+
+    /* Linear search within narrowed segment */
+    for (i = b; (i < e) && (bg[i].wid != w); i++);
+    return ((i < e) ? i : -1);
+}
+
+#define FIRST_BG(m,u)		((m)->unigrams[u].bigrams)
+#define FIRST_TG(m,b)		(TSEG_BASE((m),(b))+((m)->bigrams[b].trigrams))
+
+static int32
+lm3g_bg_score(ngram_model_dmp_t *model, int32 lw1, int32 lw2)
+{
+    int32 i, n, b, score;
+    bigram_t *bg;
+
+    b = FIRST_BG(model, lw1);
+    n = FIRST_BG(model, lw1 + 1) - b;
+    bg = model->bigrams + b;
+
+    if ((i = find_bg(bg, n, lw2)) >= 0) {
+        score = model->prob2[bg[i].prob2].l;
+    }
+    else {
+        score = model->unigrams[lw1].bo_wt1.l + model->unigrams[lw2].prob1.l;
+    }
+
+    return (score);
+}
+
+static void
+load_tginfo(ngram_model_dmp_t *model, int32 lw1, int32 lw2)
+{
+    int32 i, n, b, t;
+    bigram_t *bg;
+    tginfo_t *tginfo;
+
+    /* First allocate space for tg information for bg lw1,lw2 */
+    tginfo = (tginfo_t *) listelem_alloc(sizeof(tginfo_t));
+    tginfo->w1 = lw1;
+    tginfo->tg = NULL;
+    tginfo->next = model->tginfo[lw2];
+    model->tginfo[lw2] = tginfo;
+
+    /* Locate bigram lw1,lw2 */
+
+    b = model->unigrams[lw1].bigrams;
+    n = model->unigrams[lw1 + 1].bigrams - b;
+    bg = model->bigrams + b;
+
+    if ((n > 0) && ((i = find_bg(bg, n, lw2)) >= 0)) {
+        tginfo->bowt = model->bo_wt2[bg[i].bo_wt2].l;
+
+        /* Find t = Absolute first trigram index for bigram lw1,lw2 */
+        b += i;                 /* b = Absolute index of bigram lw1,lw2 on disk */
+        t = FIRST_TG(model, b);
+
+        tginfo->tg = model->trigrams + t;
+
+        /* Find #tg for bigram w1,w2 */
+        tginfo->n_tg = FIRST_TG(model, b + 1) - t;
+    }
+    else {                      /* No bigram w1,w2 */
+        tginfo->bowt = 0;
+        tginfo->n_tg = 0;
+    }
+}
+
+/* Similar to find_bg */
+static int32
+find_tg(trigram_t * tg, int32 n, int32 w)
+{
+    int32 i, b, e;
+
+    b = 0;
+    e = n;
+    while (e - b > BINARY_SEARCH_THRESH) {
+        i = (b + e) >> 1;
+        if (tg[i].wid < w)
+            b = i + 1;
+        else if (tg[i].wid > w)
+            e = i;
+        else
+            return i;
+    }
+
+    for (i = b; (i < e) && (tg[i].wid != w); i++);
+    return ((i < e) ? i : -1);
 }
 
 static int32
-ngram_model_dmp_raw_score(ngram_model_t *model, int32 wid,
-                          int32 *history, int32 n_hist)
+lm3g_tg_score(ngram_model_dmp_t *model, int32 lw1, int32 lw2, int32 lw3)
 {
-    return NGRAM_SCORE_ERROR;
+    ngram_model_t *base = &model->base;
+    int32 i, n, score;
+    trigram_t *tg;
+    tginfo_t *tginfo, *prev_tginfo;
+
+    if ((base->n < 3) || (lw1 < 0))
+        return (lm3g_bg_score(model, lw2, lw3));
+
+    prev_tginfo = NULL;
+    for (tginfo = model->tginfo[lw2]; tginfo; tginfo = tginfo->next) {
+        if (tginfo->w1 == lw1)
+            break;
+        prev_tginfo = tginfo;
+    }
+
+    if (!tginfo) {
+        load_tginfo(model, lw1, lw2);
+        tginfo = model->tginfo[lw2];
+    }
+    else if (prev_tginfo) {
+        prev_tginfo->next = tginfo->next;
+        tginfo->next = model->tginfo[lw2];
+        model->tginfo[lw2] = tginfo;
+    }
+
+    tginfo->used = 1;
+
+    /* Trigrams for w1,w2 now pointed to by tginfo */
+    n = tginfo->n_tg;
+    tg = tginfo->tg;
+    if ((i = find_tg(tg, n, lw3)) >= 0) {
+        score = model->prob3[tg[i].prob3].l;
+    }
+    else {
+        score = tginfo->bowt + lm3g_bg_score(model, lw2, lw3);
+    }
+
+    return (score);
+}
+
+static void
+lm3g_cache_reset(ngram_model_dmp_t *model)
+{
+    ngram_model_t *base = &model->base;
+    int32 i;
+    tginfo_t *tginfo, *next_tginfo, *prev_tginfo;
+
+    for (i = 0; i < base->n_counts[0]; i++) {
+        prev_tginfo = NULL;
+        for (tginfo = model->tginfo[i]; tginfo; tginfo = next_tginfo) {
+            next_tginfo = tginfo->next;
+
+            if (!tginfo->used) {
+                listelem_free((void *) tginfo, sizeof(tginfo_t));
+                if (prev_tginfo)
+                    prev_tginfo->next = next_tginfo;
+                else
+                    model->tginfo[i] = next_tginfo;
+            }
+            else {
+                tginfo->used = 0;
+                prev_tginfo = tginfo;
+            }
+        }
+    }
+}
+
+static int32
+ngram_model_dmp_score(ngram_model_t *base, int32 wid,
+                      int32 *history, int32 n_hist)
+{
+    ngram_model_dmp_t *model = (ngram_model_dmp_t *)base;
+    switch (n_hist) {
+    case 0:
+        return model->unigrams[wid].prob1.l;
+    case 1:
+        return lm3g_bg_score(model, history[0], wid);
+    case 2:
+        return lm3g_tg_score(model, history[1], history[0], wid);
+    default:
+        E_ERROR("%d-grams not supported", n_hist + 1);
+        return NGRAM_SCORE_ERROR;
+    }
+}
+
+static int32
+ngram_model_dmp_raw_score(ngram_model_t *base, int32 wid,
+                           int32 *history, int32 n_hist)
+{
+    ngram_model_dmp_t *model = (ngram_model_dmp_t *)base;
+    int32 score;
+
+    score = ngram_model_dmp_score(base, wid, history, n_hist);
+    if (score == NGRAM_SCORE_ERROR)
+        return score;
+    /* FIXME: No way to undo unigram weight interpolation. */
+    return (score - model->log_wip) / model->lw;
 }
 
 static void
@@ -452,7 +703,10 @@ ngram_model_dmp_free(ngram_model_t *base)
 
     ckd_free(model->unigrams);
     ckd_free(model->prob2);
-    if (model->dump_mmap == NULL) {
+    if (model->dump_mmap) {
+        mmio_file_unmap(model->dump_mmap);
+    } 
+    else {
         ckd_free(model->bigrams);
         if (base->n > 2) {
             ckd_free(model->trigrams);
