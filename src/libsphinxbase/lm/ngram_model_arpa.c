@@ -96,8 +96,12 @@ sorted_id(sorted_list_t * l, int32 *val)
             return (i);
         if (*val < l->list[i].val) {
             if (l->list[i].lower == 0) {
-                if (l->free >= MAX_SORTED_ENTRIES)
-                    E_FATAL("sorted list overflow\n"); /* FIXME FIXME FIXME */
+                if (l->free >= MAX_SORTED_ENTRIES) {
+                    /* Make the best of a bad situation. */
+                    E_WARN("sorted list overflow (%d => %d)\n",
+                           *val, l->list[i].val);
+                    return i;
+                }
 
                 l->list[i].lower = l->free;
                 (l->free)++;
@@ -110,8 +114,12 @@ sorted_id(sorted_list_t * l, int32 *val)
         }
         else {
             if (l->list[i].higher == 0) {
-                if (l->free >= MAX_SORTED_ENTRIES)
-                    E_FATAL("sorted list overflow\n");
+                if (l->free >= MAX_SORTED_ENTRIES) {
+                    /* Make the best of a bad situation. */
+                    E_WARN("sorted list overflow (%d => %d)\n",
+                           *val, l->list[i].val);
+                    return i;
+                }
 
                 l->list[i].higher = l->free;
                 (l->free)++;
@@ -128,7 +136,7 @@ sorted_id(sorted_list_t * l, int32 *val)
 /*
  * Read and return #unigrams, #bigrams, #trigrams as stated in input file.
  */
-static void
+static int
 ReadNgramCounts(FILE * fp, int32 * n_ug, int32 * n_bg, int32 * n_tg)
 {
     char string[256];
@@ -139,8 +147,10 @@ ReadNgramCounts(FILE * fp, int32 * n_ug, int32 * n_bg, int32 * n_tg)
         fgets(string, sizeof(string), fp);
     while ((strcmp(string, "\\data\\\n") != 0) && (!feof(fp)));
 
-    if (strcmp(string, "\\data\\\n") != 0)
-        E_FATAL("No \\data\\ mark in LM file\n");
+    if (strcmp(string, "\\data\\\n") != 0) {
+        E_ERROR("No \\data\\ mark in LM file\n");
+        return -1;
+    }
 
     *n_ug = *n_bg = *n_tg = 0;
     while (fgets(string, sizeof(string), fp) != NULL) {
@@ -157,8 +167,8 @@ ReadNgramCounts(FILE * fp, int32 * n_ug, int32 * n_bg, int32 * n_tg)
             *n_tg = ngram_cnt;
             break;
         default:
-            E_FATAL("Unknown ngram (%d)\n", ngram);
-            break;
+            E_ERROR("Unknown ngram (%d)\n", ngram);
+            return -1;
         }
     }
 
@@ -167,8 +177,11 @@ ReadNgramCounts(FILE * fp, int32 * n_ug, int32 * n_bg, int32 * n_tg)
         fgets(string, sizeof(string), fp);
 
     /* Check counts;  NOTE: #trigrams *CAN* be 0 */
-    if ((*n_ug <= 0) || (*n_bg <= 0) || (*n_tg < 0))
-        E_FATAL("Bad or missing ngram count\n");
+    if ((*n_ug <= 0) || (*n_bg <= 0) || (*n_tg < 0)) {
+        E_ERROR("Bad or missing ngram count\n");
+        return -1;
+    }
+    return 0;
 }
 
 /*
@@ -176,7 +189,7 @@ ReadNgramCounts(FILE * fp, int32 * n_ug, int32 * n_bg, int32 * n_tg)
  * entry to this procedure, the file pointer is positioned just after the
  * header line '\1-grams:'.
  */
-static void
+static int
 ReadUnigrams(FILE * fp, ngram_model_arpa_t * model)
 {
     ngram_model_t *base = &model->base;
@@ -202,8 +215,10 @@ ReadUnigrams(FILE * fp, ngram_model_arpa_t * model)
             bo_wt = atof(wptr[2]);
         }
 
-        if (wcnt >= base->n_counts[0])
-            E_FATAL("Too many unigrams\n");
+        if (wcnt >= base->n_counts[0]) {
+            E_ERROR("Too many unigrams\n");
+            return -1;
+        }
 
         /* Associate name with word id */
         base->word_str[wcnt] = ckd_salloc(name);
@@ -221,13 +236,13 @@ ReadUnigrams(FILE * fp, ngram_model_arpa_t * model)
                base->n_counts[0], wcnt);
         base->n_counts[0] = wcnt;
     }
+    return 0;
 }
 
 /*
- * Read bigrams from given file into given model structure.  File may be arpabo
- * or arpabo-id format, depending on idfmt = 0 or 1.
+ * Read bigrams from given file into given model structure.
  */
-static void
+static int
 ReadBigrams(FILE * fp, ngram_model_arpa_t * model)
 {
     ngram_model_t *base = &model->base;
@@ -262,11 +277,16 @@ ReadBigrams(FILE * fp, ngram_model_arpa_t * model)
                 bo_wt = atof(wptr[3]);
         }
 
-        /* FIXME: Should NOT be fatal errors! */
-        if ((w1 = ngram_wid(base, word1)) == NGRAM_INVALID_WID)
-            E_FATAL("Unknown word: %s\n", word1);
-        if ((w2 = ngram_wid(base, word2)) == NGRAM_INVALID_WID)
-            E_FATAL("Unknown word: %s\n", word2);
+        if ((w1 = ngram_wid(base, word1)) == NGRAM_INVALID_WID) {
+            E_ERROR("Unknown word: %s, skipping bigram (%s %s)\n",
+                    word1, word1, word2);
+            continue;
+        }
+        if ((w2 = ngram_wid(base, word2)) == NGRAM_INVALID_WID) {
+            E_ERROR("Unknown word: %s, skipping bigram (%s %s)\n",
+                    word2, word1, word2);
+            continue;
+        }
 
         /* FIXME: Should use logmath_t quantization here. */
         /* HACK!! to quantize probs to 4 decimal digits */
@@ -276,8 +296,10 @@ ReadBigrams(FILE * fp, ngram_model_arpa_t * model)
         p2 = logmath_log10_to_log(base->lmath, p);
         bo_wt2 = logmath_log10_to_log(base->lmath, bo_wt);
 
-        if (bgcount >= base->n_counts[1])
-            E_FATAL("Too many bigrams\n");
+        if (bgcount >= base->n_counts[1]) {
+            E_ERROR("Too many bigrams\n");
+            return -1;
+        }
 
         bgptr->wid = w2;
         bgptr->prob2 = sorted_id(&model->sorted_prob2, &p2);
@@ -285,8 +307,10 @@ ReadBigrams(FILE * fp, ngram_model_arpa_t * model)
             bgptr->bo_wt2 = sorted_id(&model->sorted_bo_wt2, &bo_wt2);
 
         if (w1 != prev_w1) {
-            if (w1 < prev_w1)
-                E_FATAL("Bigrams not in unigram order\n");
+            if (w1 < prev_w1) {
+                E_ERROR("Bigrams not in unigram order\n");
+                return -1;
+            }
 
             for (prev_w1++; prev_w1 <= w1; prev_w1++)
                 model->unigrams[prev_w1].bigrams = bgcount;
@@ -301,17 +325,21 @@ ReadBigrams(FILE * fp, ngram_model_arpa_t * model)
         }
     }
     if ((strcmp(string, "\\end\\") != 0)
-        && (strcmp(string, "\\3-grams:") != 0))
-        E_FATAL("Bad bigram: %s\n", string);
+        && (strcmp(string, "\\3-grams:") != 0)) {
+        E_ERROR("Bad bigram: %s\n", string);
+        return -1;
+    }
 
     for (prev_w1++; prev_w1 <= base->n_counts[0]; prev_w1++)
         model->unigrams[prev_w1].bigrams = bgcount;
+
+    return 0;
 }
 
 /*
  * Very similar to ReadBigrams.
  */
-static void
+static int
 ReadTrigrams(FILE * fp, ngram_model_arpa_t * model)
 {
     ngram_model_t *base = &model->base;
@@ -347,36 +375,51 @@ ReadTrigrams(FILE * fp, ngram_model_arpa_t * model)
             word3 = wptr[3];
         }
 
-        if ((w1 = ngram_wid(base, word1)) == NGRAM_INVALID_WID)
-            E_FATAL("Unknown word: %s\n", word1);
-        if ((w2 = ngram_wid(base, word2)) == NGRAM_INVALID_WID)
-            E_FATAL("Unknown word: %s\n", word2);
-        if ((w3 = ngram_wid(base, word3)) == NGRAM_INVALID_WID)
-            E_FATAL("Unknown word: %s\n", word3);
+        if ((w1 = ngram_wid(base, word1)) == NGRAM_INVALID_WID) {
+            E_ERROR("Unknown word: %s, skipping trigram (%s %s %s)\n",
+                    word1, word1, word2, word3);
+            continue;
+        }
+        if ((w2 = ngram_wid(base, word2)) == NGRAM_INVALID_WID) {
+            E_ERROR("Unknown word: %s, skipping trigram (%s %s %s)\n",
+                    word2, word1, word2, word3);
+            continue;
+        }
+        if ((w3 = ngram_wid(base, word3)) == NGRAM_INVALID_WID) {
+            E_ERROR("Unknown word: %s, skipping trigram (%s %s %s)\n",
+                    word3, word1, word2, word3);
+            continue;
+        }
 
         /* FIXME: Should use logmath_t quantization here. */
         /* HACK!! to quantize probs to 4 decimal digits */
         p = (float32)((int32)(p * 10000)) / 10000;
         p3 = logmath_log10_to_log(base->lmath, p);
 
-        if (tgcount >= base->n_counts[2])
-            E_FATAL("Too many trigrams\n");
+        if (tgcount >= base->n_counts[2]) {
+            E_ERROR("Too many trigrams\n");
+            return -1;
+        }
 
         tgptr->wid = w3;
         tgptr->prob3 = sorted_id(&model->sorted_prob3, &p3);
 
         if ((w1 != prev_w1) || (w2 != prev_w2)) {
             /* Trigram for a new bigram; update tg info for all previous bigrams */
-            if ((w1 < prev_w1) || ((w1 == prev_w1) && (w2 < prev_w2)))
-                E_FATAL("Trigrams not in bigram order\n");
+            if ((w1 < prev_w1) || ((w1 == prev_w1) && (w2 < prev_w2))) {
+                E_ERROR("Trigrams not in bigram order\n");
+                return -1;
+            }
 
             bg = (w1 !=
                   prev_w1) ? model->unigrams[w1].bigrams : prev_bg + 1;
             endbg = model->unigrams[w1 + 1].bigrams;
             bgptr = model->bigrams + bg;
             for (; (bg < endbg) && (bgptr->wid != w2); bg++, bgptr++);
-            if (bg >= endbg)
-                E_FATAL("Missing bigram for trigram: %s", string);
+            if (bg >= endbg) {
+                E_ERROR("Missing bigram for trigram: %s", string);
+                return -1;
+            }
 
             /* bg = bigram entry index for <w1,w2>.  Update tseg_base */
             seg = bg >> LOG_BG_SEG_SZ;
@@ -389,8 +432,10 @@ ReadTrigrams(FILE * fp, ngram_model_arpa_t * model)
 
                 if (prev_seg >= 0) {
                     tgoff = tgcount - model->tseg_base[prev_seg];
-                    if (tgoff > 65535)
-                        E_FATAL("Offset from tseg_base > 65535\n");
+                    if (tgoff > 65535) {
+                        E_ERROR("Offset from tseg_base > 65535\n");
+                        return -1;
+                    }
                 }
 
                 prev_seg_lastbg = ((prev_seg + 1) << LOG_BG_SEG_SZ) - 1;
@@ -406,8 +451,10 @@ ReadTrigrams(FILE * fp, ngram_model_arpa_t * model)
                 int32 tgoff;
 
                 tgoff = tgcount - model->tseg_base[prev_seg];
-                if (tgoff > 65535)
-                    E_FATAL("Offset from tseg_base > 65535\n");
+                if (tgoff > 65535) {
+                    E_ERROR("Offset from tseg_base > 65535\n");
+                    return -1;
+                }
 
                 bgptr = model->bigrams + prev_bg;
                 for (++prev_bg, ++bgptr; prev_bg <= bg; prev_bg++, bgptr++)
@@ -427,17 +474,22 @@ ReadTrigrams(FILE * fp, ngram_model_arpa_t * model)
             E_INFOCONT(".");
         }
     }
-    if (strcmp(string, "\\end\\") != 0)
-        E_FATAL("Bad trigram: %s\n", string);
+    if (strcmp(string, "\\end\\") != 0) {
+        E_ERROR("Bad trigram: %s\n", string);
+        return -1;
+    }
 
     for (prev_bg++; prev_bg <= base->n_counts[1]; prev_bg++) {
         if ((prev_bg & (BG_SEG_SZ - 1)) == 0)
             model->tseg_base[prev_bg >> LOG_BG_SEG_SZ] = tgcount;
-        if ((tgcount - model->tseg_base[prev_bg >> LOG_BG_SEG_SZ]) > 65535)
-            E_FATAL("Offset from tseg_base > 65535\n");
+        if ((tgcount - model->tseg_base[prev_bg >> LOG_BG_SEG_SZ]) > 65535) {
+            E_ERROR("Offset from tseg_base > 65535\n");
+            return -1;
+        }
         model->bigrams[prev_bg].trigrams =
             tgcount - model->tseg_base[prev_bg >> LOG_BG_SEG_SZ];
     }
+    return 0;
 }
 
 static unigram_t *
@@ -476,7 +528,10 @@ ngram_model_arpa_read(cmd_ln_t *config,
     }
  
     /* Read #unigrams, #bigrams, #trigrams from file */
-    ReadNgramCounts(fp, &n_unigram, &n_bigram, &n_trigram);
+    if (ReadNgramCounts(fp, &n_unigram, &n_bigram, &n_trigram) == -1) {
+        fclose_comp(fp, is_pipe);
+        return NULL;
+    }
     E_INFO("ngrams 1=%d, 2=%d, 3=%d\n", n_unigram, n_bigram, n_trigram);
 
     /* Allocate space for LM, including initial OOVs and placeholders; initialize it */
@@ -519,14 +574,22 @@ ngram_model_arpa_read(cmd_ln_t *config,
             ckd_calloc((n_bigram + 1) / BG_SEG_SZ + 1,
                        sizeof(int32));
     }
-    ReadUnigrams(fp, model);
+    if (ReadUnigrams(fp, model) == -1) {
+        fclose_comp(fp, is_pipe);
+        ngram_model_free(base);
+        return NULL;
+    }
     E_INFO("%8d = #unigrams created\n", base->n_counts[0]);
 
     init_sorted_list(&model->sorted_prob2);
     if (base->n_counts[2] > 0)
         init_sorted_list(&model->sorted_bo_wt2);
 
-    ReadBigrams(fp, model);
+    if (ReadBigrams(fp, model) == -1) {
+        fclose_comp(fp, is_pipe);
+        ngram_model_free(base);
+        return NULL;
+    }
 
     base->n_counts[1] = FIRST_BG(model, base->n_counts[0]);
     model->n_prob2 = model->sorted_prob2.free;
@@ -544,7 +607,11 @@ ngram_model_arpa_read(cmd_ln_t *config,
 
         init_sorted_list(&model->sorted_prob3);
 
-        ReadTrigrams(fp, model);
+        if (ReadTrigrams(fp, model) == -1) {
+            fclose_comp(fp, is_pipe);
+            ngram_model_free(base);
+            return NULL;
+        }
 
         base->n_counts[2] = FIRST_TG(model, base->n_counts[1]);
         model->n_prob3 = model->sorted_prob3.free;
