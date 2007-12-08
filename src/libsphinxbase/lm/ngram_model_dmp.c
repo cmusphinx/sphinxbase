@@ -117,8 +117,11 @@ ngram_model_dmp_read(cmd_ln_t *config,
         }
         do_swap = 1;
     }
-    if (fread(str, sizeof(char), k, fp) != (size_t) k)
-        E_FATAL("Cannot read header\n");
+    if (fread(str, sizeof(char), k, fp) != (size_t) k) {
+        E_ERROR("Cannot read header\n");
+        fclose_comp(fp, is_pipe);
+        return NULL;
+    }
     if (strncmp(str, darpa_hdr, k) != 0) {
         E_ERROR("Wrong header %s: %s is not a dump file\n", darpa_hdr);
         fclose(fp);
@@ -205,8 +208,12 @@ ngram_model_dmp_read(cmd_ln_t *config,
      * mappings that can't be precomputed, and also could have OOVs added) */
     model->unigrams = new_unigram_table(n_unigram + 1);
     if (fread(model->unigrams, sizeof(unigram_t), base->n_counts[0] + 1, fp)
-        != (size_t) base->n_counts[0] + 1)
-        E_FATAL("fread(unigrams) failed\n");
+        != (size_t) base->n_counts[0] + 1) {
+        E_ERROR("fread(unigrams) failed\n");
+        ngram_model_free(base);
+        fclose_comp(fp, is_pipe);
+        return NULL;
+    }
     if (do_swap) {
         for (i = 0, ugptr = model->unigrams;
              i <= base->n_counts[0];
@@ -261,8 +268,12 @@ ngram_model_dmp_read(cmd_ln_t *config,
         model->bigrams =
             ckd_calloc(base->n_counts[1] + 1, sizeof(bigram_t));
         if (fread(model->bigrams, sizeof(bigram_t), base->n_counts[1] + 1, fp)
-            != (size_t) base->n_counts[1] + 1)
-            E_FATAL("fread(bigrams) failed\n");
+            != (size_t) base->n_counts[1] + 1) {
+            E_ERROR("fread(bigrams) failed\n");
+            ngram_model_free(base);
+            fclose_comp(fp, is_pipe);
+            return NULL;
+        }
         if (do_swap) {
             for (i = 0, bgptr = model->bigrams; i <= base->n_counts[1];
                  i++, bgptr++) {
@@ -286,8 +297,12 @@ ngram_model_dmp_read(cmd_ln_t *config,
                 ckd_calloc(base->n_counts[2], sizeof(trigram_t));
             if (fread
                 (model->trigrams, sizeof(trigram_t), base->n_counts[2], fp)
-                != (size_t) base->n_counts[2])
-                E_FATAL("fread(trigrams) failed\n");
+                != (size_t) base->n_counts[2]) {
+                E_ERROR("fread(trigrams) failed\n");
+                ngram_model_free(base);
+                fclose_comp(fp, is_pipe);
+                return NULL;
+            }
             if (do_swap) {
                 for (i = 0, tgptr = model->trigrams; i < base->n_counts[2];
                      i++, tgptr++) {
@@ -309,8 +324,12 @@ ngram_model_dmp_read(cmd_ln_t *config,
     if (do_swap) SWAP_INT32(&k);
     model->n_prob2 = k;
     model->prob2 = ckd_calloc(k, sizeof(*model->prob2));
-    if (fread(model->prob2, sizeof(*model->prob2), k, fp) != (size_t) k)
-        E_FATAL("fread(prob2) failed\n");
+    if (fread(model->prob2, sizeof(*model->prob2), k, fp) != (size_t) k) {
+        E_ERROR("fread(prob2) failed\n");
+        ngram_model_free(base);
+        fclose_comp(fp, is_pipe);
+        return NULL;
+    }
     for (i = 0; i < k; i++) {
         if (do_swap)
             SWAP_INT32(&model->prob2[i].l);
@@ -325,8 +344,12 @@ ngram_model_dmp_read(cmd_ln_t *config,
         if (do_swap) SWAP_INT32(&k);
         model->n_bo_wt2 = k;
         model->bo_wt2 = ckd_calloc(k, sizeof(*model->bo_wt2));
-        if (fread(model->bo_wt2, sizeof(*model->bo_wt2), k, fp) != (size_t) k)
-            E_FATAL("fread(bo_wt2) failed\n");
+        if (fread(model->bo_wt2, sizeof(*model->bo_wt2), k, fp) != (size_t) k) {
+            E_ERROR("fread(bo_wt2) failed\n");
+            ngram_model_free(base);
+            fclose_comp(fp, is_pipe);
+            return NULL;
+        }
         for (i = 0; i < k; i++) {
             if (do_swap)
                 SWAP_INT32(&model->bo_wt2[i].l);
@@ -342,8 +365,12 @@ ngram_model_dmp_read(cmd_ln_t *config,
         if (do_swap) SWAP_INT32(&k);
         model->n_prob3 = k;
         model->prob3 = ckd_calloc(k, sizeof(*model->prob3));
-        if (fread(model->prob3, sizeof(*model->prob3), k, fp) != (size_t) k)
-            E_FATAL("fread(prob3) failed\n");
+        if (fread(model->prob3, sizeof(*model->prob3), k, fp) != (size_t) k) {
+            E_ERROR("fread(prob3) failed\n");
+            ngram_model_free(base);
+            fclose_comp(fp, is_pipe);
+            return NULL;
+        }
         for (i = 0; i < k; i++) {
             if (do_swap)
                 SWAP_INT32(&model->prob3[i].l);
@@ -369,8 +396,12 @@ ngram_model_dmp_read(cmd_ln_t *config,
             if (do_swap) SWAP_INT32(&k);
             model->tseg_base = ckd_calloc(k, sizeof(int32));
             if (fread(model->tseg_base, sizeof(int32), k, fp) !=
-                (size_t) k)
-                E_FATAL("fread(tseg_base) failed\n");
+                (size_t) k) {
+                E_ERROR("fread(tseg_base) failed\n");
+                ngram_model_free(base);
+                fclose_comp(fp, is_pipe);
+                return NULL;
+            }
             if (do_swap)
                 for (i = 0; i < k; i++)
                     SWAP_INT32(&model->tseg_base[i]);
@@ -389,16 +420,24 @@ ngram_model_dmp_read(cmd_ln_t *config,
         fread(&k, sizeof(k), 1, fp);
         if (do_swap) SWAP_INT32(&k);
         tmp_word_str = ckd_calloc(k, sizeof(char));
-        if (fread(tmp_word_str, sizeof(char), k, fp) != (size_t) k)
-            E_FATAL("fread(word-string) failed\n");
+        if (fread(tmp_word_str, sizeof(char), k, fp) != (size_t) k) {
+            E_ERROR("fread(word-string) failed\n");
+            ngram_model_free(base);
+            fclose_comp(fp, is_pipe);
+            return NULL;
+        }
     }
 
     /* First make sure string just read contains n_counts[0] words (PARANOIA!!) */
     for (i = 0, j = 0; i < k; i++)
         if (tmp_word_str[i] == '\0')
             j++;
-    if (j != base->n_counts[0])
-        E_FATAL("Error reading word strings\n");
+    if (j != base->n_counts[0]) {
+        E_ERROR("Error reading word strings\n");
+        ngram_model_free(base);
+        fclose_comp(fp, is_pipe);
+        return NULL;
+    }
 
     /* Break up string just read into words */
     if (do_mmap) {
