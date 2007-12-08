@@ -45,6 +45,7 @@
 #include "err.h"
 #include "pio.h"
 #include "linklist.h"
+#include "strfuncs.h"
 
 #include <string.h>
 #include <limits.h>
@@ -180,7 +181,6 @@ ReadUnigrams(FILE * fp, ngram_model_arpa_t * model)
 {
     ngram_model_t *base = &model->base;
     char string[256];
-    char name[128];
     int32 wcnt;
     float p1, bo_wt;
 
@@ -189,11 +189,17 @@ ReadUnigrams(FILE * fp, ngram_model_arpa_t * model)
     wcnt = 0;
     while ((fgets(string, sizeof(string), fp) != NULL) &&
            (strcmp(string, "\\2-grams:\n") != 0)) {
-        /* FIXME: Unsafe use of sscanf!!! */
-        if (sscanf(string, "%f %s %f", &p1, name, &bo_wt) != 3) {
+        char *wptr[3], *name;
+
+        if (str2words(string, wptr, 3) != 3) {
             if (string[0] != '\n')
                 E_WARN("Format error; unigram ignored:%s", string);
             continue;
+        }
+        else {
+            p1 = atof(wptr[0]);
+            name = wptr[1];
+            bo_wt = atof(wptr[2]);
         }
 
         if (wcnt >= base->n_counts[0])
@@ -225,10 +231,10 @@ static void
 ReadBigrams(FILE * fp, ngram_model_arpa_t * model)
 {
     ngram_model_t *base = &model->base;
-    char string[1024], word1[256], word2[256];
+    char string[1024];
     int32 w1, w2, prev_w1, bgcount;
     bigram_t *bgptr;
-    int32 n_fld, n;
+    int32 n_fld;
 
     E_INFO("Reading bigrams\n");
 
@@ -238,14 +244,22 @@ ReadBigrams(FILE * fp, ngram_model_arpa_t * model)
     n_fld = (base->n_counts[2] > 0) ? 4 : 3;
 
     while (fgets(string, sizeof(string), fp) != NULL) {
-        float32 p, bo_wt;
+        float32 p, bo_wt = 0.0f;
         int32 p2, bo_wt2;
-        /* FIXME: unsafe use of sscanf()!!! */
-        n = sscanf(string, "%f %s %s %f", &p, word1, word2, &bo_wt);
-        if (n < n_fld) {
+        char *wptr[4], *word1, *word2;
+
+        wptr[3] = NULL;
+        if (str2words(string, wptr, 4) < n_fld) {
             if (string[0] != '\n')
                 break;
             continue;
+        }
+        else {
+            p = atof(wptr[0]);
+            word1 = wptr[1];
+            word2 = wptr[2];
+            if (wptr[3])
+                bo_wt = atof(wptr[3]);
         }
 
         /* FIXME: Should NOT be fatal errors! */
@@ -286,8 +300,8 @@ ReadBigrams(FILE * fp, ngram_model_arpa_t * model)
             E_INFOCONT(".");
         }
     }
-    if ((strcmp(string, "\\end\\\n") != 0)
-        && (strcmp(string, "\\3-grams:\n") != 0))
+    if ((strcmp(string, "\\end\\") != 0)
+        && (strcmp(string, "\\3-grams:") != 0))
         E_FATAL("Bad bigram: %s\n", string);
 
     for (prev_w1++; prev_w1 <= base->n_counts[0]; prev_w1++)
@@ -301,8 +315,8 @@ static void
 ReadTrigrams(FILE * fp, ngram_model_arpa_t * model)
 {
     ngram_model_t *base = &model->base;
-    char string[1024], word1[256], word2[256], word3[256];
-    int32 i, n, w1, w2, w3, prev_w1, prev_w2, tgcount, prev_bg, bg, endbg;
+    char string[1024];
+    int32 i, w1, w2, w3, prev_w1, prev_w2, tgcount, prev_bg, bg, endbg;
     int32 seg, prev_seg, prev_seg_lastbg;
     trigram_t *tgptr;
     bigram_t *bgptr;
@@ -319,12 +333,18 @@ ReadTrigrams(FILE * fp, ngram_model_arpa_t * model)
     while (fgets(string, sizeof(string), fp) != NULL) {
         float32 p;
         int32 p3;
-        /* FIXME: unsafe use of sscanf()!!! */
-        n = sscanf(string, "%f %s %s %s", &p, word1, word2, word3);
-        if (n != 4) {
+        char *wptr[4], *word1, *word2, *word3;
+
+        if (str2words(string, wptr, 4) != 4) {
             if (string[0] != '\n')
                 break;
             continue;
+        }
+        else {
+            p = atof(wptr[0]);
+            word1 = wptr[1];
+            word2 = wptr[2];
+            word3 = wptr[3];
         }
 
         if ((w1 = ngram_wid(base, word1)) == NGRAM_INVALID_WID)
@@ -407,7 +427,7 @@ ReadTrigrams(FILE * fp, ngram_model_arpa_t * model)
             E_INFOCONT(".");
         }
     }
-    if (strcmp(string, "\\end\\\n") != 0)
+    if (strcmp(string, "\\end\\") != 0)
         E_FATAL("Bad trigram: %s\n", string);
 
     for (prev_bg++; prev_bg <= base->n_counts[1]; prev_bg++) {
