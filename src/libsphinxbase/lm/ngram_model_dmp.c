@@ -63,7 +63,6 @@ new_unigram_table(int32 n_ug)
 
     table = ckd_calloc(n_ug, sizeof(unigram_t));
     for (i = 0; i < n_ug; i++) {
-        table[i].mapid = -1;
         table[i].prob1.f = -99.0;
         table[i].bo_wt1.f = -99.0;
     }
@@ -80,7 +79,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
     FILE *fp;
     int do_mmap, do_swap, fd = -1;
     int32 is_pipe;
-    int32 i, j, k, vn, ts, err;
+    int32 i, j, k, vn, ts;
     int32 n_unigram;
     int32 n_bigram;
     int32 n_trigram;
@@ -207,33 +206,33 @@ ngram_model_dmp_read(cmd_ln_t *config,
     /* read unigrams (always in memory, as they contain dictionary
      * mappings that can't be precomputed, and also could have OOVs added) */
     model->unigrams = new_unigram_table(n_unigram + 1);
-    if (fread(model->unigrams, sizeof(unigram_t), base->n_counts[0] + 1, fp)
-        != (size_t) base->n_counts[0] + 1) {
-        E_ERROR("fread(unigrams) failed\n");
-        ngram_model_free(base);
-        fclose_comp(fp, is_pipe);
-        return NULL;
-    }
-    if (do_swap) {
-        for (i = 0, ugptr = model->unigrams;
-             i <= base->n_counts[0];
-             i++, ugptr++) {
-            SWAP_INT32(&ugptr->mapid);
+    ugptr = model->unigrams;
+    for (i = 0; i <= base->n_counts[0]; ++i) {
+        /* Skip over the mapping ID, we don't care about it. */
+        if (fread(ugptr, sizeof(int32), 1, fp) != 1) {
+            E_ERROR("fread(mapid[%d]) failed\n", i);
+            ngram_model_free(base);
+            fclose_comp(fp, is_pipe);
+            return NULL;
+        }
+        /* Read the actual unigram structure. */
+        if (fread(ugptr, sizeof(unigram_t), 1, fp) != 1)  {
+            E_ERROR("fread(unigrams) failed\n");
+            ngram_model_free(base);
+            fclose_comp(fp, is_pipe);
+            return NULL;
+        }
+        /* Byte swap if necessary. */
+        if (do_swap) {
             SWAP_INT32(&ugptr->prob1.l);
             SWAP_INT32(&ugptr->bo_wt1.l);
             SWAP_INT32(&ugptr->bigrams);
         }
-    }
-    for (i = 0, ugptr = model->unigrams; i < base->n_counts[0]; i++, ugptr++) {
         /* Convert values to log. */
         ugptr->prob1.l = logmath_log10_to_log(lmath, ugptr->prob1.f);
         ugptr->bo_wt1.l = logmath_log10_to_log(lmath, ugptr->bo_wt1.f);
-        if (ugptr->mapid != i)
-            err = 1;
-        ugptr->mapid = i;
+        ++ugptr;
     }
-    if (err)
-        E_WARN("Corrected corrupted dump file created by buggy fbs8\n");
     E_INFO("%8d = LM.unigrams(+trailer) read\n", base->n_counts[0]);
 
     /* Now mmap() the file and read in the rest of the (read-only) stuff. */
@@ -487,6 +486,7 @@ ngram_model_dmp_apply_weights(ngram_model_t *base, float32 lw,
     /* Precalculate some log values we will like. */
     log_wip = logmath_log(base->lmath, wip);
     log_uw = logmath_log(base->lmath, uw);
+    /* Log of (1-uw) / N_unigrams */
     log_uniform = logmath_log(base->lmath, 1.0 / (base->n_counts[0] - 1))
         + logmath_log(base->lmath, 1.0 - uw);
 
@@ -521,6 +521,14 @@ ngram_model_dmp_apply_weights(ngram_model_t *base, float32 lw,
             model->prob3[i].l = (int32)(model->prob3[i].l * lw) + log_wip;
         }
     }
+
+    /* Store said values in the model so that we will be able to
+     * recover the original probs. */
+    base->log_wip = log_wip;
+    base->log_uniform = log_uniform;
+    base->log_uw = log_uw;
+    base->lw = lw;
+
     return 0;
 }
 
@@ -553,22 +561,29 @@ find_bg(bigram_t * bg, int32 n, int32 w)
 #define FIRST_TG(m,b)		(TSEG_BASE((m),(b))+((m)->bigrams[b].trigrams))
 
 static int32
-lm3g_bg_score(ngram_model_dmp_t *model, int32 lw1, int32 lw2)
+lm3g_bg_score(ngram_model_dmp_t *model,
+              int32 lw1, int32 lw2, int32 *n_used)
 {
     int32 i, n, b, score;
     bigram_t *bg;
 
-    if (lw1 < 0)
+    if (lw1 < 0) {
+        *n_used = 1;
         return model->unigrams[lw2].prob1.l;
+    }
 
     b = FIRST_BG(model, lw1);
     n = FIRST_BG(model, lw1 + 1) - b;
     bg = model->bigrams + b;
 
     if ((i = find_bg(bg, n, lw2)) >= 0) {
+        /* Access mode = bigram */
+        *n_used = 2;
         score = model->prob2[bg[i].prob2].l;
     }
     else {
+        /* Access mode = unigram */
+        *n_used = 1;
         score = model->unigrams[lw1].bo_wt1.l + model->unigrams[lw2].prob1.l;
     }
 
@@ -636,7 +651,8 @@ find_tg(trigram_t * tg, int32 n, int32 w)
 }
 
 static int32
-lm3g_tg_score(ngram_model_dmp_t *model, int32 lw1, int32 lw2, int32 lw3)
+lm3g_tg_score(ngram_model_dmp_t *model, int32 lw1,
+              int32 lw2, int32 lw3, int32 *n_used)
 {
     ngram_model_t *base = &model->base;
     int32 i, n, score;
@@ -644,7 +660,7 @@ lm3g_tg_score(ngram_model_dmp_t *model, int32 lw1, int32 lw2, int32 lw3)
     tginfo_t *tginfo, *prev_tginfo;
 
     if ((base->n < 3) || (lw1 < 0))
-        return (lm3g_bg_score(model, lw2, lw3));
+        return (lm3g_bg_score(model, lw2, lw3, n_used));
 
     prev_tginfo = NULL;
     for (tginfo = model->tginfo[lw2]; tginfo; tginfo = tginfo->next) {
@@ -669,10 +685,12 @@ lm3g_tg_score(ngram_model_dmp_t *model, int32 lw1, int32 lw2, int32 lw3)
     n = tginfo->n_tg;
     tg = tginfo->tg;
     if ((i = find_tg(tg, n, lw3)) >= 0) {
+        /* Access mode = trigram */
+        *n_used = 3;
         score = model->prob3[tg[i].prob3].l;
     }
     else {
-        score = tginfo->bowt + lm3g_bg_score(model, lw2, lw3);
+        score = tginfo->bowt + lm3g_bg_score(model, lw2, lw3, n_used);
     }
 
     return (score);
@@ -707,16 +725,19 @@ lm3g_cache_reset(ngram_model_dmp_t *model)
 
 static int32
 ngram_model_dmp_score(ngram_model_t *base, int32 wid,
-                      int32 *history, int32 n_hist)
+                      int32 *history, int32 n_hist,
+                      int32 *n_used)
 {
     ngram_model_dmp_t *model = (ngram_model_dmp_t *)base;
     switch (n_hist) {
     case 0:
+        /* Access mode: unigram */
+        *n_used = 1;
         return model->unigrams[wid].prob1.l;
     case 1:
-        return lm3g_bg_score(model, history[0], wid);
+        return lm3g_bg_score(model, history[0], wid, n_used);
     case 2:
-        return lm3g_tg_score(model, history[1], history[0], wid);
+        return lm3g_tg_score(model, history[1], history[0], wid, n_used);
     default:
         E_ERROR("%d-grams not supported", n_hist + 1);
         return NGRAM_SCORE_ERROR;
@@ -725,16 +746,18 @@ ngram_model_dmp_score(ngram_model_t *base, int32 wid,
 
 static int32
 ngram_model_dmp_raw_score(ngram_model_t *base, int32 wid,
-                           int32 *history, int32 n_hist)
+                          int32 *history, int32 n_hist,
+                          int32 *n_used)
 {
     ngram_model_dmp_t *model = (ngram_model_dmp_t *)base;
     int32 score;
 
-    score = ngram_model_dmp_score(base, wid, history, n_hist);
+    score = ngram_model_dmp_score(base, wid, history, n_hist,
+                                  n_used);
     if (score == NGRAM_SCORE_ERROR)
         return score;
-    /* FIXME: No way to undo unigram weight interpolation. */
-    return (score - model->log_wip) / model->lw;
+    /* FIXME: Undo unigram weight interpolation. */
+    return (int32)((score - base->log_wip) / base->lw);
 }
 
 static void
