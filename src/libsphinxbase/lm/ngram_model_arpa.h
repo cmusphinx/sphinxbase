@@ -103,27 +103,13 @@ typedef struct {
  */
 typedef struct ngram_model_arpa_s {
     ngram_model_t base;  /**< Base ngram_model_t structure */
-
-    lmprob_t *prob2;	/* table of actual bigram probs */
-    int32 n_prob2;	/* prob2 size */
-    lmprob_t *bo_wt2;	/* table of actual bigram backoff weights */
-    int32 n_bo_wt2;	/* bo_wt2 size */
-    lmprob_t *prob3;	/* table of actual trigram probs */
-    int32 n_prob3;	/* prob3 size */
-    int32 *tseg_base;	/* tseg_base[i>>LOG_BG_SEG_SZ] = index of 1st
-			   trigram for bigram segment (i>>LOG_BG_SEG_SZ) */
+    lm3g_model_t lm3g;  /**< Shared lm3g structure */
 
     /* Arrays of unique bigram probs and bo-wts, and trigram probs
      * (these are temporary, actually) */
     sorted_list_t sorted_prob2;
     sorted_list_t sorted_bo_wt2;
     sorted_list_t sorted_prob3;
-
-    unigram_t *unigrams;
-    bigram_t  *bigrams;	/* for entire LM */
-    trigram_t *trigrams;/* for entire LM */
-    tginfo_t **tginfo;	/* tginfo[lw2] is head of linked list of trigram information for
-			   some cached subset of bigrams (*,lw2). */
 } ngram_model_arpa_t;
 
 #endif /* __NGRAM_MODEL_ARPA_H__ */

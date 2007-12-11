@@ -87,7 +87,6 @@ typedef struct trigram_s trigram_t;
  */
 #define BG_SEG_SZ	512	/* chosen so that #trigram/segment <= 2**16 */
 #define LOG_BG_SEG_SZ	9
-#define TSEG_BASE(m,b)		((m)->tseg_base[(b)>>LOG_BG_SEG_SZ])
 
 /**
  * Trigram information cache.
@@ -105,5 +104,24 @@ typedef struct tginfo_s {
     trigram_t *tg;		/**< Trigrams for lw1,lw2 */
     struct tginfo_s *next;      /**< Next lw1 with same parent lw2; NULL if none. */
 } tginfo_t;
+
+/**
+ * Common internal structure for Sphinx 3-gram models.
+ */
+typedef struct lm3g_model_s {
+    unigram_t *unigrams;
+    bigram_t *bigrams;
+    trigram_t *trigrams;
+    lmprob_t *prob2;	     /**< Table of actual bigram probs */
+    int32 n_prob2;	     /**< prob2 size */
+    lmprob_t *bo_wt2;	     /**< Table of actual bigram backoff weights */
+    int32 n_bo_wt2;	     /**< bo_wt2 size */
+    lmprob_t *prob3;	     /**< Table of actual trigram probs */
+    int32 n_prob3;	     /**< prob3 size */
+    int32 *tseg_base;    /**< tseg_base[i>>LOG_BG_SEG_SZ] = index of 1st
+                            trigram for bigram segment (i>>LOG_BG_SEG_SZ) */
+    tginfo_t **tginfo;   /**< tginfo[lw2] is head of linked list of trigram information for
+                            some cached subset of bigrams (*,lw2). */
+} lm3g_model_t;
 
 #endif /* __NGRAM_MODEL_LM3G_H__ */

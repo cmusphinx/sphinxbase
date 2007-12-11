@@ -52,6 +52,10 @@
 
 static ngram_funcs_t ngram_model_arpa_funcs;
 
+#define TSEG_BASE(m,b)		((m)->lm3g.tseg_base[(b)>>LOG_BG_SEG_SZ])
+#define FIRST_BG(m,u)		((m)->lm3g.unigrams[u].bigrams)
+#define FIRST_TG(m,b)		(TSEG_BASE((m),(b))+((m)->lm3g.bigrams[b].trigrams))
+
 /*
  * Initialize sorted list with the 0-th entry = MIN_PROB_F, which may be needed
  * to replace spurious values in the Darpa LM file.
@@ -226,8 +230,8 @@ ReadUnigrams(FILE * fp, ngram_model_arpa_t * model)
             != (void *)(long)wcnt) {
                 E_WARN("Duplicate word in dictionary: %s\n", base->word_str[wcnt]);
         }
-        model->unigrams[wcnt].prob1.l = logmath_log10_to_log(base->lmath, p1);
-        model->unigrams[wcnt].bo_wt1.l = logmath_log10_to_log(base->lmath, bo_wt);
+        model->lm3g.unigrams[wcnt].prob1.l = logmath_log10_to_log(base->lmath, p1);
+        model->lm3g.unigrams[wcnt].bo_wt1.l = logmath_log10_to_log(base->lmath, bo_wt);
         wcnt++;
     }
 
@@ -254,7 +258,7 @@ ReadBigrams(FILE * fp, ngram_model_arpa_t * model)
     E_INFO("Reading bigrams\n");
 
     bgcount = 0;
-    bgptr = model->bigrams;
+    bgptr = model->lm3g.bigrams;
     prev_w1 = -1;
     n_fld = (base->n_counts[2] > 0) ? 4 : 3;
 
@@ -313,7 +317,7 @@ ReadBigrams(FILE * fp, ngram_model_arpa_t * model)
             }
 
             for (prev_w1++; prev_w1 <= w1; prev_w1++)
-                model->unigrams[prev_w1].bigrams = bgcount;
+                model->lm3g.unigrams[prev_w1].bigrams = bgcount;
             prev_w1 = w1;
         }
 
@@ -331,7 +335,7 @@ ReadBigrams(FILE * fp, ngram_model_arpa_t * model)
     }
 
     for (prev_w1++; prev_w1 <= base->n_counts[0]; prev_w1++)
-        model->unigrams[prev_w1].bigrams = bgcount;
+        model->lm3g.unigrams[prev_w1].bigrams = bgcount;
 
     return 0;
 }
@@ -352,7 +356,7 @@ ReadTrigrams(FILE * fp, ngram_model_arpa_t * model)
     E_INFO("Reading trigrams\n");
 
     tgcount = 0;
-    tgptr = model->trigrams;
+    tgptr = model->lm3g.trigrams;
     prev_w1 = -1;
     prev_w2 = -1;
     prev_bg = -1;
@@ -412,9 +416,9 @@ ReadTrigrams(FILE * fp, ngram_model_arpa_t * model)
             }
 
             bg = (w1 !=
-                  prev_w1) ? model->unigrams[w1].bigrams : prev_bg + 1;
-            endbg = model->unigrams[w1 + 1].bigrams;
-            bgptr = model->bigrams + bg;
+                  prev_w1) ? model->lm3g.unigrams[w1].bigrams : prev_bg + 1;
+            endbg = model->lm3g.unigrams[w1 + 1].bigrams;
+            bgptr = model->lm3g.bigrams + bg;
             for (; (bg < endbg) && (bgptr->wid != w2); bg++, bgptr++);
             if (bg >= endbg) {
                 E_ERROR("Missing bigram for trigram: %s", string);
@@ -424,14 +428,14 @@ ReadTrigrams(FILE * fp, ngram_model_arpa_t * model)
             /* bg = bigram entry index for <w1,w2>.  Update tseg_base */
             seg = bg >> LOG_BG_SEG_SZ;
             for (i = prev_seg + 1; i <= seg; i++)
-                model->tseg_base[i] = tgcount;
+                model->lm3g.tseg_base[i] = tgcount;
 
             /* Update trigrams pointers for all bigrams until bg */
             if (prev_seg < seg) {
                 int32 tgoff = 0;
 
                 if (prev_seg >= 0) {
-                    tgoff = tgcount - model->tseg_base[prev_seg];
+                    tgoff = tgcount - model->lm3g.tseg_base[prev_seg];
                     if (tgoff > 65535) {
                         E_ERROR("Offset from tseg_base > 65535\n");
                         return -1;
@@ -439,7 +443,7 @@ ReadTrigrams(FILE * fp, ngram_model_arpa_t * model)
                 }
 
                 prev_seg_lastbg = ((prev_seg + 1) << LOG_BG_SEG_SZ) - 1;
-                bgptr = model->bigrams + prev_bg;
+                bgptr = model->lm3g.bigrams + prev_bg;
                 for (++prev_bg, ++bgptr; prev_bg <= prev_seg_lastbg;
                      prev_bg++, bgptr++)
                     bgptr->trigrams = tgoff;
@@ -450,13 +454,13 @@ ReadTrigrams(FILE * fp, ngram_model_arpa_t * model)
             else {
                 int32 tgoff;
 
-                tgoff = tgcount - model->tseg_base[prev_seg];
+                tgoff = tgcount - model->lm3g.tseg_base[prev_seg];
                 if (tgoff > 65535) {
                     E_ERROR("Offset from tseg_base > 65535\n");
                     return -1;
                 }
 
-                bgptr = model->bigrams + prev_bg;
+                bgptr = model->lm3g.bigrams + prev_bg;
                 for (++prev_bg, ++bgptr; prev_bg <= bg; prev_bg++, bgptr++)
                     bgptr->trigrams = tgoff;
             }
@@ -481,13 +485,13 @@ ReadTrigrams(FILE * fp, ngram_model_arpa_t * model)
 
     for (prev_bg++; prev_bg <= base->n_counts[1]; prev_bg++) {
         if ((prev_bg & (BG_SEG_SZ - 1)) == 0)
-            model->tseg_base[prev_bg >> LOG_BG_SEG_SZ] = tgcount;
-        if ((tgcount - model->tseg_base[prev_bg >> LOG_BG_SEG_SZ]) > 65535) {
+            model->lm3g.tseg_base[prev_bg >> LOG_BG_SEG_SZ] = tgcount;
+        if ((tgcount - model->lm3g.tseg_base[prev_bg >> LOG_BG_SEG_SZ]) > 65535) {
             E_ERROR("Offset from tseg_base > 65535\n");
             return -1;
         }
-        model->bigrams[prev_bg].trigrams =
-            tgcount - model->tseg_base[prev_bg >> LOG_BG_SEG_SZ];
+        model->lm3g.bigrams[prev_bg].trigrams =
+            tgcount - model->lm3g.tseg_base[prev_bg >> LOG_BG_SEG_SZ];
     }
     return 0;
 }
@@ -505,9 +509,6 @@ new_unigram_table(int32 n_ug)
     }
     return table;
 }
-
-#define FIRST_BG(m,u)		((m)->unigrams[u].bigrams)
-#define FIRST_TG(m,b)		(TSEG_BASE((m),(b))+((m)->bigrams[b].trigrams))
 
 ngram_model_t *
 ngram_model_arpa_read(cmd_ln_t *config,
@@ -563,15 +564,15 @@ ngram_model_arpa_read(cmd_ln_t *config,
      * Allocate one extra unigram and bigram entry: sentinels to terminate
      * followers (bigrams and trigrams, respectively) of previous entry.
      */
-    model->unigrams = new_unigram_table(n_unigram + 1);
-    model->bigrams =
+    model->lm3g.unigrams = new_unigram_table(n_unigram + 1);
+    model->lm3g.bigrams =
         ckd_calloc(n_bigram + 1, sizeof(bigram_t));
     if (n_trigram > 0)
-        model->trigrams =
+        model->lm3g.trigrams =
             ckd_calloc(n_trigram, sizeof(trigram_t));
 
     if (n_trigram > 0) {
-        model->tseg_base =
+        model->lm3g.tseg_base =
             ckd_calloc((n_bigram + 1) / BG_SEG_SZ + 1,
                        sizeof(int32));
     }
@@ -593,18 +594,18 @@ ngram_model_arpa_read(cmd_ln_t *config,
     }
 
     base->n_counts[1] = FIRST_BG(model, base->n_counts[0]);
-    model->n_prob2 = model->sorted_prob2.free;
-    model->prob2 = vals_in_sorted_list(&model->sorted_prob2);
+    model->lm3g.n_prob2 = model->sorted_prob2.free;
+    model->lm3g.prob2 = vals_in_sorted_list(&model->sorted_prob2);
     free_sorted_list(&model->sorted_prob2);
     E_INFO("%8d = #bigrams created\n", base->n_counts[1]);
-    E_INFO("%8d = #prob2 entries\n", model->n_prob2);
+    E_INFO("%8d = #prob2 entries\n", model->lm3g.n_prob2);
 
     if (base->n_counts[2] > 0) {
         /* Create trigram bo-wts array */
-        model->n_bo_wt2 = model->sorted_bo_wt2.free;
-        model->bo_wt2 = vals_in_sorted_list(&model->sorted_bo_wt2);
+        model->lm3g.n_bo_wt2 = model->sorted_bo_wt2.free;
+        model->lm3g.bo_wt2 = vals_in_sorted_list(&model->sorted_bo_wt2);
         free_sorted_list(&model->sorted_bo_wt2);
-        E_INFO("%8d = #bo_wt2 entries\n", model->n_bo_wt2);
+        E_INFO("%8d = #bo_wt2 entries\n", model->lm3g.n_bo_wt2);
 
         init_sorted_list(&model->sorted_prob3);
 
@@ -615,15 +616,15 @@ ngram_model_arpa_read(cmd_ln_t *config,
         }
 
         base->n_counts[2] = FIRST_TG(model, base->n_counts[1]);
-        model->n_prob3 = model->sorted_prob3.free;
-        model->prob3 = vals_in_sorted_list(&model->sorted_prob3);
+        model->lm3g.n_prob3 = model->sorted_prob3.free;
+        model->lm3g.prob3 = vals_in_sorted_list(&model->sorted_prob3);
         E_INFO("%8d = #trigrams created\n", base->n_counts[2]);
-        E_INFO("%8d = #prob3 entries\n", model->n_prob3);
+        E_INFO("%8d = #prob3 entries\n", model->lm3g.n_prob3);
 
         free_sorted_list(&model->sorted_prob3);
 
         /* Initialize tginfo */
-        model->tginfo =
+        model->lm3g.tginfo =
             ckd_calloc(base->n_1g_alloc, sizeof(tginfo_t *));
     }
 
@@ -654,34 +655,34 @@ ngram_model_arpa_apply_weights(ngram_model_t *base, float32 lw,
         + logmath_log(base->lmath, 1.0 - uw);
 
     for (i = 0; i < base->n_counts[0]; ++i) {
-        model->unigrams[i].bo_wt1.l = (int32)(model->unigrams[i].bo_wt1.l * lw);
+        model->lm3g.unigrams[i].bo_wt1.l = (int32)(model->lm3g.unigrams[i].bo_wt1.l * lw);
 
         if (strcmp(base->word_str[i], "<s>") == 0) { /* FIXME: configurable start_sym */
             /* Apply language weight and WIP */
-            model->unigrams[i].prob1.l = (int32)(model->unigrams[i].prob1.l * lw) + log_wip;
+            model->lm3g.unigrams[i].prob1.l = (int32)(model->lm3g.unigrams[i].prob1.l * lw) + log_wip;
         }
         else {
             /* Interpolate unigram probability with uniform. */
-            model->unigrams[i].prob1.l += log_uw;
-            model->unigrams[i].prob1.l =
+            model->lm3g.unigrams[i].prob1.l += log_uw;
+            model->lm3g.unigrams[i].prob1.l =
                 logmath_add(base->lmath,
-                            model->unigrams[i].prob1.l,
+                            model->lm3g.unigrams[i].prob1.l,
                             log_uniform);
             /* Apply language weight and WIP */
-            model->unigrams[i].prob1.l = (int32)(model->unigrams[i].prob1.l * lw) + log_wip;
+            model->lm3g.unigrams[i].prob1.l = (int32)(model->lm3g.unigrams[i].prob1.l * lw) + log_wip;
         }
     }
 
-    for (i = 0; i < model->n_prob2; ++i) {
-        model->prob2[i].l = (int32)(model->prob2[i].l * lw) + log_wip;
+    for (i = 0; i < model->lm3g.n_prob2; ++i) {
+        model->lm3g.prob2[i].l = (int32)(model->lm3g.prob2[i].l * lw) + log_wip;
     }
 
     if (base->n > 2) {
-        for (i = 0; i < model->n_bo_wt2; ++i) {
-            model->bo_wt2[i].l = (int32)(model->bo_wt2[i].l * lw);
+        for (i = 0; i < model->lm3g.n_bo_wt2; ++i) {
+            model->lm3g.bo_wt2[i].l = (int32)(model->lm3g.bo_wt2[i].l * lw);
         }
-        for (i = 0; i < model->n_prob3; i++) {
-            model->prob3[i].l = (int32)(model->prob3[i].l * lw) + log_wip;
+        for (i = 0; i < model->lm3g.n_prob3; i++) {
+            model->lm3g.prob3[i].l = (int32)(model->lm3g.prob3[i].l * lw) + log_wip;
         }
     }
 
@@ -729,22 +730,22 @@ lm3g_bg_score(ngram_model_arpa_t *model, int32 lw1,
 
     if (lw1 < 0) {
         *n_used = 1;
-        return model->unigrams[lw2].prob1.l;
+        return model->lm3g.unigrams[lw2].prob1.l;
     }
 
     b = FIRST_BG(model, lw1);
     n = FIRST_BG(model, lw1 + 1) - b;
-    bg = model->bigrams + b;
+    bg = model->lm3g.bigrams + b;
 
     if ((i = find_bg(bg, n, lw2)) >= 0) {
         /* Access mode = bigram */
         *n_used = 2;
-        score = model->prob2[bg[i].prob2].l;
+        score = model->lm3g.prob2[bg[i].prob2].l;
     }
     else {
         /* Access mode = unigram */
         *n_used = 1;
-        score = model->unigrams[lw1].bo_wt1.l + model->unigrams[lw2].prob1.l;
+        score = model->lm3g.unigrams[lw1].bo_wt1.l + model->lm3g.unigrams[lw2].prob1.l;
     }
 
     return (score);
@@ -761,23 +762,23 @@ load_tginfo(ngram_model_arpa_t *model, int32 lw1, int32 lw2)
     tginfo = (tginfo_t *) listelem_alloc(sizeof(tginfo_t));
     tginfo->w1 = lw1;
     tginfo->tg = NULL;
-    tginfo->next = model->tginfo[lw2];
-    model->tginfo[lw2] = tginfo;
+    tginfo->next = model->lm3g.tginfo[lw2];
+    model->lm3g.tginfo[lw2] = tginfo;
 
     /* Locate bigram lw1,lw2 */
 
-    b = model->unigrams[lw1].bigrams;
-    n = model->unigrams[lw1 + 1].bigrams - b;
-    bg = model->bigrams + b;
+    b = model->lm3g.unigrams[lw1].bigrams;
+    n = model->lm3g.unigrams[lw1 + 1].bigrams - b;
+    bg = model->lm3g.bigrams + b;
 
     if ((n > 0) && ((i = find_bg(bg, n, lw2)) >= 0)) {
-        tginfo->bowt = model->bo_wt2[bg[i].bo_wt2].l;
+        tginfo->bowt = model->lm3g.bo_wt2[bg[i].bo_wt2].l;
 
         /* Find t = Absolute first trigram index for bigram lw1,lw2 */
         b += i;                 /* b = Absolute index of bigram lw1,lw2 on disk */
         t = FIRST_TG(model, b);
 
-        tginfo->tg = model->trigrams + t;
+        tginfo->tg = model->lm3g.trigrams + t;
 
         /* Find #tg for bigram w1,w2 */
         tginfo->n_tg = FIRST_TG(model, b + 1) - t;
@@ -823,7 +824,7 @@ lm3g_tg_score(ngram_model_arpa_t *model, int32 lw1,
         return (lm3g_bg_score(model, lw2, lw3, n_used));
 
     prev_tginfo = NULL;
-    for (tginfo = model->tginfo[lw2]; tginfo; tginfo = tginfo->next) {
+    for (tginfo = model->lm3g.tginfo[lw2]; tginfo; tginfo = tginfo->next) {
         if (tginfo->w1 == lw1)
             break;
         prev_tginfo = tginfo;
@@ -831,12 +832,12 @@ lm3g_tg_score(ngram_model_arpa_t *model, int32 lw1,
 
     if (!tginfo) {
         load_tginfo(model, lw1, lw2);
-        tginfo = model->tginfo[lw2];
+        tginfo = model->lm3g.tginfo[lw2];
     }
     else if (prev_tginfo) {
         prev_tginfo->next = tginfo->next;
-        tginfo->next = model->tginfo[lw2];
-        model->tginfo[lw2] = tginfo;
+        tginfo->next = model->lm3g.tginfo[lw2];
+        model->lm3g.tginfo[lw2] = tginfo;
     }
 
     tginfo->used = 1;
@@ -847,7 +848,7 @@ lm3g_tg_score(ngram_model_arpa_t *model, int32 lw1,
     if ((i = find_tg(tg, n, lw3)) >= 0) {
         /* Access mode = trigram */
         *n_used = 3;
-        score = model->prob3[tg[i].prob3].l;
+        score = model->lm3g.prob3[tg[i].prob3].l;
     }
     else {
         score = tginfo->bowt + lm3g_bg_score(model, lw2, lw3, n_used);
@@ -865,7 +866,7 @@ lm3g_cache_reset(ngram_model_arpa_t *model)
 
     for (i = 0; i < base->n_counts[0]; i++) {
         prev_tginfo = NULL;
-        for (tginfo = model->tginfo[i]; tginfo; tginfo = next_tginfo) {
+        for (tginfo = model->lm3g.tginfo[i]; tginfo; tginfo = next_tginfo) {
             next_tginfo = tginfo->next;
 
             if (!tginfo->used) {
@@ -873,7 +874,7 @@ lm3g_cache_reset(ngram_model_arpa_t *model)
                 if (prev_tginfo)
                     prev_tginfo->next = next_tginfo;
                 else
-                    model->tginfo[i] = next_tginfo;
+                    model->lm3g.tginfo[i] = next_tginfo;
             }
             else {
                 tginfo->used = 0;
@@ -893,7 +894,7 @@ ngram_model_arpa_score(ngram_model_t *base, int32 wid,
     case 0:
         /* Access mode: unigram */
         *n_used = 1;
-        return model->unigrams[wid].prob1.l;
+        return model->lm3g.unigrams[wid].prob1.l;
     case 1:
         return lm3g_bg_score(model, history[0], wid, n_used);
     case 2:
@@ -925,24 +926,24 @@ ngram_model_arpa_free(ngram_model_t *base)
 {
     ngram_model_arpa_t *model = (ngram_model_arpa_t *)base;
 
-    ckd_free(model->unigrams);
-    ckd_free(model->bigrams);
-    ckd_free(model->trigrams);
-    ckd_free(model->prob2);
-    ckd_free(model->bo_wt2);
-    ckd_free(model->prob3);
-    if (model->tginfo) {
+    ckd_free(model->lm3g.unigrams);
+    ckd_free(model->lm3g.bigrams);
+    ckd_free(model->lm3g.trigrams);
+    ckd_free(model->lm3g.prob2);
+    ckd_free(model->lm3g.bo_wt2);
+    ckd_free(model->lm3g.prob3);
+    if (model->lm3g.tginfo) {
         int32 u;
         for (u = 0; u < base->n_1g_alloc; u++) {
             tginfo_t *tginfo, *next_tginfo;
-            for (tginfo = model->tginfo[u]; tginfo; tginfo = next_tginfo) {
+            for (tginfo = model->lm3g.tginfo[u]; tginfo; tginfo = next_tginfo) {
                 next_tginfo = tginfo->next;
                 listelem_free(tginfo, sizeof(*tginfo));
             }
         }
-        ckd_free(model->tginfo);
+        ckd_free(model->lm3g.tginfo);
     }
-    ckd_free(model->tseg_base);
+    ckd_free(model->lm3g.tseg_base);
 }
 
 static ngram_funcs_t ngram_model_arpa_funcs = {
