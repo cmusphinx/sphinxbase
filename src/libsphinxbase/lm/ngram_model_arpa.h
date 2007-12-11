@@ -49,13 +49,13 @@
 /**
  * Bigram structure.
  */
-typedef struct bigram_s {
+struct bigram_s {
     uint32 wid;	/**< Index of unigram entry for this.  (NOT dictionary id.) */
     uint16 prob2;	/**< Index into array of actual bigram probs */
     uint16 bo_wt2;	/**< Index into array of actual bigram backoff wts */
     uint16 trigrams;	/**< Index of 1st entry in lm_t.trigrams[],
 			     RELATIVE TO its segment base (see above) */
-} bigram_t;
+};
 
 /**
  * Trigram structure.
@@ -63,27 +63,10 @@ typedef struct bigram_s {
  * As with bigrams, trigram prob info kept in a separate table for conserving
  * memory space.
  */
-typedef struct trigram_s {
+struct trigram_s {
     uint32 wid;	  /**< Index of unigram entry for this.  (NOT dictionary id.) */
     uint16 prob3; /**< Index into array of actual trigram probs */
-} trigram_t;
-
-/**
- * Trigram information cache.
- *
- * The following trigram information cache eliminates most traversals of 1g->2g->3g
- * tree to locate trigrams for a given bigram (lw1,lw2).  The organization is optimized
- * for locality of access (to the same lw1), given lw2.
- */
-typedef struct tginfo_s {
-    int32 w1;			/**< lw1 component of bigram lw1,lw2.  All bigrams with
-				   same lw2 linked together (see lm_t.tginfo). */
-    int32 n_tg;			/**< #tg for parent bigram lw1,lw2 */
-    int32 bowt;                 /**< tg bowt for lw1,lw2 */
-    int32 used;			/**< whether used since last lm_reset */
-    trigram_t *tg;		/**< Trigrams for lw1,lw2 */
-    struct tginfo_s *next;      /**< Next lw1 with same parent lw2; NULL if none. */
-} tginfo_t;
+};
 
 /**
  * Bigram probs and bo-wts, and trigram probs are kept in separate

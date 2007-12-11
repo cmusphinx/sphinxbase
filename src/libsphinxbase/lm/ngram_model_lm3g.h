@@ -55,13 +55,23 @@ typedef union {
 } lmprob_t;
 
 /**
- * Unigram structure.
+ * Unigram structure (common among all lm3g implementations)
  */
 typedef struct unigram_s {
     lmprob_t prob1;     /**< Unigram probability. */
     lmprob_t bo_wt1;    /**< Unigram backoff weight. */
     int32 bigrams;	/**< Index of 1st entry in lm_t.bigrams[] */
 } unigram_t;
+
+/**
+ * Bigram structure (might be implemented differently)
+ */
+typedef struct bigram_s bigram_t;
+/**
+ * Trigram structure (might be implemented differently)
+ */
+typedef struct trigram_s trigram_t;
+
 
 /*
  * To conserve space, bigram info is kept in many tables.  Since the number
@@ -78,5 +88,22 @@ typedef struct unigram_s {
 #define BG_SEG_SZ	512	/* chosen so that #trigram/segment <= 2**16 */
 #define LOG_BG_SEG_SZ	9
 #define TSEG_BASE(m,b)		((m)->tseg_base[(b)>>LOG_BG_SEG_SZ])
+
+/**
+ * Trigram information cache.
+ *
+ * The following trigram information cache eliminates most traversals of 1g->2g->3g
+ * tree to locate trigrams for a given bigram (lw1,lw2).  The organization is optimized
+ * for locality of access (to the same lw1), given lw2.
+ */
+typedef struct tginfo_s {
+    int32 w1;			/**< lw1 component of bigram lw1,lw2.  All bigrams with
+				   same lw2 linked together (see lm_t.tginfo). */
+    int32 n_tg;			/**< #tg for parent bigram lw1,lw2 */
+    int32 bowt;                 /**< tg bowt for lw1,lw2 */
+    int32 used;			/**< whether used since last lm_reset */
+    trigram_t *tg;		/**< Trigrams for lw1,lw2 */
+    struct tginfo_s *next;      /**< Next lw1 with same parent lw2; NULL if none. */
+} tginfo_t;
 
 #endif /* __NGRAM_MODEL_LM3G_H__ */
