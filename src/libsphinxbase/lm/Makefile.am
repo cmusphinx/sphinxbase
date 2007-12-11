@@ -9,7 +9,8 @@ libsphinxlm_la_SOURCES =			\
 	ngram_model_htk.c
 
 noinst_HEADERS = ngram_model_internal.h \
-	ngram_model_dmp.h
+	ngram_model_dmp.h \
+	ngram_model_arpa.h
 
 INCLUDES = -I$(top_srcdir)/include \
            -I$(top_builddir)/include 

@@ -41,7 +41,7 @@ main(int argc, char *argv[])
 	/* Test bigrams. */
 	TEST_EQUAL(ngram_score(model, "huggins", "david", NULL), -831);
 	/* Test trigrams. */
-	TEST_EQUAL(ngram_score(model, "daines", "huggins", "david", NULL), -9450);
+	TEST_EQUAL_LOG(ngram_score(model, "daines", "huggins", "david", NULL), -9450);
 
 	ngram_model_free(model);
 

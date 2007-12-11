@@ -558,6 +558,9 @@ lm3g_bg_score(ngram_model_dmp_t *model, int32 lw1, int32 lw2)
     int32 i, n, b, score;
     bigram_t *bg;
 
+    if (lw1 < 0)
+        return model->unigrams[lw2].prob1.l;
+
     b = FIRST_BG(model, lw1);
     n = FIRST_BG(model, lw1 + 1) - b;
     bg = model->bigrams + b;
