@@ -549,8 +549,9 @@ ngram_model_arpa_read(cmd_ln_t *config,
     base->n_counts[1] = n_bigram;
     base->n_counts[2] = n_trigram;
     base->lw = 1.0;
-    base->wip = 1.0;
-    base->uw = 1.0;
+    base->log_wip = 0;
+    base->log_uniform = 0;
+    base->log_uw = 0;
     base->lmath = lmath;
     /* Allocate space for word strings. */
     base->word_str = ckd_calloc(n_unigram, sizeof(char *));
@@ -646,7 +647,8 @@ ngram_model_arpa_apply_weights(ngram_model_t *base, float32 lw,
     int i;
 
     /* Precalculate some log values we will like. */
-    log_wip = logmath_log(base->lmath, wip);
+    model->log_wip = log_wip = logmath_log(base->lmath, wip);
+    model->lw = lw;
     log_uw = logmath_log(base->lmath, uw);
     log_uniform = logmath_log(base->lmath, 1.0 / (base->n_counts[0] - 1))
         + logmath_log(base->lmath, 1.0 - uw);
@@ -711,22 +713,29 @@ find_bg(bigram_t * bg, int32 n, int32 w)
 }
 
 static int32
-lm3g_bg_score(ngram_model_arpa_t *model, int32 lw1, int32 lw2)
+lm3g_bg_score(ngram_model_arpa_t *model, int32 lw1,
+              int32 lw2, int32 *n_used)
 {
     int32 i, n, b, score;
     bigram_t *bg;
 
-    if (lw1 < 0)
+    if (lw1 < 0) {
+        *n_used = 1;
         return model->unigrams[lw2].prob1;
+    }
 
     b = FIRST_BG(model, lw1);
     n = FIRST_BG(model, lw1 + 1) - b;
     bg = model->bigrams + b;
 
     if ((i = find_bg(bg, n, lw2)) >= 0) {
+        /* Access mode = bigram */
+        *n_used = 2;
         score = model->prob2[bg[i].prob2];
     }
     else {
+        /* Access mode = unigram */
+        *n_used = 1;
         score = model->unigrams[lw1].bo_wt1 + model->unigrams[lw2].prob1;
     }
 
@@ -794,7 +803,8 @@ find_tg(trigram_t * tg, int32 n, int32 w)
 }
 
 static int32
-lm3g_tg_score(ngram_model_arpa_t *model, int32 lw1, int32 lw2, int32 lw3)
+lm3g_tg_score(ngram_model_arpa_t *model, int32 lw1,
+              int32 lw2, int32 lw3, int32 *n_used)
 {
     ngram_model_t *base = &model->base;
     int32 i, n, score;
@@ -802,7 +812,7 @@ lm3g_tg_score(ngram_model_arpa_t *model, int32 lw1, int32 lw2, int32 lw3)
     tginfo_t *tginfo, *prev_tginfo;
 
     if ((base->n < 3) || (lw1 < 0))
-        return (lm3g_bg_score(model, lw2, lw3));
+        return (lm3g_bg_score(model, lw2, lw3, n_used));
 
     prev_tginfo = NULL;
     for (tginfo = model->tginfo[lw2]; tginfo; tginfo = tginfo->next) {
@@ -827,10 +837,12 @@ lm3g_tg_score(ngram_model_arpa_t *model, int32 lw1, int32 lw2, int32 lw3)
     n = tginfo->n_tg;
     tg = tginfo->tg;
     if ((i = find_tg(tg, n, lw3)) >= 0) {
+        /* Access mode = trigram */
+        *n_used = 3;
         score = model->prob3[tg[i].prob3];
     }
     else {
-        score = tginfo->bowt + lm3g_bg_score(model, lw2, lw3);
+        score = tginfo->bowt + lm3g_bg_score(model, lw2, lw3, n_used);
     }
 
     return (score);
@@ -865,16 +877,19 @@ lm3g_cache_reset(ngram_model_arpa_t *model)
 
 static int32
 ngram_model_arpa_score(ngram_model_t *base, int32 wid,
-                      int32 *history, int32 n_hist)
+                       int32 *history, int32 n_hist,
+                       int32 *n_used)
 {
     ngram_model_arpa_t *model = (ngram_model_arpa_t *)base;
     switch (n_hist) {
     case 0:
+        /* Access mode: unigram */
+        *n_used = 1;
         return model->unigrams[wid].prob1;
     case 1:
-        return lm3g_bg_score(model, history[0], wid);
+        return lm3g_bg_score(model, history[0], wid, n_used);
     case 2:
-        return lm3g_tg_score(model, history[1], history[0], wid);
+        return lm3g_tg_score(model, history[1], history[0], wid, n_used);
     default:
         E_ERROR("%d-grams not supported", n_hist + 1);
         return NGRAM_SCORE_ERROR;
@@ -883,12 +898,14 @@ ngram_model_arpa_score(ngram_model_t *base, int32 wid,
 
 static int32
 ngram_model_arpa_raw_score(ngram_model_t *base, int32 wid,
-                           int32 *history, int32 n_hist)
+                           int32 *history, int32 n_hist,
+                           int32 *n_used)
 {
     ngram_model_arpa_t *model = (ngram_model_arpa_t *)base;
     int32 score;
 
-    score = ngram_model_arpa_score(base, wid, history, n_hist);
+    score = ngram_model_arpa_score(base, wid, history, n_hist,
+                                   n_used);
     if (score == NGRAM_SCORE_ERROR)
         return score;
     /* FIXME: No way to undo unigram weight interpolation. */

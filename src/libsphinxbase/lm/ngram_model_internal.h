@@ -49,27 +49,39 @@
 /**
  * Common implementation of ngram_model_t.
  *
- * The details of unigram, bigram, and trigram storage can vary
- * somewhat depending on the file format in use.
+ * The details of bigram, trigram, and higher-order N-gram storage, if any, can
+ * vary somewhat depending on the file format in use.
  */
 struct ngram_model_s {
     int32 *n_counts;    /**< Counts for 1, 2, 3, ... grams */
     int32 n_1g_alloc;   /**< Number of allocated unigrams (for new word addition) */
     uint8 n;            /**< This is an n-gram model (1, 2, 3, ...). */
     uint8 writable;     /**< Are word strings writable? */
-    char **word_str;    /**< Unigram names */
-    hash_table_t *wid;  /**< Mapping of unigram names to word IDs. */
     logmath_t *lmath;   /**< Log-math object */
     float32 lw;         /**< Language model scaling factor */
-    float32 wip;        /**< Word insertion penalty */
-    float32 uw;         /**< Unigram weight */
+    int32 log_wip;      /**< Log of word insertion penalty */
+    int32 log_uniform;  /**< Log of uniform (0-gram) probability */
+    int32 log_uw;       /**< Log of unigram weight */
+    char **word_str;    /**< Unigram names */
+    hash_table_t *wid;  /**< Mapping of unigram names to word IDs. */
     struct ngram_funcs_s *funcs; /**< Implementation-specific methods. */
 };
 
 typedef struct ngram_funcs_s {
-    int (*apply_weights)(ngram_model_t *model, float32 lw, float32 wip, float32 uw);
-    int32 (*score)(ngram_model_t *model, int32 wid, int32 *history, int32 n_hist);
-    int32 (*raw_score)(ngram_model_t *model, int32 wid, int32 *history, int32 n_hist);
+    int (*apply_weights)(ngram_model_t *model,
+                         float32 lw,
+                         float32 wip,
+                         float32 uw);
+    int32 (*score)(ngram_model_t *model,
+                   int32 wid,
+                   int32 *history,
+                   int32 n_hist,
+                   int32 *n_used);
+    int32 (*raw_score)(ngram_model_t *model,
+                       int32 wid,
+                       int32 *history,
+                       int32 n_hist,
+                       int32 *n_used);
     void (*free)(ngram_model_t *model);
 } ngram_funcs_t;
 

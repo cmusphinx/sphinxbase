@@ -13,6 +13,7 @@ main(int argc, char *argv[])
 {
 	logmath_t *lmath;
 	ngram_model_t *model;
+	int32 n_used;
 
 	/* Initialize a logmath object to pass to ngram_read */
 	lmath = logmath_init(1.0001, 0, 0);
@@ -26,10 +27,12 @@ main(int argc, char *argv[])
 	/* Test unigrams. */
 	TEST_EQUAL(ngram_score(model, "<UNK>", NULL), -75346);
 	TEST_EQUAL(ngram_bg_score(model, ngram_wid(model, "<UNK>"),
-				  NGRAM_INVALID_WID), -75346);
+				  NGRAM_INVALID_WID, &n_used), -75346);
+	TEST_EQUAL(n_used, 1);
 	TEST_EQUAL(ngram_score(model, "sphinxtrain", NULL), -64208);
 	TEST_EQUAL(ngram_bg_score(model, ngram_wid(model, "sphinxtrain"),
-				  NGRAM_INVALID_WID), -64208);
+				  NGRAM_INVALID_WID, &n_used), -64208);
+	TEST_EQUAL(n_used, 1);
 	/* Test bigrams. */
 	TEST_EQUAL(ngram_score(model, "huggins", "david", NULL), -831);
 	/* Test trigrams. */
@@ -47,10 +50,12 @@ main(int argc, char *argv[])
 	/* Test unigrams. */
 	TEST_EQUAL(ngram_score(model, "<UNK>", NULL), -75346);
 	TEST_EQUAL(ngram_bg_score(model, ngram_wid(model, "<UNK>"),
-				  NGRAM_INVALID_WID), -75346);
+				  NGRAM_INVALID_WID, &n_used), -75346);
+	TEST_EQUAL(n_used, 1);
 	TEST_EQUAL(ngram_score(model, "sphinxtrain", NULL), -64208);
 	TEST_EQUAL(ngram_bg_score(model, ngram_wid(model, "sphinxtrain"),
-				  NGRAM_INVALID_WID), -64208);
+				  NGRAM_INVALID_WID, &n_used), -64208);
+	TEST_EQUAL(n_used, 1);
 	/* Test bigrams. */
 	TEST_EQUAL(ngram_score(model, "huggins", "david", NULL), -831);
 	/* Test trigrams. */

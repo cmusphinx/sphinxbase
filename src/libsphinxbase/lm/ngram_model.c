@@ -262,7 +262,7 @@ ngram_model_recode(ngram_model_t *model, const char *from, const char *to)
          * collisions if a non-reversible conversion was requested.,
          * so warn about them. */
         if (hash_table_enter(new_wid, model->word_str[i],
-                             (void *)i) != (void *)i) {
+                             (void *)(long)i) != (void *)(long)i) {
             E_WARN("Duplicate word in dictionary after conversion: %s\n",
                    model->word_str[i]);
         }
@@ -297,6 +297,7 @@ ngram_score(ngram_model_t *model, const char *word, ...)
     const char *hword;
     int32 *histid;
     int32 n_hist;
+    int32 n_used;
     int32 prob;
 
     va_start(history, word);
@@ -315,28 +316,29 @@ ngram_score(ngram_model_t *model, const char *word, ...)
     va_end(history);
 
     prob = (*model->funcs->score)(model, ngram_wid(model, word),
-                                  histid, n_hist);
+                                  histid, n_hist, &n_used);
     ckd_free(histid);
     return prob;
 }
 
 int32
-ngram_tg_score(ngram_model_t *model, int32 w3, int32 w2, int32 w1)
+ngram_tg_score(ngram_model_t *model, int32 w3, int32 w2, int32 w1, int32 *n_used)
 {
     int32 hist[2] = { w2, w1 };
-    return (*model->funcs->score)(model, w3, hist, 2);
+    return (*model->funcs->score)(model, w3, hist, 2, n_used);
 }
 
 int32
-ngram_bg_score(ngram_model_t *model, int32 w2, int32 w1)
+ngram_bg_score(ngram_model_t *model, int32 w2, int32 w1, int32 *n_used)
 {
-    return (*model->funcs->score)(model, w2, &w1, 1);
+    return (*model->funcs->score)(model, w2, &w1, 1, n_used);
 }
 
 int32
-ngram_ng_score(ngram_model_t *model, int32 wid, int32 *history, int32 n_hist)
+ngram_ng_score(ngram_model_t *model, int32 wid, int32 *history,
+               int32 n_hist, int32 *n_used)
 {
-    return (*model->funcs->score)(model, wid, history, n_hist);
+    return (*model->funcs->score)(model, wid, history, n_hist, n_used);
 }
 
 int32
@@ -346,6 +348,7 @@ ngram_prob(ngram_model_t *model, const char *word, ...)
     const char *hword;
     int32 *histid;
     int32 n_hist;
+    int32 n_used;
     int32 prob;
 
     va_start(history, word);
@@ -364,15 +367,17 @@ ngram_prob(ngram_model_t *model, const char *word, ...)
     va_end(history);
 
     prob = (*model->funcs->raw_score)(model, ngram_wid(model, word),
-                                      histid, n_hist);
+                                      histid, n_hist, &n_used);
     ckd_free(histid);
     return prob;
 }
 
 int32
-ngram_ng_prob(ngram_model_t *model, int32 wid, int32 *history, int32 n_hist)
+ngram_ng_prob(ngram_model_t *model, int32 wid, int32 *history,
+              int32 n_hist, int32 *n_used)
 {
-    return (*model->funcs->raw_score)(model, wid, history, n_hist);
+    return (*model->funcs->raw_score)(model, wid, history,
+                                      n_hist, n_used);
 }
 
 int32
@@ -383,7 +388,7 @@ ngram_wid(ngram_model_t *model, const char *word)
     if (hash_table_lookup(model->wid, word, &val) == -1)
         return -1;
     else
-        return (int32)val;
+        return (int32)(long)val;
 }
 
 const char *

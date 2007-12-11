@@ -154,17 +154,22 @@ int32 ngram_score(ngram_model_t *model, const char *word, ...);
 /**
  * Quick trigram score lookup.
  */
-int32 ngram_tg_score(ngram_model_t *model, int32 w3, int32 w2, int32 w1);
+int32 ngram_tg_score(ngram_model_t *model,
+                     int32 w3, int32 w2, int32 w1,
+                     int32 *n_used);
 
 /**
  * Quick bigram score lookup.
  */
-int32 ngram_bg_score(ngram_model_t *model, int32 w2, int32 w1);
+int32 ngram_bg_score(ngram_model_t *model,
+                     int32 w2, int32 w1,
+                     int32 *n_used);
 
 /**
  * Quick general N-Gram score lookup.
  */
-int32 ngram_ng_score(ngram_model_t *model, int32 wid, int32 *history, int32 n_hist);
+int32 ngram_ng_score(ngram_model_t *model, int32 wid, int32 *history,
+                     int32 n_hist, int32 *n_used);
 
 /**
  * Get the "raw" log-probability for a general N-Gram.
@@ -180,7 +185,8 @@ int32 ngram_prob(ngram_model_t *model, const char *word, ...);
  * See documentation for ngram_ng_score() and ngram_apply_weights()
  * for an explanation of this.
  */
-int32 ngram_ng_prob(ngram_model_t *model, int32 wid, int32 *history, int32 n_hist);
+int32 ngram_ng_prob(ngram_model_t *model, int32 wid, int32 *history,
+                    int32 n_hist, int32 *n_used);
 
 /**
  * Look up numerical word ID.

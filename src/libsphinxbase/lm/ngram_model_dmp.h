@@ -56,7 +56,6 @@ typedef union {
  * Unigram objects.
  */
 typedef struct unigram_s {
-    int32 mapid;        /**< UNUSED. */
     lmprob_t prob1;     /**< Unigram probability. */
     lmprob_t bo_wt1;    /**< Unigram backoff weight. */
     int32 bigrams;	/**< Index of 1st entry in lm_t.bigrams[] */
@@ -141,8 +140,7 @@ typedef struct ngram_model_dmp_s {
     mmio_file_t *dump_mmap; /**< mmap() of dump file (or NULL if none) */
 
     /* Language model weights in the appropriate form. */
-    float32 lw;
-    int32 log_wip;
+    float32 lw;          /**< Language weight (log-exponent) */
 } ngram_model_dmp_t;
 
 #endif /*  __NGRAM_MODEL_DMP_H__ */

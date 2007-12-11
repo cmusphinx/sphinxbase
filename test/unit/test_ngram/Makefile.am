@@ -1,6 +1,6 @@
-check_PROGRAMS = test_lm_read test_lm_mmap test_lm_recode
+check_PROGRAMS = test_lm_read test_lm_mmap test_lm_score test_lm_recode
 
-TESTS = test_lm_read test_lm_mmap test_lm_recode
+TESTS = test_lm_read test_lm_mmap test_lm_score test_lm_recode
 
 INCLUDES = \
 	-I$(top_srcdir)/include \
