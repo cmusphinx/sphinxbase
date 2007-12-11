@@ -44,38 +44,8 @@
 #define __NGRAM_MODEL_DMP_H__
 
 #include "ngram_model_internal.h"
+#include "ngram_model_lm3g.h"
 #include "mmio.h"
-
-/** On-disk representation of language model probabilities. */
-typedef union {
-    float32 f;
-    int32 l;
-} lmprob_t;
-
-/**
- * Unigram objects.
- */
-typedef struct unigram_s {
-    lmprob_t prob1;     /**< Unigram probability. */
-    lmprob_t bo_wt1;    /**< Unigram backoff weight. */
-    int32 bigrams;	/**< Index of 1st entry in lm_t.bigrams[] */
-} unigram_t;
-
-/*
- * To conserve space, bigram info is kept in many tables.  Since the number
- * of distinct values << #bigrams, these table indices can be 16-bit values.
- * prob2 and bo_wt2 are such indices, but keeping trigram index is less easy.
- * It is supposed to be the index of the first trigram entry for each bigram.
- * But such an index cannot be represented in 16-bits, hence the following
- * segmentation scheme: Partition bigrams into segments of BG_SEG_SZ
- * consecutive entries, such that #trigrams in each segment <= 2**16 (the
- * corresponding trigram segment).  The bigram_t.trigrams value is then a
- * 16-bit relative index within the trigram segment.  A separate table--
- * lm_t.tseg_base--has the index of the 1st trigram for each bigram segment.
- */
-#define BG_SEG_SZ	512	/* chosen so that #trigram/segment <= 2**16 */
-#define LOG_BG_SEG_SZ	9
-#define TSEG_BASE(m,b)		((m)->tseg_base[(b)>>LOG_BG_SEG_SZ])
 
 /**
  * On-disk representation of bigrams.

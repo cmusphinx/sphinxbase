@@ -44,38 +44,7 @@
 #define __NGRAM_MODEL_ARPA_H__
 
 #include "ngram_model_internal.h"
-
-#define MAX_SORTED_ENTRIES	65534
-
-/**
- * Type used to store language model probabilities
- */
-typedef int32 lmprob_t;
-
-/**
- * Unigram structure.
- */
-typedef struct unigram_s {
-    lmprob_t prob1;     /**< Unigram probability. */
-    lmprob_t bo_wt1;    /**< Unigram backoff weight. */
-    int32 bigrams;	/**< Index of 1st entry in lm_t.bigrams[] */
-} unigram_t;
-
-/*
- * To conserve space, bigram info is kept in many tables.  Since the number
- * of distinct values << #bigrams, these table indices can be 16-bit values.
- * prob2 and bo_wt2 are such indices, but keeping trigram index is less easy.
- * It is supposed to be the index of the first trigram entry for each bigram.
- * But such an index cannot be represented in 16-bits, hence the following
- * segmentation scheme: Partition bigrams into segments of BG_SEG_SZ
- * consecutive entries, such that #trigrams in each segment <= 2**16 (the
- * corresponding trigram segment).  The bigram_t.trigrams value is then a
- * 16-bit relative index within the trigram segment.  A separate table--
- * lm_t.tseg_base--has the index of the 1st trigram for each bigram segment.
- */
-#define BG_SEG_SZ	512	/* chosen so that #trigram/segment <= 2**16 */
-#define LOG_BG_SEG_SZ	9
-#define TSEG_BASE(m,b)		((m)->tseg_base[(b)>>LOG_BG_SEG_SZ])
+#include "ngram_model_lm3g.h"
 
 /**
  * Bigram structure.
@@ -99,7 +68,6 @@ typedef struct trigram_s {
     uint16 prob3; /**< Index into array of actual trigram probs */
 } trigram_t;
 
-
 /**
  * Trigram information cache.
  *
@@ -117,14 +85,14 @@ typedef struct tginfo_s {
     struct tginfo_s *next;      /**< Next lw1 with same parent lw2; NULL if none. */
 } tginfo_t;
 
-/*
- * Bigram probs and bo-wts, and trigram probs are kept in separate tables
- * rather than within the bigram_t and trigram_t structures.  These tables
- * hold unique prob and bo-wt values, and can be < 64K long (see lm_3g.h).
- * The following tree structure is used to construct these tables of unique
- * values.  Whenever a new value is read from the LM file, the sorted tree
- * structure is searched to see if the value already exists, and inserted
- * if not found.
+/**
+ * Bigram probs and bo-wts, and trigram probs are kept in separate
+ * tables rather than within the bigram_t and trigram_t structures.
+ * These tables hold unique prob and bo-wt values, and can be < 64K
+ * long.  The following tree structure is used to construct these
+ * tables of unique values.  Whenever a new value is read from the LM
+ * file, the sorted tree structure is searched to see if the value
+ * already exists, and inserted if not found.
  */
 typedef struct sorted_entry_s {
     lmprob_t val;               /**< value being kept in this node */
@@ -136,7 +104,7 @@ typedef struct sorted_entry_s {
                                    0 => no son exists (0 is root index) */
 } sorted_entry_t;
 
-/*
+/**
  * The sorted list.  list is a (64K long) array.  The first entry is the
  * root of the tree and is created during initialization.
  */
@@ -145,15 +113,14 @@ typedef struct {
     int32 free;                 /**< first free element in list */
 } sorted_list_t;
 
+#define MAX_SORTED_ENTRIES	65534
+
 /**
  * Subclass of ngram_model for ARPA file reading.
  */
 typedef struct ngram_model_arpa_s {
     ngram_model_t base;  /**< Base ngram_model_t structure */
 
-    unigram_t *unigrams;
-    bigram_t  *bigrams;	/* for entire LM */
-    trigram_t *trigrams;/* for entire LM */
     lmprob_t *prob2;	/* table of actual bigram probs */
     int32 n_prob2;	/* prob2 size */
     lmprob_t *bo_wt2;	/* table of actual bigram backoff weights */
@@ -163,18 +130,17 @@ typedef struct ngram_model_arpa_s {
     int32 *tseg_base;	/* tseg_base[i>>LOG_BG_SEG_SZ] = index of 1st
 			   trigram for bigram segment (i>>LOG_BG_SEG_SZ) */
 
-    tginfo_t **tginfo;	/* tginfo[lw2] is head of linked list of trigram information for
-			   some cached subset of bigrams (*,lw2). */
-
     /* Arrays of unique bigram probs and bo-wts, and trigram probs
      * (these are temporary, actually) */
     sorted_list_t sorted_prob2;
     sorted_list_t sorted_bo_wt2;
     sorted_list_t sorted_prob3;
 
-    /* Language model weights in the appropriate form. */
-    float32 lw;
-    int32 log_wip;
+    unigram_t *unigrams;
+    bigram_t  *bigrams;	/* for entire LM */
+    trigram_t *trigrams;/* for entire LM */
+    tginfo_t **tginfo;	/* tginfo[lw2] is head of linked list of trigram information for
+			   some cached subset of bigrams (*,lw2). */
 } ngram_model_arpa_t;
 
 #endif /* __NGRAM_MODEL_ARPA_H__ */

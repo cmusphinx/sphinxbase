@@ -62,7 +62,7 @@ init_sorted_list(sorted_list_t * l)
     /* FIXME FIXME FIXME: Fixed size array!??! */
     l->list = ckd_calloc(MAX_SORTED_ENTRIES,
                          sizeof(sorted_entry_t));
-    l->list[0].val = INT_MIN;
+    l->list[0].val.l = INT_MIN;
     l->list[0].lower = 0;
     l->list[0].higher = 0;
     l->free = 1;
@@ -92,21 +92,21 @@ sorted_id(sorted_list_t * l, int32 *val)
     int32 i = 0;
 
     for (;;) {
-        if (*val == l->list[i].val)
+        if (*val == l->list[i].val.l)
             return (i);
-        if (*val < l->list[i].val) {
+        if (*val < l->list[i].val.l) {
             if (l->list[i].lower == 0) {
                 if (l->free >= MAX_SORTED_ENTRIES) {
                     /* Make the best of a bad situation. */
                     E_WARN("sorted list overflow (%d => %d)\n",
-                           *val, l->list[i].val);
+                           *val, l->list[i].val.l);
                     return i;
                 }
 
                 l->list[i].lower = l->free;
                 (l->free)++;
                 i = l->list[i].lower;
-                l->list[i].val = *val;
+                l->list[i].val.l = *val;
                 return (i);
             }
             else
@@ -124,7 +124,7 @@ sorted_id(sorted_list_t * l, int32 *val)
                 l->list[i].higher = l->free;
                 (l->free)++;
                 i = l->list[i].higher;
-                l->list[i].val = *val;
+                l->list[i].val.l = *val;
                 return (i);
             }
             else
@@ -226,8 +226,8 @@ ReadUnigrams(FILE * fp, ngram_model_arpa_t * model)
             != (void *)(long)wcnt) {
                 E_WARN("Duplicate word in dictionary: %s\n", base->word_str[wcnt]);
         }
-        model->unigrams[wcnt].prob1 = logmath_log10_to_log(base->lmath, p1);
-        model->unigrams[wcnt].bo_wt1 = logmath_log10_to_log(base->lmath, bo_wt);
+        model->unigrams[wcnt].prob1.l = logmath_log10_to_log(base->lmath, p1);
+        model->unigrams[wcnt].bo_wt1.l = logmath_log10_to_log(base->lmath, bo_wt);
         wcnt++;
     }
 
@@ -500,8 +500,8 @@ new_unigram_table(int32 n_ug)
 
     table = ckd_calloc(n_ug, sizeof(unigram_t));
     for (i = 0; i < n_ug; i++) {
-        table[i].prob1 = INT_MIN;
-        table[i].bo_wt1 = INT_MIN;
+        table[i].prob1.l = INT_MIN;
+        table[i].bo_wt1.l = INT_MIN;
     }
     return table;
 }
@@ -647,43 +647,51 @@ ngram_model_arpa_apply_weights(ngram_model_t *base, float32 lw,
     int i;
 
     /* Precalculate some log values we will like. */
-    model->log_wip = log_wip = logmath_log(base->lmath, wip);
-    model->lw = lw;
+    log_wip = logmath_log(base->lmath, wip);
     log_uw = logmath_log(base->lmath, uw);
+    /* Log of (1-uw) / N_unigrams */
     log_uniform = logmath_log(base->lmath, 1.0 / (base->n_counts[0] - 1))
         + logmath_log(base->lmath, 1.0 - uw);
 
     for (i = 0; i < base->n_counts[0]; ++i) {
-        model->unigrams[i].bo_wt1 = (lmprob_t)(model->unigrams[i].bo_wt1 * lw);
+        model->unigrams[i].bo_wt1.l = (int32)(model->unigrams[i].bo_wt1.l * lw);
 
         if (strcmp(base->word_str[i], "<s>") == 0) { /* FIXME: configurable start_sym */
             /* Apply language weight and WIP */
-            model->unigrams[i].prob1 = (lmprob_t)(model->unigrams[i].prob1 * lw) + log_wip;
+            model->unigrams[i].prob1.l = (int32)(model->unigrams[i].prob1.l * lw) + log_wip;
         }
         else {
             /* Interpolate unigram probability with uniform. */
-            model->unigrams[i].prob1 += log_uw;
-            model->unigrams[i].prob1 =
+            model->unigrams[i].prob1.l += log_uw;
+            model->unigrams[i].prob1.l =
                 logmath_add(base->lmath,
-                            model->unigrams[i].prob1,
+                            model->unigrams[i].prob1.l,
                             log_uniform);
             /* Apply language weight and WIP */
-            model->unigrams[i].prob1 = (lmprob_t)(model->unigrams[i].prob1 * lw) + log_wip;
+            model->unigrams[i].prob1.l = (int32)(model->unigrams[i].prob1.l * lw) + log_wip;
         }
     }
 
     for (i = 0; i < model->n_prob2; ++i) {
-        model->prob2[i] = (lmprob_t)(model->prob2[i] * lw) + log_wip;
+        model->prob2[i].l = (int32)(model->prob2[i].l * lw) + log_wip;
     }
 
     if (base->n > 2) {
         for (i = 0; i < model->n_bo_wt2; ++i) {
-            model->bo_wt2[i] = (lmprob_t)(model->bo_wt2[i] * lw);
+            model->bo_wt2[i].l = (int32)(model->bo_wt2[i].l * lw);
         }
         for (i = 0; i < model->n_prob3; i++) {
-            model->prob3[i] = (lmprob_t)(model->prob3[i] * lw) + log_wip;
+            model->prob3[i].l = (int32)(model->prob3[i].l * lw) + log_wip;
         }
     }
+
+    /* Store said values in the model so that we will be able to
+     * recover the original probs. */
+    base->log_wip = log_wip;
+    base->log_uniform = log_uniform;
+    base->log_uw = log_uw;
+    base->lw = lw;
+
     return 0;
 }
 
@@ -721,7 +729,7 @@ lm3g_bg_score(ngram_model_arpa_t *model, int32 lw1,
 
     if (lw1 < 0) {
         *n_used = 1;
-        return model->unigrams[lw2].prob1;
+        return model->unigrams[lw2].prob1.l;
     }
 
     b = FIRST_BG(model, lw1);
@@ -731,12 +739,12 @@ lm3g_bg_score(ngram_model_arpa_t *model, int32 lw1,
     if ((i = find_bg(bg, n, lw2)) >= 0) {
         /* Access mode = bigram */
         *n_used = 2;
-        score = model->prob2[bg[i].prob2];
+        score = model->prob2[bg[i].prob2].l;
     }
     else {
         /* Access mode = unigram */
         *n_used = 1;
-        score = model->unigrams[lw1].bo_wt1 + model->unigrams[lw2].prob1;
+        score = model->unigrams[lw1].bo_wt1.l + model->unigrams[lw2].prob1.l;
     }
 
     return (score);
@@ -763,7 +771,7 @@ load_tginfo(ngram_model_arpa_t *model, int32 lw1, int32 lw2)
     bg = model->bigrams + b;
 
     if ((n > 0) && ((i = find_bg(bg, n, lw2)) >= 0)) {
-        tginfo->bowt = model->bo_wt2[bg[i].bo_wt2];
+        tginfo->bowt = model->bo_wt2[bg[i].bo_wt2].l;
 
         /* Find t = Absolute first trigram index for bigram lw1,lw2 */
         b += i;                 /* b = Absolute index of bigram lw1,lw2 on disk */
@@ -839,7 +847,7 @@ lm3g_tg_score(ngram_model_arpa_t *model, int32 lw1,
     if ((i = find_tg(tg, n, lw3)) >= 0) {
         /* Access mode = trigram */
         *n_used = 3;
-        score = model->prob3[tg[i].prob3];
+        score = model->prob3[tg[i].prob3].l;
     }
     else {
         score = tginfo->bowt + lm3g_bg_score(model, lw2, lw3, n_used);
@@ -885,7 +893,7 @@ ngram_model_arpa_score(ngram_model_t *base, int32 wid,
     case 0:
         /* Access mode: unigram */
         *n_used = 1;
-        return model->unigrams[wid].prob1;
+        return model->unigrams[wid].prob1.l;
     case 1:
         return lm3g_bg_score(model, history[0], wid, n_used);
     case 2:
@@ -908,8 +916,8 @@ ngram_model_arpa_raw_score(ngram_model_t *base, int32 wid,
                                    n_used);
     if (score == NGRAM_SCORE_ERROR)
         return score;
-    /* FIXME: No way to undo unigram weight interpolation. */
-    return (score - model->log_wip) / model->lw;
+    /* FIXME: Undo unigram weight interpolation. */
+    return (score - base->log_wip) / base->lw;
 }
 
 static void
