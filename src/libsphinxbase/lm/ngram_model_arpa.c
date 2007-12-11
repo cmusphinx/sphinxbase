@@ -644,55 +644,7 @@ ngram_model_arpa_apply_weights(ngram_model_t *base, float32 lw,
                               float32 wip, float32 uw)
 {
     ngram_model_arpa_t *model = (ngram_model_arpa_t *)base;
-    int32 log_wip, log_uw, log_uniform;
-    int i;
-
-    /* Precalculate some log values we will like. */
-    log_wip = logmath_log(base->lmath, wip);
-    log_uw = logmath_log(base->lmath, uw);
-    /* Log of (1-uw) / N_unigrams */
-    log_uniform = logmath_log(base->lmath, 1.0 / (base->n_counts[0] - 1))
-        + logmath_log(base->lmath, 1.0 - uw);
-
-    for (i = 0; i < base->n_counts[0]; ++i) {
-        model->lm3g.unigrams[i].bo_wt1.l = (int32)(model->lm3g.unigrams[i].bo_wt1.l * lw);
-
-        if (strcmp(base->word_str[i], "<s>") == 0) { /* FIXME: configurable start_sym */
-            /* Apply language weight and WIP */
-            model->lm3g.unigrams[i].prob1.l = (int32)(model->lm3g.unigrams[i].prob1.l * lw) + log_wip;
-        }
-        else {
-            /* Interpolate unigram probability with uniform. */
-            model->lm3g.unigrams[i].prob1.l += log_uw;
-            model->lm3g.unigrams[i].prob1.l =
-                logmath_add(base->lmath,
-                            model->lm3g.unigrams[i].prob1.l,
-                            log_uniform);
-            /* Apply language weight and WIP */
-            model->lm3g.unigrams[i].prob1.l = (int32)(model->lm3g.unigrams[i].prob1.l * lw) + log_wip;
-        }
-    }
-
-    for (i = 0; i < model->lm3g.n_prob2; ++i) {
-        model->lm3g.prob2[i].l = (int32)(model->lm3g.prob2[i].l * lw) + log_wip;
-    }
-
-    if (base->n > 2) {
-        for (i = 0; i < model->lm3g.n_bo_wt2; ++i) {
-            model->lm3g.bo_wt2[i].l = (int32)(model->lm3g.bo_wt2[i].l * lw);
-        }
-        for (i = 0; i < model->lm3g.n_prob3; i++) {
-            model->lm3g.prob3[i].l = (int32)(model->lm3g.prob3[i].l * lw) + log_wip;
-        }
-    }
-
-    /* Store said values in the model so that we will be able to
-     * recover the original probs. */
-    base->log_wip = log_wip;
-    base->log_uniform = log_uniform;
-    base->log_uw = log_uw;
-    base->lw = lw;
-
+    lm3g_apply_weights(base, &model->lm3g, lw, wip, uw);
     return 0;
 }
 
@@ -857,33 +809,6 @@ lm3g_tg_score(ngram_model_arpa_t *model, int32 lw1,
     return (score);
 }
 
-static void
-lm3g_cache_reset(ngram_model_arpa_t *model)
-{
-    ngram_model_t *base = &model->base;
-    int32 i;
-    tginfo_t *tginfo, *next_tginfo, *prev_tginfo;
-
-    for (i = 0; i < base->n_counts[0]; i++) {
-        prev_tginfo = NULL;
-        for (tginfo = model->lm3g.tginfo[i]; tginfo; tginfo = next_tginfo) {
-            next_tginfo = tginfo->next;
-
-            if (!tginfo->used) {
-                listelem_free((void *) tginfo, sizeof(tginfo_t));
-                if (prev_tginfo)
-                    prev_tginfo->next = next_tginfo;
-                else
-                    model->lm3g.tginfo[i] = next_tginfo;
-            }
-            else {
-                tginfo->used = 0;
-                prev_tginfo = tginfo;
-            }
-        }
-    }
-}
-
 static int32
 ngram_model_arpa_score(ngram_model_t *base, int32 wid,
                        int32 *history, int32 n_hist,
@@ -910,7 +835,6 @@ ngram_model_arpa_raw_score(ngram_model_t *base, int32 wid,
                            int32 *history, int32 n_hist,
                            int32 *n_used)
 {
-    ngram_model_arpa_t *model = (ngram_model_arpa_t *)base;
     int32 score;
 
     score = ngram_model_arpa_score(base, wid, history, n_hist,

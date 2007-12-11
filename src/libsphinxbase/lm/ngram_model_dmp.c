@@ -649,33 +649,6 @@ lm3g_tg_score(ngram_model_dmp_t *model, int32 lw1,
     return (score);
 }
 
-static void
-lm3g_cache_reset(ngram_model_dmp_t *model)
-{
-    ngram_model_t *base = &model->base;
-    int32 i;
-    tginfo_t *tginfo, *next_tginfo, *prev_tginfo;
-
-    for (i = 0; i < base->n_counts[0]; i++) {
-        prev_tginfo = NULL;
-        for (tginfo = model->lm3g.tginfo[i]; tginfo; tginfo = next_tginfo) {
-            next_tginfo = tginfo->next;
-
-            if (!tginfo->used) {
-                listelem_free((void *) tginfo, sizeof(tginfo_t));
-                if (prev_tginfo)
-                    prev_tginfo->next = next_tginfo;
-                else
-                    model->lm3g.tginfo[i] = next_tginfo;
-            }
-            else {
-                tginfo->used = 0;
-                prev_tginfo = tginfo;
-            }
-        }
-    }
-}
-
 static int32
 ngram_model_dmp_score(ngram_model_t *base, int32 wid,
                       int32 *history, int32 n_hist,
@@ -702,7 +675,6 @@ ngram_model_dmp_raw_score(ngram_model_t *base, int32 wid,
                           int32 *history, int32 n_hist,
                           int32 *n_used)
 {
-    ngram_model_dmp_t *model = (ngram_model_dmp_t *)base;
     int32 score;
 
     score = ngram_model_dmp_score(base, wid, history, n_hist,

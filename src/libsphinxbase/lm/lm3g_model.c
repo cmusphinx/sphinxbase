@@ -63,6 +63,32 @@ lm3g_tginfo_free(ngram_model_t *base, tginfo_t **tginfo)
 }
 
 void
+lm3g_tginfo_reset(ngram_model_t *base, tginfo_t **tginfo)
+{
+    int32 i;
+    tginfo_t *t, *next_t, *prev_t;
+
+    for (i = 0; i < base->n_counts[0]; i++) {
+        prev_t = NULL;
+        for (t = tginfo[i]; t; t = next_t) {
+            next_t = t->next;
+
+            if (!t->used) {
+                listelem_free((void *) t, sizeof(*t));
+                if (prev_t)
+                    prev_t->next = next_t;
+                else
+                    tginfo[i] = next_t;
+            }
+            else {
+                t->used = 0;
+                prev_t = t;
+            }
+        }
+    }
+}
+
+void
 lm3g_apply_weights(ngram_model_t *base,
 		   lm3g_model_t *lm3g,
 		   float32 lw, float32 wip, float32 uw)
