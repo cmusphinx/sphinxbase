@@ -35,7 +35,7 @@
  *
  */
 /*
- * \file ngram_model_lm3g.h Core Sphinx 3-gram code used in
+ * \file lm3g_model.h Core Sphinx 3-gram code used in
  * DMP/DMP32/ARPA (for now) model code.
  *
  * Author: A cast of thousands, probably.
@@ -123,5 +123,11 @@ typedef struct lm3g_model_s {
     tginfo_t **tginfo;   /**< tginfo[lw2] is head of linked list of trigram information for
                             some cached subset of bigrams (*,lw2). */
 } lm3g_model_t;
+
+void lm3g_tginfo_free(ngram_model_t *base, tginfo_t **tginfo);
+void lm3g_apply_weights(ngram_model_t *base,
+			lm3g_model_t *lm3g,
+			float32 lw, float32 wip, float32 uw);
+
 
 #endif /* __NGRAM_MODEL_LM3G_H__ */

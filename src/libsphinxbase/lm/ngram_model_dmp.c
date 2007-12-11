@@ -484,55 +484,7 @@ ngram_model_dmp_apply_weights(ngram_model_t *base, float32 lw,
                               float32 wip, float32 uw)
 {
     ngram_model_dmp_t *model = (ngram_model_dmp_t *)base;
-    int32 log_wip, log_uw, log_uniform;
-    int i;
-
-    /* Precalculate some log values we will like. */
-    log_wip = logmath_log(base->lmath, wip);
-    log_uw = logmath_log(base->lmath, uw);
-    /* Log of (1-uw) / N_unigrams */
-    log_uniform = logmath_log(base->lmath, 1.0 / (base->n_counts[0] - 1))
-        + logmath_log(base->lmath, 1.0 - uw);
-
-    for (i = 0; i < base->n_counts[0]; ++i) {
-        model->lm3g.unigrams[i].bo_wt1.l = (int32)(model->lm3g.unigrams[i].bo_wt1.l * lw);
-
-        if (strcmp(base->word_str[i], "<s>") == 0) { /* FIXME: configurable start_sym */
-            /* Apply language weight and WIP */
-            model->lm3g.unigrams[i].prob1.l = (int32)(model->lm3g.unigrams[i].prob1.l * lw) + log_wip;
-        }
-        else {
-            /* Interpolate unigram probability with uniform. */
-            model->lm3g.unigrams[i].prob1.l += log_uw;
-            model->lm3g.unigrams[i].prob1.l =
-                logmath_add(base->lmath,
-                            model->lm3g.unigrams[i].prob1.l,
-                            log_uniform);
-            /* Apply language weight and WIP */
-            model->lm3g.unigrams[i].prob1.l = (int32)(model->lm3g.unigrams[i].prob1.l * lw) + log_wip;
-        }
-    }
-
-    for (i = 0; i < model->lm3g.n_prob2; ++i) {
-        model->lm3g.prob2[i].l = (int32)(model->lm3g.prob2[i].l * lw) + log_wip;
-    }
-
-    if (base->n > 2) {
-        for (i = 0; i < model->lm3g.n_bo_wt2; ++i) {
-            model->lm3g.bo_wt2[i].l = (int32)(model->lm3g.bo_wt2[i].l * lw);
-        }
-        for (i = 0; i < model->lm3g.n_prob3; i++) {
-            model->lm3g.prob3[i].l = (int32)(model->lm3g.prob3[i].l * lw) + log_wip;
-        }
-    }
-
-    /* Store said values in the model so that we will be able to
-     * recover the original probs. */
-    base->log_wip = log_wip;
-    base->log_uniform = log_uniform;
-    base->log_uw = log_uw;
-    base->lw = lw;
-
+    lm3g_apply_weights(base, &model->lm3g, lw, wip, uw);
     return 0;
 }
 
@@ -765,7 +717,6 @@ static void
 ngram_model_dmp_free(ngram_model_t *base)
 {
     ngram_model_dmp_t *model = (ngram_model_dmp_t *)base;
-    int32 u;
 
     ckd_free(model->lm3g.unigrams);
     ckd_free(model->lm3g.prob2);
@@ -784,16 +735,7 @@ ngram_model_dmp_free(ngram_model_t *base)
         ckd_free(model->lm3g.prob3);
     }
 
-    if (model->lm3g.tginfo) {
-        for (u = 0; u < base->n_1g_alloc; u++) {
-            tginfo_t *tginfo, *next_tginfo;
-            for (tginfo = model->lm3g.tginfo[u]; tginfo; tginfo = next_tginfo) {
-                next_tginfo = tginfo->next;
-                listelem_free(tginfo, sizeof(*tginfo));
-            }
-        }
-        ckd_free(model->lm3g.tginfo);
-    }
+    lm3g_tginfo_free(base, model->lm3g.tginfo);
 }
 
 static ngram_funcs_t ngram_model_dmp_funcs = {

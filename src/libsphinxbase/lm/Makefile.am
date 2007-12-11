@@ -1,6 +1,7 @@
 noinst_LTLIBRARIES = libsphinxlm.la
 
 libsphinxlm_la_SOURCES =			\
+	lm3g_model.c				\
 	ngram_model.c				\
 	ngram_model_arpa.c			\
 	ngram_model_dmp32.c			\
@@ -11,7 +12,7 @@ libsphinxlm_la_SOURCES =			\
 noinst_HEADERS = ngram_model_internal.h \
 	ngram_model_dmp.h \
 	ngram_model_arpa.h \
-	ngram_model_lm3g.h
+	lm3g_model.h
 
 INCLUDES = -I$(top_srcdir)/include \
            -I$(top_builddir)/include 

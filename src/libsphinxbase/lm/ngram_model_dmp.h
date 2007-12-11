@@ -44,7 +44,7 @@
 #define __NGRAM_MODEL_DMP_H__
 
 #include "ngram_model_internal.h"
-#include "ngram_model_lm3g.h"
+#include "lm3g_model.h"
 #include "mmio.h"
 
 /**

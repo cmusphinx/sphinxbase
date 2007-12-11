@@ -932,17 +932,7 @@ ngram_model_arpa_free(ngram_model_t *base)
     ckd_free(model->lm3g.prob2);
     ckd_free(model->lm3g.bo_wt2);
     ckd_free(model->lm3g.prob3);
-    if (model->lm3g.tginfo) {
-        int32 u;
-        for (u = 0; u < base->n_1g_alloc; u++) {
-            tginfo_t *tginfo, *next_tginfo;
-            for (tginfo = model->lm3g.tginfo[u]; tginfo; tginfo = next_tginfo) {
-                next_tginfo = tginfo->next;
-                listelem_free(tginfo, sizeof(*tginfo));
-            }
-        }
-        ckd_free(model->lm3g.tginfo);
-    }
+    lm3g_tginfo_free(base, model->lm3g.tginfo);
     ckd_free(model->lm3g.tseg_base);
 }
 
