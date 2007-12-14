@@ -212,6 +212,7 @@ src/sphinx_cepview/Makefile
 src/sphinx_jsgf2fsg/Makefile
 src/sphinx_amtools/Makefile
 src/sphinx_adtools/Makefile
+src/sphinx_lmtools/Makefile
 doc/Makefile
 test/Makefile
 test/unit/testfuncs.sh
