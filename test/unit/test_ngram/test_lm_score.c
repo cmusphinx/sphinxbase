@@ -22,6 +22,7 @@ main(int argc, char *argv[])
 	/* Pre-weighting, this should give the "raw" score. */
 	TEST_EQUAL(ngram_score(model, "daines", "huggins", "david", NULL),
 		   -9452);
+	TEST_EQUAL(ngram_score(model, "huggins", "david", NULL), -831);
 	/* Verify that backoff mode calculations work. */
 	ngram_bg_score(model,
 		       ngram_wid(model, "huggins"),
@@ -56,6 +57,16 @@ main(int argc, char *argv[])
 	/* -9452 * 7.5 + log(0.5) = -77821 */
 	TEST_EQUAL(ngram_score(model, "daines", "huggins", "david", NULL),
 		   -77821);
+	/* Recover original score. */
+	TEST_EQUAL(ngram_prob(model, "daines", "huggins", "david", NULL),
+		   -9452);
+	TEST_EQUAL_LOG(ngram_prob(model, "huggins", "david", NULL), -831);
+
+	/* Un-apply weights. */
+	ngram_apply_weights(model, 1.0, 1.0, 1.0);
+	TEST_EQUAL_LOG(ngram_score(model, "daines", "huggins", "david", NULL),
+		       -9452);
+	TEST_EQUAL_LOG(ngram_score(model, "huggins", "david", NULL), -831);
 	/* Recover original score. */
 	TEST_EQUAL(ngram_prob(model, "daines", "huggins", "david", NULL),
 		   -9452);

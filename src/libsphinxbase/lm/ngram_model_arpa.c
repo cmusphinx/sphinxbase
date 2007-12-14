@@ -718,7 +718,6 @@ load_tginfo(ngram_model_arpa_t *model, int32 lw1, int32 lw2)
     model->lm3g.tginfo[lw2] = tginfo;
 
     /* Locate bigram lw1,lw2 */
-
     b = model->lm3g.unigrams[lw1].bigrams;
     n = model->lm3g.unigrams[lw1 + 1].bigrams - b;
     bg = model->lm3g.bigrams + b;
@@ -835,14 +834,37 @@ ngram_model_arpa_raw_score(ngram_model_t *base, int32 wid,
                            int32 *history, int32 n_hist,
                            int32 *n_used)
 {
+    ngram_model_arpa_t *model = (ngram_model_arpa_t *)base;
     int32 score;
 
-    score = ngram_model_arpa_score(base, wid, history, n_hist,
-                                   n_used);
-    if (score == NGRAM_SCORE_ERROR)
+    switch (n_hist) {
+    case 0:
+        /* Access mode: unigram */
+        *n_used = 1;
+        /* Undo insertion penalty. */
+        score = model->lm3g.unigrams[wid].prob1.l - base->log_wip;
+        /* Undo language weight. */
+        score = (int32)(score / base->lw);
+        /* Undo unigram interpolation */
+        if (strcmp(base->word_str[wid], "<s>") != 0 /* FIXME: configurable start_sym */
+            && base->log_uniform != 0) { /* This is an impossible value */
+            score = logmath_log(base->lmath,
+                                logmath_exp(base->lmath, score)
+                                - logmath_exp(base->lmath, base->log_uniform));
+        }
         return score;
-    /* FIXME: Undo unigram weight interpolation. */
-    return (score - base->log_wip) / base->lw;
+    case 1:
+        score = lm3g_bg_score(model, history[0], wid, n_used);
+        break;
+    case 2:
+        score = lm3g_tg_score(model, history[1], history[0], wid, n_used);
+        break;
+    default:
+        E_ERROR("%d-grams not supported", n_hist + 1);
+        return NGRAM_SCORE_ERROR;
+    }
+    /* FIXME (maybe): This doesn't undo unigram weighting in backoff cases. */
+    return (int32)((score - base->log_wip) / base->lw);
 }
 
 static void

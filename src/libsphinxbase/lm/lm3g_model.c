@@ -104,39 +104,48 @@ lm3g_apply_weights(ngram_model_t *base,
         + logmath_log(base->lmath, 1.0 - uw);
 
     for (i = 0; i < base->n_counts[0]; ++i) {
-        lm3g->unigrams[i].bo_wt1.l = (int32)(lm3g->unigrams[i].bo_wt1.l * lw);
+        int32 prob1, bo_wt, n_used;
 
+        /* Backoff weights just get scaled by the lw. */
+        bo_wt = (int32)(lm3g->unigrams[i].bo_wt1.l / base->lw);
+        /* Unscaling unigram probs is a bit more complicated, so punt
+         * it back to the general code. */
+        prob1 = ngram_ng_prob(base, i, NULL, 0, &n_used);
+        /* Now compute the new scaled probabilities. */
+        lm3g->unigrams[i].bo_wt1.l = (int32)(bo_wt * lw);
         if (strcmp(base->word_str[i], "<s>") == 0) { /* FIXME: configurable start_sym */
             /* Apply language weight and WIP */
-            lm3g->unigrams[i].prob1.l = (int32)(lm3g->unigrams[i].prob1.l * lw) + log_wip;
+            lm3g->unigrams[i].prob1.l = (int32)(prob1 * lw) + log_wip;
         }
         else {
             /* Interpolate unigram probability with uniform. */
-            lm3g->unigrams[i].prob1.l += log_uw;
-            lm3g->unigrams[i].prob1.l =
-                logmath_add(base->lmath,
-                            lm3g->unigrams[i].prob1.l,
-                            log_uniform);
+            prob1 += log_uw;
+            prob1 = logmath_add(base->lmath, prob1, log_uniform);
             /* Apply language weight and WIP */
-            lm3g->unigrams[i].prob1.l = (int32)(lm3g->unigrams[i].prob1.l * lw) + log_wip;
+            lm3g->unigrams[i].prob1.l = (int32)(prob1 * lw) + log_wip;
         }
     }
 
     for (i = 0; i < lm3g->n_prob2; ++i) {
-        lm3g->prob2[i].l = (int32)(lm3g->prob2[i].l * lw) + log_wip;
+        int32 prob2;
+        /* Can't just punt this back to general code since it is quantized. */
+        prob2 = (int32)((lm3g->prob2[i].l - base->log_wip) / base->lw);
+        lm3g->prob2[i].l = (int32)(prob2 * lw) + log_wip;
     }
 
     if (base->n > 2) {
         for (i = 0; i < lm3g->n_bo_wt2; ++i) {
-            lm3g->bo_wt2[i].l = (int32)(lm3g->bo_wt2[i].l * lw);
+            lm3g->bo_wt2[i].l = (int32)(lm3g->bo_wt2[i].l  / base->lw * lw);
         }
         for (i = 0; i < lm3g->n_prob3; i++) {
-            lm3g->prob3[i].l = (int32)(lm3g->prob3[i].l * lw) + log_wip;
+            int32 prob3;
+            /* Can't just punt this back to general code since it is quantized. */
+            prob3 = (int32)((lm3g->prob3[i].l - base->log_wip) / base->lw);
+            lm3g->prob3[i].l = (int32)(prob3 * lw) + log_wip;
         }
     }
 
-    /* Store said values in the model so that we will be able to
-     * recover the original probs. */
+    /* Store updated values in the model. */
     base->log_wip = log_wip;
     base->log_uniform = log_uniform;
     base->log_uw = log_uw;

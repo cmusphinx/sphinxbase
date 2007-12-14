@@ -189,7 +189,6 @@ ngram_model_dmp_read(cmd_ln_t *config,
     /* Allocate space for LM, including initial OOVs and placeholders; initialize it */
     model = ckd_calloc(1, sizeof(*model));
     base = &model->base;
-    base->lmath = lmath;
     base->funcs = &ngram_model_dmp_funcs;
     if (n_trigram > 0)
         base->n = 3;
@@ -201,6 +200,11 @@ ngram_model_dmp_read(cmd_ln_t *config,
     base->n_1g_alloc = base->n_counts[0] = n_unigram;
     base->n_counts[1] = n_bigram;
     base->n_counts[2] = n_trigram;
+    base->lw = 1.0;
+    base->log_wip = 0;
+    base->log_uniform = 0;
+    base->log_uw = 0;
+    base->lmath = lmath;
     /* Allocate space for word strings. */
     base->word_str = ckd_calloc(n_unigram, sizeof(char *));
     /* NOTE: They are no longer case-insensitive since we are allowing
@@ -675,13 +679,36 @@ ngram_model_dmp_raw_score(ngram_model_t *base, int32 wid,
                           int32 *history, int32 n_hist,
                           int32 *n_used)
 {
+    ngram_model_dmp_t *model = (ngram_model_dmp_t *)base;
     int32 score;
 
-    score = ngram_model_dmp_score(base, wid, history, n_hist,
-                                  n_used);
-    if (score == NGRAM_SCORE_ERROR)
+    switch (n_hist) {
+    case 0:
+        /* Access mode: unigram */
+        *n_used = 1;
+        /* Undo insertion penalty. */
+        score = model->lm3g.unigrams[wid].prob1.l - base->log_wip;
+        /* Undo language weight. */
+        score = (int32)(score / base->lw);
+        /* Undo unigram interpolation */
+        if (strcmp(base->word_str[wid], "<s>") != 0 /* FIXME: configurable start_sym */
+            && base->log_uniform != 0) { /* This is an impossible value */
+            score = logmath_log(base->lmath,
+                                logmath_exp(base->lmath, score)
+                                - logmath_exp(base->lmath, base->log_uniform));
+        }
         return score;
-    /* FIXME: Undo unigram weight interpolation. */
+    case 1:
+        score = lm3g_bg_score(model, history[0], wid, n_used);
+        break;
+    case 2:
+        score = lm3g_tg_score(model, history[1], history[0], wid, n_used);
+        break;
+    default:
+        E_ERROR("%d-grams not supported", n_hist + 1);
+        return NGRAM_SCORE_ERROR;
+    }
+    /* FIXME (maybe): This doesn't undo unigram weighting in backoff cases. */
     return (int32)((score - base->log_wip) / base->lw);
 }
 
