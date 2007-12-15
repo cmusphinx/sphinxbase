@@ -470,7 +470,7 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
         cmdln->ht = hash_table_new(n, 0 /* argument names are case-sensitive */ );
 
     /* Parse command line arguments (name-value pairs); skip argv[0] if argc is odd */
-    for (j = 1; j < argc; j += 2) {
+    for (j = argc % 2; j < argc; j += 2) {
         arg_t *argdef;
         void *v, *vv;
 
