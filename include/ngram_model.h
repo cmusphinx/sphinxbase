@@ -118,16 +118,15 @@ void ngram_model_free(ngram_model_t *model);
 int ngram_model_recode(ngram_model_t *model, const char *from, const char *to);
 
 /**
- * Irreversibly apply a language weight, insertion penalty, and
- * unigram weight internally.
+ * Apply a language weight, insertion penalty, and unigram weight to a
+ * language model.
  *
  * This will change the values output by ngram_score() and friends.
  * This is done for efficiency since in decoding, these are the only
  * values we actually need.  Call ngram_prob() if you want the "raw"
  * N-Gram probability estimate.
  *
- * Note that the unigram probability will still be interpolated in the
- * output of ngram_prob(), which may be a bug.
+ * To remove all weighting, call ngram_apply_weights(model, 1.0, 1.0, 0.0).
  */
 int ngram_apply_weights(ngram_model_t *model,
 			float32 lw, float32 wip, float32 uw);
@@ -208,7 +207,7 @@ const char *ngram_word(ngram_model_t *model, int32 wid);
  *
  * @param model The model to add a word to.
  * @param word Text of the word to add.
- * @param weight Probability of this word relative to the uniform distribution.
+ * @param weight Weight of this word relative to the uniform distribution.
  * @return The word ID for the new word.
  */
 int32 ngram_add_word(ngram_model_t *model,
