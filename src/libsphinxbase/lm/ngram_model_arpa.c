@@ -550,6 +550,7 @@ ngram_model_arpa_read(cmd_ln_t *config,
     base->n_counts[0] = n_unigram;
     base->n_counts[1] = n_bigram;
     base->n_counts[2] = n_trigram;
+    base->writable = TRUE;
 
     /*
      * Allocate one extra unigram and bigram entry: sentinels to terminate

@@ -170,15 +170,36 @@ ngram_model_init(ngram_model_t *base,
 void
 ngram_model_free(ngram_model_t *model)
 {
+    int i;
     if (model->funcs && model->funcs->free)
         (*model->funcs->free)(model);
     if (model->writable) {
-        int i;
+        /* Free all words. */
         for (i = 0; i < model->n_words; ++i) {
             ckd_free(model->word_str[i]);
         }
     }
+    else {
+        /* Free all class words. */
+        for (i = 0; i < model->n_classes; ++i) {
+            ngram_class_t *lmclass;
+            int32 j;
+
+            lmclass = model->classes[i];
+            for (j = 0; j < lmclass->n_words; ++j) {
+                ckd_free(model->word_str[lmclass->start_wid + j]);
+            }
+            /* FIXME: Also need to walk the class hash table - do this
+             * once adding new words to classes is implemented. */
+        }
+    }
+    for (i = 0; i < model->n_classes; ++i) {
+        ngram_class_free(model->classes[i]);
+    }
+    ckd_free(model->classes);
+    hash_table_free(model->wid);
     ckd_free(model->word_str);
+    ckd_free(model->n_counts);
     ckd_free(model);
 }
 
@@ -537,7 +558,6 @@ ngram_class_new(ngram_model_t *model, int32 tag_wid, int32 start_wid, glist_t cl
 
     lmclass = ckd_calloc(1, sizeof(*lmclass));
     lmclass->tag_wid = tag_wid;
-    classwords = glist_reverse(classwords);
     /* wid_base is the wid (minus class tag) of the first word in the list. */
     lmclass->start_wid = start_wid;
     lmclass->n_words = glist_count(classwords);
@@ -627,16 +647,16 @@ ngram_model_read_classdef(ngram_model_t *model,
                     goto error_out;
                 inclass = FALSE;
                 /* Construct a class from the list of words collected. */
+                classwords = glist_reverse(classwords);
                 lmclass = ngram_class_new(model, classwid, start_wid, classwords);
+                /* Add this class to the list of classes collected. */
+                classes = glist_add_ptr(classes, lmclass);
+                /* Reset everything. */
+                glist_free(classwords);
+                classwords = NULL;
                 ckd_free(classname);
                 classname = NULL;
                 classwid = -1;
-                /* Reset the list of words collected. */
-                glist_free(classwords);
-                classwords = NULL;
-                /* Add this class to the list of classes collected. */
-                classes = glist_add_ptr(classes, lmclass);
-                
                 ++classid;
             }
             else {

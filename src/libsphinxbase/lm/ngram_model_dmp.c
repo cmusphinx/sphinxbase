@@ -413,6 +413,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
         offset += k;
     }
     else {
+        base->writable = TRUE;
         fread(&k, sizeof(k), 1, fp);
         if (do_swap) SWAP_INT32(&k);
         tmp_word_str = ckd_calloc(k, sizeof(char));
