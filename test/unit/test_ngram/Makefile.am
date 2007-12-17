@@ -1,4 +1,4 @@
-check_PROGRAMS = test_lm_read test_lm_mmap test_lm_score test_lm_add test_lm_recode
+check_PROGRAMS = test_lm_read test_lm_mmap test_lm_score test_lm_add test_lm_recode test_lm_class
 
 TESTS = test_lm_read test_lm_mmap test_lm_score test_lm_add test_lm_recode
 

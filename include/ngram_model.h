@@ -232,7 +232,7 @@ int32 ngram_add_word(ngram_model_t *model,
  *
  * @return 0 for success, <0 for error
  */
-int32 ngram_model_load_classdef(ngram_model_t *model,
+int32 ngram_model_read_classdef(ngram_model_t *model,
                                 const char *file_name);
 
 #ifdef __cplusplus

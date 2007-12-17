@@ -437,3 +437,10 @@ ngram_add_word(ngram_model_t *model,
     ++model->n_counts[0];
     return wid;
 }
+
+int32
+ngram_model_read_classdef(ngram_model_t *model,
+                          const char *file_name)
+{
+    return -1;
+}
