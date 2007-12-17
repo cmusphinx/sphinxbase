@@ -76,9 +76,9 @@ struct ngram_model_s {
  * Implementation of ngram_class_t.
  */
 struct ngram_class_s {
-    int32 wid_base;
-    int32 n_words;
-    int32 *prob1;
+    int32 wid_base;  /**< Base Word ID for this class */
+    int32 n_words;   /**< Number of base words for this class */
+    int32 *prob1;    /**< Probability table for base words */
     /**
      * Custom hash table for additional words.
      */
