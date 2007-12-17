@@ -297,7 +297,7 @@ ngram_model_recode(ngram_model_t *model, const char *from, const char *to)
         if (writable) {
             /* Grow or shrink the output string as necessary. */
             model->word_str[i] = ckd_realloc(model->word_str[i], result + 1);
-            model->word_str[result] = '\0';
+            model->word_str[i][result] = '\0';
         }
         else {
             /* It actually was not allocated previously, so do that now. */

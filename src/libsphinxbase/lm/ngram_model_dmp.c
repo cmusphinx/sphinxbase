@@ -430,7 +430,8 @@ ngram_model_dmp_read(cmd_ln_t *config,
         if (tmp_word_str[i] == '\0')
             j++;
     if (j != base->n_counts[0]) {
-        E_ERROR("Error reading word strings\n");
+        E_ERROR("Error reading word strings (%d doesn't match n_unigrams %d)\n",
+                j, base->n_counts[0]);
         ngram_model_free(base);
         fclose_comp(fp, is_pipe);
         return NULL;
