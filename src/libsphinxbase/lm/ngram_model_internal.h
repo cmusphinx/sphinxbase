@@ -78,8 +78,8 @@ struct ngram_model_s {
  * Implementation of ngram_class_t.
  */
 struct ngram_class_s {
-    char *name;      /**< Name of this class (unigram to which it is linked) */
-    int32 wid_base;  /**< Base Word ID for this class */
+    int32 tag_wid;  /**< Base word ID for this class tag */
+    int32 start_wid; /**< Starting base word ID for this class' words */
     int32 n_words;   /**< Number of base words for this class */
     int32 *prob1;    /**< Probability table for base words */
     /**
@@ -92,6 +92,11 @@ struct ngram_class_s {
     } *nword_hash;
     int32 n_hash;     /**< Number of buckets in nword_hash */
 };
+
+#define NGRAM_BASEWID(wid) ((wid)&0xffffff)
+#define NGRAM_CLASSID(wid) (((wid)>>24) & 0x7f)
+#define NGRAM_CLASSWID(wid,classid) (((classid)<<24) | 0x80000000 | (wid))
+#define NGRAM_IS_CLASSWID(wid) ((wid)&0x80000000)
 
 #define UG_ALLOC_STEP 10
 
@@ -193,5 +198,20 @@ int ngram_model_fst_write(ngram_model_t *model,
 int ngram_model_htk_write(ngram_model_t *model,
 			  const char *file_name);
 
+/**
+ * Allocate and initialize an N-Gram class.
+ */
+ngram_class_t *ngram_class_new(ngram_model_t *model, int32 tag_wid,
+                               int32 start_wid, glist_t classwords);
+
+/**
+ * Deallocate an N-Gram class.
+ */
+void ngram_class_free(ngram_class_t *lmclass);
+
+/**
+ * Get the in-class log probability for a word in an N-Gram class.
+ */
+int32 ngram_class_prob(ngram_class_t *lmclass, int32 wid);
 
 #endif /* __NGRAM_MODEL_INTERNAL_H__ */

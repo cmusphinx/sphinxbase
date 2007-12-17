@@ -318,6 +318,32 @@ ngram_apply_weights(ngram_model_t *model,
 }
 
 int32
+ngram_ng_score(ngram_model_t *model, int32 wid, int32 *history,
+               int32 n_hist, int32 *n_used)
+{
+    int32 score, class_weight = 0;
+    int i;
+
+    /* "Declassify" wid and history */
+    if (wid != NGRAM_INVALID_WID && NGRAM_IS_CLASSWID(wid)) {
+        ngram_class_t *lmclass = model->classes[NGRAM_CLASSID(wid)];
+
+        class_weight = ngram_class_prob(lmclass, wid);
+        if (class_weight == NGRAM_SCORE_ERROR)
+            return class_weight;
+        wid = lmclass->tag_wid;
+    }
+    for (i = 0; i < n_hist; ++i) {
+        if (history[i] != NGRAM_INVALID_WID && NGRAM_IS_CLASSWID(history[i]))
+            history[i] = model->classes[NGRAM_CLASSID(history[i])]->tag_wid;
+    }
+    score = (*model->funcs->score)(model, wid, history, n_hist, n_used);
+
+    /* Multiply by unigram in-class weight. */
+    return score + class_weight;
+}
+
+int32
 ngram_score(ngram_model_t *model, const char *word, ...)
 {
     va_list history;
@@ -342,8 +368,8 @@ ngram_score(ngram_model_t *model, const char *word, ...)
     }
     va_end(history);
 
-    prob = (*model->funcs->score)(model, ngram_wid(model, word),
-                                  histid, n_hist, &n_used);
+    prob = ngram_ng_score(model, ngram_wid(model, word),
+                          histid, n_hist, &n_used);
     ckd_free(histid);
     return prob;
 }
@@ -352,20 +378,39 @@ int32
 ngram_tg_score(ngram_model_t *model, int32 w3, int32 w2, int32 w1, int32 *n_used)
 {
     int32 hist[2] = { w2, w1 };
-    return (*model->funcs->score)(model, w3, hist, 2, n_used);
+    return ngram_ng_score(model, w3, hist, 2, n_used);
 }
 
 int32
 ngram_bg_score(ngram_model_t *model, int32 w2, int32 w1, int32 *n_used)
 {
-    return (*model->funcs->score)(model, w2, &w1, 1, n_used);
+    return ngram_ng_score(model, w2, &w1, 1, n_used);
 }
 
 int32
-ngram_ng_score(ngram_model_t *model, int32 wid, int32 *history,
-               int32 n_hist, int32 *n_used)
+ngram_ng_prob(ngram_model_t *model, int32 wid, int32 *history,
+              int32 n_hist, int32 *n_used)
 {
-    return (*model->funcs->score)(model, wid, history, n_hist, n_used);
+    int32 prob, class_weight = 0;
+    int i;
+
+    /* "Declassify" wid and history */
+    if (wid != NGRAM_INVALID_WID && NGRAM_IS_CLASSWID(wid)) {
+        ngram_class_t *lmclass = model->classes[NGRAM_CLASSID(wid)];
+
+        class_weight = ngram_class_prob(lmclass, wid);
+        if (class_weight == NGRAM_SCORE_ERROR)
+            return class_weight;
+        wid = lmclass->tag_wid;
+    }
+    for (i = 0; i < n_hist; ++i) {
+        if (history[i] != NGRAM_INVALID_WID && NGRAM_IS_CLASSWID(history[i]))
+            history[i] = model->classes[NGRAM_CLASSID(history[i])]->tag_wid;
+    }
+    prob = (*model->funcs->raw_score)(model, wid, history,
+                                      n_hist, n_used);
+    /* Multiply by unigram in-class weight. */
+    return prob + class_weight;
 }
 
 int32
@@ -393,18 +438,10 @@ ngram_prob(ngram_model_t *model, const char *word, ...)
     }
     va_end(history);
 
-    prob = (*model->funcs->raw_score)(model, ngram_wid(model, word),
-                                      histid, n_hist, &n_used);
+    prob = ngram_ng_prob(model, ngram_wid(model, word),
+                         histid, n_hist, &n_used);
     ckd_free(histid);
     return prob;
-}
-
-int32
-ngram_ng_prob(ngram_model_t *model, int32 wid, int32 *history,
-              int32 n_hist, int32 *n_used)
-{
-    return (*model->funcs->raw_score)(model, wid, history,
-                                      n_hist, n_used);
 }
 
 int32
@@ -422,7 +459,7 @@ const char *
 ngram_word(ngram_model_t *model, int32 wid)
 {
     /* Remove any class tag */
-    wid = (wid & 0xffffff);
+    wid = NGRAM_BASEWID(wid);
     if (wid >= model->n_words)
         return NULL;
     return model->word_str[wid];
@@ -442,10 +479,7 @@ ngram_add_word_internal(ngram_model_t *model,
     /* Take the next available word ID */
     wid = model->n_words;
     if (classid >= 0) {
-        /* Put the class ID in the top 8 bits. */
-        wid |= (classid << 24);
-        /* Flag this as an in-class word. */
-        wid |= 0x80000000;
+        wid = NGRAM_CLASSWID(wid, classid);
     }
     /* Check for hash collisions. */
     if (hash_table_lookup(model->wid, word, &dummy) == 0) {
@@ -494,7 +528,7 @@ ngram_add_word(ngram_model_t *model,
 }
 
 ngram_class_t *
-ngram_class_new(ngram_model_t *model, char *classname, int32 base_wid, glist_t classwords)
+ngram_class_new(ngram_model_t *model, int32 tag_wid, int32 start_wid, glist_t classwords)
 {
     ngram_class_t *lmclass;
     gnode_t *gn;
@@ -502,11 +536,10 @@ ngram_class_new(ngram_model_t *model, char *classname, int32 base_wid, glist_t c
     int i;
 
     lmclass = ckd_calloc(1, sizeof(*lmclass));
-    lmclass->name = classname;
-    classname = NULL;
+    lmclass->tag_wid = tag_wid;
     classwords = glist_reverse(classwords);
     /* wid_base is the wid (minus class tag) of the first word in the list. */
-    lmclass->wid_base = base_wid;
+    lmclass->start_wid = start_wid;
     lmclass->n_words = glist_count(classwords);
     lmclass->prob1 = ckd_calloc(lmclass->n_words, sizeof(*lmclass->prob1));
     lmclass->nword_hash = NULL;
@@ -532,9 +565,21 @@ void
 ngram_class_free(ngram_class_t *lmclass)
 {
     ckd_free(lmclass->nword_hash);
-    ckd_free(lmclass->name);
     ckd_free(lmclass->prob1);
     ckd_free(lmclass);
+}
+
+int32
+ngram_class_prob(ngram_class_t *lmclass, int32 wid)
+{
+    int32 base_wid = NGRAM_BASEWID(wid);
+
+    if (base_wid < lmclass->start_wid
+        || base_wid > lmclass->start_wid + lmclass->n_words) {
+        /* FIXME: Look it up in the hash table.  Just fail for now. */
+        return NGRAM_SCORE_ERROR;
+    }
+    return lmclass->prob1[base_wid - lmclass->start_wid];
 }
 
 int32
@@ -545,9 +590,10 @@ ngram_model_read_classdef(ngram_model_t *model,
     int32 is_pipe;
     int inclass;  /**< Are we currently reading a list of class words? */
     int classid;  /**< ID of class currently under construction. */
-    int base_wid; /**< Base word ID of current class. */
+    int start_wid;/**< Start word ID of current class. */
     int n_classes;/**< Number of classes created. */
     char *classname = NULL; /**< Name of current class. */
+    int32 classwid = -1;    /**< Base word ID of current class tag. */
     glist_t classes = NULL; /**< List of classes read from this file. */
     glist_t classwords = NULL; /**< List of words read for current class. */
     gnode_t *gn;
@@ -559,7 +605,7 @@ ngram_model_read_classdef(ngram_model_t *model,
 
     classid = model->n_classes;
     inclass = 0;
-    base_wid = model->n_words;
+    start_wid = model->n_words;
     while (!feof(fp)) {
         char line[512];
         char *wptr[2];
@@ -581,7 +627,10 @@ ngram_model_read_classdef(ngram_model_t *model,
                     goto error_out;
                 inclass = FALSE;
                 /* Construct a class from the list of words collected. */
-                lmclass = ngram_class_new(model, classname, base_wid, classwords);
+                lmclass = ngram_class_new(model, classwid, start_wid, classwords);
+                ckd_free(classname);
+                classname = NULL;
+                classwid = -1;
                 /* Reset the list of words collected. */
                 glist_free(classwords);
                 classwords = NULL;
@@ -611,7 +660,11 @@ ngram_model_read_classdef(ngram_model_t *model,
                     goto error_out;
                 inclass = TRUE;
                 classname = ckd_salloc(wptr[1]);
-                base_wid = model->n_words;
+                if ((classwid = ngram_wid(model, classname)) == NGRAM_INVALID_WID) {
+                    E_ERROR("Class tag %s not present in unigram\n", classname);
+                    goto error_out;
+                }
+                start_wid = model->n_words;
             }
             /* Otherwise, just ignore whatever junk we got */
         }
@@ -619,7 +672,7 @@ ngram_model_read_classdef(ngram_model_t *model,
 
     /* Take the list of classes and add it to whatever might have
      * already been in the language model. */
-    glist_reverse(classes);
+    classes = glist_reverse(classes);
     n_classes = glist_count(classes);
     if (model->n_classes + n_classes > 128) {
         E_ERROR("Number of classes cannot exceed 128 (sorry)\n");
