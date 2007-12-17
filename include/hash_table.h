@@ -213,6 +213,14 @@ void *hash_table_enter(hash_table_t *h, /**< In: Handle of hash table in which t
  * Add a new entry with given key and value to hash table h.  If the
  * key already exists, its value is replaced with the given value, and
  * the previous value is returned, otherwise val is returned.
+ *
+ * A very important but subtle point: The key pointer in the hash
+ * table is <b>replaced</b> with the pointer passed to this function.
+ * In general you should always pass a pointer to hash_table_enter()
+ * whose lifetime matches or exceeds that of the hash table.  In some
+ * rare cases it is convenient to initially enter a value with a
+ * short-lived key, then later replace that with a long-lived one.
+ * This behaviour allows this to happen.
  */
 SPHINXBASE_EXPORT
 void *hash_table_replace(hash_table_t *h, /**< In: Handle of hash table in which to create entry */

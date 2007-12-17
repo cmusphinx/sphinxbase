@@ -355,8 +355,13 @@ enter(hash_table_t * h, uint32 hash, const char *key, size_t len, void *val, int
         void *oldval;
         /* Key already exists. */
         oldval = cur->val;
-        if (replace) 
+        if (replace) {
+            /* Replace the pointer if replacement is requested,
+             * because this might be a different instance of the same
+             * string (this verges on magic, sorry) */
+            cur->key = key;
             cur->val = val;
+        }
         return oldval;
     }
 
