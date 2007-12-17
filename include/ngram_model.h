@@ -64,6 +64,11 @@ extern "C" {
 typedef struct ngram_model_s ngram_model_t;
 
 /**
+ * Abstract type representing a word class in an N-Gram model.
+ */
+typedef struct ngram_class_s ngram_class_t;
+
+/**
  * File types for N-Gram files
  */
 typedef enum ngram_file_type_e ngram_file_type_t;
@@ -212,6 +217,23 @@ const char *ngram_word(ngram_model_t *model, int32 wid);
  */
 int32 ngram_add_word(ngram_model_t *model,
                      const char *word, float32 weight);
+
+
+/**
+ * Read a class definition file and add classes to a language model.
+ *
+ * This function assumes that the class tags have already been defined
+ * as unigrams in the language model.  All words in the class
+ * definition will be added to the lexicon as special in-class words.
+ * For this reason is is necessary that they not have the same names
+ * as any words in the general unigram distribution.  The convention
+ * is to suffix them with ":class_tag", where class_tag is the class
+ * tag minus the enclosing square brackets.
+ *
+ * @return 0 for success, <0 for error
+ */
+int32 ngram_model_load_classdef(ngram_model_t *model,
+                                const char *file_name);
 
 #ifdef __cplusplus
 }

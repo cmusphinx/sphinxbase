@@ -56,7 +56,10 @@ struct ngram_model_s {
     int32 *n_counts;    /**< Counts for 1, 2, 3, ... grams */
     int32 n_1g_alloc;   /**< Number of allocated unigrams (for new word addition) */
     uint8 n;            /**< This is an n-gram model (1, 2, 3, ...). */
+    uint8 n_classes;    /**< Number of classes (maximum 128) */
     uint8 writable;     /**< Are word strings writable? */
+    uint8 flags;        /**< Any other flags we might care about
+                             (FIXME: Merge this and writable) */
     logmath_t *lmath;   /**< Log-math object */
     float32 lw;         /**< Language model scaling factor */
     int32 log_wip;      /**< Log of word insertion penalty */
@@ -65,7 +68,26 @@ struct ngram_model_s {
     int32 log_uniform_weight; /**< Log of uniform weight (i.e. 1 - unigram weight) */
     char **word_str;    /**< Unigram names */
     hash_table_t *wid;  /**< Mapping of unigram names to word IDs. */
-    struct ngram_funcs_s *funcs; /**< Implementation-specific methods. */
+    struct ngram_class_s *classes; /**< Word class definitions. */
+    struct ngram_funcs_s *funcs;   /**< Implementation-specific methods. */
+};
+
+/**
+ * Implementation of ngram_class_t.
+ */
+struct ngram_class_s {
+    int32 wid_base;
+    int32 n_words;
+    int32 *prob1;
+    /**
+     * Custom hash table for additional words.
+     */
+    struct ngram_hash_s {
+        int32 wid;    /**< Word ID of this bucket */
+        int32 prob1;  /**< Probability for this word */
+        int32 next;   /**< Index of next bucket (or -1 for no collision) */
+    } *nword_hash;
+    int32 n_hash;     /**< Number of buckets in nword_hash */
 };
 
 #define UG_ALLOC_STEP 10
