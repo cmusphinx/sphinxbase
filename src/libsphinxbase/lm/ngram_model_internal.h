@@ -60,29 +60,58 @@ struct ngram_model_s {
     logmath_t *lmath;   /**< Log-math object */
     float32 lw;         /**< Language model scaling factor */
     int32 log_wip;      /**< Log of word insertion penalty */
-    int32 log_uniform;  /**< Log of uniform (0-gram) probability */
     int32 log_uw;       /**< Log of unigram weight */
+    int32 log_uniform;  /**< Log of uniform (0-gram) probability */
+    int32 log_uniform_weight; /**< Log of uniform weight (i.e. 1 - unigram weight) */
     char **word_str;    /**< Unigram names */
     hash_table_t *wid;  /**< Mapping of unigram names to word IDs. */
     struct ngram_funcs_s *funcs; /**< Implementation-specific methods. */
 };
 
+#define UG_ALLOC_STEP 10
+
 typedef struct ngram_funcs_s {
+    /**
+     * Implementation-specific function for freeing an ngram_model_t.
+     */
+    void (*free)(ngram_model_t *model);
+    /**
+     * Implementation-specific function for applying language model weights.
+     */
     int (*apply_weights)(ngram_model_t *model,
                          float32 lw,
                          float32 wip,
                          float32 uw);
+    /**
+     * Implementation-specific function for querying language model score.
+     */
     int32 (*score)(ngram_model_t *model,
                    int32 wid,
                    int32 *history,
                    int32 n_hist,
                    int32 *n_used);
+    /**
+     * Implementation-specific function for querying raw language
+     * model probability.
+     */
     int32 (*raw_score)(ngram_model_t *model,
                        int32 wid,
                        int32 *history,
                        int32 n_hist,
                        int32 *n_used);
-    void (*free)(ngram_model_t *model);
+    /**
+     * Implementation-specific function for adding unigrams.
+     *
+     * This function updates the internal structures of a language
+     * model to add the given unigram with the given weight (defined
+     * as a log-factor applied to the uniform distribution).  This
+     * includes reallocating or otherwise resizing the set of unigrams.
+     *
+     * @return The language model score (not raw log-probability) of
+     * the new word, or NGRAM_SCORE_ERROR for failure.
+     */
+    int32 (*add_ug)(ngram_model_t *model,
+                    int32 wid, int32 lweight);
 } ngram_funcs_t;
 
 /**

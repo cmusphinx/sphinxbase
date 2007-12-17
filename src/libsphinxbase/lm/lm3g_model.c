@@ -93,15 +93,13 @@ lm3g_apply_weights(ngram_model_t *base,
 		   lm3g_model_t *lm3g,
 		   float32 lw, float32 wip, float32 uw)
 {
-    int32 log_wip, log_uw, log_uniform;
+    int32 log_wip, log_uw, log_uniform_weight;
     int i;
 
     /* Precalculate some log values we will like. */
     log_wip = logmath_log(base->lmath, wip);
     log_uw = logmath_log(base->lmath, uw);
-    /* Log of (1-uw) / N_unigrams */
-    log_uniform = logmath_log(base->lmath, 1.0 / (base->n_counts[0] - 1))
-        + logmath_log(base->lmath, 1.0 - uw);
+    log_uniform_weight = logmath_log(base->lmath, 1.0 - uw);
 
     for (i = 0; i < base->n_counts[0]; ++i) {
         int32 prob1, bo_wt, n_used;
@@ -120,7 +118,7 @@ lm3g_apply_weights(ngram_model_t *base,
         else {
             /* Interpolate unigram probability with uniform. */
             prob1 += log_uw;
-            prob1 = logmath_add(base->lmath, prob1, log_uniform);
+            prob1 = logmath_add(base->lmath, prob1, base->log_uniform + log_uniform_weight);
             /* Apply language weight and WIP */
             lm3g->unigrams[i].prob1.l = (int32)(prob1 * lw) + log_wip;
         }
@@ -147,7 +145,37 @@ lm3g_apply_weights(ngram_model_t *base,
 
     /* Store updated values in the model. */
     base->log_wip = log_wip;
-    base->log_uniform = log_uniform;
     base->log_uw = log_uw;
+    base->log_uniform_weight = log_uniform_weight;
     base->lw = lw;
+}
+
+int32
+lm3g_add_ug(ngram_model_t *base,
+            lm3g_model_t *lm3g, int32 wid, int32 lweight)
+{
+    int32 score;
+
+    /* Reallocate unigrams. */
+    lm3g->unigrams = ckd_realloc(lm3g->unigrams,
+                                 sizeof(*lm3g->unigrams) * base->n_1g_alloc);
+    memset(lm3g->unigrams + wid, 0, (base->n_1g_alloc - wid) * sizeof(*lm3g->unigrams));
+    /* Reallocate tginfo. */
+    lm3g->tginfo = ckd_realloc(lm3g->tginfo,
+                               sizeof(*lm3g->tginfo) * base->n_1g_alloc);
+    memset(lm3g->tginfo + wid, 0, (base->n_1g_alloc - wid) * sizeof(*lm3g->tginfo));
+    /* FIXME: we really ought to update base->log_uniform *and*
+     * renormalize all the other unigrams.  This is really slow, so I
+     * will probably just provide a function to renormalize after
+     * adding unigrams, for anyone who really cares. */
+    /* This could be simplified but then we couldn't do it in logmath */
+    score = lweight + base->log_uniform + base->log_uw;
+    score = logmath_add(base->lmath, score,
+                        base->log_uniform + base->log_uniform_weight);
+    lm3g->unigrams[wid].prob1.l = score;
+    /* This unigram by definition doesn't participate in any bigrams,
+     * so its backoff weight and bigram pointer are both undefined. */
+    lm3g->unigrams[wid].bo_wt1.l = logmath_get_zero(base->lmath);
+    lm3g->unigrams[wid].bigrams = 0;
+    return score;
 }

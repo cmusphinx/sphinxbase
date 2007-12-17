@@ -174,8 +174,13 @@ int32 ngram_ng_score(ngram_model_t *model, int32 wid, int32 *history,
 /**
  * Get the "raw" log-probability for a general N-Gram.
  *
- * See documentation for ngram_score() and ngram_apply_weights() for
- * an explanation of this.
+ * This returns the log-probability of an N-Gram, as defined in the
+ * language model file, before any language weighting, interpolation,
+ * or insertion penalty has been applied.
+ *
+ * One small bug is that when backing off to a unigram from a bigram
+ * or trigram, the unigram weight (interpolation with uniform) is not
+ * removed. 
  */
 int32 ngram_prob(ngram_model_t *model, const char *word, ...);
 
@@ -197,6 +202,17 @@ int32 ngram_wid(ngram_model_t *model, const char *word);
  * Look up word string for numerical word ID.
  */
 const char *ngram_word(ngram_model_t *model, int32 wid);
+
+/**
+ * Add a word (unigram) to the language model.
+ *
+ * @param model The model to add a word to.
+ * @param word Text of the word to add.
+ * @param weight Probability of this word relative to the uniform distribution.
+ * @return The word ID for the new word.
+ */
+int32 ngram_add_word(ngram_model_t *model,
+                     const char *word, float32 weight);
 
 #ifdef __cplusplus
 }

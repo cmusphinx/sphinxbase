@@ -196,15 +196,16 @@ ngram_model_dmp_read(cmd_ln_t *config,
         base->n = 2;
     else
         base->n = 1;
+    base->lmath = lmath;
     base->n_counts = ckd_calloc(3, sizeof(*base->n_counts));
     base->n_1g_alloc = base->n_counts[0] = n_unigram;
     base->n_counts[1] = n_bigram;
     base->n_counts[2] = n_trigram;
     base->lw = 1.0;
-    base->log_wip = 0;
-    base->log_uniform = 0;
-    base->log_uw = 0;
-    base->lmath = lmath;
+    base->log_wip = 0; /* i.e. 1.0 */
+    base->log_uw = 0;  /* i.e. 1.0 */
+    base->log_uniform = logmath_log(base->lmath, 1.0 / (base->n_counts[0] - 1));
+    base->log_uniform_weight = logmath_get_zero(base->lmath);
     /* Allocate space for word strings. */
     base->word_str = ckd_calloc(n_unigram, sizeof(char *));
     /* NOTE: They are no longer case-insensitive since we are allowing
@@ -562,7 +563,6 @@ load_tginfo(ngram_model_dmp_t *model, int32 lw1, int32 lw2)
     model->lm3g.tginfo[lw2] = tginfo;
 
     /* Locate bigram lw1,lw2 */
-
     b = model->lm3g.unigrams[lw1].bigrams;
     n = model->lm3g.unigrams[lw1 + 1].bigrams - b;
     bg = model->lm3g.bigrams + b;
@@ -691,11 +691,11 @@ ngram_model_dmp_raw_score(ngram_model_t *base, int32 wid,
         /* Undo language weight. */
         score = (int32)(score / base->lw);
         /* Undo unigram interpolation */
-        if (strcmp(base->word_str[wid], "<s>") != 0 /* FIXME: configurable start_sym */
-            && base->log_uniform != 0) { /* This is an impossible value */
+        if (strcmp(base->word_str[wid], "<s>") != 0) { /* FIXME: configurable start_sym */
             score = logmath_log(base->lmath,
                                 logmath_exp(base->lmath, score)
-                                - logmath_exp(base->lmath, base->log_uniform));
+                                - logmath_exp(base->lmath, 
+                                              base->log_uniform + base->log_uniform_weight));
         }
         return score;
     case 1:
@@ -710,6 +710,14 @@ ngram_model_dmp_raw_score(ngram_model_t *base, int32 wid,
     }
     /* FIXME (maybe): This doesn't undo unigram weighting in backoff cases. */
     return (int32)((score - base->log_wip) / base->lw);
+}
+
+static int32
+ngram_model_dmp_add_ug(ngram_model_t *base,
+                       int32 wid, int32 lweight)
+{
+    ngram_model_dmp_t *model = (ngram_model_dmp_t *)base;
+    return lm3g_add_ug(base, &model->lm3g, wid, lweight);
 }
 
 static void
@@ -738,8 +746,9 @@ ngram_model_dmp_free(ngram_model_t *base)
 }
 
 static ngram_funcs_t ngram_model_dmp_funcs = {
+    ngram_model_dmp_free,          /* free */
     ngram_model_dmp_apply_weights, /* apply_weights */
     ngram_model_dmp_score,         /* score */
     ngram_model_dmp_raw_score,     /* raw_score */
-    ngram_model_dmp_free           /* free */
+    ngram_model_dmp_add_ug         /* add_ug */
 };

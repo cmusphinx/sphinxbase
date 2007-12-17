@@ -398,3 +398,42 @@ ngram_word(ngram_model_t *model, int32 wid)
         return NULL;
     return model->word_str[wid];
 }
+
+int32
+ngram_add_word(ngram_model_t *model,
+               const char *word, float32 weight)
+{
+    int32 wid, prob = NGRAM_SCORE_ERROR;
+
+    /* Take the next available word ID */
+    wid = model->n_counts[0];
+    /* Check for hash collisions. */
+    if (hash_table_enter(model->wid, word, (void *)(long)wid) != (void *)(long)wid) {
+        E_ERROR("Duplicate definition of word %s\n", word);
+        return -1;
+    }
+    /* Reallocate word_str if necessary. */
+    if (wid >= model->n_1g_alloc) {
+        model->n_1g_alloc += UG_ALLOC_STEP;
+        model->word_str = ckd_realloc(model->word_str,
+                                      sizeof(*model->word_str) * model->n_1g_alloc);
+    }
+    /* Add the word string in the appropriate manner. */
+    if (model->writable) {
+        model->word_str[wid] = ckd_salloc(word);
+    }
+    else {
+        model->word_str[wid] = (char *)word;
+    }
+    /* Do what needs to be done to add the word to the unigram. */
+    if (model->funcs && model->funcs->add_ug)
+        prob = (*model->funcs->add_ug)(model, wid, logmath_log(model->lmath, weight));
+    if (prob == NGRAM_SCORE_ERROR) {
+        if (model->writable)
+            ckd_free(model->word_str[wid]);
+        return -1;
+    }
+    /* Finally, increase the unigram count */
+    ++model->n_counts[0];
+    return wid;
+}

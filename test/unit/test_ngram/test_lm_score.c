@@ -8,21 +8,45 @@
 #include <string.h>
 #include <math.h>
 
-int
-main(int argc, char *argv[])
+void
+run_tests(ngram_model_t *model)
 {
-	logmath_t *lmath;
-	ngram_model_t *model;
 	int32 n_used;
 
-	/* Initialize a logmath object to pass to ngram_read */
-	lmath = logmath_init(1.0001, 0, 0);
-	/* Read a language model. */
-	model = ngram_model_read(NULL, LMDIR "/100.arpa.DMP", NGRAM_DMP, lmath);
-	/* Pre-weighting, this should give the "raw" score. */
-	TEST_EQUAL(ngram_score(model, "daines", "huggins", "david", NULL),
+	ngram_tg_score(model,
+		       ngram_wid(model, "daines"),
+		       ngram_wid(model, "huggins"),
+		       ngram_wid(model, "huggins"), &n_used);
+	TEST_EQUAL(n_used, 2);
+	ngram_tg_score(model,
+		       ngram_wid(model, "david"),
+		       ngram_wid(model, "david"),
+		       ngram_wid(model, "david"), &n_used);
+	TEST_EQUAL(n_used, 1);
+
+	/* Apply weights. */
+	ngram_apply_weights(model, 7.5, 0.5, 1.0);
+	/* -9452 * 7.5 + log(0.5) = -77821 */
+	TEST_EQUAL_LOG(ngram_score(model, "daines", "huggins", "david", NULL),
+		   -77821);
+	/* Recover original score. */
+	TEST_EQUAL_LOG(ngram_prob(model, "daines", "huggins", "david", NULL),
 		   -9452);
-	TEST_EQUAL(ngram_score(model, "huggins", "david", NULL), -831);
+	TEST_EQUAL_LOG(ngram_prob(model, "huggins", "david", NULL), -831);
+
+	/* Un-apply weights. */
+	ngram_apply_weights(model, 1.0, 1.0, 1.0);
+	TEST_EQUAL_LOG(ngram_score(model, "daines", "huggins", "david", NULL),
+		       -9452);
+	TEST_EQUAL_LOG(ngram_score(model, "huggins", "david", NULL), -831);
+	/* Recover original score. */
+	TEST_EQUAL_LOG(ngram_prob(model, "daines", "huggins", "david", NULL),
+		       -9452);
+
+	/* Pre-weighting, this should give the "raw" score. */
+	TEST_EQUAL_LOG(ngram_score(model, "daines", "huggins", "david", NULL),
+		       -9452);
+	TEST_EQUAL_LOG(ngram_score(model, "huggins", "david", NULL), -831);
 	/* Verify that backoff mode calculations work. */
 	ngram_bg_score(model,
 		       ngram_wid(model, "huggins"),
@@ -41,38 +65,24 @@ main(int argc, char *argv[])
 		       ngram_wid(model, "huggins"),
 		       ngram_wid(model, "david"), &n_used);
 	TEST_EQUAL(n_used, 3);
-	ngram_tg_score(model,
-		       ngram_wid(model, "daines"),
-		       ngram_wid(model, "huggins"),
-		       ngram_wid(model, "huggins"), &n_used);
-	TEST_EQUAL(n_used, 2);
-	ngram_tg_score(model,
-		       ngram_wid(model, "david"),
-		       ngram_wid(model, "david"),
-		       ngram_wid(model, "david"), &n_used);
-	TEST_EQUAL(n_used, 1);
+}
 
-	/* Apply weights. */
-	ngram_apply_weights(model, 7.5, 0.5, 1.0);
-	/* -9452 * 7.5 + log(0.5) = -77821 */
-	TEST_EQUAL(ngram_score(model, "daines", "huggins", "david", NULL),
-		   -77821);
-	/* Recover original score. */
-	TEST_EQUAL(ngram_prob(model, "daines", "huggins", "david", NULL),
-		   -9452);
-	TEST_EQUAL_LOG(ngram_prob(model, "huggins", "david", NULL), -831);
+int
+main(int argc, char *argv[])
+{
+	logmath_t *lmath;
+	ngram_model_t *model;
 
-	/* Un-apply weights. */
-	ngram_apply_weights(model, 1.0, 1.0, 1.0);
-	TEST_EQUAL_LOG(ngram_score(model, "daines", "huggins", "david", NULL),
-		       -9452);
-	TEST_EQUAL_LOG(ngram_score(model, "huggins", "david", NULL), -831);
-	/* Recover original score. */
-	TEST_EQUAL(ngram_prob(model, "daines", "huggins", "david", NULL),
-		   -9452);
+	lmath = logmath_init(1.0001, 0, 0);
 
+	model = ngram_model_read(NULL, LMDIR "/100.arpa.DMP", NGRAM_DMP, lmath);
+	run_tests(model);
 	ngram_model_free(model);
-	logmath_free(lmath);
 
+	model = ngram_model_read(NULL, LMDIR "/100.arpa.gz", NGRAM_ARPA, lmath);
+	run_tests(model);
+	ngram_model_free(model);
+
+	logmath_free(lmath);
 	return 0;
 }

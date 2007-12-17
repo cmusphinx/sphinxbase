@@ -129,6 +129,8 @@ void lm3g_tginfo_reset(ngram_model_t *base, tginfo_t **tginfo);
 void lm3g_apply_weights(ngram_model_t *base,
 			lm3g_model_t *lm3g,
 			float32 lw, float32 wip, float32 uw);
+int32 lm3g_add_ug(ngram_model_t *base,
+                  lm3g_model_t *lm3g, int32 wid, int32 lweight);
 
 
 #endif /* __NGRAM_MODEL_LM3G_H__ */

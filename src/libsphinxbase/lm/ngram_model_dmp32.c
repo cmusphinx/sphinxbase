@@ -94,8 +94,9 @@ ngram_model_dmp32_free(ngram_model_t *base)
 }
 
 static ngram_funcs_t ngram_model_dmp32_funcs = {
+    ngram_model_dmp32_free,          /* free */
     ngram_model_dmp32_apply_weights, /* apply_weights */
     ngram_model_dmp32_score,         /* score */
     ngram_model_dmp32_raw_score,     /* raw_score */
-    ngram_model_dmp32_free           /* free */
+    NULL                             /* add_ug */
 };
