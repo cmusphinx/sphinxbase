@@ -52,7 +52,7 @@ lm3g_tginfo_free(ngram_model_t *base, tginfo_t **tginfo)
         int32 u;
 	if (tginfo == NULL)
 		return;
-        for (u = 0; u < base->n_1g_alloc; u++) {
+        for (u = 0; u < base->n_counts[0]; u++) {
 		tginfo_t *t, *next_t;
 		for (t = tginfo[u]; t; t = next_t) {
 			next_t = t->next;
@@ -177,5 +177,7 @@ lm3g_add_ug(ngram_model_t *base,
      * so its backoff weight and bigram pointer are both undefined. */
     lm3g->unigrams[wid].bo_wt1.l = logmath_get_zero(base->lmath);
     lm3g->unigrams[wid].bigrams = 0;
+    /* Finally, increase the unigram count */
+    ++base->n_counts[0];
     return score;
 }

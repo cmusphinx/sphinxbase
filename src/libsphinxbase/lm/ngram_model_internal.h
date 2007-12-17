@@ -54,7 +54,9 @@
  */
 struct ngram_model_s {
     int32 *n_counts;    /**< Counts for 1, 2, 3, ... grams */
-    int32 n_1g_alloc;   /**< Number of allocated unigrams (for new word addition) */
+    int32 n_1g_alloc;   /**< Number of allocated word strings (for new word addition) */
+    int32 n_words;      /**< Number of actual word strings (NOT the same as the
+                             number of unigrams, due to class words). */
     uint8 n;            /**< This is an n-gram model (1, 2, 3, ...). */
     uint8 n_classes;    /**< Number of classes (maximum 128) */
     uint8 writable;     /**< Are word strings writable? */
@@ -68,7 +70,7 @@ struct ngram_model_s {
     int32 log_uniform_weight; /**< Log of uniform weight (i.e. 1 - unigram weight) */
     char **word_str;    /**< Unigram names */
     hash_table_t *wid;  /**< Mapping of unigram names to word IDs. */
-    struct ngram_class_s *classes; /**< Word class definitions. */
+    struct ngram_class_s **classes; /**< Word class definitions. */
     struct ngram_funcs_s *funcs;   /**< Implementation-specific methods. */
 };
 
@@ -76,6 +78,7 @@ struct ngram_model_s {
  * Implementation of ngram_class_t.
  */
 struct ngram_class_s {
+    char *name;      /**< Name of this class (unigram to which it is linked) */
     int32 wid_base;  /**< Base Word ID for this class */
     int32 n_words;   /**< Number of base words for this class */
     int32 *prob1;    /**< Probability table for base words */

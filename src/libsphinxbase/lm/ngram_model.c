@@ -45,9 +45,10 @@
 #include "ngram_model_internal.h"
 #include "ckd_alloc.h"
 #include "filename.h"
-#include "bio.h"
+#include "pio.h"
 #include "err.h"
 #include "logmath.h"
+#include "strfuncs.h"
 
 #include <string.h>
 #ifdef HAVE_ICONV
@@ -150,7 +151,7 @@ ngram_model_init(ngram_model_t *base,
     base->lmath = lmath;
     base->n = n;
     base->n_counts = ckd_calloc(3, sizeof(*base->n_counts));
-    base->n_1g_alloc = base->n_counts[0] = n_unigram;
+    base->n_1g_alloc = base->n_words = n_unigram;
     /* Set default values for weights. */
     base->lw = 1.0;
     base->log_wip = 0; /* i.e. 1.0 */
@@ -173,7 +174,7 @@ ngram_model_free(ngram_model_t *model)
         (*model->funcs->free)(model);
     if (model->writable) {
         int i;
-        for (i = 0; i < model->n_counts[0]; ++i) {
+        for (i = 0; i < model->n_words; ++i) {
             ckd_free(model->word_str[i]);
         }
     }
@@ -206,7 +207,7 @@ ngram_model_recode(ngram_model_t *model, const char *from, const char *to)
      * buffer around, and expand it as necessary.
      */
     maxlen = 0;
-    for (i = 0; i < model->n_counts[0]; ++i) {
+    for (i = 0; i < model->n_words; ++i) {
         if (strlen(model->word_str[i]) > maxlen)
             maxlen = strlen(model->word_str[i]);
     }
@@ -219,8 +220,8 @@ ngram_model_recode(ngram_model_t *model, const char *from, const char *to)
     outbuf = ckd_calloc(maxlen, 1);
     /* And, don't forget, we need to rebuild the word to unigram ID
      * mapping. */
-    new_wid = hash_table_new(model->n_counts[0], FALSE);
-    for (i = 0; i < model->n_counts[0]; ++i) {
+    new_wid = hash_table_new(model->n_words, FALSE);
+    for (i = 0; i < model->n_words; ++i) {
         ICONV_CONST char *in;
         char *out;
         size_t inleft, outleft, result;
@@ -420,9 +421,55 @@ ngram_wid(ngram_model_t *model, const char *word)
 const char *
 ngram_word(ngram_model_t *model, int32 wid)
 {
-    if (wid >= model->n_counts[0])
+    /* Remove any class tag */
+    wid = (wid & 0xffffff);
+    if (wid >= model->n_words)
         return NULL;
     return model->word_str[wid];
+}
+
+/**
+ * Add a word to the word string and ID mapping.
+ */
+int32
+ngram_add_word_internal(ngram_model_t *model,
+                        const char *word,
+                        int32 classid)
+{
+    void *dummy;
+    int32 wid;
+
+    /* Take the next available word ID */
+    wid = model->n_words;
+    if (classid >= 0) {
+        /* Put the class ID in the top 8 bits. */
+        wid |= (classid << 24);
+        /* Flag this as an in-class word. */
+        wid |= 0x80000000;
+    }
+    /* Check for hash collisions. */
+    if (hash_table_lookup(model->wid, word, &dummy) == 0) {
+        E_ERROR("Duplicate definition of word %s\n", word);
+        return NGRAM_INVALID_WID;
+    }
+    /* Reallocate word_str if necessary. */
+    if (model->n_words >= model->n_1g_alloc) {
+        model->n_1g_alloc += UG_ALLOC_STEP;
+        model->word_str = ckd_realloc(model->word_str,
+                                      sizeof(*model->word_str) * model->n_1g_alloc);
+    }
+    /* Add the word string in the appropriate manner. */
+    /* Class words are always dynamically allocated (FIXME: memory leak...) */
+    model->word_str[model->n_words] = ckd_salloc(word);
+    /* Now enter it into the hash table. */
+    if (hash_table_enter(model->wid, model->word_str[model->n_words],
+                         (void *)(long)(wid)) != (void *)(long)(wid)) {
+        E_ERROR("Hash insertion failed for word %s => %p (should not happen)\n",
+                model->word_str[model->n_words], (void *)(long)(wid));
+    }
+    /* Increment number of words. */
+    ++model->n_words;
+    return wid;
 }
 
 int32
@@ -431,26 +478,10 @@ ngram_add_word(ngram_model_t *model,
 {
     int32 wid, prob = NGRAM_SCORE_ERROR;
 
-    /* Take the next available word ID */
-    wid = model->n_counts[0];
-    /* Check for hash collisions. */
-    if (hash_table_enter(model->wid, word, (void *)(long)wid) != (void *)(long)wid) {
-        E_ERROR("Duplicate definition of word %s\n", word);
-        return -1;
-    }
-    /* Reallocate word_str if necessary. */
-    if (wid >= model->n_1g_alloc) {
-        model->n_1g_alloc += UG_ALLOC_STEP;
-        model->word_str = ckd_realloc(model->word_str,
-                                      sizeof(*model->word_str) * model->n_1g_alloc);
-    }
-    /* Add the word string in the appropriate manner. */
-    if (model->writable) {
-        model->word_str[wid] = ckd_salloc(word);
-    }
-    else {
-        model->word_str[wid] = (char *)word;
-    }
+    wid = ngram_add_word_internal(model, word, -1);
+    if (wid == NGRAM_INVALID_WID)
+        return wid;
+
     /* Do what needs to be done to add the word to the unigram. */
     if (model->funcs && model->funcs->add_ug)
         prob = (*model->funcs->add_ug)(model, wid, logmath_log(model->lmath, weight));
@@ -459,14 +490,164 @@ ngram_add_word(ngram_model_t *model,
             ckd_free(model->word_str[wid]);
         return -1;
     }
-    /* Finally, increase the unigram count */
-    ++model->n_counts[0];
     return wid;
+}
+
+ngram_class_t *
+ngram_class_new(ngram_model_t *model, char *classname, int32 base_wid, glist_t classwords)
+{
+    ngram_class_t *lmclass;
+    gnode_t *gn;
+    float32 tprob;
+    int i;
+
+    lmclass = ckd_calloc(1, sizeof(*lmclass));
+    lmclass->name = classname;
+    classname = NULL;
+    classwords = glist_reverse(classwords);
+    /* wid_base is the wid (minus class tag) of the first word in the list. */
+    lmclass->wid_base = base_wid;
+    lmclass->n_words = glist_count(classwords);
+    lmclass->prob1 = ckd_calloc(lmclass->n_words, sizeof(*lmclass->prob1));
+    lmclass->nword_hash = NULL;
+    lmclass->n_hash = 0;
+    tprob = 0.0;
+    for (gn = classwords; gn; gn = gnode_next(gn)) {
+        tprob += gnode_float32(gn);
+    }
+    if (tprob > 1.1 || tprob < 0.9) {
+        E_WARN("Total class probability is %f, will normalize\n", tprob);
+        for (gn = classwords; gn; gn = gnode_next(gn)) {
+            gnode_float32(gn) = gnode_float32(gn) / tprob;
+        }
+    }
+    for (i = 0, gn = classwords; gn; ++i, gn = gnode_next(gn)) {
+        lmclass->prob1[i] = logmath_log(model->lmath, gnode_float32(gn));
+    }
+
+    return lmclass;
+}
+
+void
+ngram_class_free(ngram_class_t *lmclass)
+{
+    ckd_free(lmclass->nword_hash);
+    ckd_free(lmclass->name);
+    ckd_free(lmclass->prob1);
+    ckd_free(lmclass);
 }
 
 int32
 ngram_model_read_classdef(ngram_model_t *model,
                           const char *file_name)
 {
+    FILE *fp;
+    int32 is_pipe;
+    int inclass;  /**< Are we currently reading a list of class words? */
+    int classid;  /**< ID of class currently under construction. */
+    int base_wid; /**< Base word ID of current class. */
+    int n_classes;/**< Number of classes created. */
+    char *classname = NULL; /**< Name of current class. */
+    glist_t classes = NULL; /**< List of classes read from this file. */
+    glist_t classwords = NULL; /**< List of words read for current class. */
+    gnode_t *gn;
+
+    if ((fp = fopen_comp(file_name, "r", &is_pipe)) == NULL) {
+        E_ERROR("File %s not found\n", file_name);
+        return -1;
+    }
+
+    classid = model->n_classes;
+    inclass = 0;
+    base_wid = model->n_words;
+    while (!feof(fp)) {
+        char line[512];
+        char *wptr[2];
+        int n_words;
+
+        if (fgets(line, sizeof(line), fp) == NULL)
+            break;
+
+        n_words = str2words(line, wptr, 2);
+        if (n_words <= 0)
+            continue;
+
+        if (inclass) {
+            /* Look for an end of class marker. */
+            if (n_words == 2 && 0 == strcmp(wptr[0], "END")) {
+                ngram_class_t *lmclass;
+
+                if (classname == NULL || 0 != strcmp(wptr[1], classname))
+                    goto error_out;
+                inclass = FALSE;
+                /* Construct a class from the list of words collected. */
+                lmclass = ngram_class_new(model, classname, base_wid, classwords);
+                /* Reset the list of words collected. */
+                glist_free(classwords);
+                classwords = NULL;
+                /* Add this class to the list of classes collected. */
+                classes = glist_add_ptr(classes, lmclass);
+                
+                ++classid;
+            }
+            else {
+                float32 fprob;
+
+                if (n_words == 2)
+                    fprob = atof(wptr[1]);
+                else
+                    fprob = 1.0f;
+                /* Add this word to the language model. */
+                if (ngram_add_word_internal(model, wptr[0], classid) == NGRAM_INVALID_WID)
+                    goto error_out;
+                /* Add it to the list of words for this class. */
+                classwords = glist_add_float32(classwords, fprob);
+            }
+        }
+        else {
+            /* Start a new LM class if the LMCLASS marker is seen */
+            if (n_words == 2 && 0 == strcmp(wptr[0], "LMCLASS")) {
+                if (inclass)
+                    goto error_out;
+                inclass = TRUE;
+                classname = ckd_salloc(wptr[1]);
+                base_wid = model->n_words;
+            }
+            /* Otherwise, just ignore whatever junk we got */
+        }
+    }
+
+    /* Take the list of classes and add it to whatever might have
+     * already been in the language model. */
+    glist_reverse(classes);
+    n_classes = glist_count(classes);
+    if (model->n_classes + n_classes > 128) {
+        E_ERROR("Number of classes cannot exceed 128 (sorry)\n");
+        goto error_out;
+    }
+    if (model->classes == NULL) {
+        model->classes = ckd_calloc(n_classes,
+                                    sizeof(*model->classes));
+    }
+    else {
+        model->classes = ckd_realloc(model->classes + n_classes,
+                                     model->n_classes * sizeof(*model->classes));
+    }
+    for (gn = classes; gn; gn = gnode_next(gn)) {
+        model->classes[model->n_classes] = gnode_ptr(gn);
+        ++model->n_classes;
+    }
+    glist_free(classes);
+    fclose_comp(fp, is_pipe);
+    return 0;
+
+error_out:
+    /* Free all the stuff we might have allocated. */
+    glist_free(classwords);
+    for (gn = classes; gn; gn = gnode_next(gn)) {
+        ngram_class_free(gnode_ptr(gn));
+    }
+    glist_free(classes);
+    ckd_free(classname);
     return -1;
 }

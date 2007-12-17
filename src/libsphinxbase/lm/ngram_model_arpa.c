@@ -547,6 +547,7 @@ ngram_model_arpa_read(cmd_ln_t *config,
         n = 1;
     /* Initialize base model. */
     ngram_model_init(base, &ngram_model_arpa_funcs, lmath, n, n_unigram);
+    base->n_counts[0] = n_unigram;
     base->n_counts[1] = n_bigram;
     base->n_counts[2] = n_trigram;
 

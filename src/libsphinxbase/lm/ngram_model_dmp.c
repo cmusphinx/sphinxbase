@@ -196,6 +196,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
     else
         n = 1;
     ngram_model_init(base, &ngram_model_dmp_funcs, lmath, n, n_unigram);
+    base->n_counts[0] = n_unigram;
     base->n_counts[1] = n_bigram;
     base->n_counts[2] = n_trigram;
 

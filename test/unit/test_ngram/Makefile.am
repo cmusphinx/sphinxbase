@@ -1,6 +1,6 @@
 check_PROGRAMS = test_lm_read test_lm_mmap test_lm_score test_lm_add test_lm_recode test_lm_class
 
-TESTS = test_lm_read test_lm_mmap test_lm_score test_lm_add test_lm_recode
+TESTS = test_lm_read test_lm_mmap test_lm_score test_lm_add test_lm_recode test_lm_class
 
 INCLUDES = \
 	-I$(top_srcdir)/include \
@@ -13,4 +13,5 @@ LDADD = ${top_builddir}/src/libsphinxbase/libsphinxbase.la \
 noinst_HEADERS = test_macros.h
 
 EXTRA_DIST = 100.arpa.gz \
-	100.arpa.DMP
+	100.arpa.DMP \
+	100.probdef

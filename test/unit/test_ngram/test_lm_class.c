@@ -18,7 +18,7 @@ run_tests(logmath_t *lmath, ngram_model_t *model)
 	TEST_EQUAL(ngram_wid(model, "scylla"), 285);
 	TEST_EQUAL(strcmp(ngram_word(model, 285), "scylla"), 0);
 
-	rv = ngram_model_read_classdef(model, "100.probdef");
+	rv = ngram_model_read_classdef(model, LMDIR "/100.probdef");
 	TEST_EQUAL(rv, 0);
 
 	/* Verify that class word IDs remain the same. */
