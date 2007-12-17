@@ -137,6 +137,15 @@ typedef struct ngram_funcs_s {
 } ngram_funcs_t;
 
 /**
+ * Initialize the base ngram_model_t structure.
+ */
+int32
+ngram_model_init(ngram_model_t *model,
+                 ngram_funcs_t *funcs,
+                 logmath_t *lmath,
+                 int32 n, int32 n_unigram);
+
+/**
  * Read an N-Gram model from an ARPABO text file.
  */
 ngram_model_t *ngram_model_arpa_read(cmd_ln_t *config,

@@ -15,19 +15,19 @@ run_tests(logmath_t *lmath, ngram_model_t *model)
 
 	wid = ngram_add_word(model, "foobie", 1.0);
 	score = ngram_score(model, "foobie", NULL);
-	TEST_EQUAL_LOG(score, logmath_log(lmath, 1.0/399.0)); /* #unigrams */
+	TEST_EQUAL_LOG(score, logmath_log(lmath, 1.0/400.0)); /* #unigrams */
 
 	wid = ngram_add_word(model, "quux", 0.5);
 	score = ngram_score(model, "quux", NULL);
-	TEST_EQUAL_LOG(score, logmath_log(lmath, 0.5/399.0)); /* #unigrams */
+	TEST_EQUAL_LOG(score, logmath_log(lmath, 0.5/400.0)); /* #unigrams */
 
 	ngram_apply_weights(model, 1.0, 1.0, 0.9);
 	score = ngram_score(model, "quux", NULL);
-	TEST_EQUAL_LOG(score, logmath_log(lmath, 0.5/399.0*0.9 + 1.0/399.0*0.1));
+	TEST_EQUAL_LOG(score, logmath_log(lmath, 0.5/400.0*0.9 + 1.0/400.0*0.1));
 
 	wid = ngram_add_word(model, "bazbar", 0.5);
 	score = ngram_score(model, "bazbar", NULL);
-	TEST_EQUAL_LOG(score, logmath_log(lmath, 0.5/399.0*0.9 + 1.0/399.0*0.1));
+	TEST_EQUAL_LOG(score, logmath_log(lmath, 0.5/400.0*0.9 + 1.0/400.0*0.1));
 }
 
 int

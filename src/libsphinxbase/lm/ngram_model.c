@@ -140,6 +140,32 @@ ngram_model_write(ngram_model_t *model, const char *file_name,
     return -1; /* In case your compiler is really stupid. */
 }
 
+int32
+ngram_model_init(ngram_model_t *base,
+                 ngram_funcs_t *funcs,
+                 logmath_t *lmath,
+                 int32 n, int32 n_unigram)
+{
+    base->funcs = funcs;
+    base->lmath = lmath;
+    base->n = n;
+    base->n_counts = ckd_calloc(3, sizeof(*base->n_counts));
+    base->n_1g_alloc = base->n_counts[0] = n_unigram;
+    /* Set default values for weights. */
+    base->lw = 1.0;
+    base->log_wip = 0; /* i.e. 1.0 */
+    base->log_uw = 0;  /* i.e. 1.0 */
+    base->log_uniform = logmath_log(lmath, 1.0 / n_unigram);
+    base->log_uniform_weight = logmath_get_zero(lmath);
+    /* Allocate space for word strings. */
+    base->word_str = ckd_calloc(n_unigram, sizeof(char *));
+    /* NOTE: They are no longer case-insensitive since we are allowing
+     * other encodings for word strings.  Beware. */
+    base->wid = hash_table_new(n_unigram, FALSE);
+
+    return 0;
+}
+
 void
 ngram_model_free(ngram_model_t *model)
 {

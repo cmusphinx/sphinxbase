@@ -520,6 +520,7 @@ ngram_model_arpa_read(cmd_ln_t *config,
     int32 n_unigram;
     int32 n_bigram;
     int32 n_trigram;
+    int32 n;
     ngram_model_arpa_t *model;
     ngram_model_t *base;
 
@@ -538,28 +539,16 @@ ngram_model_arpa_read(cmd_ln_t *config,
     /* Allocate space for LM, including initial OOVs and placeholders; initialize it */
     model = ckd_calloc(1, sizeof(*model));
     base = &model->base;
-    base->funcs = &ngram_model_arpa_funcs;
     if (n_trigram > 0)
-        base->n = 3;
+        n = 3;
     else if (n_bigram > 0)
-        base->n = 2;
+        n = 2;
     else
-        base->n = 1;
-    base->lmath = lmath;
-    base->n_counts = ckd_calloc(3, sizeof(*base->n_counts));
-    base->n_1g_alloc = base->n_counts[0] = n_unigram;
+        n = 1;
+    /* Initialize base model. */
+    ngram_model_init(base, &ngram_model_arpa_funcs, lmath, n, n_unigram);
     base->n_counts[1] = n_bigram;
     base->n_counts[2] = n_trigram;
-    base->lw = 1.0;
-    base->log_wip = 0; /* i.e. 1.0 */
-    base->log_uw = 0;  /* i.e. 1.0 */
-    base->log_uniform = logmath_log(base->lmath, 1.0 / (base->n_counts[0] - 1));
-    base->log_uniform_weight = logmath_get_zero(base->lmath);
-    /* Allocate space for word strings. */
-    base->word_str = ckd_calloc(n_unigram, sizeof(char *));
-    /* NOTE: They are no longer case-insensitive since we are allowing
-     * other encodings for word strings.  Beware. */
-    base->wid = hash_table_new(n_unigram, FALSE);
 
     /*
      * Allocate one extra unigram and bigram entry: sentinels to terminate
