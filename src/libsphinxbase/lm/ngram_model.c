@@ -714,15 +714,19 @@ ngram_model_add_class(ngram_model_t *model,
 
     tag_wid = ngram_model_add_word(model, classname, classweight);
     if (tag_wid == NGRAM_INVALID_WID)
-        return tag_wid;
+        return -1;
 
+    if (model->n_classes == 128) {
+        E_ERROR("Number of classes cannot exceed 128 (sorry)\n");
+        return -1;
+    }
     classid = model->n_classes;
     for (i = 0; i < n_words; ++i) {
         int32 wid;
 
         wid = ngram_add_word_internal(model, words[i], classid);
         if (wid == NGRAM_INVALID_WID)
-            return wid;
+            return -1;
         if (start_wid == -1)
             start_wid = NGRAM_BASEWID(wid);
         classwords = glist_add_float32(classwords, weights[i]);
@@ -731,7 +735,7 @@ ngram_model_add_class(ngram_model_t *model,
     lmclass = ngram_class_new(model, tag_wid, start_wid, classwords);
     glist_free(classwords);
     if (lmclass == NULL)
-        return NGRAM_INVALID_WID;
+        return -1;
 
     ++model->n_classes;
     if (model->classes == NULL)
