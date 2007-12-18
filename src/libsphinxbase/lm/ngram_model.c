@@ -332,7 +332,7 @@ ngram_model_recode(ngram_model_t *model, const char *from, const char *to)
 #endif /* !HAVE_ICONV */
 
 int
-ngram_apply_weights(ngram_model_t *model,
+ngram_model_apply_weights(ngram_model_t *model,
 		    float32 lw, float32 wip, float32 uw)
 {
     return (*model->funcs->apply_weights)(model, lw, wip, uw);
@@ -528,7 +528,7 @@ ngram_add_word_internal(ngram_model_t *model,
 }
 
 int32
-ngram_add_word(ngram_model_t *model,
+ngram_model_add_word(ngram_model_t *model,
                const char *word, float32 weight)
 {
     int32 wid, prob = NGRAM_SCORE_ERROR;

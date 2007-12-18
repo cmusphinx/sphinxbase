@@ -133,8 +133,8 @@ int ngram_model_recode(ngram_model_t *model, const char *from, const char *to);
  *
  * To remove all weighting, call ngram_apply_weights(model, 1.0, 1.0, 0.0).
  */
-int ngram_apply_weights(ngram_model_t *model,
-			float32 lw, float32 wip, float32 uw);
+int ngram_model_apply_weights(ngram_model_t *model,
+                              float32 lw, float32 wip, float32 uw);
 
 /**
  * Get the score (scaled, interpolated log-probability) for a general
@@ -215,9 +215,8 @@ const char *ngram_word(ngram_model_t *model, int32 wid);
  * @param weight Weight of this word relative to the uniform distribution.
  * @return The word ID for the new word.
  */
-int32 ngram_add_word(ngram_model_t *model,
+int32 ngram_model_add_word(ngram_model_t *model,
                      const char *word, float32 weight);
-
 
 /**
  * Read a class definition file and add classes to a language model.
@@ -234,6 +233,31 @@ int32 ngram_add_word(ngram_model_t *model,
  */
 int32 ngram_model_read_classdef(ngram_model_t *model,
                                 const char *file_name);
+
+/**
+ * Add a word to a class in a language model.
+ *
+ * @param model The model to add a word to.
+ * @param classname Name of the class to add this word to.
+ * @param word Text of the word to add.
+ * @param weight Weight of this word relative to the within-class uniform distribution.
+ * @return The word ID for the new word.
+ */
+int32 ngram_model_add_class_word(ngram_model_t *model,
+                                 const char *classname,
+                                 const char *word,
+                                 float32 weight);
+
+/**
+ * Create a new language model by linearly interpolating several sub-models.
+ *
+ * @param models An array of N-Gram model pointers.
+ * @param weights An array of weights to apply to corresponding models.
+ * @param n_models The number of models (and weights).
+ * @return A new language model which linearly interpolates all sub-models.
+ */
+ngram_model_t *ngram_model_interp(ngram_model_t **models,
+                                  float32 *weights, int32 n_models);
 
 #ifdef __cplusplus
 }
