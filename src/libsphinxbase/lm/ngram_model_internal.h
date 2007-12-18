@@ -90,8 +90,11 @@ struct ngram_class_s {
         int32 prob1;  /**< Probability for this word */
         int32 next;   /**< Index of next bucket (or -1 for no collision) */
     } *nword_hash;
-    int32 n_hash;     /**< Number of buckets in nword_hash */
+    int32 n_hash;       /**< Number of buckets in nword_hash (power of 2) */
+    int32 n_hash_inuse; /**< Number of words in nword_hash */
 };
+
+#define NGRAM_HASH_SIZE 128
 
 #define NGRAM_BASEWID(wid) ((wid)&0xffffff)
 #define NGRAM_CLASSID(wid) (((wid)>>24) & 0x7f)

@@ -51,6 +51,7 @@
 #include "strfuncs.h"
 
 #include <string.h>
+#include <assert.h>
 #ifdef HAVE_ICONV
 #include <iconv.h>
 #endif
@@ -189,8 +190,11 @@ ngram_model_free(ngram_model_t *model)
             for (j = 0; j < lmclass->n_words; ++j) {
                 ckd_free(model->word_str[lmclass->start_wid + j]);
             }
-            /* FIXME: Also need to walk the class hash table - do this
-             * once adding new words to classes is implemented. */
+            for (j = 0; j < lmclass->n_hash; ++j) {
+                if (lmclass->nword_hash[j].wid != -1) {
+                    ckd_free(model->word_str[lmclass->nword_hash[j].wid]);
+                }
+            }
         }
     }
     for (i = 0; i < model->n_classes; ++i) {
@@ -514,7 +518,7 @@ ngram_add_word_internal(ngram_model_t *model,
                                       sizeof(*model->word_str) * model->n_1g_alloc);
     }
     /* Add the word string in the appropriate manner. */
-    /* Class words are always dynamically allocated (FIXME: memory leak...) */
+    /* Class words are always dynamically allocated. */
     model->word_str[model->n_words] = ckd_salloc(word);
     /* Now enter it into the hash table. */
     if (hash_table_enter(model->wid, model->word_str[model->n_words],
@@ -581,6 +585,62 @@ ngram_class_new(ngram_model_t *model, int32 tag_wid, int32 start_wid, glist_t cl
     return lmclass;
 }
 
+int32
+ngram_class_add_word(ngram_class_t *lmclass, int32 wid, int32 lweight)
+{
+    int32 hash;
+
+    if (lmclass->nword_hash == NULL) {
+        /* Initialize everything in it to -1 */
+        lmclass->nword_hash = ckd_malloc(NGRAM_HASH_SIZE * sizeof(*lmclass->nword_hash));
+        memset(lmclass->nword_hash, 0xff, NGRAM_HASH_SIZE * sizeof(*lmclass->nword_hash));
+        lmclass->n_hash = NGRAM_HASH_SIZE;
+        lmclass->n_hash_inuse = 0;
+    }
+    /* Stupidest possible hash function.  This will work pretty well
+     * when this function is called repeatedly with contiguous word
+     * IDs, though... */
+    hash = wid & (lmclass->n_hash - 1);
+    if (lmclass->nword_hash[hash].wid == -1) {
+        /* Good, no collision. */
+        lmclass->nword_hash[hash].wid = wid;
+        lmclass->nword_hash[hash].prob1 = lweight;
+        ++lmclass->n_hash_inuse;
+        return hash;
+    }
+    else {
+        int32 next; /**< Next available bucket. */
+        /* Collision... Find the end of the hash chain. */
+        while (lmclass->nword_hash[hash].next != -1)
+            hash = lmclass->nword_hash[hash].next;
+        assert(hash != -1);
+        /* Does we has any more bukkit? */
+        if (lmclass->n_hash_inuse == lmclass->n_hash) {
+            /* Oh noes!  Ok, we makes more. */
+            lmclass->nword_hash = ckd_realloc(lmclass->nword_hash, 
+                                              lmclass->n_hash * 2 * sizeof(*lmclass->nword_hash));
+            memset(lmclass->nword_hash + lmclass->n_hash,
+                   0xff, lmclass->n_hash * sizeof(*lmclass->nword_hash));
+            /* Just use the next allocated one (easy) */
+            next = lmclass->n_hash;
+            lmclass->n_hash *= 2;
+        }
+        else {
+            /* Look for any available bucket.  We hope this doesn't happen. */
+            for (next = 0; next < lmclass->n_hash; ++next)
+                if (lmclass->nword_hash[next].wid == -1)
+                    break;
+            /* This should absolutely not happen. */
+            assert(next != lmclass->n_hash);
+        }
+        lmclass->nword_hash[next].wid = wid;
+        lmclass->nword_hash[next].prob1 = lweight;
+        lmclass->nword_hash[hash].next = next;
+        ++lmclass->n_hash_inuse;
+        return next;
+    }
+}
+
 void
 ngram_class_free(ngram_class_t *lmclass)
 {
@@ -590,16 +650,85 @@ ngram_class_free(ngram_class_t *lmclass)
 }
 
 int32
+ngram_model_add_class_word(ngram_model_t *model,
+                           const char *classname,
+                           const char *word,
+                           float32 weight)
+{
+    ngram_class_t *lmclass;
+    int32 classid, tag_wid, wid, i, scale;
+    float32 fprob;
+
+    /* Find the class corresponding to classname.  Linear search
+     * probably okay here since there won't be very many classes, and
+     * this doesn't have to be fast. */
+    tag_wid = ngram_wid(model, classname);
+    if (tag_wid == NGRAM_INVALID_WID) {
+        E_ERROR("No such word or class tag: %s\n", classname);
+        return tag_wid;
+    }
+    for (classid = 0; classid < model->n_classes; ++classid) {
+        if (model->classes[classid]->tag_wid == tag_wid)
+            break;
+    }
+    /* Hmm, no such class.  It's probably not a good idea to create one. */
+    if (classid == model->n_classes) {
+        E_ERROR("Word %s is not a class tag (call ngram_model_add_class() first)\n", classname);
+        return NGRAM_INVALID_WID;
+    }
+    lmclass = model->classes[classid];
+
+    /* Add this word to the model's set of words. */
+    wid = ngram_add_word_internal(model, word, classid);
+    if (wid == NGRAM_INVALID_WID)
+        return wid;
+
+    /* This is the fixed probability of the new word. */
+    fprob = weight * 1.0 / (lmclass->n_words + lmclass->n_hash_inuse + 1);
+    /* Now normalize everything else to fit it in.  This is
+     * accomplished by simply scaling all the other probabilities
+     * by (1-fprob). */
+    scale = logmath_log(model->lmath, 1.0 - fprob);
+    for (i = 0; i < lmclass->n_words; ++i)
+        lmclass->prob1[i] += scale;
+    for (i = 0; i < lmclass->n_hash; ++i)
+        if (lmclass->nword_hash[i].wid != -1)
+            lmclass->nword_hash[i].prob1 += scale;
+
+    /* Now add it to the class hash table. */
+    return ngram_class_add_word(lmclass, wid, logmath_log(model->lmath, fprob));
+}
+
+int32
+ngram_model_add_class(ngram_model_t *model,
+                      const char *classname,
+                      const char **words,
+                      float32 *weights,
+                      int32 n_words)
+{
+    return -1;
+}
+
+int32
 ngram_class_prob(ngram_class_t *lmclass, int32 wid)
 {
     int32 base_wid = NGRAM_BASEWID(wid);
 
     if (base_wid < lmclass->start_wid
         || base_wid > lmclass->start_wid + lmclass->n_words) {
-        /* FIXME: Look it up in the hash table.  Just fail for now. */
-        return NGRAM_SCORE_ERROR;
+        int32 hash;
+
+        /* Look it up in the hash table. */
+        hash = wid & (lmclass->n_hash - 1);
+        while (hash != -1 && lmclass->nword_hash[hash].wid != wid)
+            hash = lmclass->nword_hash[hash].next;
+        if (hash == -1)
+            return NGRAM_SCORE_ERROR;
+        return lmclass->nword_hash[hash].prob1;
     }
-    return lmclass->prob1[base_wid - lmclass->start_wid];
+    else {
+        return lmclass->prob1[base_wid - lmclass->start_wid];
+    }
 }
 
 int32

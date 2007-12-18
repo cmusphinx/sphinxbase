@@ -11,7 +11,7 @@
 void
 run_tests(logmath_t *lmath, ngram_model_t *model)
 {
-	int32 rv;
+	int32 rv, i;
 
 	TEST_ASSERT(model);
 
@@ -61,6 +61,29 @@ run_tests(logmath_t *lmath, ngram_model_t *model)
 		       logmath_log10_to_log(lmath, -0.9404));
 	TEST_EQUAL_LOG(ngram_score(model, "should", "variance", "zero:zero", NULL),
 		       logmath_log10_to_log(lmath, -0.9404));
+
+	/* Add words to classes. */
+	rv = ngram_model_add_class_word(model, "scylla", "scrappy:scylla", 1.0);
+	TEST_ASSERT(rv >= 0);
+	TEST_EQUAL(ngram_wid(model, "scrappy:scylla"), 0x80000196);
+	TEST_EQUAL_LOG(ngram_score(model, "scrappy:scylla", NULL),
+		       logmath_log10_to_log(lmath, -2.7884) + logmath_log(lmath, 0.2));
+	printf("scrappy:scylla %08x %d %f\n", 
+	       ngram_wid(model, "scrappy:scylla"),
+	       ngram_score(model, "scrappy:scylla", NULL),
+	       logmath_exp(lmath, ngram_score(model, "scrappy:scylla", NULL)));
+	/* Add a lot of words to a class. */
+	for (i = 0; i < 129; ++i) {
+		char word[32];
+		sprintf(word, "%d:scylla", i);
+		rv = ngram_model_add_class_word(model, "scylla", word, 1.0);
+		printf("%s %08x %d %f\n", word,
+		       ngram_wid(model, word),
+		       ngram_score(model, word, NULL),
+		       logmath_exp(lmath, ngram_score(model, word, NULL)));
+		TEST_ASSERT(rv >= 0);
+		TEST_EQUAL(ngram_wid(model, word), 0x80000197 + i);
+	}
 }
 
 int
