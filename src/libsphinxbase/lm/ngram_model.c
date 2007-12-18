@@ -533,7 +533,7 @@ ngram_add_word_internal(ngram_model_t *model,
 
 int32
 ngram_model_add_word(ngram_model_t *model,
-               const char *word, float32 weight)
+                     const char *word, float32 weight)
 {
     int32 wid, prob = NGRAM_SCORE_ERROR;
 
@@ -702,11 +702,45 @@ ngram_model_add_class_word(ngram_model_t *model,
 int32
 ngram_model_add_class(ngram_model_t *model,
                       const char *classname,
+                      float32 classweight,
                       const char **words,
                       float32 *weights,
                       int32 n_words)
 {
-    return -1;
+    ngram_class_t *lmclass;
+    glist_t classwords = NULL;
+    int32 i, start_wid = -1;
+    int32 classid, tag_wid;
+
+    tag_wid = ngram_model_add_word(model, classname, classweight);
+    if (tag_wid == NGRAM_INVALID_WID)
+        return tag_wid;
+
+    classid = model->n_classes;
+    for (i = 0; i < n_words; ++i) {
+        int32 wid;
+
+        wid = ngram_add_word_internal(model, words[i], classid);
+        if (wid == NGRAM_INVALID_WID)
+            return wid;
+        if (start_wid == -1)
+            start_wid = NGRAM_BASEWID(wid);
+        classwords = glist_add_float32(classwords, weights[i]);
+    }
+    classwords = glist_reverse(classwords);
+    lmclass = ngram_class_new(model, tag_wid, start_wid, classwords);
+    glist_free(classwords);
+    if (lmclass == NULL)
+        return NGRAM_INVALID_WID;
+
+    ++model->n_classes;
+    if (model->classes == NULL)
+        model->classes = ckd_calloc(1, sizeof(*model->classes));
+    else
+        model->classes = ckd_realloc(model->classes,
+                                     model->n_classes * sizeof(*model->classes));
+    model->classes[classid] = lmclass;
+    return classid;
 }
 
 int32

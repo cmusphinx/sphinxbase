@@ -84,6 +84,21 @@ run_tests(logmath_t *lmath, ngram_model_t *model)
 		TEST_ASSERT(rv >= 0);
 		TEST_EQUAL(ngram_wid(model, word), 0x80000197 + i);
 	}
+
+	/* Add a new class. */
+	{
+		const char *words[] = { "blatz:foobie", "hurf:foobie" };
+		float32 weights[] = { 0.6, 0.4 };
+		int32 foobie_prob;
+		rv = ngram_model_add_class(model, "[foobie]", 1.0,
+					   words, weights, 2);
+		TEST_ASSERT(rv >= 0);
+		foobie_prob = ngram_score(model, "[foobie]", NULL);
+		TEST_EQUAL_LOG(ngram_score(model, "blatz:foobie", NULL),
+			       foobie_prob + logmath_log(lmath, 0.6));
+		TEST_EQUAL_LOG(ngram_score(model, "hurf:foobie", NULL),
+			       foobie_prob + logmath_log(lmath, 0.4));
+	}
 }
 
 int

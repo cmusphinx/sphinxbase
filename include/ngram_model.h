@@ -235,6 +235,16 @@ int32 ngram_model_read_classdef(ngram_model_t *model,
                                 const char *file_name);
 
 /**
+ * Add a new class to a language model.
+ */
+int32 ngram_model_add_class(ngram_model_t *model,
+                            const char *classname,
+                            float32 classweight,
+                            const char **words,
+                            float32 *weights,
+                            int32 n_words);
+
+/**
  * Add a word to a class in a language model.
  *
  * @param model The model to add a word to.
