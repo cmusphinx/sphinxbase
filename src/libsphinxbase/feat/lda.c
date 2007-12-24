@@ -126,6 +126,10 @@ feat_read_lda(feat_t *feat, const char *ldafile, int32 dim)
 
     /* Note that SphinxTrain stores the eigenvectors as row vectors. */
     assert(n == feat_stream_len(feat, 0));
+    /* Override dim from file if it is 0 or greater than m. */
+    if (dim > m || dim <= 0) {
+        dim = m;
+    }
     feat->out_dim = dim;
 
     return 0;
