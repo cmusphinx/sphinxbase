@@ -135,18 +135,17 @@ if test "x$ad_files" = "x"; then
                         ;;
                 # FIXME: isn't this the same OSS as on Linux?
                 *-*-freebsd*|*-*-netbsd*|*-*-openbsd*)
-                        ad_files="ad_oss_bsd.lo mulaw_base.lo"
-                        ad_libs="-lossaudio"
+                        ad_files="ad_oss_bsd.lo"
                         ad_backend="AD_BACKEND_OSS_BSD"
 			AC_DEFINE(AD_BACKEND_OSS_BSD, [], [Use OSS interface for sound I/O])
                         ;;
                 *-*-osf*)
-                        ad_files="ad_osf.lo mulaw_base.lo"
+                        ad_files="ad_osf.lo"
                         ad_backend="AD_BACKEND_OSF"
 			AC_DEFINE(AD_BACKEND_OSF, [], [Use OSF interface for sound I/O])
                         ;;
                 *-*-irix*)
-                        ad_files="ad_irix.lo mulaw_base.lo"
+                        ad_files="ad_irix.lo"
                         ad_libs="-laudio"
                         ad_backend="AD_BACKEND_IRIX"
 			AC_DEFINE(AD_BACKEND_IRIX, [], [Use IRIX interface for sound I/O])

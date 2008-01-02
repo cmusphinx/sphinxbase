@@ -64,18 +64,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/ioctl.h>
-#if defined(SYS_SOUNDCARD_H)
 #include <sys/soundcard.h>
-#else
-#include <soundcard.h>
-#endif
+#include <sys/ioctl.h>
 #include <errno.h>
+#include <unistd.h>
 #include <config.h>
 
 #include "prim_type.h"
 #include "ad.h"
-
 
 #define AUDIO_FORMAT AFMT_S16_LE        /* 16-bit signed, little endian */
 #define INPUT_GAIN   (80)
@@ -98,13 +94,18 @@ ad_open_dev(const char *dev, int32 sps)
 
     sampleRate = sps;
 
+    if (dev == NULL)
+        dev = DEFAULT_DEVICE;
+
     /* Used to have O_NDELAY. */
     if ((dspFD = open(dev, O_RDONLY)) < 0) {
         if (errno == EBUSY)
-            fprintf(stderr, "Audio device busy\n");
+            fprintf(stderr, "%s(%d): Audio device(%s) busy\n",
+                    __FILE__, __LINE__, dev);
         else
             fprintf(stderr,
-                    "Failed to open audio device: %s\n", strerror(errno));
+                    "%s(%d): Failed to open audio device(%s): %s\n",
+                    __FILE__, __LINE__, dev, strerror(errno));
         return NULL;
     }
 
@@ -214,7 +215,6 @@ ad_open_dev(const char *dev, int32 sps)
         }
 
         /* Set the same gain for left and right channels. */
-
         inputGain = inputGain << 8 | inputGain;
         if (ioctl(mixerFD, SOUND_MIXER_WRITE_MIC, &inputGain) < 0) {
             fprintf(stderr,
@@ -227,7 +227,7 @@ ad_open_dev(const char *dev, int32 sps)
     }
 
     if ((handle = (ad_rec_t *) calloc(1, sizeof(ad_rec_t))) == NULL) {
-        fprintf(stderr, "calloc(%d) failed\n", sizeof(ad_rec_t));
+        fprintf(stderr, "calloc(%ld) failed\n", sizeof(ad_rec_t));
         abort();
     }
 
@@ -327,8 +327,13 @@ ad_read(ad_rec_t * handle, int16 * buf, int32 max)
     }
 
     if (length < 0) {
-        fprintf(stderr, "Audio read error\n");
-        return AD_ERR_GEN;
+        if (errno != EAGAIN) {
+            fprintf(stderr, "Audio read error");
+            return AD_ERR_GEN;
+        }
+        else {
+            length = 0;
+        }
     }
 
     if ((length == 0) && (!handle->recording))

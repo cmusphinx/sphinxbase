@@ -156,7 +156,7 @@ ad_open_dev(const char *dev, int32 sps)
         fprintf(stderr, "Audio ioctl(CHANNELS %d) failed %s\n",
                 numberChannels, strerror(errno));
         close(dspFD);
-        return 0;
+        return NULL;
     }
 
     if (ioctl(dspFD, SNDCTL_DSP_NONBLOCK, &nonBlocking) < 0) {

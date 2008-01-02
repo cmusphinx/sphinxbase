@@ -22,8 +22,7 @@ EXTRA_libsphinxad_la_SOURCES = ad_base.c \
 	ad_portaudio.c \
 	audio_utils_sunos.c \
 	play_win32.c \
-	rec_win32.c \
-	mulaw_base.c
+	rec_win32.c
 
 noinst_HEADERS = audio_utils_sunos.h \
 	pa_host.h \
