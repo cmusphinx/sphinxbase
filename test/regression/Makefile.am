@@ -24,7 +24,7 @@ CLEANFILES = test*.err test*.out		\
 if FIXED_POINT
 TESTS = $(srcdir)/test-cepview.sh
 else
-TESTS = $(wildcard $(srcdir)/test-*.sh)
+TESTS = $(srcdir)/test-*.sh
 endif
 
 EXTRA_DIST += $(TESTS)

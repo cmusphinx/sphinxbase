@@ -7,7 +7,7 @@ INCLUDES = \
 LDADD = ${top_builddir}/src/libsphinxbase/libsphinxbase.la -lm
 
 
-TESTS = $(wildcard $(srcdir)/_*.test)
+TESTS = $(srcdir)/_*.test
 
 
-EXTRA_DIST = $(TESTS) $(wildcard $(srcdir)/_*.res)
+EXTRA_DIST = $(TESTS) $(srcdir)/_*.res
