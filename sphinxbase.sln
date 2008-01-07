@@ -1,25 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual Studio 2005
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libsphinxad", "WIN32\libsphinxad\libsphinxad.vcproj", "{BCCDB739-63EB-49DE-894B-DA5F0C7E2902}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libsphinxfe", "win32\libsphinxfe\libsphinxfe.vcproj", "{FC760041-9A5D-4D86-8CCD-2E2AFEB27C7F}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libsphinxfeat", "WIN32\libsphinxfeat\libsphinxfeat.vcproj", "{389B2B1B-0BA8-4666-991C-7AB46336494A}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libsphinxutil", "win32\libsphinxutil\libsphinxutil.vcproj", "{BD87B57E-4A79-47CA-8667-9F10E0529549}"
-EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sphinx_cepview", "WIN32\sphinx_cepview\sphinx_cepview.vcproj", "{06364F13-FBCE-4E2B-9289-0DD39E246205}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sphinx_cepview", "win32\sphinx_cepview\sphinx_cepview.vcproj", "{06364F13-FBCE-4E2B-9289-0DD39E246205}"
 	ProjectSection(ProjectDependencies) = postProject
 		{2F025EAD-99BD-40F5-B2CC-F0A28CAD7F2D} = {2F025EAD-99BD-40F5-B2CC-F0A28CAD7F2D}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sphinx_fe", "WIN32\sphinx_fe\sphinx_fe.vcproj", "{D088C451-BB4D-4379-AFFA-C7523DBD35DD}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sphinx_fe", "win32\sphinx_fe\sphinx_fe.vcproj", "{D088C451-BB4D-4379-AFFA-C7523DBD35DD}"
 	ProjectSection(ProjectDependencies) = postProject
 		{2F025EAD-99BD-40F5-B2CC-F0A28CAD7F2D} = {2F025EAD-99BD-40F5-B2CC-F0A28CAD7F2D}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sphinxbase", "WIN32\sphinxbase\sphinxbase.vcproj", "{2F025EAD-99BD-40F5-B2CC-F0A28CAD7F2D}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sphinxbase", "win32\sphinxbase\sphinxbase.vcproj", "{2F025EAD-99BD-40F5-B2CC-F0A28CAD7F2D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,22 +19,6 @@ Global
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{BCCDB739-63EB-49DE-894B-DA5F0C7E2902}.Debug|Win32.ActiveCfg = Debug|Win32
-		{BCCDB739-63EB-49DE-894B-DA5F0C7E2902}.Debug|Win32.Build.0 = Debug|Win32
-		{BCCDB739-63EB-49DE-894B-DA5F0C7E2902}.Release|Win32.ActiveCfg = Release|Win32
-		{BCCDB739-63EB-49DE-894B-DA5F0C7E2902}.Release|Win32.Build.0 = Release|Win32
-		{FC760041-9A5D-4D86-8CCD-2E2AFEB27C7F}.Debug|Win32.ActiveCfg = Debug|Win32
-		{FC760041-9A5D-4D86-8CCD-2E2AFEB27C7F}.Debug|Win32.Build.0 = Debug|Win32
-		{FC760041-9A5D-4D86-8CCD-2E2AFEB27C7F}.Release|Win32.ActiveCfg = Release|Win32
-		{FC760041-9A5D-4D86-8CCD-2E2AFEB27C7F}.Release|Win32.Build.0 = Release|Win32
-		{389B2B1B-0BA8-4666-991C-7AB46336494A}.Debug|Win32.ActiveCfg = Debug|Win32
-		{389B2B1B-0BA8-4666-991C-7AB46336494A}.Debug|Win32.Build.0 = Debug|Win32
-		{389B2B1B-0BA8-4666-991C-7AB46336494A}.Release|Win32.ActiveCfg = Release|Win32
-		{389B2B1B-0BA8-4666-991C-7AB46336494A}.Release|Win32.Build.0 = Release|Win32
-		{BD87B57E-4A79-47CA-8667-9F10E0529549}.Debug|Win32.ActiveCfg = Debug|Win32
-		{BD87B57E-4A79-47CA-8667-9F10E0529549}.Debug|Win32.Build.0 = Debug|Win32
-		{BD87B57E-4A79-47CA-8667-9F10E0529549}.Release|Win32.ActiveCfg = Release|Win32
-		{BD87B57E-4A79-47CA-8667-9F10E0529549}.Release|Win32.Build.0 = Release|Win32
 		{06364F13-FBCE-4E2B-9289-0DD39E246205}.Debug|Win32.ActiveCfg = Debug|Win32
 		{06364F13-FBCE-4E2B-9289-0DD39E246205}.Debug|Win32.Build.0 = Debug|Win32
 		{06364F13-FBCE-4E2B-9289-0DD39E246205}.Release|Win32.ActiveCfg = Release|Win32

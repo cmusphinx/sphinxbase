@@ -214,7 +214,7 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath="..\..\src\libsphinxfeat\agc.c"
+				RelativePath="..\..\src\libsphinxbase\feat\agc.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -236,7 +236,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxutil\bio.c"
+				RelativePath="..\..\src\libsphinxbase\util\bio.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -258,7 +258,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxutil\bitvec.c"
+				RelativePath="..\..\src\libsphinxbase\util\bitvec.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -280,7 +280,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxutil\blas_lite.c"
+				RelativePath="..\..\src\libsphinxbase\util\blas_lite.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -302,7 +302,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxutil\case.c"
+				RelativePath="..\..\src\libsphinxbase\util\case.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -324,7 +324,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxutil\ckd_alloc.c"
+				RelativePath="..\..\src\libsphinxbase\util\ckd_alloc.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -346,7 +346,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxutil\cmd_ln.c"
+				RelativePath="..\..\src\libsphinxbase\util\cmd_ln.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -368,7 +368,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxfeat\cmn.c"
+				RelativePath="..\..\src\libsphinxbase\feat\cmn.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -390,7 +390,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxfeat\cmn_prior.c"
+				RelativePath="..\..\src\libsphinxbase\feat\cmn_prior.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -434,7 +434,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxutil\err.c"
+				RelativePath="..\..\src\libsphinxbase\util\err.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -456,7 +456,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxutil\f2c_lite.c"
+				RelativePath="..\..\src\libsphinxbase\util\f2c_lite.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -478,7 +478,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxfe\fe_interface.c"
+				RelativePath="..\..\src\libsphinxbase\fe\fe_interface.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -500,7 +500,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxfe\fe_sigproc.c"
+				RelativePath="..\..\src\libsphinxbase\fe\fe_sigproc.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -522,7 +522,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxfe\fe_warp.c"
+				RelativePath="..\..\src\libsphinxbase\fe\fe_warp.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -544,7 +544,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxfe\fe_warp_affine.c"
+				RelativePath="..\..\src\libsphinxbase\fe\fe_warp_affine.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -566,7 +566,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxfe\fe_warp_inverse_linear.c"
+				RelativePath="..\..\src\libsphinxbase\fe\fe_warp_inverse_linear.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -588,7 +588,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxfe\fe_warp_piecewise_linear.c"
+				RelativePath="..\..\src\libsphinxbase\fe\fe_warp_piecewise_linear.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -610,7 +610,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxfeat\feat.c"
+				RelativePath="..\..\src\libsphinxbase\feat\feat.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -632,7 +632,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxutil\filename.c"
+				RelativePath="..\..\src\libsphinxbase\util\filename.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -654,7 +654,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxfe\fixlog.c"
+				RelativePath="..\..\src\libsphinxbase\fe\fixlog.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -676,7 +676,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxutil\genrand.c"
+				RelativePath="..\..\src\libsphinxbase\util\genrand.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -698,7 +698,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxutil\glist.c"
+				RelativePath="..\..\src\libsphinxbase\util\glist.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -720,7 +720,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxutil\hash_table.c"
+				RelativePath="..\..\src\libsphinxbase\util\hash_table.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -742,7 +742,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxutil\heap.c"
+				RelativePath="..\..\src\libsphinxbase\util\heap.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -764,7 +764,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxutil\info.c"
+				RelativePath="..\..\src\libsphinxbase\util\info.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -786,7 +786,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxfeat\lda.c"
+				RelativePath="..\..\src\libsphinxbase\feat\lda.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -808,7 +808,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxutil\linklist.c"
+				RelativePath="..\..\src\libsphinxbase\util\linklist.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -830,37 +830,11 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxutil\logmath.c"
+				RelativePath="..\..\src\libsphinxbase\util\logmath.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxutil\matrix.c"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath="..\..\src\libsphinxutil\mmio.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libsphinxad\mulaw_base.c"
+				RelativePath="..\..\src\libsphinxbase\util\matrix.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -882,7 +856,11 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxutil\pio.c"
+				RelativePath="..\..\src\libsphinxbase\util\mmio.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libsphinxbase\util\pio.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -926,7 +904,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxutil\profile.c"
+				RelativePath="..\..\src\libsphinxbase\util\profile.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -970,7 +948,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxutil\s3_arraylist.c"
+				RelativePath="..\..\src\libsphinxbase\util\s3_arraylist.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -992,7 +970,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxutil\slamch.c"
+				RelativePath="..\..\src\libsphinxbase\util\slamch.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -1014,7 +992,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxutil\slapack_lite.c"
+				RelativePath="..\..\src\libsphinxbase\util\slapack_lite.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -1036,7 +1014,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxutil\strfuncs.c"
+				RelativePath="..\..\src\libsphinxbase\util\strfuncs.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -1058,7 +1036,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxutil\unlimit.c"
+				RelativePath="..\..\src\libsphinxbase\util\unlimit.c"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -1145,23 +1123,23 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxfe\fe_internal.h"
+				RelativePath="..\..\src\libsphinxbase\fe\fe_internal.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxfe\fe_warp.h"
+				RelativePath="..\..\src\libsphinxbase\fe\fe_warp.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxfe\fe_warp_affine.h"
+				RelativePath="..\..\src\libsphinxbase\fe\fe_warp_affine.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxfe\fe_warp_inverse_linear.h"
+				RelativePath="..\..\src\libsphinxbase\fe\fe_warp_inverse_linear.h"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxfe\fe_warp_piecewise_linear.h"
+				RelativePath="..\..\src\libsphinxbase\fe\fe_warp_piecewise_linear.h"
 				>
 			</File>
 			<File
