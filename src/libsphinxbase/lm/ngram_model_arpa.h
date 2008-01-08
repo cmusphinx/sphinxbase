@@ -35,7 +35,7 @@
  *
  */
 /*
- * \file ngram_model_dmp.h DMP format for N-Gram models
+ * \file ngram_model_arpa.h ARPABO text format for N-Gram models
  *
  * Author: David Huggins-Daines <dhuggins@cs.cmu.edu>
  */
