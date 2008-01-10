@@ -115,6 +115,8 @@
 
 #include <stdio.h>
 
+#include "genrand.h"
+
 /* Period parameters */
 #define N 624
 #define M 397
