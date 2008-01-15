@@ -5,10 +5,8 @@ SUBDIRS = src \
 
 EXTRA_DIST = autogen.sh					\
 	sphinxbase.pc.in				\
-	sphinxbase.vcw					\
 	win32/sphinx_fe/sphinx_fe.vcproj		\
 	win32/sphinxbase/sphinxbase.vcproj		\
-	win32/sphinxbase/sphinxbase.vcp			\
 	win32/sphinx_cepview/sphinx_cepview.vcproj	\
 	m4/iconv.m4					\
 	m4/lib-ld.m4					\
