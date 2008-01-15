@@ -814,10 +814,9 @@ ngram_model_arpa_score(ngram_model_t *base, int32 wid,
     case 1:
         return lm3g_bg_score(model, history[0], wid, n_used);
     case 2:
-        return lm3g_tg_score(model, history[1], history[0], wid, n_used);
     default:
-        E_ERROR("%d-grams not supported", n_hist + 1);
-        return NGRAM_SCORE_ERROR;
+        /* Anything greater than 2 is the same as a trigram for now. */
+        return lm3g_tg_score(model, history[1], history[0], wid, n_used);
     }
 }
 
@@ -849,11 +848,10 @@ ngram_model_arpa_raw_score(ngram_model_t *base, int32 wid,
         score = lm3g_bg_score(model, history[0], wid, n_used);
         break;
     case 2:
+    default:
+        /* Anything greater than 2 is the same as a trigram for now. */
         score = lm3g_tg_score(model, history[1], history[0], wid, n_used);
         break;
-    default:
-        E_ERROR("%d-grams not supported", n_hist + 1);
-        return NGRAM_SCORE_ERROR;
     }
     /* FIXME (maybe): This doesn't undo unigram weighting in backoff cases. */
     return (int32)((score - base->log_wip) / base->lw);

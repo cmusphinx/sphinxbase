@@ -474,8 +474,9 @@ ngram_wid(ngram_model_t *model, const char *word)
 {
     void *val;
 
+    /* FIXME@!! If <UNK> is not WID 0 this is bogus. */
     if (hash_table_lookup(model->wid, word, &val) == -1)
-        return -1;
+        return NGRAM_UNKNOWN_WID;
     else
         return (int32)(long)val;
 }
