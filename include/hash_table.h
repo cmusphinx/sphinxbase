@@ -291,9 +291,13 @@ void *hash_table_enter_bkey(hash_table_t *h,	/**< In: Handle of hash table
     ((int32)(long)hash_table_enter_bkey((h),(k),(l),(void *)(long)(v)))
 
 
-/*
- * Lookup hash table h for given key and return the associated value in *val.
- * Return value: 0 if key found in hash table, else -1.
+/**
+ * Look up a key in a hash table and optionally return the associated
+ * value.
+ *
+ * @param val Pointer to a void * to store the result, or NULL if the
+ *            actual value is not important.
+ * @return 0 if key found in hash table, else -1.
  */
 SPHINXBASE_EXPORT
 int32 hash_table_lookup(hash_table_t *h,	/**< In: Handle of hash table being searched */

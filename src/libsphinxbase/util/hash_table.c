@@ -317,7 +317,8 @@ hash_table_lookup(hash_table_t * h, const char *key, void ** val)
 
     entry = lookup(h, hash, key, len);
     if (entry) {
-        *val = entry->val;
+        if (val)
+            *val = entry->val;
         return 0;
     }
     else
@@ -333,7 +334,8 @@ hash_table_lookup_int32(hash_table_t * h, const char *key, int32 *val)
     rv = hash_table_lookup(h, key, &vval);
     if (rv != 0)
         return rv;
-    *val = (int32)(long)vval;
+    if (val)
+        *val = (int32)(long)vval;
     return 0;
 }
 
@@ -351,7 +353,8 @@ hash_table_lookup_bkey(hash_table_t * h, const char *key, size_t len, void ** va
 
     entry = lookup(h, hash, key, len);
     if (entry) {
-        *val = entry->val;
+        if (val)
+            *val = entry->val;
         return 0;
     }
     else
@@ -367,7 +370,8 @@ hash_table_lookup_bkey_int32(hash_table_t * h, const char *key, size_t len, int3
     rv = hash_table_lookup_bkey(h, key, len, &vval);
     if (rv != 0)
         return rv;
-    *val = (int32)(long)vval;
+    if (val)
+        *val = (int32)(long)vval;
     return 0;
 }
 
