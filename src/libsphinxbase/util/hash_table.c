@@ -324,6 +324,19 @@ hash_table_lookup(hash_table_t * h, const char *key, void ** val)
         return -1;
 }
 
+int32
+hash_table_lookup_int32(hash_table_t * h, const char *key, int32 *val)
+{
+    void *vval;
+    int32 rv;
+
+    rv = hash_table_lookup(h, key, &vval);
+    if (rv != 0)
+        return rv;
+    *val = (int32)(long)vval;
+    return 0;
+}
+
 
 int32
 hash_table_lookup_bkey(hash_table_t * h, const char *key, size_t len, void ** val)
@@ -343,6 +356,19 @@ hash_table_lookup_bkey(hash_table_t * h, const char *key, size_t len, void ** va
     }
     else
         return -1;
+}
+
+int32
+hash_table_lookup_bkey_int32(hash_table_t * h, const char *key, size_t len, int32 *val)
+{
+    void *vval;
+    int32 rv;
+
+    rv = hash_table_lookup_bkey(h, key, len, &vval);
+    if (rv != 0)
+        return rv;
+    *val = (int32)(long)vval;
+    return 0;
 }
 
 

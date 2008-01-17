@@ -210,6 +210,15 @@ void *hash_table_enter(hash_table_t *h, /**< In: Handle of hash table in which t
     );
 
 /**
+ * Add a 32-bit integer value to a hash table.
+ *
+ * This macro is the clean way to do this and avoid compiler warnings
+ * on 64-bit platforms.
+ */
+#define hash_table_enter_int32(h,k,v) \
+    ((int32)(long)hash_table_enter((h),(k),(void *)(long)(v)))
+
+/**
  * Add a new entry with given key and value to hash table h.  If the
  * key already exists, its value is replaced with the given value, and
  * the previous value is returned, otherwise val is returned.
@@ -229,6 +238,14 @@ void *hash_table_replace(hash_table_t *h, /**< In: Handle of hash table in which
                          void *val	  /**< In: Value to be associated with above key */
     );
 
+/**
+ * Replace a 32-bit integer value in a hash table.
+ *
+ * This macro is the clean way to do this and avoid compiler warnings
+ * on 64-bit platforms.
+ */
+#define hash_table_replace_int32(h,k,v) \
+    ((int32)(long)hash_table_replace((h),(k),(void *)(long)(v)))
 
 /**
  * Delete an entry with given key and associated value to hash table
@@ -264,6 +281,16 @@ void *hash_table_enter_bkey(hash_table_t *h,	/**< In: Handle of hash table
                               void *val		/**< In: Value to be associated with above key */
 	);
 
+/**
+ * Enter a 32-bit integer value in a hash table.
+ *
+ * This macro is the clean way to do this and avoid compiler warnings
+ * on 64-bit platforms.
+ */
+#define hash_table_enter_bkey_int32(h,k,l,v) \
+    ((int32)(long)hash_table_enter_bkey((h),(k),(l),(void *)(long)(v)))
+
+
 /*
  * Lookup hash table h for given key and return the associated value in *val.
  * Return value: 0 if key found in hash table, else -1.
@@ -272,6 +299,18 @@ SPHINXBASE_EXPORT
 int32 hash_table_lookup(hash_table_t *h,	/**< In: Handle of hash table being searched */
                         const char *key,	/**< In: C-style NULL-terminated string whose value is sought */
                         void **val	  	/**< Out: *val = value associated with key */
+	);
+
+/**
+ * Look up a 32-bit integer value in a hash table.
+ *
+ * This function is the clean way to do this and avoid compiler warnings
+ * on 64-bit platforms.
+ */
+SPHINXBASE_EXPORT
+int32 hash_table_lookup_int32(hash_table_t *h,	/**< In: Handle of hash table being searched */
+                              const char *key,	/**< In: C-style NULL-terminated string whose value is sought */
+                              int32 *val	/**< Out: *val = value associated with key */
 	);
 
 /**
@@ -285,6 +324,19 @@ int32 hash_table_lookup_bkey(hash_table_t *h,	/**< In: Handle of hash table bein
                              const char *key,	/**< In: Key buffer */
                              size_t len,	/**< In: Length of above key buffer */
                              void **val		/**< Out: *val = value associated with key */
+	);
+
+/**
+ * Look up a 32-bit integer value in a hash table.
+ *
+ * This function is the clean way to do this and avoid compiler warnings
+ * on 64-bit platforms.
+ */
+SPHINXBASE_EXPORT
+int32 hash_table_lookup_bkey_int32(hash_table_t *h,/**< In: Handle of hash table being searched */
+                                   const char *key,/**< In: Key buffer */
+                                   size_t len,	/**< In: Length of above key buffer */
+                                   int32 *val	/**< Out: *val = value associated with key */
 	);
 
 /**
