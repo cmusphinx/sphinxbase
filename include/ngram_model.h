@@ -216,7 +216,7 @@ const char *ngram_word(ngram_model_t *model, int32 wid);
  * @return The word ID for the new word.
  */
 int32 ngram_model_add_word(ngram_model_t *model,
-                     const char *word, float32 weight);
+                           const char *word, float32 weight);
 
 /**
  * Read a class definition file and add classes to a language model.
@@ -259,15 +259,81 @@ int32 ngram_model_add_class_word(ngram_model_t *model,
                                  float32 weight);
 
 /**
- * Create a new language model by linearly interpolating several sub-models.
+ * Create a set of language models sharing a common space of word IDs.
  *
- * @param models An array of N-Gram model pointers.
- * @param weights An array of weights to apply to corresponding models.
- * @param n_models The number of models (and weights).
- * @return A new language model which linearly interpolates all sub-models.
+ * This function creates a meta-language model which groups together a
+ * set of language models, synchronizing word IDs between them.  To
+ * use this language model, you can either select a submodel to use
+ * exclusively using ngram_model_set_select(), or interpolate
+ * between scores from all models.  To do the latter, you can either
+ * pass a non-NULL value of the <code>weights</code> parameter, or
+ * re-activate interpolation later on by calling
+ * ngram_model_set_interp().
+ *
+ * In order to make this efficient, there are some restrictions on the
+ * models that can be grouped together.  The most important (and
+ * currently the only) one is that they <strong>must</strong> all
+ * share the same log-math parameters.
+ *
+ * @param config Any configuration parameters to be shared between models.
+ * @param models Array of pointers to previously created language models.
+ * @param names Array of strings to use as unique identifiers for LMs.
+ * @param weights Array of weights to use in interpolating LMs, or NULL
+ *                for no interpolation.
+ * @param n_models Number of elements in the arrays passed to this function.
  */
-ngram_model_t *ngram_model_interp(ngram_model_t **models,
-                                  float32 *weights, int32 n_models);
+ngram_model_t *ngram_model_set_init(cmd_ln_t *config,
+                                    ngram_model_t **models,
+                                    const char **names,
+                                    float32 *weights,
+                                    int32 n_models);
+
+/**
+ * Read a set of language models from a control file.
+ *
+ * This file creates a language model set from a "control file" of
+ * the type used in Sphinx-II and Sphinx-III.
+ */
+ngram_model_t *ngram_model_set_read(cmd_ln_t *config,
+                                    const char *lmctlfile);
+
+/**
+ * Returns the number of language models in a set.
+ */
+int32 ngram_model_set_count(ngram_model_t *set);
+
+/**
+ * Select a single language model from a set for scoring.
+ */
+ngram_model_t *ngram_model_set_select(ngram_model_t *set,
+                                      const char *name);
+
+/**
+ * Set interpolation weights for a set and enables interpolation.
+ */
+ngram_model_t *ngram_model_set_interp(ngram_model_t *set,
+                                      const char **names,
+                                      int32 *weights);
+
+/**
+ * Add a language model to a set.
+ */
+ngram_model_t *ngram_model_set_add(ngram_model_t *set,
+                                   ngram_model_t *model);
+
+/**
+ * Remove a language model from a set.
+ */
+ngram_model_t *ngram_model_set_remove(ngram_model_t *set,
+                                      const char *name);
+
+/**
+ * Set the word-to-ID mapping for this set.
+ */
+const char **ngram_model_set_map_words(ngram_model_t *set,
+                                       const char **words,
+                                       int32 *wids,
+                                       int32 n_words);
 
 #ifdef __cplusplus
 }

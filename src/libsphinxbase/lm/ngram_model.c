@@ -35,7 +35,7 @@
  *
  */
 /*
- * \file lm_3g.c DARPA Trigram LM module (adapted to Sphinx 3)
+ * \file ngram_model.c N-Gram language models.
  *
  * Author: David Huggins-Daines, much code taken from sphinx3/src/libs3decoder/liblm
  */
@@ -313,8 +313,7 @@ ngram_model_recode(ngram_model_t *model, const char *from, const char *to)
         /* Now update the hash table.  We might have terrible
          * collisions if a non-reversible conversion was requested.,
          * so warn about them. */
-        if (hash_table_enter(new_wid, model->word_str[i],
-                             (void *)(long)i) != (void *)(long)i) {
+        if (hash_table_enter_int32(new_wid, model->word_str[i], i) != i) {
             E_WARN("Duplicate word in dictionary after conversion: %s\n",
                    model->word_str[i]);
         }
@@ -522,8 +521,7 @@ ngram_add_word_internal(ngram_model_t *model,
     /* Class words are always dynamically allocated. */
     model->word_str[model->n_words] = ckd_salloc(word);
     /* Now enter it into the hash table. */
-    if (hash_table_enter(model->wid, model->word_str[model->n_words],
-                         (void *)(long)(wid)) != (void *)(long)(wid)) {
+    if (hash_table_enter_int32(model->wid, model->word_str[model->n_words], wid) != wid) {
         E_ERROR("Hash insertion failed for word %s => %p (should not happen)\n",
                 model->word_str[model->n_words], (void *)(long)(wid));
     }
