@@ -294,15 +294,13 @@ void *hash_table_enter_bkey(hash_table_t *h,	/**< In: Handle of hash table
 /**
  * Look up a key in a hash table and optionally return the associated
  * value.
- *
- * @param val Pointer to a void * to store the result, or NULL if the
- *            actual value is not important.
  * @return 0 if key found in hash table, else -1.
  */
 SPHINXBASE_EXPORT
 int32 hash_table_lookup(hash_table_t *h,	/**< In: Handle of hash table being searched */
                         const char *key,	/**< In: C-style NULL-terminated string whose value is sought */
-                        void **val	  	/**< Out: *val = value associated with key */
+                        void **val	  	/**< Out: *val = value associated with key.
+                                                   If this is NULL, no value will be returned. */
 	);
 
 /**
@@ -314,7 +312,8 @@ int32 hash_table_lookup(hash_table_t *h,	/**< In: Handle of hash table being sea
 SPHINXBASE_EXPORT
 int32 hash_table_lookup_int32(hash_table_t *h,	/**< In: Handle of hash table being searched */
                               const char *key,	/**< In: C-style NULL-terminated string whose value is sought */
-                              int32 *val	/**< Out: *val = value associated with key */
+                              int32 *val	/**< Out: *val = value associated with key.
+                                                   If this is NULL, no value will be returned. */
 	);
 
 /**
@@ -327,7 +326,8 @@ SPHINXBASE_EXPORT
 int32 hash_table_lookup_bkey(hash_table_t *h,	/**< In: Handle of hash table being searched */
                              const char *key,	/**< In: Key buffer */
                              size_t len,	/**< In: Length of above key buffer */
-                             void **val		/**< Out: *val = value associated with key */
+                             void **val		/**< Out: *val = value associated with key.
+                                                   If this is NULL, no value will be returned. */
 	);
 
 /**
@@ -340,7 +340,8 @@ SPHINXBASE_EXPORT
 int32 hash_table_lookup_bkey_int32(hash_table_t *h,/**< In: Handle of hash table being searched */
                                    const char *key,/**< In: Key buffer */
                                    size_t len,	/**< In: Length of above key buffer */
-                                   int32 *val	/**< Out: *val = value associated with key */
+                                   int32 *val	/**< Out: *val = value associated with key.
+                                                   If this is NULL, no value will be returned. */
 	);
 
 /**
@@ -348,7 +349,9 @@ int32 hash_table_lookup_bkey_int32(hash_table_t *h,/**< In: Handle of hash table
  */
 SPHINXBASE_EXPORT
 glist_t hash_table_tolist(hash_table_t *h,	/**< In: Hash table from which list is to be generated */
-                          int32 *count		/**< Out: #entries in the list */
+                          int32 *count		/**< Out: #entries in the list.
+                                                   If this is NULL, no count will be returned. */
+
 	);
 
 /**

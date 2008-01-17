@@ -615,7 +615,8 @@ hash_table_tolist(hash_table_t * h, int32 * count)
         }
     }
 
-    *count = j;
+    if (count)
+        *count = j;
 
     return g;
 }
