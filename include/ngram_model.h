@@ -333,7 +333,6 @@ ngram_model_t *ngram_model_set_remove(ngram_model_t *set,
  */
 const char **ngram_model_set_map_words(ngram_model_t *set,
                                        const char **words,
-                                       const int32 *wids,
                                        int32 n_words);
 
 #ifdef __cplusplus

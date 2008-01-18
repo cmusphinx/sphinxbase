@@ -272,7 +272,6 @@ ngram_model_set_remove(ngram_model_t *base,
 const char **
 ngram_model_set_map_words(ngram_model_t *base,
                           const char **words,
-                          const int32 *wids,
                           int32 n_words)
 {
     ngram_model_set_t *set = (ngram_model_set_t *)base;
