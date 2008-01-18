@@ -225,7 +225,11 @@ const char *ngram_word(ngram_model_t *model, int32 wid);
  * vocabulary".  The difference is that the former assigns a fixed
  * non-zero unigram probability to unknown words, while the latter
  * does not allow unknown words (or, equivalently, it assigns them
- * zero probability).
+ * zero probability).  If this is a closed vocabulary model, this
+ * function will return NGRAM_INVALID_WID.
+ *
+ * @return The ID for the unknown word, or NGRAM_INVALID_WID if none
+ * exists.
  */
 int32 ngram_unknown_wid(ngram_model_t *model);
 
