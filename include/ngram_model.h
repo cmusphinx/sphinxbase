@@ -241,7 +241,7 @@ int32 ngram_model_add_class(ngram_model_t *model,
                             const char *classname,
                             float32 classweight,
                             const char **words,
-                            float32 *weights,
+                            const float32 *weights,
                             int32 n_words);
 
 /**
@@ -285,7 +285,7 @@ int32 ngram_model_add_class_word(ngram_model_t *model,
 ngram_model_t *ngram_model_set_init(cmd_ln_t *config,
                                     ngram_model_t **models,
                                     const char **names,
-                                    float32 *weights,
+                                    const float32 *weights,
                                     int32 n_models);
 
 /**
@@ -313,13 +313,14 @@ ngram_model_t *ngram_model_set_select(ngram_model_t *set,
  */
 ngram_model_t *ngram_model_set_interp(ngram_model_t *set,
                                       const char **names,
-                                      int32 *weights);
+                                      const float32 *weights);
 
 /**
  * Add a language model to a set.
  */
 ngram_model_t *ngram_model_set_add(ngram_model_t *set,
-                                   ngram_model_t *model);
+                                   ngram_model_t *model,
+                                   float32 weight);
 
 /**
  * Remove a language model from a set.
@@ -332,7 +333,7 @@ ngram_model_t *ngram_model_set_remove(ngram_model_t *set,
  */
 const char **ngram_model_set_map_words(ngram_model_t *set,
                                        const char **words,
-                                       int32 *wids,
+                                       const int32 *wids,
                                        int32 n_words);
 
 #ifdef __cplusplus

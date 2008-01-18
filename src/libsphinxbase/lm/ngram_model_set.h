@@ -52,6 +52,7 @@ typedef struct ngram_model_set_s {
     ngram_model_t base;  /**< Base ngram_model_t structure. */
 
     int32 n_models;      /**< Number of models in this set. */
+    int32 cur;           /**< Currently selected model, or -1 for none. */
     ngram_model_t **lms; /**< Language models in this set. */
     char **names;        /**< Names for language models. */
     int32 *lweights;     /**< Log interpolation weights. */

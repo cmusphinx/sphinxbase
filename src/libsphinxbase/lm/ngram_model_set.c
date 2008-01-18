@@ -65,7 +65,7 @@ ngram_model_t *
 ngram_model_set_init(cmd_ln_t *config,
                      ngram_model_t **models,
                      const char **names,
-                     float32 *weights,
+                     const float32 *weights,
                      int32 n_models)
 {
     ngram_model_set_t *model;
@@ -93,14 +93,18 @@ ngram_model_set_init(cmd_ln_t *config,
     /* Allocate the combined model, initialize it. */
     model = ckd_calloc(1, sizeof(*model));
     base = &model->base;
+    model->cur = -1;
+    model->n_models = n_models;
     model->lms = ckd_calloc(n_models, sizeof(*model->lms));
     model->names = ckd_calloc(n_models, sizeof(*model->names));
-    model->lweights = ckd_calloc(n_models, sizeof(*model->lweights));
+    if (weights)
+        model->lweights = ckd_calloc(n_models, sizeof(*model->lweights));
     n = 0;
     for (i = 0; i < n_models; ++i) {
         model->lms[i] = models[i];
         model->names[i] = ckd_salloc(names[i]);
-        model->lweights[i] = logmath_log(lmath, weights[i]);
+        if (weights)
+            model->lweights[i] = logmath_log(lmath, weights[i]);
         /* N is the maximum of all merged models. */
         if (models[i]->n > n)
             n = models[i]->n;
@@ -141,11 +145,13 @@ ngram_model_set_init(cmd_ln_t *config,
         int32 j;
         /* Also create the master wid mapping. */
         (void)hash_table_enter_int32(base->wid, base->word_str[i], i);
+        /* printf("%s: %d => ", base->word_str[i], i); */
         for (j = 0; j < n_models; ++j) {
             model->widmap[i][j] = ngram_wid(models[j], base->word_str[i]);
+            /* printf("%d ", model->widmap[i][j]); */
         }
+        /* printf("\n"); */
     }
-
 
     return base;
 }
@@ -158,54 +164,133 @@ ngram_model_set_read(cmd_ln_t *config,
 }
 
 int32
-ngram_model_set_count(ngram_model_t *set)
+ngram_model_set_count(ngram_model_t *base)
 {
-    return -1;
+    ngram_model_set_t *set = (ngram_model_set_t *)base;
+    return set->n_models;
 }
 
 ngram_model_t *
-ngram_model_set_select(ngram_model_t *set,
+ngram_model_set_select(ngram_model_t *base,
                        const char *name)
 {
-    return NULL;
+    ngram_model_set_t *set = (ngram_model_set_t *)base;
+    ngram_model_t *prev = NULL;
+    int32 i;
+
+    if (set->cur != -1)
+        prev = set->lms[set->cur];
+    /* There probably won't be very many submodels. */
+    for (i = 0; i < set->n_models; ++i)
+        if (0 == strcmp(set->names[i], name))
+            break;
+    if (i == set->n_models)
+        return NULL;
+    set->cur = i;
+    return prev;
 }
 
 ngram_model_t *
-ngram_model_set_interp(ngram_model_t *set,
+ngram_model_set_interp(ngram_model_t *base,
                        const char **names,
-                       int32 *weights)
+                       const float32 *weights)
 {
-    return NULL;
+    ngram_model_set_t *set = (ngram_model_set_t *)base;
+
+    if (set->lweights == NULL) {
+        set->lweights = ckd_calloc(set->n_models, sizeof(*set->lweights));
+    }
+    /* If we have a set of weights here, then set them. */
+    if (names && weights) {
+        int32 i, j;
+        /* We hope there aren't many models. */
+        for (i = 0; i < set->n_models; ++i) {
+            for (j = 0; j < set->n_models; ++j) {
+                if (0 == strcmp(names[i], set->names[j]))
+                    break;
+            }
+            if (j == set->n_models)
+                continue;
+            set->lweights[j] = logmath_log(base->lmath, weights[i]);
+        }
+
+    }
+    /* Otherwise just enable existing weights. */
+    else {
+        /* Use a uniform set if they weren't initialized. */
+        if (set->lweights == NULL) {
+            int32 uniform = logmath_log(base->lmath, 1.0/set->n_models);
+            int32 i;
+            for (i = 0; i < set->n_models; ++i)
+                set->lweights[i] = uniform;
+        }
+        set->cur = -1;
+    }
+    return base;
 }
 
 ngram_model_t *
-ngram_model_set_add(ngram_model_t *set,
-                    ngram_model_t *model)
+ngram_model_set_add(ngram_model_t *base,
+                    ngram_model_t *model,
+                    float32 weight)
 {
-    return NULL;
+    ngram_model_set_t *set = (ngram_model_set_t *)base;
+
+    /* Add it to the array of lms. */
+
+    /* Renormalize the interpolation weights. */
+
+    /* Expand the word ID mapping. */
+
+    return model;
 }
 
 ngram_model_t *
-ngram_model_set_remove(ngram_model_t *set,
+ngram_model_set_remove(ngram_model_t *base,
                        const char *name)
 {
-    return NULL;
+    ngram_model_set_t *set = (ngram_model_set_t *)base;
+    ngram_model_t *submodel;
+    int32 lmidx;
+
+    for (lmidx = 0; lmidx < set->n_models; ++lmidx)
+        if (0 == strcmp(name, set->names[lmidx]))
+            break;
+    if (lmidx == set->n_models)
+        return NULL;
+    submodel = set->lms[lmidx];
+
+    /* Remove it from the array of lms. */
+
+    /* Renormalize the interpolation weights. */
+
+    /* Remove this lm from the word ID mapping. */
+
+    return submodel;
 }
 
 const char **
-ngram_model_set_map_words(ngram_model_t *set,
+ngram_model_set_map_words(ngram_model_t *base,
                           const char **words,
-                          int32 *wids,
+                          const int32 *wids,
                           int32 n_words)
 {
-    return NULL;
+    ngram_model_set_t *set = (ngram_model_set_t *)base;
+
+    return (const char **)set->widmap;
 }
 
 static int
 ngram_model_set_apply_weights(ngram_model_t *base, float32 lw,
                               float32 wip, float32 uw)
 {
-    return -1;
+    ngram_model_set_t *set = (ngram_model_set_t *)base;
+    int32 i;
+
+    /* Apply weights to each sub-model. */
+    for (i = 0; i < set->n_models; ++i)
+        ngram_model_apply_weights(set->lms[i], lw, wip, uw);
+    return 0;
 }
 
 static int32
@@ -213,7 +298,39 @@ ngram_model_set_score(ngram_model_t *base, int32 wid,
                       int32 *history, int32 n_hist,
                       int32 *n_used)
 {
-    return NGRAM_SCORE_ERROR;
+    ngram_model_set_t *set = (ngram_model_set_t *)base;
+    int32 mapwid;
+    int32 *maphist;
+    int32 score;
+    int32 i;
+
+    maphist = ckd_calloc(n_hist, sizeof(*maphist));
+
+    /* Interpolate if there is no current. */
+    if (set->cur == -1) {
+        score = logmath_get_zero(base->lmath);
+        for (i = 0; i < set->n_models; ++i) {
+            int32 j;
+            /* Map word and history IDs for each model. */
+            mapwid = set->widmap[wid][i];
+            for (j = 0; j < n_hist; ++j)
+                maphist[j] = set->widmap[history[j]][i];
+            score = logmath_add(base->lmath, score,
+                                set->lweights[i] + 
+                                ngram_ng_score(set->lms[i],
+                                               mapwid, maphist, n_hist, n_used));
+        }
+    }
+    else {
+        int32 j;
+        /* Map word and history IDs (FIXME: do this in a function?) */
+        mapwid = set->widmap[wid][set->cur];
+        for (j = 0; j < n_hist; ++j)
+            maphist[j] = set->widmap[history[j]][set->cur];
+        score = ngram_ng_score(set->lms[set->cur],
+                               mapwid, maphist, n_hist, n_used);
+    }
+    return score;
 }
 
 static int32
@@ -221,19 +338,103 @@ ngram_model_set_raw_score(ngram_model_t *base, int32 wid,
                           int32 *history, int32 n_hist,
                           int32 *n_used)
 {
-    return NGRAM_SCORE_ERROR;
+    ngram_model_set_t *set = (ngram_model_set_t *)base;
+    int32 mapwid;
+    int32 *maphist;
+    int32 score;
+    int32 i;
+
+    maphist = ckd_calloc(n_hist, sizeof(*maphist));
+
+    /* Interpolate if there is no current. */
+    if (set->cur == -1) {
+        score = logmath_get_zero(base->lmath);
+        for (i = 0; i < set->n_models; ++i) {
+            int32 j;
+            /* Map word and history IDs for each model. */
+            mapwid = set->widmap[wid][i];
+            for (j = 0; j < n_hist; ++j)
+                maphist[j] = set->widmap[history[j]][i];
+            score = logmath_add(base->lmath, score,
+                                set->lweights[i] + 
+                                ngram_ng_prob(set->lms[i],
+                                              mapwid, maphist, n_hist, n_used));
+        }
+    }
+    else {
+        int32 j;
+        /* Map word and history IDs (FIXME: do this in a function?) */
+        mapwid = set->widmap[wid][set->cur];
+        for (j = 0; j < n_hist; ++j)
+            maphist[j] = set->widmap[history[j]][set->cur];
+        score = ngram_ng_prob(set->lms[set->cur],
+                              mapwid, maphist, n_hist, n_used);
+    }
+    ckd_free(maphist);
+    return score;
 }
 
 static int32
 ngram_model_set_add_ug(ngram_model_t *base,
                        int32 wid, int32 lweight)
 {
-    return NGRAM_INVALID_WID;
+    ngram_model_set_t *set = (ngram_model_set_t *)base;
+    int32 *newwid;
+    int32 i, prob;
+
+    /* At this point the word has already been added to the master
+       model and we have a new word ID for it.  Add it to submodels
+       and track the word IDs. */
+    newwid = ckd_calloc(set->n_models, sizeof(*newwid));
+    prob = logmath_get_zero(base->lmath);
+    for (i = 0; i < set->n_models; ++i) {
+        int32 wprob, n_hist;
+
+        /* Did this word already exist? */
+        newwid[i] = ngram_wid(set->lms[i], base->word_str[i]);
+        if (newwid[i] == NGRAM_INVALID_WID) {
+            /* Add it to the submodel. */
+            newwid[i] = ngram_model_add_word(set->lms[i], base->word_str[i],
+                                             logmath_exp(base->lmath, lweight));
+            if (newwid[i] == NGRAM_INVALID_WID) {
+                ckd_free(newwid);
+                return NGRAM_SCORE_ERROR;
+            }
+        }
+        /* Now get the unigram probability for the new word and either
+         * interpolate it or use it (if this is the current model). */
+        wprob = ngram_ng_prob(set->lms[i], newwid[i], NULL, 0, &n_hist);
+        if (set->cur == i)
+            prob = wprob;
+        else if (set->cur == -1)
+            prob = logmath_add(base->lmath, prob, set->lweights[i] + wprob);
+    }
+    /* Okay we have the word IDs for this in all the submodels.  Now
+       do some complicated memory mangling to add this to the
+       widmap. */
+    set->widmap[0] = ckd_realloc(set->widmap[0],
+                                 base->n_words
+                                 * set->n_models
+                                 * sizeof(**set->widmap));
+    for (i = 0; i < base->n_words; ++i)
+        set->widmap[i] = set->widmap[0] + i * set->n_models;
+    memcpy(set->widmap[wid], newwid, set->n_models * sizeof(*newwid));
+    ckd_free(newwid);
+    return prob;
 }
 
 static void
 ngram_model_set_free(ngram_model_t *base)
 {
+    ngram_model_set_t *set = (ngram_model_set_t *)base;
+    int32 i;
+
+    ckd_free(set->lms);
+    for (i = 0; i < set->n_models; ++i)
+        ckd_free(set->names[i]);
+    ckd_free(set->names);
+    ckd_free(set->lweights);
+    ckd_free_2d((void **)set->widmap);
 }
 
 static ngram_funcs_t ngram_model_set_funcs = {

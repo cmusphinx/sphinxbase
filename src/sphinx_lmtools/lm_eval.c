@@ -56,14 +56,29 @@ static const arg_t defn[] = {
     "Shows the usage of the tool"},
 
   { "-logbase",
-      ARG_FLOAT64,
-      "1.0001",
-      "Base in which all log-likelihoods calculated" },
+    ARG_FLOAT64,
+    "1.0001",
+    "Base in which all log-likelihoods calculated" },
 
   { "-lm",
     ARG_STRING,
     NULL,
     "Language model file"},
+
+  { "-probdef",
+    ARG_STRING,
+    NULL,
+    "Probability definition file for classes in LM"},
+
+  { "-lmctlfn",
+    ARG_STRING,
+    NULL,
+    "Control file listing a set of language models"},
+
+  { "-lmname",
+    ARG_STRING,
+    NULL,
+    "Name of language model in -lmctlfn to use for all utterances" },
 
   { "-lsn",
     ARG_STRING,
@@ -240,7 +255,7 @@ main(int argc, char *argv[])
 	cmd_ln_t *config;
 	ngram_model_t *lm = NULL;
 	logmath_t *lmath;
-	const char *lmfn, *lsnfn, *text;
+	const char *lmfn, *probdefn, *lsnfn, *text;
 
 	if ((config = cmd_ln_parse_r(NULL, defn, argc, argv, TRUE)) == NULL)
 		return 1;
@@ -253,6 +268,12 @@ main(int argc, char *argv[])
 
 	/* Load the language model. */
 	lmfn = cmd_ln_str_r(config, "-lm");
+        if ((probdefn = cmd_ln_str_r(config, "-probdef")) != NULL)
+            ngram_model_read_classdef(lm, probdefn);
+        ngram_model_apply_weights(lm,
+                                  cmd_ln_float32_r(config, "-lw"),
+                                  cmd_ln_float32_r(config, "-wip"),
+                                  cmd_ln_float32_r(config, "-uw"));
 
 	if (lmfn == NULL
 	    || (lm = ngram_model_read(config, lmfn,

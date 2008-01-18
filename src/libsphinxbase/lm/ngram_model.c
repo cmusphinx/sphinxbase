@@ -336,7 +336,7 @@ ngram_model_recode(ngram_model_t *model, const char *from, const char *to)
 
 int
 ngram_model_apply_weights(ngram_model_t *model,
-		    float32 lw, float32 wip, float32 uw)
+                          float32 lw, float32 wip, float32 uw)
 {
     return (*model->funcs->apply_weights)(model, lw, wip, uw);
 }
@@ -703,7 +703,7 @@ ngram_model_add_class(ngram_model_t *model,
                       const char *classname,
                       float32 classweight,
                       const char **words,
-                      float32 *weights,
+                      const float32 *weights,
                       int32 n_words)
 {
     ngram_class_t *lmclass;
