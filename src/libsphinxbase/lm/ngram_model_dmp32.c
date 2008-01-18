@@ -76,7 +76,7 @@ ngram_model_dmp32_score(ngram_model_t *model, int32 wid,
                         int32 *history, int32 n_hist,
                         int32 *n_used)
 {
-    return NGRAM_SCORE_ERROR;
+    return model->log_zero;
 }
 
 static int32
@@ -84,7 +84,7 @@ ngram_model_dmp32_raw_score(ngram_model_t *model, int32 wid,
                             int32 *history, int32 n_hist,
                             int32 *n_used)
 {
-    return NGRAM_SCORE_ERROR;
+    return model->log_zero;
 }
 
 static void

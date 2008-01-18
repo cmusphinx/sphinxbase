@@ -81,9 +81,7 @@ enum ngram_file_type_e {
     NGRAM_HTK    /**< HTK SLF format (write only) */
 };
 
-#define NGRAM_SCORE_ERROR 1  /**< Impossible log probability */
 #define NGRAM_INVALID_WID -1 /**< Impossible word ID */
-#define NGRAM_UNKNOWN_WID 0  /**< ID of unknown word <UNK> */
 
 /**
  * Read an N-Gram model from a file on disk.
@@ -152,6 +150,19 @@ int ngram_model_apply_weights(ngram_model_t *model,
  * ngram_tg_score(), or ngram_bg_score() instead.  In the future there
  * will probably be a version that takes a general language model
  * state object, to support suffix-array LM and things like that.
+ *
+ * If one of the words is not in the LM's vocabulary, the result will
+ * depend on whether this is an open or closed vocabulary language
+ * model.  For an open-vocabulary model, unknown words are all mapped
+ * to the unigram <UNK> which has a non-zero probability and also
+ * participates in higher-order N-Grams.  Therefore, you will get a
+ * score of some sort in this case.
+ *
+ * For a closed-vocabulary model, unknown words are impossible and
+ * thus have zero probability.  Therefore, if <code>word</code> is
+ * unknown, this function will return a "zero" log-probability, i.e. a
+ * large negative number.  To obtain this number for comparison, call
+ * ngram_zero().
  */
 int32 ngram_score(ngram_model_t *model, const char *word, ...);
 
@@ -206,6 +217,22 @@ int32 ngram_wid(ngram_model_t *model, const char *word);
  * Look up word string for numerical word ID.
  */
 const char *ngram_word(ngram_model_t *model, int32 wid);
+
+/**
+ * Get the unknown word ID for a language model.
+ *
+ * Language models can be either "open vocabulary" or "closed
+ * vocabulary".  The difference is that the former assigns a fixed
+ * non-zero unigram probability to unknown words, while the latter
+ * does not allow unknown words (or, equivalently, it assigns them
+ * zero probability).
+ */
+int32 ngram_unknown_wid(ngram_model_t *model);
+
+/**
+ * Get the "zero" log-probability value for a language model.
+ */
+int32 ngram_zero(ngram_model_t *model);
 
 /**
  * Add a word (unigram) to the language model.

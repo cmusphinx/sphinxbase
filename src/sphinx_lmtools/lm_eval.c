@@ -141,7 +141,7 @@ calc_entropy(ngram_model_t *lm, char **words, int32 n,
 			continue;
 		}
 		/* Skip and count OOVs. */
-		if (wids[i] == NGRAM_UNKNOWN_WID) {
+		if (wids[i] == NGRAM_INVALID_WID) {
 			++noovs;
 			continue;
 		}

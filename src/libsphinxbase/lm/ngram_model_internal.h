@@ -68,6 +68,7 @@ struct ngram_model_s {
     int32 log_uw;       /**< Log of unigram weight */
     int32 log_uniform;  /**< Log of uniform (0-gram) probability */
     int32 log_uniform_weight; /**< Log of uniform weight (i.e. 1 - unigram weight) */
+    int32 log_zero;     /**< Zero probability, cached here for quick lookup */
     char **word_str;    /**< Unigram names */
     hash_table_t *wid;  /**< Mapping of unigram names to word IDs. */
     struct ngram_class_s **classes; /**< Word class definitions. */
@@ -141,7 +142,7 @@ typedef struct ngram_funcs_s {
      * includes reallocating or otherwise resizing the set of unigrams.
      *
      * @return The language model score (not raw log-probability) of
-     * the new word, or NGRAM_SCORE_ERROR for failure.
+     * the new word, or 0 for failure.
      */
     int32 (*add_ug)(ngram_model_t *model,
                     int32 wid, int32 lweight);
@@ -214,6 +215,8 @@ void ngram_class_free(ngram_class_t *lmclass);
 
 /**
  * Get the in-class log probability for a word in an N-Gram class.
+ *
+ * @return This probability, or 0 if word not found.
  */
 int32 ngram_class_prob(ngram_class_t *lmclass, int32 wid);
 

@@ -307,7 +307,7 @@ ngram_model_set_score(ngram_model_t *base, int32 wid,
 
     /* Interpolate if there is no current. */
     if (set->cur == -1) {
-        score = logmath_get_zero(base->lmath);
+        score = base->log_zero;
         for (i = 0; i < set->n_models; ++i) {
             int32 j;
             /* Map word and history IDs for each model. */
@@ -347,7 +347,7 @@ ngram_model_set_raw_score(ngram_model_t *base, int32 wid,
 
     /* Interpolate if there is no current. */
     if (set->cur == -1) {
-        score = logmath_get_zero(base->lmath);
+        score = base->log_zero;
         for (i = 0; i < set->n_models; ++i) {
             int32 j;
             /* Map word and history IDs for each model. */
@@ -385,7 +385,7 @@ ngram_model_set_add_ug(ngram_model_t *base,
        model and we have a new word ID for it.  Add it to submodels
        and track the word IDs. */
     newwid = ckd_calloc(set->n_models, sizeof(*newwid));
-    prob = logmath_get_zero(base->lmath);
+    prob = base->log_zero;
     for (i = 0; i < set->n_models; ++i) {
         int32 wprob, n_hist;
 
@@ -397,7 +397,7 @@ ngram_model_set_add_ug(ngram_model_t *base,
                                              logmath_exp(base->lmath, lweight));
             if (newwid[i] == NGRAM_INVALID_WID) {
                 ckd_free(newwid);
-                return NGRAM_SCORE_ERROR;
+                return base->log_zero;
             }
         }
         /* Now get the unigram probability for the new word and either

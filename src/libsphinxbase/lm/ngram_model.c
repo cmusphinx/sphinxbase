@@ -159,6 +159,7 @@ ngram_model_init(ngram_model_t *base,
     base->log_uw = 0;  /* i.e. 1.0 */
     base->log_uniform = logmath_log(lmath, 1.0 / n_unigram);
     base->log_uniform_weight = logmath_get_zero(lmath);
+    base->log_zero = logmath_get_zero(lmath);
     /* Allocate space for word strings. */
     base->word_str = ckd_calloc(n_unigram, sizeof(char *));
     /* NOTE: They are no longer case-insensitive since we are allowing
@@ -353,8 +354,10 @@ ngram_ng_score(ngram_model_t *model, int32 wid, int32 *history,
         ngram_class_t *lmclass = model->classes[NGRAM_CLASSID(wid)];
 
         class_weight = ngram_class_prob(lmclass, wid);
-        if (class_weight == NGRAM_SCORE_ERROR)
-            return class_weight;
+        if (class_weight == 0) /* Yes, this is correct, because
+                                * log_zero is not available to
+                                * ngram_class_prob() */
+            return model->log_zero;
         wid = lmclass->tag_wid;
     }
     for (i = 0; i < n_hist; ++i) {
@@ -423,7 +426,7 @@ ngram_ng_prob(ngram_model_t *model, int32 wid, int32 *history,
         ngram_class_t *lmclass = model->classes[NGRAM_CLASSID(wid)];
 
         class_weight = ngram_class_prob(lmclass, wid);
-        if (class_weight == NGRAM_SCORE_ERROR)
+        if (class_weight == model->log_zero)
             return class_weight;
         wid = lmclass->tag_wid;
     }
@@ -469,15 +472,32 @@ ngram_prob(ngram_model_t *model, const char *word, ...)
 }
 
 int32
+ngram_unknown_wid(ngram_model_t *model)
+{
+    int32 val;
+
+    /* Look up <UNK>, if not found return NGRAM_INVALID_WID. */
+    if (hash_table_lookup_int32(model->wid, "<UNK>", &val) == -1)
+        return NGRAM_INVALID_WID;
+    else
+        return val;
+}
+
+int32
+ngram_zero(ngram_model_t *model)
+{
+    return model->log_zero;
+}
+
+int32
 ngram_wid(ngram_model_t *model, const char *word)
 {
-    void *val;
+    int32 val;
 
-    /* FIXME@!! If <UNK> is not WID 0 this is bogus. */
-    if (hash_table_lookup(model->wid, word, &val) == -1)
-        return NGRAM_UNKNOWN_WID;
+    if (hash_table_lookup_int32(model->wid, word, &val) == -1)
+        return ngram_unknown_wid(model);
     else
-        return (int32)(long)val;
+        return val;
 }
 
 const char *
@@ -534,7 +554,7 @@ int32
 ngram_model_add_word(ngram_model_t *model,
                      const char *word, float32 weight)
 {
-    int32 wid, prob = NGRAM_SCORE_ERROR;
+    int32 wid, prob = model->log_zero;
 
     wid = ngram_add_word_internal(model, word, -1);
     if (wid == NGRAM_INVALID_WID)
@@ -543,7 +563,7 @@ ngram_model_add_word(ngram_model_t *model,
     /* Do what needs to be done to add the word to the unigram. */
     if (model->funcs && model->funcs->add_ug)
         prob = (*model->funcs->add_ug)(model, wid, logmath_log(model->lmath, weight));
-    if (prob == NGRAM_SCORE_ERROR) {
+    if (prob == 0) {
         if (model->writable)
             ckd_free(model->word_str[wid]);
         return -1;
@@ -760,7 +780,7 @@ ngram_class_prob(ngram_class_t *lmclass, int32 wid)
         while (hash != -1 && lmclass->nword_hash[hash].wid != wid)
             hash = lmclass->nword_hash[hash].next;
         if (hash == -1)
-            return NGRAM_SCORE_ERROR;
+            return 0;
         return lmclass->nword_hash[hash].prob1;
     }
     else {

@@ -204,7 +204,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
      * mappings that can't be precomputed, and also could have OOVs added) */
     model->lm3g.unigrams = new_unigram_table(n_unigram + 1);
     ugptr = model->lm3g.unigrams;
-    for (i = 0; i <= base->n_counts[0]; ++i) {
+    for (i = 0; i <= n_unigram; ++i) {
         /* Skip over the mapping ID, we don't care about it. */
         if (fread(ugptr, sizeof(int32), 1, fp) != 1) {
             E_ERROR("fread(mapid[%d]) failed\n", i);
@@ -230,7 +230,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
         ugptr->bo_wt1.l = logmath_log10_to_log(lmath, ugptr->bo_wt1.f);
         ++ugptr;
     }
-    E_INFO("%8d = LM.unigrams(+trailer) read\n", base->n_counts[0]);
+    E_INFO("%8d = LM.unigrams(+trailer) read\n", n_unigram);
 
     /* Now mmap() the file and read in the rest of the (read-only) stuff. */
     if (do_mmap) {
@@ -258,20 +258,20 @@ ngram_model_dmp_read(cmd_ln_t *config,
     /* read bigrams */
     if (do_mmap) {
         model->lm3g.bigrams = (bigram_t *) (map_base + offset);
-        offset += (base->n_counts[1] + 1) * sizeof(bigram_t);
+        offset += (n_bigram + 1) * sizeof(bigram_t);
     }
     else {
         model->lm3g.bigrams =
-            ckd_calloc(base->n_counts[1] + 1, sizeof(bigram_t));
-        if (fread(model->lm3g.bigrams, sizeof(bigram_t), base->n_counts[1] + 1, fp)
-            != (size_t) base->n_counts[1] + 1) {
+            ckd_calloc(n_bigram + 1, sizeof(bigram_t));
+        if (fread(model->lm3g.bigrams, sizeof(bigram_t), n_bigram + 1, fp)
+            != (size_t) n_bigram + 1) {
             E_ERROR("fread(bigrams) failed\n");
             ngram_model_free(base);
             fclose_comp(fp, is_pipe);
             return NULL;
         }
         if (do_swap) {
-            for (i = 0, bgptr = model->lm3g.bigrams; i <= base->n_counts[1];
+            for (i = 0, bgptr = model->lm3g.bigrams; i <= n_bigram;
                  i++, bgptr++) {
                 SWAP_INT16(&bgptr->wid);
                 SWAP_INT16(&bgptr->prob2);
@@ -280,34 +280,34 @@ ngram_model_dmp_read(cmd_ln_t *config,
             }
         }
     }
-    E_INFO("%8d = LM.bigrams(+trailer) read\n", base->n_counts[1]);
+    E_INFO("%8d = LM.bigrams(+trailer) read\n", n_bigram);
 
     /* read trigrams */
-    if (base->n_counts[2] > 0) {
+    if (n_trigram > 0) {
         if (do_mmap) {
             model->lm3g.trigrams = (trigram_t *) (map_base + offset);
-            offset += base->n_counts[2] * sizeof(trigram_t);
+            offset += n_trigram * sizeof(trigram_t);
         }
         else {
             model->lm3g.trigrams =
-                ckd_calloc(base->n_counts[2], sizeof(trigram_t));
+                ckd_calloc(n_trigram, sizeof(trigram_t));
             if (fread
-                (model->lm3g.trigrams, sizeof(trigram_t), base->n_counts[2], fp)
-                != (size_t) base->n_counts[2]) {
+                (model->lm3g.trigrams, sizeof(trigram_t), n_trigram, fp)
+                != (size_t) n_trigram) {
                 E_ERROR("fread(trigrams) failed\n");
                 ngram_model_free(base);
                 fclose_comp(fp, is_pipe);
                 return NULL;
             }
             if (do_swap) {
-                for (i = 0, tgptr = model->lm3g.trigrams; i < base->n_counts[2];
+                for (i = 0, tgptr = model->lm3g.trigrams; i < n_trigram;
                      i++, tgptr++) {
                     SWAP_INT16(&tgptr->wid);
                     SWAP_INT16(&tgptr->prob3);
                 }
             }
         }
-        E_INFO("%8d = LM.trigrams read\n", base->n_counts[2]);
+        E_INFO("%8d = LM.trigrams read\n", n_trigram);
         /* Initialize tginfo */
         model->lm3g.tginfo =
             ckd_calloc(base->n_1g_alloc, sizeof(tginfo_t *));
@@ -379,7 +379,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
     /* read tseg_base size and tseg_base */
     if (do_mmap)
         offset = ftell(fp);
-    if (base->n_counts[2] > 0) {
+    if (n_trigram > 0) {
         if (do_mmap) {
             memcpy(&k, map_base + offset, sizeof(k));
             offset += sizeof(int32);
@@ -387,7 +387,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
             offset += k * sizeof(int32);
         }
         else {
-            k = (base->n_counts[1] + 1) / BG_SEG_SZ + 1;
+            k = (n_bigram + 1) / BG_SEG_SZ + 1;
             fread(&k, sizeof(k), 1, fp);
             if (do_swap) SWAP_INT32(&k);
             model->lm3g.tseg_base = ckd_calloc(k, sizeof(int32));
@@ -429,9 +429,9 @@ ngram_model_dmp_read(cmd_ln_t *config,
     for (i = 0, j = 0; i < k; i++)
         if (tmp_word_str[i] == '\0')
             j++;
-    if (j != base->n_counts[0]) {
+    if (j != n_unigram) {
         E_ERROR("Error reading word strings (%d doesn't match n_unigrams %d)\n",
-                j, base->n_counts[0]);
+                j, n_unigram);
         ngram_model_free(base);
         fclose_comp(fp, is_pipe);
         return NULL;
@@ -440,7 +440,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
     /* Break up string just read into words */
     if (do_mmap) {
         j = 0;
-        for (i = 0; i < base->n_counts[0]; i++) {
+        for (i = 0; i < n_unigram; i++) {
             base->word_str[i] = tmp_word_str + j;
             if (hash_table_enter(base->wid, base->word_str[i],
                                  (void *)(long)i) != (void *)(long)i) {
@@ -451,7 +451,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
     }
     else {
         j = 0;
-        for (i = 0; i < base->n_counts[0]; i++) {
+        for (i = 0; i < n_unigram; i++) {
             base->word_str[i] = ckd_salloc(tmp_word_str + j);
             if (hash_table_enter(base->wid, base->word_str[i],
                                  (void *)(long)i) != (void *)(long)i) {
