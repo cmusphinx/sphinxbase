@@ -354,23 +354,26 @@ ngram_model_set_interp(ngram_model_t *base,
 {
     ngram_model_set_t *set = (ngram_model_set_t *)base;
 
-    if (set->lweights == NULL) {
+    if (set->lweights == NULL)
         set->lweights = ckd_calloc(set->n_models, sizeof(*set->lweights));
-    }
+
     /* If we have a set of weights here, then set them. */
     if (names && weights) {
         int32 i, j;
         /* We hope there aren't many models. */
         for (i = 0; i < set->n_models; ++i) {
-            for (j = 0; j < set->n_models; ++j) {
+            for (j = 0; j < set->n_models; ++j)
                 if (0 == strcmp(names[i], set->names[j]))
                     break;
+            if (j == set->n_models) {
+                E_ERROR("Unknown LM name %s\n", names[i]);
+                return NULL;
             }
-            if (j == set->n_models)
-                continue;
             set->lweights[j] = logmath_log(base->lmath, weights[i]);
         }
-
+    }
+    else if (weights) {
+        memcpy(set->lweights, weights, set->n_models * sizeof(*set->lweights));
     }
     /* Otherwise just enable existing weights. */
     else {
@@ -381,8 +384,8 @@ ngram_model_set_interp(ngram_model_t *base,
             for (i = 0; i < set->n_models; ++i)
                 set->lweights[i] = uniform;
         }
-        set->cur = -1;
     }
+    set->cur = -1;
     return base;
 }
 
