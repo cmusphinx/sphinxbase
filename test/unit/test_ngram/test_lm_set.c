@@ -41,12 +41,31 @@ main(int argc, char *argv[])
 	TEST_EQUAL_LOG(ngram_score(lmset, "daines", "huggins", "david", NULL),
 		       logmath_log10_to_log(lmath, -0.0512));
 
+	TEST_ASSERT(ngram_model_set_interp(lmset, NULL, NULL));
+	TEST_EQUAL_LOG(ngram_score(lmset, "sphinxtrain", NULL),
+		       logmath_log(lmath,
+				   0.5 * pow(10, -2.7884)
+				   + 0.5 * pow(10, -2.8192)));
+
 	TEST_ASSERT(ngram_model_set_interp(lmset, names, weights));
 	TEST_EQUAL_LOG(ngram_score(lmset, "sphinxtrain", NULL),
 		       logmath_log(lmath,
 				   0.6 * pow(10, -2.7884)
 				   + 0.4 * pow(10, -2.8192)));
 
+	TEST_EQUAL(ngram_model_set_select(lmset, "100_2"), lms[1]);
+	TEST_EQUAL(ngram_score(lmset, "sphinxtrain", NULL),
+		   logmath_log10_to_log(lmath, -2.8192));
+	TEST_EQUAL(ngram_score(lmset, "huggins", "david", NULL),
+		   logmath_log10_to_log(lmath, -0.1597));
+	TEST_EQUAL_LOG(ngram_score(lmset, "daines", "huggins", "david", NULL),
+		       logmath_log10_to_log(lmath, -0.0512));
+
+	TEST_ASSERT(ngram_model_set_interp(lmset, NULL, NULL));
+	TEST_EQUAL_LOG(ngram_score(lmset, "sphinxtrain", NULL),
+		       logmath_log(lmath,
+				   0.6 * pow(10, -2.7884)
+				   + 0.4 * pow(10, -2.8192)));
 
 	ngram_model_free(lmset);
 	ngram_model_free(lms[0]);

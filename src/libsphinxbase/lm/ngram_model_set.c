@@ -143,15 +143,20 @@ ngram_model_set_init(cmd_ln_t *config,
     /* Allocate the combined model, initialize it. */
     model = ckd_calloc(1, sizeof(*model));
     base = &model->base;
-    if (weights)
-        model->cur = -1;
-    else
-        model->cur = 0;
     model->n_models = n_models;
     model->lms = ckd_calloc(n_models, sizeof(*model->lms));
     model->names = ckd_calloc(n_models, sizeof(*model->names));
+    /* Initialize weights to a uniform distribution */
+    model->lweights = ckd_calloc(n_models, sizeof(*model->lweights));
+    {
+        int32 uniform = logmath_log(lmath, 1.0/n_models);
+        for (i = 0; i < n_models; ++i)
+            model->lweights[i] = uniform;
+    }
+    /* Default to interpolate if weights were given. */
     if (weights)
-        model->lweights = ckd_calloc(n_models, sizeof(*model->lweights));
+        model->cur = -1;
+
     n = 0;
     for (i = 0; i < n_models; ++i) {
         model->lms[i] = models[i];
@@ -354,12 +359,10 @@ ngram_model_set_interp(ngram_model_t *base,
 {
     ngram_model_set_t *set = (ngram_model_set_t *)base;
 
-    if (set->lweights == NULL)
-        set->lweights = ckd_calloc(set->n_models, sizeof(*set->lweights));
-
     /* If we have a set of weights here, then set them. */
     if (names && weights) {
         int32 i, j;
+
         /* We hope there aren't many models. */
         for (i = 0; i < set->n_models; ++i) {
             for (j = 0; j < set->n_models; ++j)
@@ -376,15 +379,6 @@ ngram_model_set_interp(ngram_model_t *base,
         memcpy(set->lweights, weights, set->n_models * sizeof(*set->lweights));
     }
     /* Otherwise just enable existing weights. */
-    else {
-        /* Use a uniform set if they weren't initialized. */
-        if (set->lweights == NULL) {
-            int32 uniform = logmath_log(base->lmath, 1.0/set->n_models);
-            int32 i;
-            for (i = 0; i < set->n_models; ++i)
-                set->lweights[i] = uniform;
-        }
-    }
     set->cur = -1;
     return base;
 }
