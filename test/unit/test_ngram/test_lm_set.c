@@ -79,7 +79,42 @@ main(int argc, char *argv[])
 	ngram_model_free(lms[1]);
 
 	/* Now test lmctl files. */
-	TEST_ASSERT(ngram_model_set_read(NULL, LMDIR "/100.lmctl", lmath));
+	lmset = ngram_model_set_read(NULL, LMDIR "/100.lmctl", lmath);
+	TEST_ASSERT(lmset);
+	TEST_EQUAL(ngram_score(lmset, "sphinxtrain", NULL),
+		   logmath_log10_to_log(lmath, -2.7884));
+
+	TEST_ASSERT(ngram_model_set_interp(lmset, NULL, NULL));
+	TEST_EQUAL_LOG(ngram_score(lmset, "sphinxtrain", NULL),
+		       logmath_log(lmath,
+				   (1.0 / 3.0) * pow(10, -2.7884)
+				   + (1.0 / 3.0) * pow(10, -2.8192)));
+
+	ngram_model_set_select(lmset, "100_2");
+	TEST_EQUAL(ngram_score(lmset, "sphinxtrain", NULL),
+		   logmath_log10_to_log(lmath, -2.8192));
+	TEST_EQUAL(ngram_score(lmset, "huggins", "david", NULL),
+		   logmath_log10_to_log(lmath, -0.1597));
+	TEST_EQUAL_LOG(ngram_score(lmset, "daines", "huggins", "david", NULL),
+		       logmath_log10_to_log(lmath, -0.0512));
+
+	ngram_model_set_select(lmset, "100");
+	TEST_EQUAL(ngram_score(lmset, "sphinxtrain", NULL),
+		   logmath_log10_to_log(lmath, -2.7884));
+	TEST_EQUAL(ngram_score(lmset, "huggins", "david", NULL),
+		   logmath_log10_to_log(lmath, -0.0361));
+	TEST_EQUAL_LOG(ngram_score(lmset, "daines", "huggins", "david", NULL),
+		       logmath_log10_to_log(lmath, -0.4105));
+
+	/* Test class probabilities. */
+	ngram_model_set_select(lmset, "100");
+	TEST_EQUAL_LOG(ngram_score(lmset, "scylla:scylla", NULL),
+		       logmath_log10_to_log(lmath, -2.7884) + logmath_log(lmath, 0.4));
+	TEST_EQUAL_LOG(ngram_score(lmset, "scooby:scylla", NULL),
+		       logmath_log10_to_log(lmath, -2.7884) + logmath_log(lmath, 0.1));
+	TEST_EQUAL_LOG(ngram_score(lmset, "apparently", "karybdis:scylla", NULL),
+		       logmath_log10_to_log(lmath, -0.5172));
+
 
 	logmath_free(lmath);
 	return 0;

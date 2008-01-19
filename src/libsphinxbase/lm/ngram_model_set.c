@@ -77,7 +77,6 @@ build_widmap(ngram_model_t *base, logmath_t *lmath, int32 n)
     /* Create the set of merged words. */
     for (i = 0; i < set->n_models; ++i) {
         int32 j;
-        /* FIXME: Not really sure what to do with class words yet. */
         for (j = 0; j < models[i]->n_words; ++j) {
             /* Ignore collisions. */
             (void)hash_table_enter_int32(vocab, models[i]->word_str[j], j);
@@ -167,8 +166,6 @@ ngram_model_set_init(cmd_ln_t *config,
         /* N is the maximum of all merged models. */
         if (models[i]->n > n)
             n = models[i]->n;
-        /* FIXME: Don't know what to do with classes... actually,
-         * probably nothing.*/
     }
 
     /* Now build the word-ID mapping and merged vocabulary. */
@@ -301,13 +298,16 @@ ngram_model_set_read(cmd_ln_t *config,
 
     /* Now construct arrays out of lms and lmnames, and build an
      * ngram_model_set. */
+    lms = glist_reverse(lms);
+    lmnames = glist_reverse(lmnames);
     {
-        int32 n_models = glist_count(lms);
+        int32 n_models;
         ngram_model_t **lm_array;
         char **name_array;
         gnode_t *lm_node, *name_node;
         int32 i;
 
+        n_models = glist_count(lms);
         lm_array = ckd_calloc(n_models, sizeof(*lm_array));
         name_array = ckd_calloc(n_models, sizeof(*name_array));
         lm_node = lms;
