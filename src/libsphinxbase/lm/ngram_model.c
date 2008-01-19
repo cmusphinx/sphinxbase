@@ -149,23 +149,34 @@ ngram_model_init(ngram_model_t *base,
                  int32 n, int32 n_unigram)
 {
     base->funcs = funcs;
-    base->lmath = lmath;
     base->n = n;
-    base->n_counts = ckd_calloc(3, sizeof(*base->n_counts));
+    /* If this was previously initialized... */
+    if (base->n_counts == NULL)
+        base->n_counts = ckd_calloc(3, sizeof(*base->n_counts));
     base->n_1g_alloc = base->n_words = n_unigram;
-    /* Set default values for weights. */
-    base->lw = 1.0;
-    base->log_wip = 0; /* i.e. 1.0 */
-    base->log_uw = 0;  /* i.e. 1.0 */
-    base->log_uniform = logmath_log(lmath, 1.0 / n_unigram);
-    base->log_uniform_weight = logmath_get_zero(lmath);
-    base->log_zero = logmath_get_zero(lmath);
-    /* Allocate space for word strings. */
-    base->word_str = ckd_calloc(n_unigram, sizeof(char *));
+    /* Don't reset weights if logmath object hasn't changed. */
+    if (base->lmath != lmath) {
+        /* Set default values for weights. */
+        base->lw = 1.0;
+        base->log_wip = 0; /* i.e. 1.0 */
+        base->log_uw = 0;  /* i.e. 1.0 */
+        base->log_uniform = logmath_log(lmath, 1.0 / n_unigram);
+        base->log_uniform_weight = logmath_get_zero(lmath);
+        base->log_zero = logmath_get_zero(lmath);
+        base->lmath = lmath;
+    }
+    /* Allocate or reallocate space for word strings. */
+    if (base->word_str)
+        base->word_str = ckd_realloc(base->word_str, n_unigram * sizeof(char *));
+    else
+        base->word_str = ckd_calloc(n_unigram, sizeof(char *));
     /* NOTE: They are no longer case-insensitive since we are allowing
      * other encodings for word strings.  Beware. */
-    base->wid = hash_table_new(n_unigram, FALSE);
-
+    if (base->wid)
+        hash_table_empty(base->wid);
+    else
+        base->wid = hash_table_new(n_unigram, FALSE);
+    
     return 0;
 }
 

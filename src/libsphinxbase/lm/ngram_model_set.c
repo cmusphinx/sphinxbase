@@ -61,6 +61,59 @@ my_compare(const void *a, const void *b)
         return strcmp(*(char * const *)a, *(char * const *)b);
 }
 
+static void
+build_widmap(ngram_model_t *base, logmath_t *lmath, int32 n)
+{
+    ngram_model_set_t *set = (ngram_model_set_t *)base;
+    ngram_model_t **models = set->lms;
+    hash_table_t *vocab;
+    glist_t hlist;
+    gnode_t *gn;
+    int32 i;
+
+    /* Construct a merged vocabulary and a set of word-ID mappings. */
+    vocab = hash_table_new(models[0]->n_words, FALSE);
+    /* Create the set of merged words. */
+    for (i = 0; i < set->n_models; ++i) {
+        int32 j;
+        /* FIXME: Not really sure what to do with class words yet. */
+        for (j = 0; j < models[i]->n_words; ++j) {
+            /* Ignore collisions. */
+            (void)hash_table_enter_int32(vocab, models[i]->word_str[j], j);
+        }
+    }
+    /* Create the array of words, then sort it. */
+    if (hash_table_lookup(vocab, "<UNK>", NULL) != 0)
+        (void)hash_table_enter_int32(vocab, "<UNK>", 0);
+    /* Now we know the number of unigrams, initialize the base model. */
+    ngram_model_init(base, &ngram_model_set_funcs, lmath, n, hash_table_inuse(vocab));
+    base->writable = FALSE; /* We will reuse the pointers from the submodels. */
+    i = 0;
+    hlist = hash_table_tolist(vocab, NULL);
+    for (gn = hlist; gn; gn = gnode_next(gn)) {
+        hash_entry_t *ent = gnode_ptr(gn);
+        base->word_str[i++] = (char *)ent->key;
+    }
+    glist_free(hlist);
+    qsort(base->word_str, base->n_words, sizeof(*base->word_str), my_compare);
+
+    /* Now create the word ID mappings. */
+    set->widmap = (int32 **) ckd_calloc_2d(base->n_words, set->n_models,
+                                           sizeof(**set->widmap));
+    for (i = 0; i < base->n_words; ++i) {
+        int32 j;
+        /* Also create the master wid mapping. */
+        (void)hash_table_enter_int32(base->wid, base->word_str[i], i);
+        /* printf("%s: %d => ", base->word_str[i], i); */
+        for (j = 0; j < set->n_models; ++j) {
+            set->widmap[i][j] = ngram_wid(models[j], base->word_str[i]);
+            /* printf("%d ", set->widmap[i][j]); */
+        }
+        /* printf("\n"); */
+    }
+    hash_table_free(vocab);
+}
+
 ngram_model_t *
 ngram_model_set_init(cmd_ln_t *config,
                      ngram_model_t **models,
@@ -71,9 +124,6 @@ ngram_model_set_init(cmd_ln_t *config,
     ngram_model_set_t *model;
     ngram_model_t *base;
     logmath_t *lmath;
-    hash_table_t *vocab;
-    glist_t hlist;
-    gnode_t *gn;
     int32 i, n;
 
     if (n_models == 0) /* WTF */
@@ -111,48 +161,8 @@ ngram_model_set_init(cmd_ln_t *config,
         /* FIXME: Don't know what to do with classes... */
     }
 
-    /* Construct a merged vocabulary and a set of word-ID mappings. */
-    vocab = hash_table_new(models[0]->n_words, FALSE);
-    /* Create the set of merged words. */
-    for (i = 0; i < n_models; ++i) {
-        int32 j;
-        /* FIXME: Not really sure what to do with class words yet. */
-        for (j = 0; j < models[i]->n_words; ++j) {
-            /* Ignore collisions. */
-            (void)hash_table_enter_int32(vocab, models[i]->word_str[j], j);
-        }
-    }
-    /* Create the array of words, then sort it. */
-    if (hash_table_lookup(vocab, "<UNK>", NULL) != 0)
-        (void)hash_table_enter_int32(vocab, "<UNK>", 0);
-    /* Now we know the number of unigrams, initialize the base model. */
-    ngram_model_init(base, &ngram_model_set_funcs, lmath, n,
-                     hash_table_inuse(vocab));
-    base->writable = FALSE; /* We will reuse the pointers from the submodels. */
-    i = 0;
-    hlist = hash_table_tolist(vocab, NULL);
-    for (gn = hlist; gn; gn = gnode_next(gn)) {
-        hash_entry_t *ent = gnode_ptr(gn);
-        base->word_str[i++] = (char *)ent->key;
-    }
-    glist_free(hlist);
-    qsort(base->word_str, base->n_words, sizeof(*base->word_str), my_compare);
-
-    /* Now create the word ID mappings. */
-    model->widmap = (int32 **) ckd_calloc_2d(base->n_words, n_models,
-                                             sizeof(**model->widmap));
-    for (i = 0; i < base->n_words; ++i) {
-        int32 j;
-        /* Also create the master wid mapping. */
-        (void)hash_table_enter_int32(base->wid, base->word_str[i], i);
-        /* printf("%s: %d => ", base->word_str[i], i); */
-        for (j = 0; j < n_models; ++j) {
-            model->widmap[i][j] = ngram_wid(models[j], base->word_str[i]);
-            /* printf("%d ", model->widmap[i][j]); */
-        }
-        /* printf("\n"); */
-    }
-
+    /* Now build the word-ID mapping and merged vocabulary. */
+    build_widmap(base, lmath, n);
     return base;
 }
 
@@ -235,13 +245,30 @@ ngram_model_set_add(ngram_model_t *base,
                     float32 weight)
 {
     ngram_model_set_t *set = (ngram_model_set_t *)base;
+    float32 fprob;
+    int32 scale, i;
 
     /* Add it to the array of lms. */
+    ++set->n_models;
+    set->lms = ckd_realloc(set->lms, set->n_models * sizeof(*set->lms));
+    set->lms[set->n_models - 1] = model;
+    if (model->n > base->n)
+        base->n = model->n;
 
     /* Renormalize the interpolation weights. */
+    fprob = weight * 1.0 / set->n_models;
+    set->lweights = ckd_realloc(set->lweights,
+                               set->n_models * sizeof(*set->lweights));
+    set->lweights[set->n_models - 1] = logmath_log(base->lmath, fprob);
+    /* Now normalize everything else to fit it in.  This is
+     * accomplished by simply scaling all the other probabilities
+     * by (1-fprob). */
+    scale = logmath_log(base->lmath, 1.0 - fprob);
+    for (i = 0; i < set->n_models - 1; ++i)
+        set->lweights[i] += scale;
 
-    /* Expand the word ID mapping. */
-
+    /* Rebuild the word ID mapping. */
+    build_widmap(base, base->lmath, base->n);
     return model;
 }
 
@@ -251,7 +278,8 @@ ngram_model_set_remove(ngram_model_t *base,
 {
     ngram_model_set_t *set = (ngram_model_set_t *)base;
     ngram_model_t *submodel;
-    int32 lmidx;
+    int32 lmidx, scale, n, i;
+    float32 fprob;
 
     for (lmidx = 0; lmidx < set->n_models; ++lmidx)
         if (0 == strcmp(name, set->names[lmidx]))
@@ -260,12 +288,30 @@ ngram_model_set_remove(ngram_model_t *base,
         return NULL;
     submodel = set->lms[lmidx];
 
-    /* Remove it from the array of lms. */
+    /* Renormalize the interpolation weights by scaling them by
+     * 1/(1-fprob) */
+    fprob = logmath_exp(base->lmath, set->lweights[lmidx]);
+    scale = logmath_log(base->lmath, 1.0 - fprob);
 
-    /* Renormalize the interpolation weights. */
+    /* Remove it from the array of lms, renormalize remaining weights,
+     * and recalcluate n. */
+    --set->n_models;
+    n = 0;
+    for (i = 0; i < set->n_models - 1; ++i) {
+        if (i >= lmidx) {
+            set->lms[i] = set->lms[i+1];
+            set->lweights[i] = set->lweights[i+1];
+        }
+        set->lweights[i] -= scale;
+        if (set->lms[i]->n > n)
+            n = set->lms[i]->n;
+    }
+    /* There's no need to shrink these arrays. */
+    set->lms[set->n_models] = NULL;
+    set->lweights[set->n_models] = base->log_zero;
 
-    /* Remove this lm from the word ID mapping. */
-
+    /* Rebuild the word ID mapping. */
+    build_widmap(base, base->lmath, n);
     return submodel;
 }
 
@@ -275,6 +321,22 @@ ngram_model_set_map_words(ngram_model_t *base,
                           int32 n_words)
 {
     ngram_model_set_t *set = (ngram_model_set_t *)base;
+    int32 i;
+
+    /* Recreate the word mapping. */
+    ckd_free(base->word_str);
+    ckd_free_2d((void **)set->widmap);
+    base->writable = TRUE;
+    base->word_str = ckd_calloc(n_words, sizeof(*base->word_str));
+    set->widmap = (int32 **)ckd_calloc_2d(n_words, set->n_models, sizeof(**set->widmap));
+    for (i = 0; i < n_words; ++i) {
+        int32 j;
+        base->word_str[i] = ckd_salloc(words[i]);
+        (void)hash_table_enter_int32(base->wid, base->word_str[i], i);
+        for (j = 0; j < set->n_models; ++j) {
+            set->widmap[i][j] = ngram_wid(set->lms[j], base->word_str[i]);
+        }
+    }
 
     return (const char **)set->widmap;
 }
