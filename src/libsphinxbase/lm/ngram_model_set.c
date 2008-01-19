@@ -143,7 +143,10 @@ ngram_model_set_init(cmd_ln_t *config,
     /* Allocate the combined model, initialize it. */
     model = ckd_calloc(1, sizeof(*model));
     base = &model->base;
-    model->cur = -1;
+    if (weights)
+        model->cur = -1;
+    else
+        model->cur = 0;
     model->n_models = n_models;
     model->lms = ckd_calloc(n_models, sizeof(*model->lms));
     model->names = ckd_calloc(n_models, sizeof(*model->names));
@@ -325,11 +328,15 @@ ngram_model_set_select(ngram_model_t *base,
                        const char *name)
 {
     ngram_model_set_t *set = (ngram_model_set_t *)base;
-    ngram_model_t *prev = NULL;
     int32 i;
 
-    if (set->cur != -1)
-        prev = set->lms[set->cur];
+    if (name == NULL) {
+        if (set->cur == -1)
+            return NULL;
+        else
+            return set->lms[set->cur];
+    }
+
     /* There probably won't be very many submodels. */
     for (i = 0; i < set->n_models; ++i)
         if (0 == strcmp(set->names[i], name))
@@ -337,7 +344,7 @@ ngram_model_set_select(ngram_model_t *base,
     if (i == set->n_models)
         return NULL;
     set->cur = i;
-    return prev;
+    return set->lms[set->cur];
 }
 
 ngram_model_t *

@@ -354,12 +354,19 @@ int32 ngram_model_set_count(ngram_model_t *set);
 
 /**
  * Select a single language model from a set for scoring.
+ *
+ * If <code>name</code> is NULL, the current language model (if any)
+ * is returned.  Otherwise, the newly selected model is returned.
  */
 ngram_model_t *ngram_model_set_select(ngram_model_t *set,
                                       const char *name);
 
 /**
  * Set interpolation weights for a set and enables interpolation.
+ *
+ * If <code>weights</code> is NULL, any previously initialized set of
+ * weights will be used.  If no weights were specified to
+ * ngram_model_set_init(), then a uniform distribution will be used.
  */
 ngram_model_t *ngram_model_set_interp(ngram_model_t *set,
                                       const char **names,
