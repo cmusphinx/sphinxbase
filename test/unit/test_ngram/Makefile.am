@@ -21,4 +21,6 @@ noinst_HEADERS = test_macros.h
 
 EXTRA_DIST = 100.arpa.gz \
 	100.arpa.DMP \
-	100.probdef
+	100.probdef \
+	100_2.arpa.gz \
+	100_2.arpa.DMP
