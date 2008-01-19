@@ -12,7 +12,7 @@ int
 main(int argc, char *argv[])
 {
 	logmath_t *lmath;
-	ngram_model_t *lms[2];
+	ngram_model_t *lms[3];
 	ngram_model_t *lmset;
 	const char *names[] = { "100", "100_2" };
 	float32 weights[] = { 0.6, 0.4 };
@@ -66,6 +66,13 @@ main(int argc, char *argv[])
 		       logmath_log(lmath,
 				   0.6 * pow(10, -2.7884)
 				   + 0.4 * pow(10, -2.8192)));
+
+	lms[2] = ngram_model_read(NULL, LMDIR "/turtle.lm", NGRAM_ARPA, lmath);
+	TEST_ASSERT(ngram_model_set_add(lmset, lms[2], 1.0));
+	TEST_EQUAL_LOG(ngram_score(lmset, "sphinxtrain", NULL),
+		       logmath_log(lmath,
+				   0.6 * (2 / 3) * pow(10, -2.7884)
+				   + 0.4 * (2 / 3) * pow(10, -2.8192)));
 
 	ngram_model_free(lmset);
 	ngram_model_free(lms[0]);

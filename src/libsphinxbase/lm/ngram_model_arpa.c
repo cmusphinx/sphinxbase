@@ -806,6 +806,7 @@ ngram_model_arpa_score(ngram_model_t *base, int32 wid,
                        int32 *n_used)
 {
     ngram_model_arpa_t *model = (ngram_model_arpa_t *)base;
+
     switch (n_hist) {
     case 0:
         /* Access mode: unigram */

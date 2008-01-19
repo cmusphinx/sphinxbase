@@ -369,8 +369,12 @@ ngram_ng_score(ngram_model_t *model, int32 wid, int32 *history,
     int32 score, class_weight = 0;
     int i;
 
+    /* Closed vocabulary, OOV word probability is zero */
+    if (wid == NGRAM_INVALID_WID)
+        return model->log_zero;
+
     /* "Declassify" wid and history */
-    if (wid != NGRAM_INVALID_WID && NGRAM_IS_CLASSWID(wid)) {
+    if (NGRAM_IS_CLASSWID(wid)) {
         ngram_class_t *lmclass = model->classes[NGRAM_CLASSID(wid)];
 
         class_weight = ngram_class_prob(lmclass, wid);
@@ -441,8 +445,12 @@ ngram_ng_prob(ngram_model_t *model, int32 wid, int32 *history,
     int32 prob, class_weight = 0;
     int i;
 
+    /* Closed vocabulary, OOV word probability is zero */
+    if (wid == NGRAM_INVALID_WID)
+        return model->log_zero;
+
     /* "Declassify" wid and history */
-    if (wid != NGRAM_INVALID_WID && NGRAM_IS_CLASSWID(wid)) {
+    if (NGRAM_IS_CLASSWID(wid)) {
         ngram_class_t *lmclass = model->classes[NGRAM_CLASSID(wid)];
 
         class_weight = ngram_class_prob(lmclass, wid);
