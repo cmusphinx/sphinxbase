@@ -43,6 +43,7 @@
 
 #include <err.h>
 #include <ckd_alloc.h>
+#include <strfuncs.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -186,8 +187,7 @@ ngram_model_set_read(cmd_ln_t *config,
     char str[1024];
     ngram_model_t *set = NULL;
     hash_table_t *classes;
-
-    E_INFO("Reading LM control file '%s'\n", lmctlfile);
+    char *basedir, *c;
 
     /* Read all the class definition files to accumulate a mapping of
      * classnames to definitions. */
@@ -196,13 +196,37 @@ ngram_model_set_read(cmd_ln_t *config,
         E_ERROR_SYSTEM("Failed to open %s", lmctlfile);
         return NULL;
     }
+
+    /* Try to find the base directory to append to relative paths in
+     * the lmctl file. */
+    if ((c = strrchr(lmctlfile, '/')) || (c = strrchr(lmctlfile, '\\'))) {
+        /* Include the trailing slash. */
+        basedir = ckd_calloc(c - lmctlfile + 2, 1);
+        memcpy(basedir, lmctlfile, c - lmctlfile + 1);
+    }
+    else {
+        basedir = NULL;
+    }
+    E_INFO("Reading LM control file '%s'\n", lmctlfile);
+    if (basedir)
+        E_INFO("Will prepend '%s' to unqualified paths\n", basedir);
+
     if (fscanf(ctlfp, "%1023s", str) == 1) {
         if (strcmp(str, "{") == 0) {
             /* Load LMclass files */
             while ((fscanf(ctlfp, "%1023s", str) == 1)
                    && (strcmp(str, "}") != 0)) {
-                if (read_classdef_file(classes, str) < 0)
+                char *deffile;
+                if (basedir && str[0] != '/' && str[0] != '\\')
+                    deffile = string_join(basedir, str, NULL);
+                else
+                    deffile = ckd_salloc(str);
+                E_INFO("Reading classdef from '%s'\n", deffile);
+                if (read_classdef_file(classes, deffile) < 0) {
+                    ckd_free(deffile);
                     goto error_out;
+                }
+                ckd_free(deffile);
             }
 
             if (strcmp(str, "}") != 0) {
@@ -219,12 +243,15 @@ ngram_model_set_read(cmd_ln_t *config,
         str[0] = '\0';
 
     /* Read in one LM at a time and add classes to them as necessary. */
-    lms = lmnames = NULL;
     while (str[0] != '\0') {
         char *lmfile;
         ngram_model_t *lm;
 
-        lmfile = ckd_salloc(str);
+        if (basedir && str[0] != '/' && str[0] != '\\')
+            lmfile = string_join(basedir, str, NULL);
+        else
+            lmfile = ckd_salloc(str);
+        E_INFO("Reading lm from '%s'\n", lmfile);
         lm = ngram_model_read(config, lmfile, NGRAM_AUTO, lmath);
         if (lm == NULL) {
             ckd_free(lmfile);
@@ -237,7 +264,7 @@ ngram_model_set_read(cmd_ln_t *config,
         }
         ckd_free(lmfile);
         lms = glist_add_ptr(lms, lm);
-        lmnames = glist_add_ptr(lms, ckd_salloc(str));
+        lmnames = glist_add_ptr(lmnames, ckd_salloc(str));
 
         if (fscanf(ctlfp, "%1023s", str) == 1) {
             if (strcmp(str, "{") == 0) {
@@ -247,6 +274,7 @@ ngram_model_set_read(cmd_ln_t *config,
                     void *val;
                     classdef_t *classdef;
 
+                    E_INFO("Adding class '%s'\n", str);
                     if (hash_table_lookup(classes, str, &val) == -1) {
                         E_ERROR("Unknown class %s in control file\n", str);
                         goto error_out;
@@ -317,6 +345,7 @@ error_out:
             classdef_free(he->val);
         }
         hash_table_free(classes);
+        ckd_free(basedir);
     }
     return set;
 }
@@ -386,6 +415,7 @@ ngram_model_set_interp(ngram_model_t *base,
 ngram_model_t *
 ngram_model_set_add(ngram_model_t *base,
                     ngram_model_t *model,
+                    const char *name,
                     float32 weight)
 {
     ngram_model_set_t *set = (ngram_model_set_t *)base;
@@ -396,6 +426,8 @@ ngram_model_set_add(ngram_model_t *base,
     ++set->n_models;
     set->lms = ckd_realloc(set->lms, set->n_models * sizeof(*set->lms));
     set->lms[set->n_models - 1] = model;
+    set->names = ckd_realloc(set->names, set->n_models * sizeof(*set->names));
+    set->names[set->n_models - 1] = ckd_salloc(name);
     if (model->n > base->n)
         base->n = model->n;
 

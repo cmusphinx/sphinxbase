@@ -380,6 +380,7 @@ ngram_model_t *ngram_model_set_interp(ngram_model_t *set,
  */
 ngram_model_t *ngram_model_set_add(ngram_model_t *set,
                                    ngram_model_t *model,
+                                   const char *name,
                                    float32 weight);
 
 /**

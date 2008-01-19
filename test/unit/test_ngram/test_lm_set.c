@@ -68,15 +68,19 @@ main(int argc, char *argv[])
 				   + 0.4 * pow(10, -2.8192)));
 
 	lms[2] = ngram_model_read(NULL, LMDIR "/turtle.lm", NGRAM_ARPA, lmath);
-	TEST_ASSERT(ngram_model_set_add(lmset, lms[2], 1.0));
+	TEST_ASSERT(ngram_model_set_add(lmset, lms[2], "turtle", 1.0));
 	TEST_EQUAL_LOG(ngram_score(lmset, "sphinxtrain", NULL),
 		       logmath_log(lmath,
-				   0.6 * (2 / 3) * pow(10, -2.7884)
-				   + 0.4 * (2 / 3) * pow(10, -2.8192)));
+				   0.6 * (2.0 / 3.0) * pow(10, -2.7884)
+				   + 0.4 * (2.0 / 3.0) * pow(10, -2.8192)));
 
 	ngram_model_free(lmset);
 	ngram_model_free(lms[0]);
 	ngram_model_free(lms[1]);
+
+	/* Now test lmctl files. */
+	TEST_ASSERT(ngram_model_set_read(NULL, LMDIR "/100.lmctl", lmath));
+
 	logmath_free(lmath);
 	return 0;
 }
