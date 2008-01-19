@@ -267,11 +267,16 @@ int32 ngram_model_read_classdef(ngram_model_t *model,
 
 /**
  * Add a new class to a language model.
+ *
+ * If <code>classname</code> already exists in the unigram set for
+ * <code>model</code>, then it will be converted to a class tag, and
+ * <code>classweight</code> will be ignored.  Otherwise, a new unigram
+ * will be created as in ngram_model_add_word().
  */
 int32 ngram_model_add_class(ngram_model_t *model,
                             const char *classname,
                             float32 classweight,
-                            const char **words,
+                            char **words,
                             const float32 *weights,
                             int32 n_words);
 
@@ -315,7 +320,7 @@ int32 ngram_model_add_class_word(ngram_model_t *model,
  */
 ngram_model_t *ngram_model_set_init(cmd_ln_t *config,
                                     ngram_model_t **models,
-                                    const char **names,
+                                    char **names,
                                     const float32 *weights,
                                     int32 n_models);
 
@@ -324,9 +329,23 @@ ngram_model_t *ngram_model_set_init(cmd_ln_t *config,
  *
  * This file creates a language model set from a "control file" of
  * the type used in Sphinx-II and Sphinx-III.
+ * File format (optional stuff is indicated by enclosing in []):
+ * 
+ *   [{ LMClassFileName LMClassFilename ... }]
+ *   TrigramLMFileName LMName [{ LMClassName LMClassName ... }]
+ *   TrigramLMFileName LMName [{ LMClassName LMClassName ... }]
+ *   ...
+ * (There should be whitespace around the { and } delimiters.)
+ * 
+ * This is an extension of the older format that had only TrigramLMFilenName
+ * and LMName pairs.  The new format allows a set of LMClass files to be read
+ * in and referred to by the trigram LMs.
+ * 
+ * No "comments" allowed in this file.
  */
 ngram_model_t *ngram_model_set_read(cmd_ln_t *config,
-                                    const char *lmctlfile);
+                                    const char *lmctlfile,
+                                    logmath_t *lmath);
 
 /**
  * Returns the number of language models in a set.

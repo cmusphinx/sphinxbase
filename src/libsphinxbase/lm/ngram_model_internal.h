@@ -149,6 +149,15 @@ typedef struct ngram_funcs_s {
 } ngram_funcs_t;
 
 /**
+ * One class definition from a classdef file.
+ */
+typedef struct classdef_s {
+    char **words;
+    float32 *weights;
+    int32 n_words;
+} classdef_t;
+
+/**
  * Initialize the base ngram_model_t structure.
  */
 int32
@@ -201,6 +210,16 @@ int ngram_model_fst_write(ngram_model_t *model,
  */
 int ngram_model_htk_write(ngram_model_t *model,
 			  const char *file_name);
+
+/**
+ * Read a probdef file.
+ */
+int32 read_classdef_file(hash_table_t *classes, const char *classdef_file);
+
+/**
+ * Free a class definition.
+ */
+void classdef_free(classdef_t *classdef);
 
 /**
  * Allocate and initialize an N-Gram class.

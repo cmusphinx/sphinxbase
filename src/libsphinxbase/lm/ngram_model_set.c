@@ -117,7 +117,7 @@ build_widmap(ngram_model_t *base, logmath_t *lmath, int32 n)
 ngram_model_t *
 ngram_model_set_init(cmd_ln_t *config,
                      ngram_model_t **models,
-                     const char **names,
+                     char **names,
                      const float32 *weights,
                      int32 n_models)
 {
@@ -158,7 +158,8 @@ ngram_model_set_init(cmd_ln_t *config,
         /* N is the maximum of all merged models. */
         if (models[i]->n > n)
             n = models[i]->n;
-        /* FIXME: Don't know what to do with classes... */
+        /* FIXME: Don't know what to do with classes... actually,
+         * probably nothing.*/
     }
 
     /* Now build the word-ID mapping and merged vocabulary. */
@@ -168,9 +169,148 @@ ngram_model_set_init(cmd_ln_t *config,
 
 ngram_model_t *
 ngram_model_set_read(cmd_ln_t *config,
-                     const char *lmctlfile)
+                     const char *lmctlfile,
+                     logmath_t *lmath)
 {
-    return NULL;
+    FILE *ctlfp;
+    glist_t lms = NULL;
+    glist_t lmnames = NULL;
+    char str[1024];
+    ngram_model_t *set = NULL;
+    hash_table_t *classes;
+
+    E_INFO("Reading LM control file '%s'\n", lmctlfile);
+
+    /* Read all the class definition files to accumulate a mapping of
+     * classnames to definitions. */
+    classes = hash_table_new(0, FALSE);
+    if ((ctlfp = fopen(lmctlfile, "r")) == NULL) {
+        E_ERROR_SYSTEM("Failed to open %s", lmctlfile);
+        return NULL;
+    }
+    if (fscanf(ctlfp, "%1023s", str) == 1) {
+        if (strcmp(str, "{") == 0) {
+            /* Load LMclass files */
+            while ((fscanf(ctlfp, "%1023s", str) == 1)
+                   && (strcmp(str, "}") != 0)) {
+                if (read_classdef_file(classes, str) < 0)
+                    goto error_out;
+            }
+
+            if (strcmp(str, "}") != 0) {
+                E_ERROR("Unexpected EOF in %s\n", lmctlfile);
+                goto error_out;
+            }
+
+            /* This might be the first LM name. */
+            if (fscanf(ctlfp, "%1023s", str) != 1)
+                str[0] = '\0';
+        }
+    }
+    else
+        str[0] = '\0';
+
+    /* Read in one LM at a time and add classes to them as necessary. */
+    lms = lmnames = NULL;
+    while (str[0] != '\0') {
+        char *lmfile;
+        ngram_model_t *lm;
+
+        lmfile = ckd_salloc(str);
+        lm = ngram_model_read(config, lmfile, NGRAM_AUTO, lmath);
+        if (lm == NULL) {
+            ckd_free(lmfile);
+            goto error_out;
+        }
+        if (fscanf(ctlfp, "%1023s", str) != 1) {
+            E_ERROR("LMname missing after LMFileName '%s'\n", lmfile);
+            ckd_free(lmfile);
+            goto error_out;
+        }
+        ckd_free(lmfile);
+        lms = glist_add_ptr(lms, lm);
+        lmnames = glist_add_ptr(lms, ckd_salloc(str));
+
+        if (fscanf(ctlfp, "%1023s", str) == 1) {
+            if (strcmp(str, "{") == 0) {
+                /* LM uses classes; read their names */
+                while ((fscanf(ctlfp, "%1023s", str) == 1) &&
+                       (strcmp(str, "}") != 0)) {
+                    void *val;
+                    classdef_t *classdef;
+
+                    if (hash_table_lookup(classes, str, &val) == -1) {
+                        E_ERROR("Unknown class %s in control file\n", str);
+                        goto error_out;
+                    }
+                    classdef = val;
+                    if (ngram_model_add_class(lm, str, 1.0,
+                                              classdef->words, classdef->weights,
+                                              classdef->n_words) < 0) {
+                        goto error_out;
+                    }
+                }
+                if (strcmp(str, "}") != 0) {
+                    E_ERROR("Unexpected EOF in %s\n", lmctlfile);
+                    goto error_out;
+                }
+                if (fscanf(ctlfp, "%1023s", str) != 1)
+                    str[0] = '\0';
+            }
+        }
+        else
+            str[0] = '\0';
+    }
+    fclose(ctlfp);
+
+    /* Now construct arrays out of lms and lmnames, and build an
+     * ngram_model_set. */
+    {
+        int32 n_models = glist_count(lms);
+        ngram_model_t **lm_array;
+        char **name_array;
+        gnode_t *lm_node, *name_node;
+        int32 i;
+
+        lm_array = ckd_calloc(n_models, sizeof(*lm_array));
+        name_array = ckd_calloc(n_models, sizeof(*name_array));
+        lm_node = lms;
+        name_node = lmnames;
+        for (i = 0; i < n_models; ++i) {
+            lm_array[i] = gnode_ptr(lm_node);
+            name_array[i] = gnode_ptr(name_node);
+            lm_node = gnode_next(lm_node);
+            name_node = gnode_next(name_node);
+        }
+        set = ngram_model_set_init(config, lm_array, name_array,
+                                   NULL, n_models);
+        ckd_free(lm_array);
+        ckd_free(name_array);
+    }
+error_out:
+    {
+        gnode_t *gn;
+        glist_t hlist;
+
+        if (set == NULL) {
+            for (gn = lms; gn; gn = gnode_next(gn)) {
+                ngram_model_free(gnode_ptr(gn));
+            }
+        }
+        glist_free(lms);
+        for (gn = lmnames; gn; gn = gnode_next(gn)) {
+            ckd_free(gnode_ptr(gn));
+        }
+        glist_free(lmnames);
+        hlist = hash_table_tolist(classes, NULL);
+        for (gn = hlist; gn; gn = gnode_next(gn)) {
+            hash_entry_t *he = gnode_ptr(gn);
+            ckd_free((char *)he->key);
+            classdef_free(he->val);
+        }
+        hash_table_free(classes);
+    }
+    return set;
 }
 
 int32
