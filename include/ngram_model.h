@@ -367,6 +367,9 @@ ngram_model_t *ngram_model_set_interp(ngram_model_t *set,
 
 /**
  * Add a language model to a set.
+ *
+ * Caution: This will obliterate any previous word ID mapping!  If you
+ * were depending on one of those then you will need to rebuild it.
  */
 ngram_model_t *ngram_model_set_add(ngram_model_t *set,
                                    ngram_model_t *model,
@@ -374,6 +377,9 @@ ngram_model_t *ngram_model_set_add(ngram_model_t *set,
 
 /**
  * Remove a language model from a set.
+ *
+ * Caution: This will obliterate any previous word ID mapping!  If you
+ * were depending on one of those then you will need to rebuild it.
  */
 ngram_model_t *ngram_model_set_remove(ngram_model_t *set,
                                       const char *name);
