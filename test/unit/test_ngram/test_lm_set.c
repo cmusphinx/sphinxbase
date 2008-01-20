@@ -15,6 +15,15 @@ main(int argc, char *argv[])
 	ngram_model_t *lms[3];
 	ngram_model_t *lmset;
 	const char *names[] = { "100", "100_2" };
+	const char *words[] = {
+		"<UNK>",
+		"ROBOMAN",
+		"libio",
+		"sphinxtrain",
+		"bigbird",
+		"quuxfuzz"
+	};
+	const int32 n_words = sizeof(words) / sizeof(words[0]);
 	float32 weights[] = { 0.6, 0.4 };
 
 	lmath = logmath_init(1.0001, 0, 0);
@@ -41,18 +50,21 @@ main(int argc, char *argv[])
 	TEST_EQUAL_LOG(ngram_score(lmset, "daines", "huggins", "david", NULL),
 		       logmath_log10_to_log(lmath, -0.0512));
 
+	/* Test interpolation with default weights. */
 	TEST_ASSERT(ngram_model_set_interp(lmset, NULL, NULL));
 	TEST_EQUAL_LOG(ngram_score(lmset, "sphinxtrain", NULL),
 		       logmath_log(lmath,
 				   0.5 * pow(10, -2.7884)
 				   + 0.5 * pow(10, -2.8192)));
 
+	/* Test interpolation with set weights. */
 	TEST_ASSERT(ngram_model_set_interp(lmset, names, weights));
 	TEST_EQUAL_LOG(ngram_score(lmset, "sphinxtrain", NULL),
 		       logmath_log(lmath,
 				   0.6 * pow(10, -2.7884)
 				   + 0.4 * pow(10, -2.8192)));
 
+	/* Test switching back to selected mode. */
 	TEST_EQUAL(ngram_model_set_select(lmset, "100_2"), lms[1]);
 	TEST_EQUAL(ngram_score(lmset, "sphinxtrain", NULL),
 		   logmath_log10_to_log(lmath, -2.8192));
@@ -61,18 +73,22 @@ main(int argc, char *argv[])
 	TEST_EQUAL_LOG(ngram_score(lmset, "daines", "huggins", "david", NULL),
 		       logmath_log10_to_log(lmath, -0.0512));
 
+	/* Test interpolation with previously set weights. */
 	TEST_ASSERT(ngram_model_set_interp(lmset, NULL, NULL));
 	TEST_EQUAL_LOG(ngram_score(lmset, "sphinxtrain", NULL),
 		       logmath_log(lmath,
 				   0.6 * pow(10, -2.7884)
 				   + 0.4 * pow(10, -2.8192)));
 
+	/* Test interpolation with closed-vocabulary models and OOVs. */
 	lms[2] = ngram_model_read(NULL, LMDIR "/turtle.lm", NGRAM_ARPA, lmath);
 	TEST_ASSERT(ngram_model_set_add(lmset, lms[2], "turtle", 1.0));
 	TEST_EQUAL_LOG(ngram_score(lmset, "sphinxtrain", NULL),
 		       logmath_log(lmath,
 				   0.6 * (2.0 / 3.0) * pow(10, -2.7884)
 				   + 0.4 * (2.0 / 3.0) * pow(10, -2.8192)));
+
+	/* Test word mappings. */
 
 	ngram_model_free(lmset);
 	ngram_model_free(lms[0]);
@@ -115,6 +131,21 @@ main(int argc, char *argv[])
 	TEST_EQUAL_LOG(ngram_score(lmset, "apparently", "karybdis:scylla", NULL),
 		       logmath_log10_to_log(lmath, -0.5172));
 
+	/* Test word ID mapping. */
+	ngram_model_set_select(lmset, "turtle");
+	TEST_EQUAL(ngram_wid(lmset, "ROBOMAN"),
+		   ngram_wid(lmset, ngram_word(lmset, ngram_wid(lmset, "ROBOMAN"))));
+	TEST_EQUAL(ngram_wid(lmset, "bigbird"),
+		   ngram_wid(lmset, ngram_word(lmset, ngram_wid(lmset, "bigbird"))));
+	TEST_EQUAL(ngram_wid(lmset, "quuxfuzz"), ngram_unknown_wid(lmset));
+	TEST_EQUAL(ngram_score(lmset, "quuxfuzz", NULL), ngram_zero(lmset));
+	TEST_ASSERT(ngram_model_set_map_words(lmset, words, n_words));
+	TEST_EQUAL(ngram_wid(lmset, "ROBOMAN"),
+		   ngram_wid(lmset, ngram_word(lmset, ngram_wid(lmset, "ROBOMAN"))));
+	TEST_EQUAL(ngram_wid(lmset, "bigbird"),
+		   ngram_wid(lmset, ngram_word(lmset, ngram_wid(lmset, "bigbird"))));
+	TEST_EQUAL(ngram_wid(lmset, "quuxfuzz"), 5);
+	TEST_EQUAL(ngram_score(lmset, "quuxfuzz", NULL), ngram_zero(lmset));
 
 	logmath_free(lmath);
 	return 0;

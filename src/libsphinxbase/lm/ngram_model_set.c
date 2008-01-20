@@ -502,6 +502,7 @@ ngram_model_set_map_words(ngram_model_t *base,
     /* Recreate the word mapping. */
     ckd_free(base->word_str);
     ckd_free_2d((void **)set->widmap);
+    hash_table_empty(base->wid);
     base->writable = TRUE;
     base->word_str = ckd_calloc(n_words, sizeof(*base->word_str));
     set->widmap = (int32 **)ckd_calloc_2d(n_words, set->n_models, sizeof(**set->widmap));
