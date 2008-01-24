@@ -169,6 +169,8 @@ ngram_model_set_init(cmd_ln_t *config,
         if (models[i]->n > n)
             n = models[i]->n;
     }
+    /* Allocate the history mapping table. */
+    model->maphist = ckd_calloc(n - 1, sizeof(*model->maphist));
 
     /* Now build the word-ID mapping and merged vocabulary. */
     build_widmap(base, lmath, n);
@@ -491,8 +493,12 @@ ngram_model_set_add(ngram_model_t *base,
     set->lms[set->n_models - 1] = model;
     set->names = ckd_realloc(set->names, set->n_models * sizeof(*set->names));
     set->names[set->n_models - 1] = ckd_salloc(name);
-    if (model->n > base->n)
+    /* Expand the history mapping table if necessary. */
+    if (model->n > base->n) {
         base->n = model->n;
+        set->maphist = ckd_realloc(set->maphist,
+                                   model->n - 1 * sizeof(*set->maphist));
+    }
 
     /* Renormalize the interpolation weights. */
     fprob = weight * 1.0 / set->n_models;
@@ -548,6 +554,7 @@ ngram_model_set_remove(ngram_model_t *base,
     /* There's no need to shrink these arrays. */
     set->lms[set->n_models] = NULL;
     set->lweights[set->n_models] = base->log_zero;
+    /* No need to shrink maphist either. */
 
     /* Rebuild the word ID mapping. */
     build_widmap(base, base->lmath, n);
@@ -600,12 +607,12 @@ ngram_model_set_score(ngram_model_t *base, int32 wid,
 {
     ngram_model_set_t *set = (ngram_model_set_t *)base;
     int32 mapwid;
-    int32 *maphist;
     int32 score;
     int32 i;
 
-    /* FIXME: Allocating this every time is very bad. */
-    maphist = ckd_calloc(n_hist, sizeof(*maphist));
+    /* Truncate the history. */
+    if (n_hist > base->n - 1)
+        n_hist = base->n - 1;
 
     /* Interpolate if there is no current. */
     if (set->cur == -1) {
@@ -616,14 +623,14 @@ ngram_model_set_score(ngram_model_t *base, int32 wid,
             mapwid = set->widmap[wid][i];
             for (j = 0; j < n_hist; ++j) {
                 if (history[j] == NGRAM_INVALID_WID)
-                    maphist[j] = NGRAM_INVALID_WID;
+                    set->maphist[j] = NGRAM_INVALID_WID;
                 else
-                    maphist[j] = set->widmap[history[j]][i];
+                    set->maphist[j] = set->widmap[history[j]][i];
             }
             score = logmath_add(base->lmath, score,
                                 set->lweights[i] + 
                                 ngram_ng_score(set->lms[i],
-                                               mapwid, maphist, n_hist, n_used));
+                                               mapwid, set->maphist, n_hist, n_used));
         }
     }
     else {
@@ -632,14 +639,14 @@ ngram_model_set_score(ngram_model_t *base, int32 wid,
         mapwid = set->widmap[wid][set->cur];
         for (j = 0; j < n_hist; ++j) {
             if (history[j] == NGRAM_INVALID_WID)
-                maphist[j] = NGRAM_INVALID_WID;
+                set->maphist[j] = NGRAM_INVALID_WID;
             else
-                maphist[j] = set->widmap[history[j]][set->cur];
+                set->maphist[j] = set->widmap[history[j]][set->cur];
         }
         score = ngram_ng_score(set->lms[set->cur],
-                               mapwid, maphist, n_hist, n_used);
+                               mapwid, set->maphist, n_hist, n_used);
     }
-    ckd_free(maphist);
+
     return score;
 }
 
@@ -650,11 +657,12 @@ ngram_model_set_raw_score(ngram_model_t *base, int32 wid,
 {
     ngram_model_set_t *set = (ngram_model_set_t *)base;
     int32 mapwid;
-    int32 *maphist;
     int32 score;
     int32 i;
 
-    maphist = ckd_calloc(n_hist, sizeof(*maphist));
+    /* Truncate the history. */
+    if (n_hist > base->n - 1)
+        n_hist = base->n - 1;
 
     /* Interpolate if there is no current. */
     if (set->cur == -1) {
@@ -665,14 +673,14 @@ ngram_model_set_raw_score(ngram_model_t *base, int32 wid,
             mapwid = set->widmap[wid][i];
             for (j = 0; j < n_hist; ++j) {
                 if (history[j] == NGRAM_INVALID_WID)
-                    maphist[j] = NGRAM_INVALID_WID;
+                    set->maphist[j] = NGRAM_INVALID_WID;
                 else
-                    maphist[j] = set->widmap[history[j]][i];
+                    set->maphist[j] = set->widmap[history[j]][i];
             }
             score = logmath_add(base->lmath, score,
                                 set->lweights[i] + 
                                 ngram_ng_prob(set->lms[i],
-                                              mapwid, maphist, n_hist, n_used));
+                                              mapwid, set->maphist, n_hist, n_used));
         }
     }
     else {
@@ -681,14 +689,14 @@ ngram_model_set_raw_score(ngram_model_t *base, int32 wid,
         mapwid = set->widmap[wid][set->cur];
         for (j = 0; j < n_hist; ++j) {
             if (history[j] == NGRAM_INVALID_WID)
-                maphist[j] = NGRAM_INVALID_WID;
+                set->maphist[j] = NGRAM_INVALID_WID;
             else
-                maphist[j] = set->widmap[history[j]][set->cur];
+                set->maphist[j] = set->widmap[history[j]][set->cur];
         }
         score = ngram_ng_prob(set->lms[set->cur],
-                              mapwid, maphist, n_hist, n_used);
+                              mapwid, set->maphist, n_hist, n_used);
     }
-    ckd_free(maphist);
+
     return score;
 }
 
@@ -754,6 +762,7 @@ ngram_model_set_free(ngram_model_t *base)
         ckd_free(set->names[i]);
     ckd_free(set->names);
     ckd_free(set->lweights);
+    ckd_free(set->maphist);
     ckd_free_2d((void **)set->widmap);
 }
 

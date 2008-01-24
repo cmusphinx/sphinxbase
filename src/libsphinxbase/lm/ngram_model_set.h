@@ -57,6 +57,7 @@ typedef struct ngram_model_set_s {
     char **names;        /**< Names for language models. */
     int32 *lweights;     /**< Log interpolation weights. */
     int32 **widmap;      /**< Word ID mapping for submodels. */
+    int32 *maphist;      /**< Word ID mapping for N-Gram history. */
 } ngram_model_set_t;
 
 #endif /* __NGRAM_MODEL_SET_H__ */
