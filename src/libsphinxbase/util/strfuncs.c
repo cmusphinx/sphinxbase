@@ -85,7 +85,7 @@ str2words(char *line, char **ptr, int32 max_ptr)
     i = 0;                      /* For scanning through the input string */
     while (1) {
         /* Skip whitespace before next word */
-        while (line[i] && isspace((int)line[i]))
+        while (line[i] && isspace((unsigned char)line[i]))
             ++i;
         if (!line[i])
             break;
@@ -106,7 +106,7 @@ str2words(char *line, char **ptr, int32 max_ptr)
         if (ptr != NULL)
             ptr[n] = line + i;
         ++n;
-        while (line[i] && !isspace((int)line[i]))
+        while (line[i] && !isspace((unsigned char)line[i]))
             ++i;
         if (!line[i])
             break;
