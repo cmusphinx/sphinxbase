@@ -71,6 +71,7 @@ main(int argc, char *argv[])
 
 	ngram_model_free(model);
 	logmath_free(lmath);
+	cmd_ln_free_r(config);
 
 	return 0;
 }

@@ -98,6 +98,8 @@ build_widmap(ngram_model_t *base, logmath_t *lmath, int32 n)
     qsort(base->word_str, base->n_words, sizeof(*base->word_str), my_compare);
 
     /* Now create the word ID mappings. */
+    if (set->widmap)
+        ckd_free_2d((void **)set->widmap);
     set->widmap = (int32 **) ckd_calloc_2d(base->n_words, set->n_models,
                                            sizeof(**set->widmap));
     for (i = 0; i < base->n_words; ++i) {
@@ -344,6 +346,7 @@ error_out:
             ckd_free((char *)he->key);
             classdef_free(he->val);
         }
+        glist_free(hlist);
         hash_table_free(classes);
         ckd_free(basedir);
     }
@@ -601,6 +604,7 @@ ngram_model_set_score(ngram_model_t *base, int32 wid,
     int32 score;
     int32 i;
 
+    /* FIXME: Allocating this every time is very bad. */
     maphist = ckd_calloc(n_hist, sizeof(*maphist));
 
     /* Interpolate if there is no current. */
@@ -635,6 +639,7 @@ ngram_model_set_score(ngram_model_t *base, int32 wid,
         score = ngram_ng_score(set->lms[set->cur],
                                mapwid, maphist, n_hist, n_used);
     }
+    ckd_free(maphist);
     return score;
 }
 
@@ -742,6 +747,8 @@ ngram_model_set_free(ngram_model_t *base)
     ngram_model_set_t *set = (ngram_model_set_t *)base;
     int32 i;
 
+    for (i = 0; i < set->n_models; ++i)
+        ngram_model_free(set->lms[i]);
     ckd_free(set->lms);
     for (i = 0; i < set->n_models; ++i)
         ckd_free(set->names[i]);

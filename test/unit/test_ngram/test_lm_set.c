@@ -87,12 +87,7 @@ main(int argc, char *argv[])
 		       logmath_log(lmath,
 				   0.6 * (2.0 / 3.0) * pow(10, -2.7884)
 				   + 0.4 * (2.0 / 3.0) * pow(10, -2.8192)));
-
-	/* Test word mappings. */
-
 	ngram_model_free(lmset);
-	ngram_model_free(lms[0]);
-	ngram_model_free(lms[1]);
 
 	/* Now test lmctl files. */
 	lmset = ngram_model_set_read(NULL, LMDIR "/100.lmctl", lmath);
@@ -147,6 +142,7 @@ main(int argc, char *argv[])
 	TEST_EQUAL(ngram_wid(lmset, "quuxfuzz"), 5);
 	TEST_EQUAL(ngram_score(lmset, "quuxfuzz", NULL), ngram_zero(lmset));
 
+	ngram_model_free(lmset);
 	logmath_free(lmath);
 	return 0;
 }
