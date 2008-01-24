@@ -82,11 +82,40 @@ main(int argc, char *argv[])
 
 	/* Test interpolation with closed-vocabulary models and OOVs. */
 	lms[2] = ngram_model_read(NULL, LMDIR "/turtle.lm", NGRAM_ARPA, lmath);
-	TEST_ASSERT(ngram_model_set_add(lmset, lms[2], "turtle", 1.0));
+	TEST_ASSERT(ngram_model_set_add(lmset, lms[2], "turtle", 1.0, FALSE));
 	TEST_EQUAL_LOG(ngram_score(lmset, "sphinxtrain", NULL),
 		       logmath_log(lmath,
 				   0.6 * (2.0 / 3.0) * pow(10, -2.7884)
 				   + 0.4 * (2.0 / 3.0) * pow(10, -2.8192)));
+	ngram_model_free(lmset);
+
+	/* Test adding and removing language models with preserved
+	 * word ID mappings. */
+	lms[0] = ngram_model_read(NULL, LMDIR "/100.arpa.DMP", NGRAM_DMP, lmath);
+	lms[1] = ngram_model_read(NULL, LMDIR "/100_2.arpa.DMP", NGRAM_DMP, lmath);
+	lms[2] = ngram_model_read(NULL, LMDIR "/turtle.lm", NGRAM_ARPA, lmath);
+	lmset = ngram_model_set_init(NULL, lms, (char **)names, NULL, 1);
+	{
+		int32 wid;
+		wid = ngram_wid(lmset, "sphinxtrain");
+		TEST_ASSERT(ngram_model_set_add(lmset, lms[1], "100_2", 1.0, TRUE));
+		/* Verify that it is the same. */
+		TEST_EQUAL(wid, ngram_wid(lmset, "sphinxtrain"));
+		/* Now add another model and verify that its words
+		 * don't actually get added. */
+		TEST_ASSERT(ngram_model_set_add(lmset, lms[2], "turtle", 1.0, TRUE));
+		TEST_EQUAL(wid, ngram_wid(lmset, "sphinxtrain"));
+		TEST_EQUAL(ngram_unknown_wid(lmset), ngram_wid(lmset, "FORWARD"));
+		/* Remove language model, make sure this doesn't break horribly. */
+		TEST_EQUAL(lms[1], ngram_model_set_remove(lmset, "100_2", TRUE));
+		ngram_model_free(lms[1]);
+		TEST_EQUAL(wid, ngram_wid(lmset, "sphinxtrain"));
+		/* Now enable remapping of word IDs and verify that it works. */
+		TEST_EQUAL(lms[2], ngram_model_set_remove(lmset, "turtle", TRUE));
+		TEST_ASSERT(ngram_model_set_add(lmset, lms[2], "turtle", 1.0, FALSE));
+		printf("FORWARD = %d\n", ngram_wid(lmset, "FORWARD"));
+	}
+
 	ngram_model_free(lmset);
 
 	/* Now test lmctl files. */

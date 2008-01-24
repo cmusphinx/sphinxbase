@@ -400,22 +400,30 @@ ngram_model_t *ngram_model_set_interp(ngram_model_t *set,
 /**
  * Add a language model to a set.
  *
- * Caution: This will obliterate any previous word ID mapping!  If you
- * were depending on one of those then you will need to rebuild it.
+ * @param model The language model to add.
+ * @param name The name to associate with this model.
+ * @param weight Interpolation weight for this model, relative to the
+ *               uniform distribution.  1.0 is a safe value.
+ * @param reuse_widmap Reuse the existing word-ID mapping in
+ * <code>set</code>.  Any new words present in <code>model</code>
+ * will not be added to the word-ID mapping in this case.
  */
 ngram_model_t *ngram_model_set_add(ngram_model_t *set,
                                    ngram_model_t *model,
                                    const char *name,
-                                   float32 weight);
+                                   float32 weight,
+                                   int reuse_widmap);
 
 /**
  * Remove a language model from a set.
  *
- * Caution: This will obliterate any previous word ID mapping!  If you
- * were depending on one of those then you will need to rebuild it.
+ * @param name The name associated with the model to remove.
+ * @param reuse_widmap Reuse the existing word-ID mapping in
+ *                     <code>set</code>.
  */
 ngram_model_t *ngram_model_set_remove(ngram_model_t *set,
-                                      const char *name);
+                                      const char *name,
+                                      int reuse_widmap);
 
 /**
  * Set the word-to-ID mapping for this model set.

@@ -481,7 +481,9 @@ ngram_model_t *
 ngram_model_set_add(ngram_model_t *base,
                     ngram_model_t *model,
                     const char *name,
-                    float32 weight)
+                    float32 weight,
+                    int reuse_widmap)
+                    
 {
     ngram_model_set_t *set = (ngram_model_set_t *)base;
     float32 fprob;
@@ -503,7 +505,7 @@ ngram_model_set_add(ngram_model_t *base,
     /* Renormalize the interpolation weights. */
     fprob = weight * 1.0 / set->n_models;
     set->lweights = ckd_realloc(set->lweights,
-                               set->n_models * sizeof(*set->lweights));
+                                set->n_models * sizeof(*set->lweights));
     set->lweights[set->n_models - 1] = logmath_log(base->lmath, fprob);
     /* Now normalize everything else to fit it in.  This is
      * accomplished by simply scaling all the other probabilities
@@ -512,14 +514,33 @@ ngram_model_set_add(ngram_model_t *base,
     for (i = 0; i < set->n_models - 1; ++i)
         set->lweights[i] += scale;
 
-    /* Rebuild the word ID mapping. */
-    build_widmap(base, base->lmath, base->n);
+    /* Reuse the old word ID mapping if requested. */
+    if (reuse_widmap) {
+        int32 **new_widmap;
+
+        /* Tack another column onto the widmap array. */
+        new_widmap = (int32 **)ckd_calloc_2d(base->n_words, set->n_models,
+                                             sizeof (**new_widmap));
+        for (i = 0; i < base->n_words; ++i) {
+            /* Copy all the existing mappings. */
+            memcpy(new_widmap[i], set->widmap[i],
+                   (set->n_models - 1) * sizeof(**new_widmap));
+            /* Create the new mapping. */
+            new_widmap[i][set->n_models-1] = ngram_wid(model, base->word_str[i]);
+        }
+        ckd_free_2d((void **)set->widmap);
+        set->widmap = new_widmap;
+    }
+    else {
+        build_widmap(base, base->lmath, base->n);
+    }
     return model;
 }
 
 ngram_model_t *
 ngram_model_set_remove(ngram_model_t *base,
-                       const char *name)
+                       const char *name,
+                       int reuse_widmap)
 {
     ngram_model_set_t *set = (ngram_model_set_t *)base;
     ngram_model_t *submodel;
@@ -542,9 +563,12 @@ ngram_model_set_remove(ngram_model_t *base,
      * and recalcluate n. */
     --set->n_models;
     n = 0;
-    for (i = 0; i < set->n_models - 1; ++i) {
+    ckd_free(set->names[lmidx]);
+    set->names[lmidx] = NULL;
+    for (i = 0; i < set->n_models; ++i) {
         if (i >= lmidx) {
             set->lms[i] = set->lms[i+1];
+            set->names[i] = set->names[i+1];
             set->lweights[i] = set->lweights[i+1];
         }
         set->lweights[i] -= scale;
@@ -556,8 +580,17 @@ ngram_model_set_remove(ngram_model_t *base,
     set->lweights[set->n_models] = base->log_zero;
     /* No need to shrink maphist either. */
 
-    /* Rebuild the word ID mapping. */
-    build_widmap(base, base->lmath, n);
+    /* Reuse the existing word ID mapping if requested. */
+    if (reuse_widmap) {
+        /* Just go through and shrink each row. */
+        for (i = 0; i < base->n_words; ++i) {
+            memmove(set->widmap[i] + lmidx, set->widmap[i] + lmidx + 1,
+                    (set->n_models - lmidx) * sizeof(**set->widmap));
+        }
+    }
+    else {
+        build_widmap(base, base->lmath, n);
+    }
     return submodel;
 }
 
