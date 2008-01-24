@@ -442,7 +442,7 @@ ngram_model_set_known_wid(ngram_model_t *base,
         return FALSE;
     }
     else
-        return (set->widmap[set->cur][set_wid]
+        return (set->widmap[set_wid][set->cur]
                 != ngram_unknown_wid(set->lms[set->cur]));
 }
 
