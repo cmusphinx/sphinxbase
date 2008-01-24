@@ -193,6 +193,9 @@ void
 ngram_model_free(ngram_model_t *model)
 {
     int i;
+
+    if (model == NULL)
+        return;
     if (model->funcs && model->funcs->free)
         (*model->funcs->free)(model);
     if (model->writable) {
