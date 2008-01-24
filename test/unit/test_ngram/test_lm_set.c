@@ -31,7 +31,7 @@ main(int argc, char *argv[])
 	lms[0] = ngram_model_read(NULL, LMDIR "/100.arpa.DMP", NGRAM_DMP, lmath);
 	lms[1] = ngram_model_read(NULL, LMDIR "/100_2.arpa.DMP", NGRAM_DMP, lmath);
 
-	lmset = ngram_model_set_init(NULL, lms, names, NULL, 2);
+	lmset = ngram_model_set_init(NULL, lms, (char **)names, NULL, 2);
 	TEST_ASSERT(lmset);
 	TEST_EQUAL(ngram_model_set_select(lmset, "100_2"), lms[1]);
 	TEST_EQUAL(ngram_model_set_select(lmset, "100"), lms[0]);
@@ -139,7 +139,7 @@ main(int argc, char *argv[])
 		   ngram_wid(lmset, ngram_word(lmset, ngram_wid(lmset, "bigbird"))));
 	TEST_EQUAL(ngram_wid(lmset, "quuxfuzz"), ngram_unknown_wid(lmset));
 	TEST_EQUAL(ngram_score(lmset, "quuxfuzz", NULL), ngram_zero(lmset));
-	TEST_ASSERT(ngram_model_set_map_words(lmset, words, n_words));
+	ngram_model_set_map_words(lmset, words, n_words);
 	TEST_EQUAL(ngram_wid(lmset, "ROBOMAN"),
 		   ngram_wid(lmset, ngram_word(lmset, ngram_wid(lmset, "ROBOMAN"))));
 	TEST_EQUAL(ngram_wid(lmset, "bigbird"),

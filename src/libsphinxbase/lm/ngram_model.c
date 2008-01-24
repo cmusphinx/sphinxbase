@@ -500,10 +500,24 @@ ngram_prob(ngram_model_t *model, const char *word, ...)
 }
 
 int32
+ngram_score_to_prob(ngram_model_t *base, int32 score)
+{
+    int32 prob;
+
+    /* Undo insertion penalty. */
+    prob = score - base->log_wip;
+    /* Undo language weight. */
+    prob = (int32)(prob / base->lw);
+
+    return prob;
+}
+
+int32
 ngram_unknown_wid(ngram_model_t *model)
 {
     int32 val;
 
+    /* FIXME: This could be memoized for speed if necessary. */
     /* Look up <UNK>, if not found return NGRAM_INVALID_WID. */
     if (hash_table_lookup_int32(model->wid, "<UNK>", &val) == -1)
         return NGRAM_INVALID_WID;

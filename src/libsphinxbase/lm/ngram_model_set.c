@@ -358,7 +358,7 @@ ngram_model_set_count(ngram_model_t *base)
 }
 
 ngram_model_t *
-ngram_model_set_select(ngram_model_t *base,
+ngram_model_set_lookup(ngram_model_t *base,
                        const char *name)
 {
     ngram_model_set_t *set = (ngram_model_set_t *)base;
@@ -377,8 +377,68 @@ ngram_model_set_select(ngram_model_t *base,
             break;
     if (i == set->n_models)
         return NULL;
+    return set->lms[i];
+}
+
+ngram_model_t *
+ngram_model_set_select(ngram_model_t *base,
+                       const char *name)
+{
+    ngram_model_set_t *set = (ngram_model_set_t *)base;
+    int32 i;
+
+    /* There probably won't be very many submodels. */
+    for (i = 0; i < set->n_models; ++i)
+        if (0 == strcmp(set->names[i], name))
+            break;
+    if (i == set->n_models)
+        return NULL;
     set->cur = i;
     return set->lms[set->cur];
+}
+
+const char *
+ngram_model_set_current(ngram_model_t *base)
+{
+    ngram_model_set_t *set = (ngram_model_set_t *)base;
+
+    if (set->cur == -1)
+        return NULL;
+    else
+        return set->names[set->cur];
+}
+
+int32
+ngram_model_set_current_wid(ngram_model_t *base,
+                            int32 set_wid)
+{
+    ngram_model_set_t *set = (ngram_model_set_t *)base;
+
+    if (set->cur == -1 || set_wid >= base->n_words)
+        return NGRAM_INVALID_WID;
+    else
+        return set->widmap[set->cur][set_wid];
+}
+
+int32
+ngram_model_set_known_wid(ngram_model_t *base,
+                          int32 set_wid)
+{
+    ngram_model_set_t *set = (ngram_model_set_t *)base;
+
+    if (set_wid >= base->n_words)
+        return FALSE;
+    else if (set->cur == -1) {
+        int32 i;
+        for (i = 0; i < set->n_models; ++i) {
+            if (set->widmap[i][set_wid] != ngram_unknown_wid(set->lms[i]))
+                return TRUE;
+        }
+        return FALSE;
+    }
+    else
+        return (set->widmap[set->cur][set_wid]
+                != ngram_unknown_wid(set->lms[set->cur]));
 }
 
 ngram_model_t *
@@ -491,7 +551,7 @@ ngram_model_set_remove(ngram_model_t *base,
     return submodel;
 }
 
-const char **
+void
 ngram_model_set_map_words(ngram_model_t *base,
                           const char **words,
                           int32 n_words)
@@ -502,10 +562,11 @@ ngram_model_set_map_words(ngram_model_t *base,
     /* Recreate the word mapping. */
     ckd_free(base->word_str);
     ckd_free_2d((void **)set->widmap);
-    hash_table_empty(base->wid);
     base->writable = TRUE;
+    base->n_words = base->n_1g_alloc = n_words;
     base->word_str = ckd_calloc(n_words, sizeof(*base->word_str));
     set->widmap = (int32 **)ckd_calloc_2d(n_words, set->n_models, sizeof(**set->widmap));
+    hash_table_empty(base->wid);
     for (i = 0; i < n_words; ++i) {
         int32 j;
         base->word_str[i] = ckd_salloc(words[i]);
@@ -514,8 +575,6 @@ ngram_model_set_map_words(ngram_model_t *base,
             set->widmap[i][j] = ngram_wid(set->lms[j], base->word_str[i]);
         }
     }
-
-    return (const char **)set->widmap;
 }
 
 static int
@@ -551,8 +610,12 @@ ngram_model_set_score(ngram_model_t *base, int32 wid,
             int32 j;
             /* Map word and history IDs for each model. */
             mapwid = set->widmap[wid][i];
-            for (j = 0; j < n_hist; ++j)
-                maphist[j] = set->widmap[history[j]][i];
+            for (j = 0; j < n_hist; ++j) {
+                if (history[j] == NGRAM_INVALID_WID)
+                    maphist[j] = NGRAM_INVALID_WID;
+                else
+                    maphist[j] = set->widmap[history[j]][i];
+            }
             score = logmath_add(base->lmath, score,
                                 set->lweights[i] + 
                                 ngram_ng_score(set->lms[i],
@@ -563,8 +626,12 @@ ngram_model_set_score(ngram_model_t *base, int32 wid,
         int32 j;
         /* Map word and history IDs (FIXME: do this in a function?) */
         mapwid = set->widmap[wid][set->cur];
-        for (j = 0; j < n_hist; ++j)
-            maphist[j] = set->widmap[history[j]][set->cur];
+        for (j = 0; j < n_hist; ++j) {
+            if (history[j] == NGRAM_INVALID_WID)
+                maphist[j] = NGRAM_INVALID_WID;
+            else
+                maphist[j] = set->widmap[history[j]][set->cur];
+        }
         score = ngram_ng_score(set->lms[set->cur],
                                mapwid, maphist, n_hist, n_used);
     }
@@ -591,8 +658,12 @@ ngram_model_set_raw_score(ngram_model_t *base, int32 wid,
             int32 j;
             /* Map word and history IDs for each model. */
             mapwid = set->widmap[wid][i];
-            for (j = 0; j < n_hist; ++j)
-                maphist[j] = set->widmap[history[j]][i];
+            for (j = 0; j < n_hist; ++j) {
+                if (history[j] == NGRAM_INVALID_WID)
+                    maphist[j] = NGRAM_INVALID_WID;
+                else
+                    maphist[j] = set->widmap[history[j]][i];
+            }
             score = logmath_add(base->lmath, score,
                                 set->lweights[i] + 
                                 ngram_ng_prob(set->lms[i],
@@ -603,8 +674,12 @@ ngram_model_set_raw_score(ngram_model_t *base, int32 wid,
         int32 j;
         /* Map word and history IDs (FIXME: do this in a function?) */
         mapwid = set->widmap[wid][set->cur];
-        for (j = 0; j < n_hist; ++j)
-            maphist[j] = set->widmap[history[j]][set->cur];
+        for (j = 0; j < n_hist; ++j) {
+            if (history[j] == NGRAM_INVALID_WID)
+                maphist[j] = NGRAM_INVALID_WID;
+            else
+                maphist[j] = set->widmap[history[j]][set->cur];
+        }
         score = ngram_ng_prob(set->lms[set->cur],
                               mapwid, maphist, n_hist, n_used);
     }

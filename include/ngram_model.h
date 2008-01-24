@@ -193,9 +193,8 @@ int32 ngram_ng_score(ngram_model_t *model, int32 wid, int32 *history,
  * language model file, before any language weighting, interpolation,
  * or insertion penalty has been applied.
  *
- * One small bug is that when backing off to a unigram from a bigram
- * or trigram, the unigram weight (interpolation with uniform) is not
- * removed. 
+ * @note When backing off to a unigram from a bigram or trigram, the
+ * unigram weight (interpolation with uniform) is not removed.
  */
 int32 ngram_prob(ngram_model_t *model, const char *word, ...);
 
@@ -207,6 +206,18 @@ int32 ngram_prob(ngram_model_t *model, const char *word, ...);
  */
 int32 ngram_ng_prob(ngram_model_t *model, int32 wid, int32 *history,
                     int32 n_hist, int32 *n_used);
+
+/**
+ * Convert score to "raw" log-probability.
+ *
+ * @note The unigram weight (interpolation with uniform) is not
+ * removed, since there is no way to know which order of N-Gram
+ * generated <code>score</code>.
+ * 
+ * @param score The N-Gram score to convert
+ * @return The raw log-probability value.
+ */
+int32 ngram_score_to_prob(ngram_model_t *model, int32 score);
 
 /**
  * Look up numerical word ID.
@@ -355,11 +366,25 @@ int32 ngram_model_set_count(ngram_model_t *set);
 /**
  * Select a single language model from a set for scoring.
  *
- * If <code>name</code> is NULL, the current language model (if any)
- * is returned.  Otherwise, the newly selected model is returned.
+ * @return the newly selected language model, or NULL if no language
+ * model by that name exists.
  */
 ngram_model_t *ngram_model_set_select(ngram_model_t *set,
                                       const char *name);
+
+/**
+ * Look up a language model by name from a set.
+ *
+ * @return language model corresponding to <code>name</code>, or NULL
+ * if no language model by that name exists.
+ */
+ngram_model_t *ngram_model_set_lookup(ngram_model_t *set,
+                                      const char *name);
+
+/**
+ * Get the current language model name, if any.
+ */
+const char *ngram_model_set_current(ngram_model_t *set);
 
 /**
  * Set interpolation weights for a set and enables interpolation.
@@ -393,11 +418,32 @@ ngram_model_t *ngram_model_set_remove(ngram_model_t *set,
                                       const char *name);
 
 /**
- * Set the word-to-ID mapping for this set.
+ * Set the word-to-ID mapping for this model set.
  */
-const char **ngram_model_set_map_words(ngram_model_t *set,
-                                       const char **words,
-                                       int32 n_words);
+void ngram_model_set_map_words(ngram_model_t *set,
+                               const char **words,
+                               int32 n_words);
+
+/**
+ * Query the word-ID mapping for the current language model.
+ *
+ * @return the local word ID in the current language model, or
+ * NGRAM_INVALID_WID if <code>set_wid</code> is invalid or
+ * interpolation is enabled.
+ */
+int32 ngram_model_set_current_wid(ngram_model_t *set,
+                                  int32 set_wid);
+
+/**
+ * Test whether a word ID corresponds to a known word in the current
+ * state of the language model set.
+ *
+ * @return If there is a current language model, returns non-zero if
+ * <code>set_wid</code> corresponds to a known word in that language
+ * model.  Otherwise, returns non-zero if <code>set_wid</code>
+ * corresponds to a known word in any language model.
+ */
+int32 ngram_model_set_known_wid(ngram_model_t *set, int32 set_wid);
 
 #ifdef __cplusplus
 }

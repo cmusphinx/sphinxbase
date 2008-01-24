@@ -7,7 +7,7 @@ libsphinxbase_la_LDFLAGS = -version-info 1:0:0
 libsphinxbase_la_LIBADD = $(LTLIBICONV) \
 	util/libsphinxutil.la \
 	fe/libsphinxfe.la \
-	feat/libsphinxfeat.la
+	feat/libsphinxfeat.la \
+	lm/libsphinxlm.la
 
-#	am/libsphinxam.la \
-#	lm/libsphinxlm.la
+#	am/libsphinxam.la
