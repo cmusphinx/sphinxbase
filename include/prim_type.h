@@ -125,6 +125,16 @@ typedef union anytype_s {
 	float64 fl_64;
 } anytype_t;
 
+#ifndef TRUE
+#define TRUE 1
+#endif
+#ifndef FALSE
+#define FALSE 0
+#endif
+
+#ifndef NULL
+#define NULL (void *)0
+#endif
 
 /* Useful constants */
 #define MAX_INT32		((int32) 0x7fffffff)
