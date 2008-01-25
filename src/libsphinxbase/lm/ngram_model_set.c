@@ -742,35 +742,42 @@ ngram_model_set_add_ug(ngram_model_t *base,
     int32 i, prob;
 
     /* At this point the word has already been added to the master
-       model and we have a new word ID for it.  Add it to submodels
-       and track the word IDs. */
+       model and we have a new word ID for it.  Add it to active
+       submodels and track the word IDs. */
     newwid = ckd_calloc(set->n_models, sizeof(*newwid));
     prob = base->log_zero;
     for (i = 0; i < set->n_models; ++i) {
         int32 wprob, n_hist;
 
-        /* Did this word already exist? */
-        newwid[i] = ngram_wid(set->lms[i], base->word_str[i]);
-        if (newwid[i] == NGRAM_INVALID_WID) {
-            /* Add it to the submodel. */
-            newwid[i] = ngram_model_add_word(set->lms[i], base->word_str[i],
-                                             logmath_exp(base->lmath, lweight));
+        /* Only add to active models. */
+        if (set->cur == -1 || set->cur == i) {
+            /* Did this word already exist? */
+            newwid[i] = ngram_wid(set->lms[i], base->word_str[i]);
             if (newwid[i] == NGRAM_INVALID_WID) {
-                ckd_free(newwid);
-                return base->log_zero;
+                /* Add it to the submodel. */
+                newwid[i] = ngram_model_add_word(set->lms[i], base->word_str[i],
+                                                 logmath_exp(base->lmath, lweight));
+                if (newwid[i] == NGRAM_INVALID_WID) {
+                    ckd_free(newwid);
+                    return base->log_zero;
+                }
             }
+            /* Now get the unigram probability for the new word and either
+             * interpolate it or use it (if this is the current model). */
+            wprob = ngram_ng_prob(set->lms[i], newwid[i], NULL, 0, &n_hist);
+            if (set->cur == i)
+                prob = wprob;
+            else if (set->cur == -1)
+                prob = logmath_add(base->lmath, prob, set->lweights[i] + wprob);
         }
-        /* Now get the unigram probability for the new word and either
-         * interpolate it or use it (if this is the current model). */
-        wprob = ngram_ng_prob(set->lms[i], newwid[i], NULL, 0, &n_hist);
-        if (set->cur == i)
-            prob = wprob;
-        else if (set->cur == -1)
-            prob = logmath_add(base->lmath, prob, set->lweights[i] + wprob);
+        else {
+            newwid[i] = NGRAM_INVALID_WID;
+        }
     }
     /* Okay we have the word IDs for this in all the submodels.  Now
        do some complicated memory mangling to add this to the
        widmap. */
+    set->widmap = ckd_realloc(set->widmap, base->n_words * sizeof(*set->widmap));
     set->widmap[0] = ckd_realloc(set->widmap[0],
                                  base->n_words
                                  * set->n_models

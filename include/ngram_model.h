@@ -252,6 +252,10 @@ int32 ngram_zero(ngram_model_t *model);
 /**
  * Add a word (unigram) to the language model.
  *
+ * @note The semantics of this are not particularly well-defined for
+ * model sets, and may be subject to change.  Currently this will add
+ * the word to all of the submodels
+ *
  * @param model The model to add a word to.
  * @param word Text of the word to add.
  * @param weight Weight of this word relative to the uniform distribution.
