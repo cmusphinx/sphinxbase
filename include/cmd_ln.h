@@ -219,7 +219,7 @@ SPHINXBASE_EXPORT
 void cmd_ln_appl_enter(int argc,   /**< In: #Actual arguments */
 		       char *argv[], /**< In: Actual arguments */
 		       const char* default_argfn, /**< In: default argument file name*/
-		       arg_t *defn /**< Command-line argument definition */
+		       const arg_t *defn /**< Command-line argument definition */
 	);
 
 

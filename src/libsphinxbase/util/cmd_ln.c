@@ -228,7 +228,7 @@ cmd_ln_get(void)
 void
 cmd_ln_appl_enter(int argc, char *argv[],
                   const char *default_argfn,
-                  arg_t * defn)
+                  const arg_t * defn)
 {
     /* Look for default or specified arguments file */
     const char *str;
