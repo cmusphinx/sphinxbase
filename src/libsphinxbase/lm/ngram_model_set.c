@@ -603,6 +603,11 @@ ngram_model_set_map_words(ngram_model_t *base,
     int32 i;
 
     /* Recreate the word mapping. */
+    if (base->writable) {
+        for (i = 0; i < base->n_words; ++i) {
+            ckd_free(base->word_str[i]);
+        }
+    }
     ckd_free(base->word_str);
     ckd_free_2d((void **)set->widmap);
     base->writable = TRUE;
