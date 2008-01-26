@@ -461,11 +461,16 @@ fe_pre_emphasis(int16 const *in, frame_t * out, int32 len,
     int i;
 
 #if defined(FIXED16)
-    int16 fxd_alpha = (int16)(factor * 32768);
+    int16 fxd_alpha = (int16)(factor * 0x8000);
+    int32 tmp1, tmp2;
 
-    out[0] = in[0] - (int16)(((int32)prior * fxd_alpha) >> 15);
-    for (i = 1; i < len; ++i) { 
-        out[i] = in[i] - (int16)(((int32)in[i-1] * fxd_alpha) >> 15);
+    tmp1 = (int32)in[0] << 15;
+    tmp2 = (int32)prior * fxd_alpha;
+    out[0] = (int16)((tmp1 - tmp2) >> 15);
+    for (i = 1; i < len; ++i) {
+        tmp1 = (int32)in[i] << 15;
+        tmp2 = (int32)in[i-1] * fxd_alpha;
+        out[i] = (int16)((tmp1 - tmp2) >> 15);
     }
 #elif defined(FIXED_POINT)
     fixed32 fxd_alpha = FLOAT2FIX(factor);
