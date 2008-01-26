@@ -458,24 +458,20 @@ void
 fe_pre_emphasis(int16 const *in, frame_t * out, int32 len,
                 float32 factor, int16 prior)
 {
-    int32 i;
-#if defined(FIXED16)
-    int32 fxd_factor = (int32) (factor * (float32) (1 << DEFAULT_RADIX));
-    out[0] = in[0] - ((int32) (prior * fxd_factor) >> DEFAULT_RADIX);
+    int i;
 
-    for (i = 1; i < len; ++i) {
-        out[i] =
-            in[i] - ((int32) (in[i - 1] * fxd_factor) >> DEFAULT_RADIX);
+#if defined(FIXED16)
+    int16 fxd_alpha = (int16)(factor * 32768);
+
+    out[0] = in[0] - (int16)(((int32)prior * fxd_alpha) >> 15);
+    for (i = 1; i < len; ++i) { 
+        out[i] = in[i] - (int16)(((int32)in[i-1] * fxd_alpha) >> 15);
     }
 #elif defined(FIXED_POINT)
-    /* Use extra precision for alpha under the assumption it is between 0 and 1. */
-    fixed32 fxd_factor = FLOAT2FIX_ANY(factor, 30);
-    out[0] = (int32) (in[0] << DEFAULT_RADIX)
-        - FIXMUL_ANY(prior, fxd_factor, 30-DEFAULT_RADIX);
-
+    fixed32 fxd_alpha = FLOAT2FIX(factor);
+    out[0] = ((fixed32)in[0] << DEFAULT_RADIX) - (prior * fxd_alpha);
     for (i = 1; i < len; ++i) {
-        out[i] = ((int32)in[i] << DEFAULT_RADIX)
-            - FIXMUL_ANY(in[i-1], fxd_factor, 30-DEFAULT_RADIX);
+        out[i] = ((fixed32)in[i] << DEFAULT_RADIX) - (in[i-1] * fxd_alpha);
     }
 #else
     out[0] = (frame_t) in[0] - factor * (frame_t) prior;
@@ -488,12 +484,14 @@ fe_pre_emphasis(int16 const *in, frame_t * out, int32 len,
 void
 fe_short_to_frame(int16 const *in, frame_t * out, int32 len)
 {
-    int32 i;
-
-#ifdef  FIXED_POINT
+#if defined(FIXED16)
+    memcpy(out, in, len * sizeof(*in));
+#elif defined(FIXED_POINT)
+    int i;
     for (i = 0; i < len; i++)
         out[i] = (int32) in[i] << DEFAULT_RADIX;
 #else                           /* FIXED_POINT */
+    int i;
     for (i = 0; i < len; i++)
         out[i] = (frame_t) in[i];
 #endif                          /* FIXED_POINT */
@@ -504,6 +502,7 @@ fe_create_hamming(window_t * in, int32 in_len)
 {
     int i;
 
+    /* FIXME: The window is symmetric so it should only be in_len/2 points */
     if (in_len > 1)
         for (i = 0; i < in_len; i++) {
             float64 hamm;
