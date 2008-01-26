@@ -65,6 +65,7 @@
 #endif
 
 #include "fe.h"
+#include "fe_internal.h"
 #include "cmd_ln.h"
 #include "err.h"
 #include "ckd_alloc.h"
@@ -614,7 +615,6 @@ fe_parse_options(int32 argc, char **argv)
     P->params.SAMPLING_RATE = cmd_ln_float32("-samprate");
     P->params.WINDOW_LENGTH = cmd_ln_float32("-wlen");
     P->params.FRAME_RATE = cmd_ln_int32("-frate");
-    P->params.FB_TYPE = MEL_SCALE;
     P->output_endian = BIG;
     P->params.NUM_FILTERS = cmd_ln_int32("-nfilt");
     P->params.NUM_CEPSTRA = cmd_ln_int32("-ncep");

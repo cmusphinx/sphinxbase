@@ -38,9 +38,8 @@
 #include <config.h>
 #endif
 
-#include "fe.h"
-#include "fixpoint.h"
-
+#include <fe.h>
+#include <fixpoint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,24 +49,86 @@ extern "C" {
 }
 #endif
 
-#ifdef FIXED_POINT
 #ifdef FIXED16
+/* Q15 format */
 typedef int16 frame_t;
-typedef struct { int16 r, i; } complex;
-#else
-typedef fixed32 frame_t;
-typedef struct { fixed32 r, i; } complex;
-#endif
+typedef int16 window_t;
 typedef int32 powspec_t;
+typedef struct { int16 r, i; } complex;
+#elif defined(FIXED_POINT)
+typedef fixed32 frame_t;
+typedef int32 powspec_t;
+typedef fixed32 window_t;
+typedef struct { fixed32 r, i; } complex;
 #else /* FIXED_POINT */
 typedef float64 frame_t;
 typedef float64 powspec_t;
+typedef float64 window_t;
 typedef struct { float64 r, i; } complex;
 #endif /* FIXED_POINT */
 
 #ifndef	M_PI
 #define M_PI	(3.14159265358979323846)
 #endif	/* M_PI */
+
+/** Base Struct to hold all structure for MFCC computation. */
+typedef struct melfb_s melfb_t;
+struct melfb_s {
+    float32 sampling_rate;
+    int32 num_cepstra;
+    int32 num_filters;
+    int32 fft_size;
+    float32 lower_filt_freq;
+    float32 upper_filt_freq;
+    mfcc_t **filter_coeffs;
+    mfcc_t **mel_cosine;
+    int32 *left_apex;
+    int32 *width;
+    int32 doublewide;
+    char *warp_type;
+    char *warp_params;
+    /* Precomputed normalization constants for unitary DCT-II/DCT-III */
+    mfcc_t sqrt_inv_n, sqrt_inv_2n;
+    /* Value and coefficients for HTK-style liftering */
+    int32 lifter_val;
+    mfcc_t *lifter;
+    /* Normalize filters to unit area */
+    int32 unit_area;
+    /* Round filter frequencies to DFT points (hurts accuracy, but is
+       useful for legacy purposes) */
+    int32 round_filters;
+};
+
+/* sqrt(1/2), also used for unitary DCT-II/DCT-III */
+#define SQRT_HALF FLOAT2MFCC(0.707106781186548)
+
+/** Structure for the front-end computation. */
+struct fe_s {
+    float32 SAMPLING_RATE;
+    int32 FRAME_RATE;
+    int32 FRAME_SHIFT;
+    float32 WINDOW_LENGTH;
+    int32 FRAME_SIZE;
+    int32 FFT_SIZE;
+    int32 LOG_SPEC;
+    int32 NUM_CEPSTRA;
+    int32 FEATURE_DIMENSION;
+    int32 swap;
+    int32 dither;
+    int32 seed;
+    float32 PRE_EMPHASIS_ALPHA;
+    int16 *OVERFLOW_SAMPS;
+    int32 NUM_OVERFLOW_SAMPS;    
+    melfb_t *MEL_FB;
+    int32 START_FLAG;
+    int16 PRIOR;
+    window_t *HAMMING_WINDOW;
+    int32 FRAME_COUNTER;
+    int32 transform;
+    int32 remove_dc;
+    /* Temporary buffers for processing. */
+    powspec_t *spec, *mfspec;
+};
 
 #define FORWARD_FFT 1
 #define INVERSE_FFT -1

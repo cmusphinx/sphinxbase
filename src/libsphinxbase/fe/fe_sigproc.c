@@ -507,18 +507,17 @@ fe_create_hamming(window_t * in, int32 in_len)
 {
     int i;
 
-    /* FIXME: The window is symmetric so it should only be in_len/2 points */
-    if (in_len > 1)
-        for (i = 0; i < in_len; i++) {
-            float64 hamm;
-
-            hamm  = (0.54 - 0.46 * cos(2 * M_PI * i /
-                                       ((float64) in_len - 1.0)));
-
-            in[i] = FLOAT2COS(hamm);
-        }
-
-    return;
+    /* Symmetric, so we only create the first half of it. */
+    for (i = 0; i < in_len / 2; i++) {
+        float64 hamm;
+        hamm  = (0.54 - 0.46 * cos(2 * M_PI * i /
+                                   ((float64) in_len - 1.0)));
+#ifdef FIXED16
+        in[i] = (int16)(hamm * 0x8000);
+#else
+        in[i] = FLOAT2COS(hamm);
+#endif
+    }
 }
 
 
@@ -528,52 +527,44 @@ fe_hamming_window(frame_t * in, window_t * window, int32 in_len, int32 remove_dc
     int i;
 
     if (remove_dc) {
+#ifdef FIXED_POINT
+        int32 mean = 0; /* Use int32 to avoid possibility of overflow */
+#else
         frame_t mean = 0;
+#endif
 
         for (i = 0; i < in_len; i++)
             mean += in[i];
         mean /= in_len;
         for (i = 0; i < in_len; i++)
-            in[i] -= mean;
+            in[i] -= (frame_t)mean;
     }
 
-    if (in_len > 1) {
-        for (i = 0; i < in_len; i++) {
-            in[i] = COSMUL(in[i], window[i]);
-        }
-    }
+#ifdef FIXED16
+    for (i = 0; i < in_len/2; i++) {
+        int32 tmp1, tmp2;
 
+        tmp1 = (int32)in[i] * window[i];
+        tmp2 = (int32)in[in_len-1-i] * window[i];
+        in[i] = (int16)(tmp1 >> 15);
+        in[in_len-1-i] = (int16)(tmp2 >> 15);
+    }
+#else
+    for (i = 0; i < in_len/2; i++) {
+        in[i] = COSMUL(in[i], window[i]);
+        in[in_len-1-i] = COSMUL(in[in_len-1-i], window[i]);
+    }
+#endif
 }
 
 
 int32
 fe_frame_to_fea(fe_t * FE, frame_t * in, mfcc_t * fea)
 {
-    powspec_t *spec, *mfspec;
-
-    if (FE->FB_TYPE == MEL_SCALE) {
-        spec = (powspec_t *) calloc(FE->FFT_SIZE, sizeof(powspec_t));
-        mfspec =
-            (powspec_t *) calloc(FE->MEL_FB->num_filters,
-                                 sizeof(powspec_t));
-
-        if (spec == NULL || mfspec == NULL) {
-            E_WARN("memory alloc failed in fe_frame_to_fea()\n");
-            return FE_MEM_ALLOC_ERROR;
-        }
-
-        fe_spec_magnitude(in, FE->FRAME_SIZE, spec, FE->FFT_SIZE);
-        fe_mel_spec(FE, spec, mfspec);
-        fe_mel_cep(FE, mfspec, fea);
-        fe_lifter(FE, fea);
-
-        free(spec);
-        free(mfspec);
-    }
-    else {
-        E_WARN("MEL SCALE IS CURRENTLY THE ONLY IMPLEMENTATION!\n");
-        return FE_INVALID_PARAM_ERROR;
-    }
+    fe_spec_magnitude(in, FE->FRAME_SIZE, FE->spec, FE->FFT_SIZE);
+    fe_mel_spec(FE, FE->spec, FE->mfspec);
+    fe_mel_cep(FE, FE->mfspec, fea);
+    fe_lifter(FE, fea);
     return 0;
 }
 
@@ -786,117 +777,6 @@ fe_dct3(fe_t * FE, const mfcc_t * mfcep, powspec_t * mflogspec)
     }
 }
 
-int32
-fe_fft(complex const *in, complex * out, int32 N, int32 invert)
-{
-    int32 s, k,                 /* as above                             */
-     lgN;                       /* log2(N)                              */
-    complex *f1, *f2,           /* pointers into from array             */
-    *t1, *t2,                   /* pointers into to array               */
-    *ww;                        /* pointer into w array                 */
-    complex *from, *to,         /* as above                             */
-     wwf2,                      /* temporary for ww*f2                  */
-    *exch,                      /* temporary for exchanging from and to */
-    *wEnd;                      /* to keep ww from going off end        */
-
-    /* Cache the weight array and scratchpad for all FFTs of the same
-     * order (we could actually do better than this, but we'd need a
-     * different algorithm). */
-    static complex *w;
-    static complex *buffer;     /* from and to flipflop btw out and buffer */
-    static int32 lastN;
-
-    /* check N, compute lgN                                             */
-    for (k = N, lgN = 0; k > 1; k /= 2, lgN++) {
-        if (k % 2 != 0 || N < 0) {
-            E_WARN("fft: N must be a power of 2 (is %d)\n", N);
-            return (-1);
-        }
-    }
-
-    /* check invert                                                     */
-    if (!(invert == 1 || invert == -1)) {
-        E_WARN("fft: invert must be either +1 or -1 (is %d)\n", invert);
-        return (-1);
-    }
-
-    /* Initialize weights and scratchpad buffer.  This will cause a
-     * slow startup and "leak" a small, constant amount of memory,
-     * don't worry about it. */
-    if (lastN != N) {
-        if (buffer)
-            free(buffer);
-        if (w)
-            free(w);
-        buffer = (complex *) calloc(N, sizeof(complex));
-        w = (complex *) calloc(N / 2, sizeof(complex));
-        /* w = exp(-2*PI*i/N), w[k] = w^k                                       */
-        for (k = 0; k < N / 2; k++) {
-            float64 x = -2 * M_PI * invert * k / N;
-            w[k].r = FLOAT2COS(cos(x));
-            w[k].i = FLOAT2COS(sin(x));
-        }
-        lastN = N;
-    }
-
-    wEnd = &w[N / 2];
-
-    /* Initialize scratchpad pointers. */
-    if (lgN % 2 == 0) {
-        from = out;
-        to = buffer;
-    }
-    else {
-        to = out;
-        from = buffer;
-    }
-    memcpy(from, in, N * sizeof(*in));
-
-    /* go for it!                                                               */
-    for (k = N / 2; k > 0; k /= 2) {
-        for (s = 0; s < k; s++) {
-            /* initialize pointers                                              */
-            f1 = &from[s];
-            f2 = &from[s + k];
-            t1 = &to[s];
-            t2 = &to[s + N / 2];
-            ww = &w[0];
-            /* compute <s,k>                                                    */
-            while (ww < wEnd) {
-                /* wwf2 = ww * f2                                                       */
-                wwf2.r = COSMUL(f2->r, ww->r) - COSMUL(f2->i, ww->i);
-                wwf2.i = COSMUL(f2->r, ww->i) + COSMUL(f2->i, ww->r);
-                /* t1 = f1 + wwf2                                                       */
-                t1->r = f1->r + wwf2.r;
-                t1->i = f1->i + wwf2.i;
-                /* t2 = f1 - wwf2                                                       */
-                t2->r = f1->r - wwf2.r;
-                t2->i = f1->i - wwf2.i;
-                /* increment                                                    */
-                f1 += 2 * k;
-                f2 += 2 * k;
-                t1 += k;
-                t2 += k;
-                ww += k;
-            }
-        }
-        exch = from;
-        from = to;
-        to = exch;
-    }
-
-    /* Normalize for inverse FFT (not used but hey...) */
-    if (invert == -1) {
-        for (s = 0; s < N; s++) {
-            from[s].r = in[s].r / N;
-            from[s].i = in[s].i / N;
-
-        }
-    }
-
-    return (0);
-}
-
 /* Translated from the FORTRAN (obviously) from "Real-Valued Fast
  * Fourier Transform Algorithms" by Henrik V. Sorensen et al., IEEE
  * Transactions on Acoustics, Speech, and Signal Processing, vol. 35,
@@ -1059,11 +939,6 @@ fe_parse_general_params(param_t const *P, fe_t * FE)
         FE->WINDOW_LENGTH = P->WINDOW_LENGTH;
     else
         FE->WINDOW_LENGTH = (float32) DEFAULT_WINDOW_LENGTH;
-
-    if (P->FB_TYPE != 0)
-        FE->FB_TYPE = P->FB_TYPE;
-    else
-        FE->FB_TYPE = DEFAULT_FB_TYPE;
 
     FE->dither = P->dither;
     FE->seed = P->seed;

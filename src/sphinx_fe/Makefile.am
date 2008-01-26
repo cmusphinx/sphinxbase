@@ -9,4 +9,6 @@ sphinx_fe_LDADD = \
 	$(top_builddir)/src/libsphinxbase/libsphinxbase.la
 
 
-INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include
+INCLUDES = -I$(top_srcdir)/include \
+	-I$(top_builddir)/include \
+	-I$(top_srcdir)/src/libsphinxbase/fe

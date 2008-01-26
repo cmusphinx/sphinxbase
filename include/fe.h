@@ -58,8 +58,9 @@
 
 /* Win32/WinCE DLL gunk */
 #include <sphinxbase_export.h>
-#include <fixpoint.h>
 
+#include <sphinx_config.h>
+#include <fixpoint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -100,11 +101,6 @@ extern "C" {
     ARG_BOOLEAN, \
     "no", \
     "Input is cepstral files, output is log spectral files" }, \
-   \
-  { "-fbtype", \
-    ARG_STRING, \
-    "mel_scale", \
-    "FB Type of mel_scale or log_linear" }, \
    \
   { "-alpha", \
     ARG_FLOAT32, \
@@ -206,14 +202,9 @@ extern "C" {
     "no", \
     "Show input filenames" }
   
-    
-
 #ifdef FIXED_POINT
-/* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /** MFCC computation type. */
 typedef fixed32 mfcc_t;
-/** Internal computation type. */
-typedef fixed32 window_t;
 
 #define FLOAT2MFCC(x) FLOAT2FIX(x)
 #define MFCC2FLOAT(x) FIX2FLOAT(x)
@@ -222,7 +213,6 @@ typedef fixed32 window_t;
 #else /* !FIXED_POINT */
 
 typedef float32 mfcc_t;
-typedef float64 window_t;
 #define FLOAT2MFCC(x) (x)
 #define MFCC2FLOAT(x) (x)
 #define MFCCMUL(a,b) ((a)*(b))
@@ -233,13 +223,6 @@ typedef float64 window_t;
 enum {
 	RAW_LOG_SPEC = 1,
 	SMOOTH_LOG_SPEC = 2
-};
-
-/* Values for the 'FB_TYPE' field (actually MEL_SCALE is the only one
- * supported). */
-enum {
-	MEL_SCALE,
-	LOG_LINEAR,
 };
 
 /* Values for the 'transform' field. */
@@ -255,7 +238,6 @@ struct param_s {
     float32 SAMPLING_RATE;
     int32 FRAME_RATE;
     float32 WINDOW_LENGTH;
-    int32 FB_TYPE;
     int32 NUM_CEPSTRA;
     int32 NUM_FILTERS;
     int32 FFT_SIZE;
@@ -277,64 +259,8 @@ struct param_s {
     int32 remove_dc;
 };
 
-/** Base Struct to hold all structure for MFCC computation. */
-typedef struct melfb_s melfb_t;
-struct melfb_s {
-    float32 sampling_rate;
-    int32 num_cepstra;
-    int32 num_filters;
-    int32 fft_size;
-    float32 lower_filt_freq;
-    float32 upper_filt_freq;
-    mfcc_t **filter_coeffs;
-    mfcc_t **mel_cosine;
-    int32 *left_apex;
-    int32 *width;
-    int32 doublewide;
-    char *warp_type;
-    char *warp_params;
-    /* Precomputed normalization constants for unitary DCT-II/DCT-III */
-    mfcc_t sqrt_inv_n, sqrt_inv_2n;
-    /* Value and coefficients for HTK-style liftering */
-    int32 lifter_val;
-    mfcc_t *lifter;
-    /* Normalize filters to unit area */
-    int32 unit_area;
-    /* Round filter frequencies to DFT points (hurts accuracy, but is
-       useful for legacy purposes) */
-    int32 round_filters;
-};
-
-/* sqrt(1/2), also used for unitary DCT-II/DCT-III */
-#define SQRT_HALF FLOAT2MFCC(0.707106781186548)
-
 /** Structure for the front-end computation. */
 typedef struct fe_s fe_t;
-struct fe_s {
-    float32 SAMPLING_RATE;
-    int32 FRAME_RATE;
-    int32 FRAME_SHIFT;
-    float32 WINDOW_LENGTH;
-    int32 FRAME_SIZE;
-    int32 FFT_SIZE;
-    int32 FB_TYPE;
-    int32 LOG_SPEC;
-    int32 NUM_CEPSTRA;
-    int32 FEATURE_DIMENSION;
-    int32 swap;
-    int32 dither;
-    int32 seed;
-    float32 PRE_EMPHASIS_ALPHA;
-    int16 *OVERFLOW_SAMPS;
-    int32 NUM_OVERFLOW_SAMPS;    
-    melfb_t *MEL_FB;
-    int32 START_FLAG;
-    int16 PRIOR;
-    window_t *HAMMING_WINDOW;
-    int32 FRAME_COUNTER;
-    int32 transform;
-    int32 remove_dc;
-};
 
 enum {
 	FE_SUCCESS = 0,
@@ -363,7 +289,6 @@ enum {
  * fft size consistent with it.
  */
 #define DEFAULT_FFT_SIZE 512
-#define DEFAULT_FB_TYPE MEL_SCALE
 #define DEFAULT_NUM_CEPSTRA 13
 #define DEFAULT_NUM_FILTERS 40
 #define DEFAULT_LOWER_FILT_FREQ 133.33334

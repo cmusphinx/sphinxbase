@@ -92,7 +92,6 @@ fe_init_params(param_t * P)
 /* This should take care of all variables that default to zero */
     memset(P, 0, sizeof(param_t));
 /* Now take care of variables that do not default to zero */
-    P->FB_TYPE = DEFAULT_FB_TYPE;
     P->seed = SEED;
     P->round_filters = 1;
     P->unit_area = 1;
@@ -115,15 +114,6 @@ fe_init_auto()
     p.SAMPLING_RATE = cmd_ln_float32("-samprate");
     p.FRAME_RATE = cmd_ln_int32("-frate");
     p.WINDOW_LENGTH = cmd_ln_float32("-wlen");
-    if (strcmp("mel_scale", cmd_ln_str("-fbtype")) == 0)
-        p.FB_TYPE = MEL_SCALE;
-    else if (strcmp("log_linear", cmd_ln_str("-fbtype")) == 0)
-        p.FB_TYPE = LOG_LINEAR;
-    else {
-        E_WARN("Invalid fbtype\n");
-        return NULL;
-    }
-
     p.NUM_CEPSTRA = cmd_ln_int32("-ncep");
     p.NUM_FILTERS = cmd_ln_int32("-nfilt");
     p.FFT_SIZE = cmd_ln_int32("-nfft");
@@ -251,7 +241,7 @@ fe_init(param_t const *P)
     /* establish buffers for overflow samps and hamming window */
     FE->OVERFLOW_SAMPS = (int16 *) calloc(FE->FRAME_SIZE, sizeof(int16));
     FE->HAMMING_WINDOW =
-        (window_t *) calloc(FE->FRAME_SIZE, sizeof(window_t));
+        (window_t *) calloc(FE->FRAME_SIZE/2, sizeof(window_t));
 
     if (FE->OVERFLOW_SAMPS == NULL || FE->HAMMING_WINDOW == NULL) {
         E_WARN("memory alloc failed in fe_init()\n");
@@ -262,21 +252,19 @@ fe_init(param_t const *P)
     fe_create_hamming(FE->HAMMING_WINDOW, FE->FRAME_SIZE);
 
     /* init and fill appropriate filter structure */
-    if (FE->FB_TYPE == MEL_SCALE) {
-        if ((FE->MEL_FB = (melfb_t *) calloc(1, sizeof(melfb_t))) == NULL) {
-            E_WARN("memory alloc failed in fe_init()\n");
-            return (NULL);
-        }
-        /* transfer params to mel fb */
-        fe_parse_melfb_params(P, FE->MEL_FB);
-
-        fe_build_melfilters(FE->MEL_FB);
-        fe_compute_melcosine(FE->MEL_FB);
-    }
-    else {
-        E_WARN("MEL SCALE IS CURRENTLY THE ONLY IMPLEMENTATION!\n");
+    if ((FE->MEL_FB = (melfb_t *) calloc(1, sizeof(melfb_t))) == NULL) {
+        E_WARN("memory alloc failed in fe_init()\n");
         return (NULL);
     }
+    /* transfer params to mel fb */
+    fe_parse_melfb_params(P, FE->MEL_FB);
+
+    fe_build_melfilters(FE->MEL_FB);
+    fe_compute_melcosine(FE->MEL_FB);
+
+    /* Create temporary spectrum and mel-spectrum buffers. */
+    FE->spec = (powspec_t *) calloc(FE->FFT_SIZE, sizeof(powspec_t));
+    FE->mfspec = (powspec_t *) calloc(FE->MEL_FB->num_filters, sizeof(powspec_t));
 
     if (P->verbose) {
         fe_print_current(FE);
@@ -573,22 +561,15 @@ int32
 fe_close(fe_t * FE)
 {
     /* kill FE instance - free everything... */
-    if (FE->FB_TYPE == MEL_SCALE) {
-        fe_free_2d((void *) FE->MEL_FB->filter_coeffs);
-        fe_free_2d((void *) FE->MEL_FB->mel_cosine);
-        if (FE->MEL_FB->lifter)
-            free(FE->MEL_FB->lifter);
-        free(FE->MEL_FB->left_apex);
-        free(FE->MEL_FB->width);
-        free(FE->MEL_FB);
-    }
-    else {
-        /* We won't end up here, since this was already checked up when we
-         * started. But just in case, let's break, if we're debugging.
-         */
-        assert(0);
-    }
-
+    fe_free_2d((void *) FE->MEL_FB->filter_coeffs);
+    fe_free_2d((void *) FE->MEL_FB->mel_cosine);
+    if (FE->MEL_FB->lifter)
+        free(FE->MEL_FB->lifter);
+    free(FE->MEL_FB->left_apex);
+    free(FE->MEL_FB->width);
+    free(FE->MEL_FB);
+    free(FE->spec);
+    free(FE->mfspec);
     free(FE->OVERFLOW_SAMPS);
     free(FE->HAMMING_WINDOW);
     free(FE);
