@@ -16,6 +16,18 @@ run_program() {
     $builddir/libtool --mode=execute "$builddir/src/$program/$program" $@
 }
 
+debug_program() {
+    program="$1"
+    shift
+    $builddir/libtool --mode=execute gdb --args "$programs/$program" $@
+}
+
+memcheck_program() {
+    program="$1"
+    shift
+    $builddir/libtool --mode=execute valgrind --leak-check=full "$programs/$program" $@
+}
+
 pass() {
     title="$1"
     echo "$title PASSED"
