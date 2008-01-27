@@ -71,6 +71,47 @@ typedef struct { float64 r, i; } complex;
 #define M_PI	(3.14159265358979323846)
 #endif	/* M_PI */
 
+/* Values for the 'logspec' field. */
+enum {
+	RAW_LOG_SPEC = 1,
+	SMOOTH_LOG_SPEC = 2
+};
+
+/* Values for the 'transform' field. */
+enum {
+	LEGACY_DCT = 0,
+	DCT_II = 1,
+        DCT_HTK = 2
+};
+
+/** Structure holding front-end parameters. */
+/* This will go away soon-ish. */
+typedef struct param_s param_t;
+struct param_s {
+    float32 SAMPLING_RATE;
+    int32 FRAME_RATE;
+    float32 WINDOW_LENGTH;
+    int32 NUM_CEPSTRA;
+    int32 NUM_FILTERS;
+    int32 FFT_SIZE;
+    float32 LOWER_FILT_FREQ;
+    float32 UPPER_FILT_FREQ;
+    float32 PRE_EMPHASIS_ALPHA;
+    int32 swap;
+    int32 dither;
+    int32 seed;
+    int32 logspec;
+    int32 doublebw;
+    int32 verbose;
+    char *warp_type;
+    char *warp_params;
+    int32 transform;
+    int32 lifter_val;
+    int32 unit_area;
+    int32 round_filters;
+    int32 remove_dc;
+};
+
 /** Base Struct to hold all structure for MFCC computation. */
 typedef struct melfb_s melfb_t;
 struct melfb_s {
@@ -137,6 +178,8 @@ struct fe_s {
 #define FORWARD_FFT 1
 #define INVERSE_FFT -1
 
+void fe_init_params(param_t * P);
+fe_t *fe_init(param_t const *P);
 /* functions */
 int32 fe_build_melfilters(melfb_t *MEL_FB);
 int32 fe_compute_melcosine(melfb_t *MEL_FB);

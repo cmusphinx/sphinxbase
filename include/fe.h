@@ -60,6 +60,7 @@
 #include <sphinxbase_export.h>
 
 #include <sphinx_config.h>
+#include <cmd_ln.h>
 #include <fixpoint.h>
 
 #ifdef __cplusplus
@@ -219,49 +220,14 @@ typedef float32 mfcc_t;
 #define MFCCLN(x,in,out) log(x)
 #endif /* !FIXED_POINT */
 
-/* Values for the 'logspec' field. */
-enum {
-	RAW_LOG_SPEC = 1,
-	SMOOTH_LOG_SPEC = 2
-};
-
-/* Values for the 'transform' field. */
-enum {
-	LEGACY_DCT = 0,
-	DCT_II = 1,
-        DCT_HTK = 2
-};
-
-/** Structure holding front-end parameters. */
-typedef struct param_s param_t;
-struct param_s {
-    float32 SAMPLING_RATE;
-    int32 FRAME_RATE;
-    float32 WINDOW_LENGTH;
-    int32 NUM_CEPSTRA;
-    int32 NUM_FILTERS;
-    int32 FFT_SIZE;
-    float32 LOWER_FILT_FREQ;
-    float32 UPPER_FILT_FREQ;
-    float32 PRE_EMPHASIS_ALPHA;
-    int32 swap;
-    int32 dither;
-    int32 seed;
-    int32 logspec;
-    int32 doublebw;
-    int32 verbose;
-    char *warp_type;
-    char *warp_params;
-    int32 transform;
-    int32 lifter_val;
-    int32 unit_area;
-    int32 round_filters;
-    int32 remove_dc;
-};
-
-/** Structure for the front-end computation. */
+/**
+ * Structure for the front-end computation.
+ */
 typedef struct fe_s fe_t;
 
+/**
+ * Error codes returned by stuff.
+ */
 enum {
 	FE_SUCCESS = 0,
 	FE_OUTPUT_FILE_SUCCESS  = 0,
@@ -319,13 +285,6 @@ enum {
 #define DEFAULT_BLOCKSIZE 200000
 #define SEED  -1
 
-/** 
- * Function that sets default values in a param_t structure
- */
-SPHINXBASE_EXPORT
-void fe_init_params(param_t *P /** An allocated param_t structure */
-        );
-
 /**
  * Function that automatically initializes a front-end structure by reading
  * command-line arguments (cmd_ln.h)
@@ -338,13 +297,11 @@ fe_t* fe_init_auto(void);
  * @return, an initialized fe_t structure
  */
 SPHINXBASE_EXPORT
-fe_t *fe_init(param_t const *P /**< Input: A filled param_t structure */
-	);
+fe_t *fe_init_auto_r(cmd_ln_t *config);
 
 /** Function call for starting utternace */
 SPHINXBASE_EXPORT
-int32 fe_start_utt(fe_t *FE /**< Input: A filled FE rountine */
-	);
+int32 fe_start_utt(fe_t *FE);
 
 /**
  * Function call for the end of the utterance. It also collect the
