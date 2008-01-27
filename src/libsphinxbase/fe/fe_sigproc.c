@@ -561,7 +561,7 @@ fe_hamming_window(frame_t * in, window_t * window, int32 in_len, int32 remove_dc
 int32
 fe_frame_to_fea(fe_t * FE, frame_t * in, mfcc_t * fea)
 {
-    fe_spec_magnitude(in, FE->FRAME_SIZE, FE->spec, FE->FFT_SIZE);
+    fe_spec_magnitude(FE, in, FE->FRAME_SIZE, FE->spec, FE->FFT_SIZE);
     fe_mel_spec(FE, FE->spec, FE->mfspec);
     fe_mel_cep(FE, FE->mfspec, fea);
     fe_lifter(FE, fea);
@@ -569,61 +569,51 @@ fe_frame_to_fea(fe_t * FE, frame_t * in, mfcc_t * fea)
 }
 
 void
-fe_spec_magnitude(frame_t const *data, int32 data_len,
+fe_spec_magnitude(fe_t *fe,
+                  frame_t const *data, int32 data_len,
                   powspec_t * spec, int32 fftsize)
 {
     int32 j, wrap;
-    frame_t *fft;
 
-    fft = calloc(fftsize, sizeof(frame_t));
-    if (fft == NULL) {
-        E_FATAL
-            ("memory alloc failed in fe_spec_magnitude()\n...exiting\n");
-    }
     wrap = (data_len < fftsize) ? data_len : fftsize;
-    memcpy(fft, data, wrap * sizeof(frame_t));
+    memcpy(fe->fft, data, wrap * sizeof(frame_t));
     if (data_len > fftsize) {    /*aliasing */
         E_WARN
             ("Aliasing. Consider using fft size (%d) > buffer size (%d)\n",
              fftsize, data_len);
         for (wrap = 0, j = fftsize; j < data_len; wrap++, j++)
-            fft[wrap] += data[j];
+            fe->fft[wrap] += data[j];
     }
-    fe_fft_real(fft, fftsize);
+    else {/* Zero padding */
+        memset(fe->fft + data_len, 0, (fftsize - data_len) * sizeof(*fe->fft));
+    }
+    fe_fft_real(fe->fft, fftsize);
 
     /* The first point (DC coefficient) has no imaginary part */
     {
-#ifdef FIXED_POINT
-        uint32 r = abs(fft[0]);
 #ifdef FIXED16
-        spec[0] = fixlog(r) * 2;
+        spec[0] = fixlog(abs(fe->fft[0])) * 2;
+#elif defined(FIXED_POINT)
+        spec[0] = FIXLN(abs(fe->fft[0])) * 2;
 #else
-        spec[0] = FIXLN(r) * 2;
-#endif /* !FIXED16 */
-#else /* !FIXED_POINT */
-        spec[0] = fft[0] * fft[0];
-#endif /* !FIXED_POINT */
+        spec[0] = fe->fft[0] * fe->fft[0];
+#endif
     }
 
     for (j = 1; j <= fftsize / 2; j++) {
-#ifdef FIXED_POINT
-        uint32 r = abs(fft[j]);
-        uint32 i = abs(fft[fftsize - j]);
 #ifdef FIXED16
-        int32 rr = fixlog(r) * 2;
-        int32 ii = fixlog(i) * 2;
-#else
-        int32 rr = FIXLN(r) * 2;
-        int32 ii = FIXLN(i) * 2;
-#endif
+        int32 rr = fixlog(abs(fe->fft[j])) * 2;
+        int32 ii = fixlog(abs(fe->fft[fftsize - j])) * 2;
         spec[j] = fe_log_add(rr, ii);
-#else                           /* !FIXED_POINT */
-        spec[j] = fft[j] * fft[j] + fft[fftsize - j] * fft[fftsize - j];
-#endif                          /* !FIXED_POINT */
+#elif defined(FIXED_POINT)
+        int32 rr = FIXLN(abs(fe->fft[j])) * 2;
+        int32 ii = FIXLN(abs(fe->fft[fftsize - j])) * 2;
+        spec[j] = fe_log_add(rr, ii);
+#else
+        spec[j] = fe->fft[j] * fe->fft[j]
+            + fe->fft[fftsize - j] * fe->fft[fftsize - j];
+#endif
     }
-
-    free(fft);
-    return;
 }
 
 void

@@ -262,7 +262,8 @@ fe_init(param_t const *P)
     fe_build_melfilters(FE->MEL_FB);
     fe_compute_melcosine(FE->MEL_FB);
 
-    /* Create temporary spectrum and mel-spectrum buffers. */
+    /* Create temporary FFT, spectrum and mel-spectrum buffers. */
+    FE->fft = (frame_t *) calloc(FE->FFT_SIZE, sizeof(frame_t));
     FE->spec = (powspec_t *) calloc(FE->FFT_SIZE, sizeof(powspec_t));
     FE->mfspec = (powspec_t *) calloc(FE->MEL_FB->num_filters, sizeof(powspec_t));
 
@@ -568,6 +569,7 @@ fe_close(fe_t * FE)
     free(FE->MEL_FB->left_apex);
     free(FE->MEL_FB->width);
     free(FE->MEL_FB);
+    free(FE->fft);
     free(FE->spec);
     free(FE->mfspec);
     free(FE->OVERFLOW_SAMPS);
