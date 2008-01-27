@@ -56,6 +56,7 @@
 #include "genrand.h"
 #include "err.h"
 #include "cmd_ln.h"
+#include "ckd_alloc.h"
 
 void
 fe_init_params(param_t * P)
@@ -475,12 +476,13 @@ int32
 fe_close(fe_t * fe)
 {
     /* kill FE instance - free everything... */
-    fe_free_2d((void *) fe->mel_fb->filter_coeffs);
     fe_free_2d((void *) fe->mel_fb->mel_cosine);
     if (fe->mel_fb->lifter)
         free(fe->mel_fb->lifter);
-    free(fe->mel_fb->left_apex);
-    free(fe->mel_fb->width);
+    ckd_free(fe->mel_fb->spec_start);
+    ckd_free(fe->mel_fb->filt_start);
+    ckd_free(fe->mel_fb->filt_width);
+    ckd_free(fe->mel_fb->filt_coeffs);
     free(fe->mel_fb);
     free(fe->fft);
     free(fe->ccc);

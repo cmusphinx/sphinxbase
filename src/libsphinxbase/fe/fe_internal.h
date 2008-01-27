@@ -121,10 +121,14 @@ struct melfb_s {
     int32 fft_size;
     float32 lower_filt_freq;
     float32 upper_filt_freq;
-    mfcc_t **filter_coeffs;
+    /* DCT coefficients. */
     mfcc_t **mel_cosine;
-    int32 *left_apex;
-    int32 *width;
+    /* Filter coefficients. */
+    mfcc_t *filt_coeffs;
+    int16 *spec_start;
+    int16 *filt_start;
+    int16 *filt_width;
+    /* Luxury mobile home. */
     int32 doublewide;
     char *warp_type;
     char *warp_params;

@@ -50,6 +50,7 @@
 #endif
 
 #include "prim_type.h"
+#include "ckd_alloc.h"
 #include "fixpoint.h"
 #include "fe.h"
 #include "fe_internal.h"
@@ -284,30 +285,19 @@ fe_log(float32 x)
 int32
 fe_build_melfilters(melfb_t *mel_fb)
 {
-    int32 i, j;
-    float32 fftfreq, melmin, melmax, melbw, loslope, hislope;
+    float32 melmin, melmax, melbw, fftfreq;
+    int n_coeffs, i, j;
 
-    /* Filter coefficient matrix */
-    /* FIXME: This is much larger than it needs to be. */
-    mel_fb->filter_coeffs =
-        (mfcc_t **) fe_create_2d(mel_fb->num_filters, mel_fb->fft_size/2+1,
-                                 sizeof(mfcc_t));
-    /* Left edge of filter coefficients, in FFT points */
-    mel_fb->left_apex =
-        (int32 *) calloc(mel_fb->num_filters, sizeof(int32));
-    /* Width of filter, in FFT points */
-    mel_fb->width = (int32 *) calloc(mel_fb->num_filters, sizeof(int32));
+    /* Filter coefficient matrix, in flattened form. */
+    mel_fb->spec_start = ckd_malloc(mel_fb->num_filters * sizeof(*mel_fb->spec_start));
+    mel_fb->filt_start = ckd_malloc(mel_fb->num_filters * sizeof(*mel_fb->filt_start));
+    mel_fb->filt_width = ckd_malloc(mel_fb->num_filters * sizeof(*mel_fb->filt_width));
 
-    if (mel_fb->filter_coeffs == NULL
-        || mel_fb->left_apex == NULL
-        || mel_fb->width == NULL) {
-        E_WARN("memory alloc failed in fe_build_melfilters()\n");
-        return FE_MEM_ALLOC_ERROR;
-    }
-
-    /* Minimum and maximum frequencies in mel scale */
+    /* First calculate the widths of each filter. */
+    /* Minimum and maximum frequencies in mel scale. */
     melmin = fe_mel(mel_fb->lower_filt_freq);
     melmax = fe_mel(mel_fb->upper_filt_freq);
+
     /* Width of filters in mel scale */
     melbw = (melmax - melmin) / (mel_fb->num_filters + 1);
     if (mel_fb->doublewide) {
@@ -325,10 +315,11 @@ fe_build_melfilters(melfb_t *mel_fb)
         }
     }
 
-    /* FFT point spacing */
+    /* DFT point spacing */
     fftfreq = mel_fb->sampling_rate / (float32) mel_fb->fft_size;
 
-    /* Construct filter coefficients */
+    /* Count and place filter coefficients. */
+    n_coeffs = 0;
     for (i = 0; i < mel_fb->num_filters; ++i) {
         float32 freqs[3];
 
@@ -338,22 +329,46 @@ fe_build_melfilters(melfb_t *mel_fb)
                 freqs[j] = fe_melinv((i + j * 2) * melbw + melmin);
             else
                 freqs[j] = fe_melinv((i + j) * melbw + melmin);
+            /* Round them to DFT points if requested */
             if (mel_fb->round_filters)
                 freqs[j] = ((int)(freqs[j] / fftfreq + 0.5)) * fftfreq;
         }
 
-        mel_fb->left_apex[i] = -1;
-        mel_fb->width[i] = -1;
-        /* printf("filter %d (%f, %f, %f): ", i, freqs[0], freqs[1], freqs[2]); */
-        for (j = 0; j < mel_fb->fft_size/2+1; ++j) {
-            float32 hz;
+        /* spec_start is the start of this filter in the power spectrum. */
+        mel_fb->spec_start[i] = (int)(freqs[0] / fftfreq + 0.5);
+        /* filt_width is the width in DFT points of this filter. */
+        mel_fb->filt_width[i] = (int)((freqs[2] - freqs[0]) / fftfreq + 0.5);
+        /* filt_start is the start of this filter in the filt_coeffs array. */
+        mel_fb->filt_start[i] = n_coeffs;
+        n_coeffs += mel_fb->filt_width[i];
+    }
 
-            hz = j * fftfreq;
-            if (hz < freqs[0] || hz > freqs[2])
-                continue;
-            if (mel_fb->left_apex[i] == -1)
-                mel_fb->left_apex[i] = j;
-            mel_fb->width[i] = j - mel_fb->left_apex[i] + 1;
+    /* Now go back and allocate the coefficient array. */
+    mel_fb->filt_coeffs = ckd_malloc(n_coeffs * sizeof(*mel_fb->filt_coeffs));
+
+    /* And now generate the coefficients. */
+    n_coeffs = 0;
+    for (i = 0; i < mel_fb->num_filters; ++i) {
+        float32 freqs[3];
+
+        /* Left, center, right frequencies in Hertz */
+        for (j = 0; j < 3; ++j) {
+            if (mel_fb->doublewide)
+                freqs[j] = fe_melinv((i + j * 2) * melbw + melmin);
+            else
+                freqs[j] = fe_melinv((i + j) * melbw + melmin);
+            /* Round them to DFT points if requested */
+            if (mel_fb->round_filters)
+                freqs[j] = ((int)(freqs[j] / fftfreq + 0.5)) * fftfreq;
+        }
+
+        for (j = 0; j < mel_fb->filt_width[i]; ++j) {
+            float32 hz, loslope, hislope;
+
+            hz = (mel_fb->spec_start[i] + j) * fftfreq;
+            if (hz < freqs[0] || hz > freqs[2]) {
+                E_FATAL("WTF, %f < %f > %f\n", freqs[0], hz, freqs[2]);
+            }
             loslope = (hz - freqs[0]) / (freqs[1] - freqs[0]);
             hislope = (freqs[2] - hz) / (freqs[2] - freqs[1]);
             if (mel_fb->unit_area) {
@@ -362,24 +377,22 @@ fe_build_melfilters(melfb_t *mel_fb)
             }
             if (loslope < hislope) {
 #ifdef FIXED_POINT
-                mel_fb->filter_coeffs[i][j - mel_fb->left_apex[i]] = fe_log(loslope);
+                mel_fb->filt_coeffs[n_coeffs] = fe_log(loslope);
 #else
-                mel_fb->filter_coeffs[i][j - mel_fb->left_apex[i]] = loslope;
+                mel_fb->filt_coeffs[n_coeffs] = loslope;
 #endif
-                /* printf("%f ", loslope); */
             }
             else {
 #ifdef FIXED_POINT
-                mel_fb->filter_coeffs[i][j - mel_fb->left_apex[i]] = fe_log(hislope);
+                mel_fb->filt_coeffs[n_coeffs] = fe_log(hislope);
 #else
-                mel_fb->filter_coeffs[i][j - mel_fb->left_apex[i]] = hislope;
+                mel_fb->filt_coeffs[n_coeffs] = hislope;
 #endif
-                /* printf("%f ", hislope); */
             }
+            ++n_coeffs;
         }
-        /* printf("\n"); */
-        /* printf("left_apex %d width %d\n", mel_fb->left_apex[i], mel_fb->width[i]); */
     }
+    
 
     return FE_SUCCESS;
 }
@@ -612,25 +625,26 @@ fe_spec_magnitude(fe_t *fe,
 void
 fe_mel_spec(fe_t * fe, powspec_t const *spec, powspec_t * mfspec)
 {
-    int32 whichfilt, start, i;
+    int whichfilt;
 
     for (whichfilt = 0; whichfilt < fe->mel_fb->num_filters; whichfilt++) {
-        start = fe->mel_fb->left_apex[whichfilt];
+        int spec_start, filt_start, i;
+
+        spec_start = fe->mel_fb->spec_start[whichfilt];
+        filt_start = fe->mel_fb->filt_start[whichfilt];
 
 #ifdef FIXED_POINT
-        mfspec[whichfilt] = spec[start]
-            + fe->mel_fb->filter_coeffs[whichfilt][0];
-        for (i = 1; i < fe->mel_fb->width[whichfilt]; i++) {
+        mfspec[whichfilt] = spec[start] + fe->mel_fb->filt_coeffs[filt_start];
+        for (i = 1; i < fe->mel_fb->filt_width[whichfilt]; i++) {
             mfspec[whichfilt] = fe_log_add(mfspec[whichfilt],
-                                           spec[start + i] +
-                                           fe->mel_fb->
-                                           filter_coeffs[whichfilt][i]);
+                                           spec[spec_start + i] +
+                                           fe->mel_fb->filt_coeffs[filt_start + i]);
         }
 #else                           /* !FIXED_POINT */
         mfspec[whichfilt] = 0;
-        for (i = 0; i < fe->mel_fb->width[whichfilt]; i++)
+        for (i = 0; i < fe->mel_fb->filt_width[whichfilt]; i++)
             mfspec[whichfilt] +=
-                spec[start + i] * fe->mel_fb->filter_coeffs[whichfilt][i];
+                spec[spec_start + i] * fe->mel_fb->filt_coeffs[filt_start + i];
 #endif                          /* !FIXED_POINT */
     }
 }
