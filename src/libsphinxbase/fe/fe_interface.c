@@ -169,8 +169,8 @@ fe_init(param_t const *P)
     /* We add 0.5 so approximate the float with the closest
      * integer. E.g., 2.3 is truncate to 2, whereas 3.7 becomes 4
      */
-    fe->frame_shift = (int32) (fe->sampling_rate / fe->frame_rate + 0.5);       /* why 0.5? */
-    fe->frame_size = (int32) (fe->window_length * fe->sampling_rate + 0.5);     /* why 0.5? */
+    fe->frame_shift = (int32) (fe->sampling_rate / fe->frame_rate + 0.5);
+    fe->frame_size = (int32) (fe->window_length * fe->sampling_rate + 0.5);
     fe->prior = 0;
     fe->frame_counter = 0;
 
