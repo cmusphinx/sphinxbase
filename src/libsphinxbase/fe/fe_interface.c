@@ -251,6 +251,7 @@ fe_init(param_t const *P)
     /* create hamming window */
     fe_create_hamming(FE->HAMMING_WINDOW, FE->FRAME_SIZE);
 
+
     /* init and fill appropriate filter structure */
     if ((FE->MEL_FB = (melfb_t *) calloc(1, sizeof(melfb_t))) == NULL) {
         E_WARN("memory alloc failed in fe_init()\n");
@@ -258,7 +259,6 @@ fe_init(param_t const *P)
     }
     /* transfer params to mel fb */
     fe_parse_melfb_params(P, FE->MEL_FB);
-
     fe_build_melfilters(FE->MEL_FB);
     fe_compute_melcosine(FE->MEL_FB);
 
@@ -266,6 +266,11 @@ fe_init(param_t const *P)
     FE->fft = (frame_t *) calloc(FE->FFT_SIZE, sizeof(frame_t));
     FE->spec = (powspec_t *) calloc(FE->FFT_SIZE, sizeof(powspec_t));
     FE->mfspec = (powspec_t *) calloc(FE->MEL_FB->num_filters, sizeof(powspec_t));
+    FE->ccc = (frame_t *)calloc(FE->FFT_SIZE / 4, sizeof(*FE->ccc));
+    FE->sss = (frame_t *)calloc(FE->FFT_SIZE / 4, sizeof(*FE->sss));
+
+    /* create twiddle factors */
+    fe_create_twiddle(FE);
 
     if (P->verbose) {
         fe_print_current(FE);
@@ -570,6 +575,8 @@ fe_close(fe_t * FE)
     free(FE->MEL_FB->width);
     free(FE->MEL_FB);
     free(FE->fft);
+    free(FE->ccc);
+    free(FE->sss);
     free(FE->spec);
     free(FE->mfspec);
     free(FE->OVERFLOW_SAMPS);

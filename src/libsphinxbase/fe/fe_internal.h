@@ -110,6 +110,7 @@ struct fe_s {
     float32 WINDOW_LENGTH;
     int32 FRAME_SIZE;
     int32 FFT_SIZE;
+    int32 fft_order;
     int32 LOG_SPEC;
     int32 NUM_CEPSTRA;
     int32 FEATURE_DIMENSION;
@@ -126,6 +127,8 @@ struct fe_s {
     int32 FRAME_COUNTER;
     int32 transform;
     int32 remove_dc;
+    /* Twiddle factors for FFT. */
+    frame_t *ccc, *sss;
     /* Temporary buffers for processing. */
     frame_t *fft;
     powspec_t *spec, *mfspec;
@@ -142,6 +145,7 @@ float32 fe_melinv(float32 x);
 int32 fe_dither(int16 *buffer,int32 nsamps);
 void fe_pre_emphasis(int16 const *in, frame_t *out, int32 len, float32 factor, int16 prior);
 void fe_create_hamming(window_t *in, int32 in_len);
+void fe_create_twiddle(fe_t *fe);
 void fe_hamming_window(frame_t *in, window_t *window, int32 in_len, int32 remove_dc);
 void fe_spec_magnitude(fe_t *fe,
 		       frame_t const *data,
@@ -153,8 +157,7 @@ void fe_spec2cep(fe_t * FE, const powspec_t * mflogspec, mfcc_t * mfcep);
 void fe_dct2(fe_t *FE, const powspec_t *mflogspec, mfcc_t *mfcep, int htk);
 void fe_dct3(fe_t *FE, const mfcc_t *mfcep, powspec_t *mflogspec);
 void fe_lifter(fe_t *FE, mfcc_t *mfcep);
-int32 fe_fft(complex const *in, complex *out, int32 N, int32 invert);
-int32 fe_fft_real(frame_t *x, int n);
+frame_t * fe_fft_real(fe_t *fe, frame_t const *data, int data_len);
 void fe_short_to_frame(int16 const *in, frame_t *out, int32 len);
 void *fe_create_2d(int32 d1, int32 d2, int32 elem_size);
 void fe_print_current(fe_t const *FE);
