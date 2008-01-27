@@ -335,12 +335,23 @@ fe_build_melfilters(melfb_t *mel_fb)
         }
 
         /* spec_start is the start of this filter in the power spectrum. */
-        mel_fb->spec_start[i] = (int)(freqs[0] / fftfreq + 0.5);
-        /* filt_width is the width in DFT points of this filter. */
-        mel_fb->filt_width[i] = (int)((freqs[2] - freqs[0]) / fftfreq + 0.5);
-        /* filt_start is the start of this filter in the filt_coeffs array. */
-        mel_fb->filt_start[i] = n_coeffs;
-        n_coeffs += mel_fb->filt_width[i];
+        mel_fb->spec_start[i] = -1;
+        /* There must be a better way... */
+        for (j = 0; j < mel_fb->fft_size/2+1; ++j) {
+            float32 hz = j * fftfreq;
+            if (hz < freqs[0])
+                continue;
+            else if (hz > freqs[2] || j == mel_fb->fft_size/2) {
+                /* filt_width is the width in DFT points of this filter. */
+                mel_fb->filt_width[i] = j - mel_fb->spec_start[i];
+                /* filt_start is the start of this filter in the filt_coeffs array. */
+                mel_fb->filt_start[i] = n_coeffs;
+                n_coeffs += mel_fb->filt_width[i];
+                break;
+            }
+            if (mel_fb->spec_start[i] == -1)
+                mel_fb->spec_start[i] = j;
+        }
     }
 
     /* Now go back and allocate the coefficient array. */
@@ -634,7 +645,7 @@ fe_mel_spec(fe_t * fe, powspec_t const *spec, powspec_t * mfspec)
         filt_start = fe->mel_fb->filt_start[whichfilt];
 
 #ifdef FIXED_POINT
-        mfspec[whichfilt] = spec[start] + fe->mel_fb->filt_coeffs[filt_start];
+        mfspec[whichfilt] = spec[spec_start] + fe->mel_fb->filt_coeffs[filt_start];
         for (i = 1; i < fe->mel_fb->filt_width[whichfilt]; i++) {
             mfspec[whichfilt] = fe_log_add(mfspec[whichfilt],
                                            spec[spec_start + i] +
