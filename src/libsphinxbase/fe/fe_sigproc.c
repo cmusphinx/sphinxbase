@@ -574,33 +574,37 @@ fe_spec_magnitude(fe_t *fe,
                   powspec_t * spec, int32 fftsize)
 {
     frame_t *fft;
-    int32 j;
+    int32 j, scale;
 
-    fft = fe_fft_real(fe, data, data_len);
+    /* Do FFT and get the scaling factor back (only actually used in
+     * fixed-point).  Note the scaling factor is expressed in bits. */
+    fft = fe_fft_real(fe, data, data_len, &scale);
+
+    /* We need to scale things up the rest of the way to N. */
+    scale = fe->fft_order - scale;
 
     /* The first point (DC coefficient) has no imaginary part */
     {
 #ifdef FIXED16
-        spec[0] = fixlog(abs(fft[0]) << fe->fft_order) * 2;
+        spec[0] = fixlog(abs(fft[0]) << scale) * 2;
 #elif defined(FIXED_POINT)
-        spec[0] = FIXLN(abs(fft[0]) << fe->fft_order) * 2;
+        spec[0] = FIXLN(abs(fft[0]) << scale) * 2;
 #else
-        spec[0] = fft[0] * fft[0] * fftsize * fftsize;
+        spec[0] = fft[0] * fft[0];
 #endif
     }
 
     for (j = 1; j <= fftsize / 2; j++) {
 #ifdef FIXED16
-        int32 rr = fixlog(abs(fft[j]) << fe->fft_order) * 2;
-        int32 ii = fixlog(abs(fft[fftsize - j]) << fe->fft_order) * 2;
+        int32 rr = fixlog(abs(fft[j]) << scale) * 2;
+        int32 ii = fixlog(abs(fft[fftsize - j]) << scale) * 2;
         spec[j] = fe_log_add(rr, ii);
 #elif defined(FIXED_POINT)
-        int32 rr = FIXLN(abs(fft[j]) << fe->fft_order) * 2;
-        int32 ii = FIXLN(abs(fft[fftsize - j]) << fe->fft_order) * 2;
+        int32 rr = FIXLN(abs(fft[j]) << scale) * 2;
+        int32 ii = FIXLN(abs(fft[fftsize - j]) << scale) * 2;
         spec[j] = fe_log_add(rr, ii);
 #else
-        spec[j] = fft[j] * fft[j] * fftsize * fftsize
-            + fft[fftsize - j] * fft[fftsize - j] * fftsize * fftsize;
+        spec[j] = fft[j] * fft[j] + fft[fftsize - j] * fft[fftsize - j];
 #endif
     }
 }
@@ -782,12 +786,12 @@ fe_create_twiddle(fe_t *fe)
 /* Translated from the FORTRAN (obviously) from "Real-Valued Fast
  * Fourier Transform Algorithms" by Henrik V. Sorensen et al., IEEE
  * Transactions on Acoustics, Speech, and Signal Processing, vol. 35,
- * no.6.  The fixed-point version does a version of "block floating
+ * no.6.  The 16-bit version does a version of "block floating
  * point" in order to avoid rounding errors.
  */
-#if defined(FIXED16) || defined(FIXED_POINT)
+#if defined(FIXED16)
 frame_t *
-fe_fft_real(fe_t *fe, frame_t const *data, int data_len)
+fe_fft_real(fe_t *fe, frame_t const *data, int data_len, int *out_shift)
 {
     int i, j, k, m, n, lz, wrap;
     frame_t *x, xt, max;
@@ -832,13 +836,8 @@ fe_fft_real(fe_t *fe, frame_t const *data, int data_len)
     /* The FFT has a gain of M bits, so we need to attenuate the input
      * by M bits minus the number of leading zeroes in the input's
      * range in order to avoid overflows.  */
-#ifdef FIXED16
-#define FFT_HIGHBIT 15
-#else
-#define FFT_HIGHBIT 31
-#endif
-    for (lz = 0; lz <= m; ++lz)
-        if (max & (1 << (FFT_HIGHBIT-lz)))
+    for (lz = 0; lz < m; ++lz)
+        if (max & (1 << (15-lz)))
             break;
 
     /* Basic butterflies (2-point FFT, real twiddle factors):
@@ -905,16 +904,11 @@ fe_fft_real(fe_t *fe, frame_t const *data, int data_len)
                 /* There are some symmetry properties which allow us
                  * to get away with only four multiplications here. */
                 {
-#ifdef FIXED16
                     int32 tmp1, tmp2;
                     tmp1 = (int32)x[i3] * cc + (int32)x[i4] * ss;
                     tmp2 = (int32)x[i3] * ss - (int32)x[i4] * cc;
                     t1 = (int16)(tmp1 >> 15);
                     t2 = (int16)(tmp2 >> 15);
-#elif defined(FIXED_POINT)
-                    t1 = COSMUL(x[i3], cc) + COSMUL(x[i4], ss);
-                    t2 = COSMUL(x[i3], ss) - COSMUL(x[i4], cc);
-#endif
                 }
 
                 x[i4] = (x[i2] - t2) >> atten;
@@ -925,15 +919,15 @@ fe_fft_real(fe_t *fe, frame_t const *data, int data_len)
         }
     }
 
-    /* Now attenuate the output to match the dynamic range of the input. */
-    for (i = 0; i < n; ++i)
-        x[i] >>= lz;
+    /* Return the residual scaling factor. */
+    if (out_shift)
+        *out_shift = lz;
 
     return x;
 }
-#else /* !FIXED16 && !FIXED_POINT */
+#else /* !FIXED16 */
 frame_t *
-fe_fft_real(fe_t *fe, frame_t const *data, int data_len)
+fe_fft_real(fe_t *fe, frame_t const *data, int data_len, int *out_shift)
 {
     int i, j, k, m, n, wrap;
     frame_t *x, xt;
@@ -1031,8 +1025,8 @@ fe_fft_real(fe_t *fe, frame_t const *data, int data_len)
 
                 /* There are some symmetry properties which allow us
                  * to get away with only four multiplications here. */
-                t1 = x[i3] * cc + x[i4] * ss;
-                t2 = x[i3] * ss - x[i4] * cc;
+                t1 = COSMUL(x[i3], cc) + COSMUL(x[i4], ss);
+                t2 = COSMUL(x[i3], ss) - COSMUL(x[i4], cc);
 
                 x[i4] = (x[i2] - t2);
                 x[i3] = (-x[i2] - t2);
@@ -1041,6 +1035,10 @@ fe_fft_real(fe_t *fe, frame_t const *data, int data_len)
             }
         }
     }
+
+    /* This isn't used, but set it for completeness. */
+    if (out_shift)
+        *out_shift = m;
 
     return x;
 }

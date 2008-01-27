@@ -157,7 +157,7 @@ void fe_spec2cep(fe_t * FE, const powspec_t * mflogspec, mfcc_t * mfcep);
 void fe_dct2(fe_t *FE, const powspec_t *mflogspec, mfcc_t *mfcep, int htk);
 void fe_dct3(fe_t *FE, const mfcc_t *mfcep, powspec_t *mflogspec);
 void fe_lifter(fe_t *FE, mfcc_t *mfcep);
-frame_t * fe_fft_real(fe_t *fe, frame_t const *data, int data_len);
+frame_t * fe_fft_real(fe_t *fe, frame_t const *data, int data_len, int *out_shift);
 void fe_short_to_frame(int16 const *in, frame_t *out, int32 len);
 void *fe_create_2d(int32 d1, int32 d2, int32 elem_size);
 void fe_print_current(fe_t const *FE);
