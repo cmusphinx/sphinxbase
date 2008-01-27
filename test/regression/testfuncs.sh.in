@@ -19,13 +19,13 @@ run_program() {
 debug_program() {
     program="$1"
     shift
-    $builddir/libtool --mode=execute gdb --args "$programs/$program" $@
+    $builddir/libtool --mode=execute gdb --args "$builddir/src/$program/$program" $@
 }
 
 memcheck_program() {
     program="$1"
     shift
-    $builddir/libtool --mode=execute valgrind --leak-check=full "$programs/$program" $@
+    $builddir/libtool --mode=execute valgrind --leak-check=full "$builddir/src/$program/$program" $@
 }
 
 pass() {
