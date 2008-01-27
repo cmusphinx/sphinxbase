@@ -527,7 +527,7 @@ fe_hamming_window(frame_t * in, window_t * window, int32 in_len, int32 remove_dc
     int i;
 
     if (remove_dc) {
-#ifdef FIXED_POINT
+#ifdef FIXED16
         int32 mean = 0; /* Use int32 to avoid possibility of overflow */
 #else
         frame_t mean = 0;
@@ -849,9 +849,9 @@ fe_fft_real(fe_t *fe, frame_t const *data, int data_len, int *out_shift)
      * off on it until it's absolutely necessary. */
     for (i = 0; i < n; i += 2) {
         int atten = (lz == 0);
-        xt = x[i];
-        x[i]     = (xt + x[i + 1]) >> atten;
-        x[i + 1] = (xt - x[i + 1]) >> atten;
+        xt = x[i] >> atten;
+        x[i]     = xt + (x[i + 1] >> atten);
+        x[i + 1] = xt - (x[i + 1] >> atten);
     }
 
     /* The rest of the butterflies, in stages from 1..m */
@@ -869,9 +869,9 @@ fe_fft_real(fe_t *fe, frame_t const *data, int data_len, int *out_shift)
              * x[i]          = x[i] +  1 * x[i + (1<<k)]
              * x[i + (1<<k)] = x[i] + -1 * x[i + (1<<k)]
              */
-            xt = x[i];
-            x[i]             = (xt + x[i + (1 << n2)]) >> atten;
-            x[i + (1 << n2)] = (xt - x[i + (1 << n2)]) >> atten;
+            xt = x[i] >> atten;
+            x[i]             = xt + (x[i + (1 << n2)] >> atten);
+            x[i + (1 << n2)] = xt - (x[i + (1 << n2)] >> atten);
 
             /* The other ones with real twiddle factors:
              * x[i + (1<<k) + (1<<(k-1))]
@@ -907,14 +907,14 @@ fe_fft_real(fe_t *fe, frame_t const *data, int data_len, int *out_shift)
                     int32 tmp1, tmp2;
                     tmp1 = (int32)x[i3] * cc + (int32)x[i4] * ss;
                     tmp2 = (int32)x[i3] * ss - (int32)x[i4] * cc;
-                    t1 = (int16)(tmp1 >> 15);
-                    t2 = (int16)(tmp2 >> 15);
+                    t1 = (int16)(tmp1 >> 15) >> atten;
+                    t2 = (int16)(tmp2 >> 15) >> atten;
                 }
 
-                x[i4] = (x[i2] - t2) >> atten;
-                x[i3] = (-x[i2] - t2) >> atten;
-                x[i2] = (x[i1] - t1) >> atten;
-                x[i1] = (x[i1] + t1) >> atten;
+                x[i4] = (x[i2] >> atten) - t2;
+                x[i3] = (-x[i2] >> atten) - t2;
+                x[i2] = (x[i1] >> atten) - t1;
+                x[i1] = (x[i1] >> atten) + t1;
             }
         }
     }
@@ -1042,7 +1042,7 @@ fe_fft_real(fe_t *fe, frame_t const *data, int data_len, int *out_shift)
 
     return x;
 }
-#endif /* !FIXED16 && !FIXED_POINT */
+#endif /* !FIXED16 */
 
 void *
 fe_create_2d(int32 d1, int32 d2, int32 elem_size)
