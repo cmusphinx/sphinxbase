@@ -282,145 +282,145 @@ fe_log(float32 x)
 #endif
 
 int32
-fe_build_melfilters(melfb_t *MEL_FB)
+fe_build_melfilters(melfb_t *mel_fb)
 {
     int32 i, j;
     float32 fftfreq, melmin, melmax, melbw, loslope, hislope;
 
     /* Filter coefficient matrix */
     /* FIXME: This is much larger than it needs to be. */
-    MEL_FB->filter_coeffs =
-        (mfcc_t **) fe_create_2d(MEL_FB->num_filters, MEL_FB->fft_size/2+1,
+    mel_fb->filter_coeffs =
+        (mfcc_t **) fe_create_2d(mel_fb->num_filters, mel_fb->fft_size/2+1,
                                  sizeof(mfcc_t));
     /* Left edge of filter coefficients, in FFT points */
-    MEL_FB->left_apex =
-        (int32 *) calloc(MEL_FB->num_filters, sizeof(int32));
+    mel_fb->left_apex =
+        (int32 *) calloc(mel_fb->num_filters, sizeof(int32));
     /* Width of filter, in FFT points */
-    MEL_FB->width = (int32 *) calloc(MEL_FB->num_filters, sizeof(int32));
+    mel_fb->width = (int32 *) calloc(mel_fb->num_filters, sizeof(int32));
 
-    if (MEL_FB->filter_coeffs == NULL
-        || MEL_FB->left_apex == NULL
-        || MEL_FB->width == NULL) {
+    if (mel_fb->filter_coeffs == NULL
+        || mel_fb->left_apex == NULL
+        || mel_fb->width == NULL) {
         E_WARN("memory alloc failed in fe_build_melfilters()\n");
         return FE_MEM_ALLOC_ERROR;
     }
 
     /* Minimum and maximum frequencies in mel scale */
-    melmin = fe_mel(MEL_FB->lower_filt_freq);
-    melmax = fe_mel(MEL_FB->upper_filt_freq);
+    melmin = fe_mel(mel_fb->lower_filt_freq);
+    melmax = fe_mel(mel_fb->upper_filt_freq);
     /* Width of filters in mel scale */
-    melbw = (melmax - melmin) / (MEL_FB->num_filters + 1);
-    if (MEL_FB->doublewide) {
+    melbw = (melmax - melmin) / (mel_fb->num_filters + 1);
+    if (mel_fb->doublewide) {
         melmin -= melbw;
         melmax += melbw;
         if ((fe_melinv(melmin) < 0) ||
-            (fe_melinv(melmax) > MEL_FB->sampling_rate / 2)) {
+            (fe_melinv(melmax) > mel_fb->sampling_rate / 2)) {
             E_WARN
                 ("Out of Range: low  filter edge = %f (%f)\n",
                  fe_melinv(melmin), 0.0);
             E_WARN
                 ("              high filter edge = %f (%f)\n",
-                 fe_melinv(melmax), MEL_FB->sampling_rate / 2);
+                 fe_melinv(melmax), mel_fb->sampling_rate / 2);
             return FE_INVALID_PARAM_ERROR;
         }
     }
 
     /* FFT point spacing */
-    fftfreq = MEL_FB->sampling_rate / (float32) MEL_FB->fft_size;
+    fftfreq = mel_fb->sampling_rate / (float32) mel_fb->fft_size;
 
     /* Construct filter coefficients */
-    for (i = 0; i < MEL_FB->num_filters; ++i) {
+    for (i = 0; i < mel_fb->num_filters; ++i) {
         float32 freqs[3];
 
         /* Left, center, right frequencies in Hertz */
         for (j = 0; j < 3; ++j) {
-            if (MEL_FB->doublewide)
+            if (mel_fb->doublewide)
                 freqs[j] = fe_melinv((i + j * 2) * melbw + melmin);
             else
                 freqs[j] = fe_melinv((i + j) * melbw + melmin);
-            if (MEL_FB->round_filters)
+            if (mel_fb->round_filters)
                 freqs[j] = ((int)(freqs[j] / fftfreq + 0.5)) * fftfreq;
         }
 
-        MEL_FB->left_apex[i] = -1;
-        MEL_FB->width[i] = -1;
+        mel_fb->left_apex[i] = -1;
+        mel_fb->width[i] = -1;
         /* printf("filter %d (%f, %f, %f): ", i, freqs[0], freqs[1], freqs[2]); */
-        for (j = 0; j < MEL_FB->fft_size/2+1; ++j) {
+        for (j = 0; j < mel_fb->fft_size/2+1; ++j) {
             float32 hz;
 
             hz = j * fftfreq;
             if (hz < freqs[0] || hz > freqs[2])
                 continue;
-            if (MEL_FB->left_apex[i] == -1)
-                MEL_FB->left_apex[i] = j;
-            MEL_FB->width[i] = j - MEL_FB->left_apex[i] + 1;
+            if (mel_fb->left_apex[i] == -1)
+                mel_fb->left_apex[i] = j;
+            mel_fb->width[i] = j - mel_fb->left_apex[i] + 1;
             loslope = (hz - freqs[0]) / (freqs[1] - freqs[0]);
             hislope = (freqs[2] - hz) / (freqs[2] - freqs[1]);
-            if (MEL_FB->unit_area) {
+            if (mel_fb->unit_area) {
                 loslope *= 2 / (freqs[2] - freqs[0]);
                 hislope *= 2 / (freqs[2] - freqs[0]);
             }
             if (loslope < hislope) {
 #ifdef FIXED_POINT
-                MEL_FB->filter_coeffs[i][j - MEL_FB->left_apex[i]] = fe_log(loslope);
+                mel_fb->filter_coeffs[i][j - mel_fb->left_apex[i]] = fe_log(loslope);
 #else
-                MEL_FB->filter_coeffs[i][j - MEL_FB->left_apex[i]] = loslope;
+                mel_fb->filter_coeffs[i][j - mel_fb->left_apex[i]] = loslope;
 #endif
                 /* printf("%f ", loslope); */
             }
             else {
 #ifdef FIXED_POINT
-                MEL_FB->filter_coeffs[i][j - MEL_FB->left_apex[i]] = fe_log(hislope);
+                mel_fb->filter_coeffs[i][j - mel_fb->left_apex[i]] = fe_log(hislope);
 #else
-                MEL_FB->filter_coeffs[i][j - MEL_FB->left_apex[i]] = hislope;
+                mel_fb->filter_coeffs[i][j - mel_fb->left_apex[i]] = hislope;
 #endif
                 /* printf("%f ", hislope); */
             }
         }
         /* printf("\n"); */
-        /* printf("left_apex %d width %d\n", MEL_FB->left_apex[i], MEL_FB->width[i]); */
+        /* printf("left_apex %d width %d\n", mel_fb->left_apex[i], mel_fb->width[i]); */
     }
 
     return FE_SUCCESS;
 }
 
 int32
-fe_compute_melcosine(melfb_t * MEL_FB)
+fe_compute_melcosine(melfb_t * mel_fb)
 {
 
     float64 freqstep;
     int32 i, j;
 
-    if ((MEL_FB->mel_cosine =
-         (mfcc_t **) fe_create_2d(MEL_FB->num_cepstra,
-                                  MEL_FB->num_filters,
+    if ((mel_fb->mel_cosine =
+         (mfcc_t **) fe_create_2d(mel_fb->num_cepstra,
+                                  mel_fb->num_filters,
                                   sizeof(mfcc_t))) == NULL) {
         E_WARN("memory alloc failed in fe_compute_melcosine()\n");
         return FE_MEM_ALLOC_ERROR;
     }
 
-    freqstep = M_PI / MEL_FB->num_filters;
+    freqstep = M_PI / mel_fb->num_filters;
     /* NOTE: The first row vector is actually unnecessary but we leave
      * it in to avoid confusion. */
-    for (i = 0; i < MEL_FB->num_cepstra; i++) {
-        for (j = 0; j < MEL_FB->num_filters; j++) {
+    for (i = 0; i < mel_fb->num_cepstra; i++) {
+        for (j = 0; j < mel_fb->num_filters; j++) {
             float64 cosine;
 
             cosine = cos(freqstep * i * (j + 0.5));
-            MEL_FB->mel_cosine[i][j] = FLOAT2COS(cosine);
+            mel_fb->mel_cosine[i][j] = FLOAT2COS(cosine);
         }
     }
 
     /* Also precompute normalization constants for unitary DCT. */
-    MEL_FB->sqrt_inv_n = FLOAT2COS(sqrt(1.0 / MEL_FB->num_filters));
-    MEL_FB->sqrt_inv_2n = FLOAT2COS(sqrt(2.0 / MEL_FB->num_filters));
+    mel_fb->sqrt_inv_n = FLOAT2COS(sqrt(1.0 / mel_fb->num_filters));
+    mel_fb->sqrt_inv_2n = FLOAT2COS(sqrt(2.0 / mel_fb->num_filters));
 
     /* And liftering weights */
-    if (MEL_FB->lifter_val) {
-        MEL_FB->lifter = calloc(MEL_FB->num_cepstra, sizeof(*MEL_FB->lifter));
-        for (i = 0; i < MEL_FB->num_cepstra; ++i) {
-            MEL_FB->lifter[i] = FLOAT2MFCC(1 + MEL_FB->lifter_val / 2
-                                           * sin(i * M_PI / MEL_FB->lifter_val));
+    if (mel_fb->lifter_val) {
+        mel_fb->lifter = calloc(mel_fb->num_cepstra, sizeof(*mel_fb->lifter));
+        for (i = 0; i < mel_fb->num_cepstra; ++i) {
+            mel_fb->lifter[i] = FLOAT2MFCC(1 + mel_fb->lifter_val / 2
+                                           * sin(i * M_PI / mel_fb->lifter_val));
         }
     }
 
@@ -559,12 +559,12 @@ fe_hamming_window(frame_t * in, window_t * window, int32 in_len, int32 remove_dc
 
 
 int32
-fe_frame_to_fea(fe_t * FE, frame_t * in, mfcc_t * fea)
+fe_frame_to_fea(fe_t * fe, frame_t * in, mfcc_t * fea)
 {
-    fe_spec_magnitude(FE, in, FE->FRAME_SIZE, FE->spec, FE->FFT_SIZE);
-    fe_mel_spec(FE, FE->spec, FE->mfspec);
-    fe_mel_cep(FE, FE->mfspec, fea);
-    fe_lifter(FE, fea);
+    fe_spec_magnitude(fe, in, fe->frame_size, fe->spec, fe->fft_size);
+    fe_mel_spec(fe, fe->spec, fe->mfspec);
+    fe_mel_cep(fe, fe->mfspec, fea);
+    fe_lifter(fe, fea);
     return 0;
 }
 
@@ -610,37 +610,37 @@ fe_spec_magnitude(fe_t *fe,
 }
 
 void
-fe_mel_spec(fe_t * FE, powspec_t const *spec, powspec_t * mfspec)
+fe_mel_spec(fe_t * fe, powspec_t const *spec, powspec_t * mfspec)
 {
     int32 whichfilt, start, i;
 
-    for (whichfilt = 0; whichfilt < FE->MEL_FB->num_filters; whichfilt++) {
-        start = FE->MEL_FB->left_apex[whichfilt];
+    for (whichfilt = 0; whichfilt < fe->mel_fb->num_filters; whichfilt++) {
+        start = fe->mel_fb->left_apex[whichfilt];
 
 #ifdef FIXED_POINT
         mfspec[whichfilt] = spec[start]
-            + FE->MEL_FB->filter_coeffs[whichfilt][0];
-        for (i = 1; i < FE->MEL_FB->width[whichfilt]; i++) {
+            + fe->mel_fb->filter_coeffs[whichfilt][0];
+        for (i = 1; i < fe->mel_fb->width[whichfilt]; i++) {
             mfspec[whichfilt] = fe_log_add(mfspec[whichfilt],
                                            spec[start + i] +
-                                           FE->MEL_FB->
+                                           fe->mel_fb->
                                            filter_coeffs[whichfilt][i]);
         }
 #else                           /* !FIXED_POINT */
         mfspec[whichfilt] = 0;
-        for (i = 0; i < FE->MEL_FB->width[whichfilt]; i++)
+        for (i = 0; i < fe->mel_fb->width[whichfilt]; i++)
             mfspec[whichfilt] +=
-                spec[start + i] * FE->MEL_FB->filter_coeffs[whichfilt][i];
+                spec[start + i] * fe->mel_fb->filter_coeffs[whichfilt][i];
 #endif                          /* !FIXED_POINT */
     }
 }
 
 void
-fe_mel_cep(fe_t * FE, powspec_t * mfspec, mfcc_t * mfcep)
+fe_mel_cep(fe_t * fe, powspec_t * mfspec, mfcc_t * mfcep)
 {
     int32 i;
 
-    for (i = 0; i < FE->MEL_FB->num_filters; ++i) {
+    for (i = 0; i < fe->mel_fb->num_filters; ++i) {
 #ifndef FIXED_POINT /* It's already in log domain for fixed point */
         if (mfspec[i] > 0)
             mfspec[i] = log(mfspec[i]);
@@ -654,109 +654,109 @@ fe_mel_cep(fe_t * FE, powspec_t * mfspec, mfcc_t * mfcep)
     }
 
     /* If we are doing LOG_SPEC, then do nothing. */
-    if (FE->LOG_SPEC == RAW_LOG_SPEC) {
-        for (i = 0; i < FE->FEATURE_DIMENSION; i++) {
+    if (fe->log_spec == RAW_LOG_SPEC) {
+        for (i = 0; i < fe->feature_dimension; i++) {
             mfcep[i] = (mfcc_t) mfspec[i];
         }
     }
     /* For smoothed spectrum, do DCT-II followed by (its inverse) DCT-III */
-    else if (FE->LOG_SPEC == SMOOTH_LOG_SPEC) {
+    else if (fe->log_spec == SMOOTH_LOG_SPEC) {
         /* FIXME: This is probably broken for fixed-point. */
-        fe_dct2(FE, mfspec, mfcep, 0);
-        fe_dct3(FE, mfcep, mfspec);
-        for (i = 0; i < FE->FEATURE_DIMENSION; i++) {
+        fe_dct2(fe, mfspec, mfcep, 0);
+        fe_dct3(fe, mfcep, mfspec);
+        for (i = 0; i < fe->feature_dimension; i++) {
             mfcep[i] = (mfcc_t) mfspec[i];
         }
     }
-    else if (FE->transform == DCT_II)
-        fe_dct2(FE, mfspec, mfcep, 0);
-    else if (FE->transform == DCT_HTK)
-        fe_dct2(FE, mfspec, mfcep, 1);
+    else if (fe->transform == DCT_II)
+        fe_dct2(fe, mfspec, mfcep, 0);
+    else if (fe->transform == DCT_HTK)
+        fe_dct2(fe, mfspec, mfcep, 1);
     else
-        fe_spec2cep(FE, mfspec, mfcep);
+        fe_spec2cep(fe, mfspec, mfcep);
 
     return;
 }
 
 void
-fe_spec2cep(fe_t * FE, const powspec_t * mflogspec, mfcc_t * mfcep)
+fe_spec2cep(fe_t * fe, const powspec_t * mflogspec, mfcc_t * mfcep)
 {
     int32 i, j, beta;
 
     /* Compute C0 separately (its basis vector is 1) to avoid
      * costly multiplications. */
     mfcep[0] = mflogspec[0] / 2; /* beta = 0.5 */
-    for (j = 1; j < FE->MEL_FB->num_filters; j++)
+    for (j = 1; j < fe->mel_fb->num_filters; j++)
 	mfcep[0] += mflogspec[j]; /* beta = 1.0 */
-    mfcep[0] /= (frame_t) FE->MEL_FB->num_filters;
+    mfcep[0] /= (frame_t) fe->mel_fb->num_filters;
 
-    for (i = 1; i < FE->NUM_CEPSTRA; ++i) {
+    for (i = 1; i < fe->num_cepstra; ++i) {
         mfcep[i] = 0;
-        for (j = 0; j < FE->MEL_FB->num_filters; j++) {
+        for (j = 0; j < fe->mel_fb->num_filters; j++) {
             if (j == 0)
                 beta = 1;       /* 0.5 */
             else
                 beta = 2;       /* 1.0 */
             mfcep[i] += COSMUL(mflogspec[j],
-                               FE->MEL_FB->mel_cosine[i][j]) * beta;
+                               fe->mel_fb->mel_cosine[i][j]) * beta;
         }
 	/* Note that this actually normalizes by num_filters, like the
 	 * original Sphinx front-end, due to the doubled 'beta' factor
 	 * above.  */
-        mfcep[i] /= (frame_t) FE->MEL_FB->num_filters * 2;
+        mfcep[i] /= (frame_t) fe->mel_fb->num_filters * 2;
     }
 }
 
 void
-fe_dct2(fe_t * FE, const powspec_t * mflogspec, mfcc_t * mfcep, int htk)
+fe_dct2(fe_t * fe, const powspec_t * mflogspec, mfcc_t * mfcep, int htk)
 {
     int32 i, j;
 
     /* Compute C0 separately (its basis vector is 1) to avoid
      * costly multiplications. */
     mfcep[0] = mflogspec[0];
-    for (j = 1; j < FE->MEL_FB->num_filters; j++)
+    for (j = 1; j < fe->mel_fb->num_filters; j++)
 	mfcep[0] += mflogspec[j];
     if (htk)
-        mfcep[0] = COSMUL(mfcep[0], FE->MEL_FB->sqrt_inv_2n);
+        mfcep[0] = COSMUL(mfcep[0], fe->mel_fb->sqrt_inv_2n);
     else /* sqrt(1/N) = sqrt(2/N) * 1/sqrt(2) */
-        mfcep[0] = COSMUL(mfcep[0], FE->MEL_FB->sqrt_inv_n);
+        mfcep[0] = COSMUL(mfcep[0], fe->mel_fb->sqrt_inv_n);
 
-    for (i = 1; i < FE->NUM_CEPSTRA; ++i) {
+    for (i = 1; i < fe->num_cepstra; ++i) {
         mfcep[i] = 0;
-        for (j = 0; j < FE->MEL_FB->num_filters; j++) {
+        for (j = 0; j < fe->mel_fb->num_filters; j++) {
 	    mfcep[i] += COSMUL(mflogspec[j],
-				FE->MEL_FB->mel_cosine[i][j]);
+				fe->mel_fb->mel_cosine[i][j]);
         }
-        mfcep[i] = COSMUL(mfcep[i], FE->MEL_FB->sqrt_inv_2n);
+        mfcep[i] = COSMUL(mfcep[i], fe->mel_fb->sqrt_inv_2n);
     }
 }
 
 void
-fe_lifter(fe_t *FE, mfcc_t *mfcep)
+fe_lifter(fe_t *fe, mfcc_t *mfcep)
 {
     int32 i;
 
-    if (FE->MEL_FB->lifter_val == 0)
+    if (fe->mel_fb->lifter_val == 0)
         return;
 
-    for (i = 0; i < FE->NUM_CEPSTRA; ++i) {
-        mfcep[i] = MFCCMUL(mfcep[i], FE->MEL_FB->lifter[i]);
+    for (i = 0; i < fe->num_cepstra; ++i) {
+        mfcep[i] = MFCCMUL(mfcep[i], fe->mel_fb->lifter[i]);
     }
 }
 
 void
-fe_dct3(fe_t * FE, const mfcc_t * mfcep, powspec_t * mflogspec)
+fe_dct3(fe_t * fe, const mfcc_t * mfcep, powspec_t * mflogspec)
 {
     int32 i, j;
 
-    for (i = 0; i < FE->MEL_FB->num_filters; ++i) {
+    for (i = 0; i < fe->mel_fb->num_filters; ++i) {
         mflogspec[i] = COSMUL(mfcep[0], SQRT_HALF);
-        for (j = 1; j < FE->NUM_CEPSTRA; j++) {
+        for (j = 1; j < fe->num_cepstra; j++) {
             mflogspec[i] += COSMUL(mfcep[j],
-                                    FE->MEL_FB->mel_cosine[j][i]);
+                                    fe->mel_fb->mel_cosine[j][i]);
         }
-        mflogspec[i] = COSMUL(mflogspec[i], FE->MEL_FB->sqrt_inv_2n);
+        mflogspec[i] = COSMUL(mflogspec[i], fe->mel_fb->sqrt_inv_2n);
     }
 }
 
@@ -768,8 +768,8 @@ fe_create_twiddle(fe_t *fe)
 {
     int i;
 
-    for (i = 0; i < fe->FFT_SIZE / 4; ++i) {
-        float64 a = 2 * M_PI * i / fe->FFT_SIZE;
+    for (i = 0; i < fe->fft_size / 4; ++i) {
+        float64 a = 2 * M_PI * i / fe->fft_size;
 #ifdef FIXED16
         fe->ccc[i] = (int16)(cos(a) * 0x8000);
         fe->sss[i] = (int16)(sin(a) * 0x8000);
@@ -797,7 +797,7 @@ fe_fft_real(fe_t *fe, frame_t const *data, int data_len, int *out_shift)
     frame_t *x, xt, max;
 
     m = fe->fft_order;
-    n = fe->FFT_SIZE;
+    n = fe->fft_size;
     x = fe->fft;
 
     wrap = (data_len < n) ? data_len : n;
@@ -933,7 +933,7 @@ fe_fft_real(fe_t *fe, frame_t const *data, int data_len, int *out_shift)
     frame_t *x, xt;
 
     m = fe->fft_order;
-    n = fe->FFT_SIZE;
+    n = fe->fft_size;
     x = fe->fft;
 
     wrap = (data_len < n) ? data_len : n;
@@ -1084,65 +1084,65 @@ fe_free_2d(void *arr)
 }
 
 void
-fe_parse_general_params(param_t const *P, fe_t * FE)
+fe_parse_general_params(param_t const *p, fe_t * fe)
 {
     int j;
 
-    if (P->SAMPLING_RATE != 0)
-        FE->SAMPLING_RATE = P->SAMPLING_RATE;
+    if (p->sampling_rate != 0)
+        fe->sampling_rate = p->sampling_rate;
     else
-        FE->SAMPLING_RATE = DEFAULT_SAMPLING_RATE;
+        fe->sampling_rate = DEFAULT_SAMPLING_RATE;
 
-    if (P->FRAME_RATE != 0)
-        FE->FRAME_RATE = P->FRAME_RATE;
+    if (p->frame_rate != 0)
+        fe->frame_rate = p->frame_rate;
     else
-        FE->FRAME_RATE = DEFAULT_FRAME_RATE;
+        fe->frame_rate = DEFAULT_FRAME_RATE;
 
-    if (P->WINDOW_LENGTH != 0)
-        FE->WINDOW_LENGTH = P->WINDOW_LENGTH;
+    if (p->window_length != 0)
+        fe->window_length = p->window_length;
     else
-        FE->WINDOW_LENGTH = (float32) DEFAULT_WINDOW_LENGTH;
+        fe->window_length = (float32) DEFAULT_WINDOW_LENGTH;
 
-    FE->dither = P->dither;
-    FE->seed = P->seed;
-    FE->swap = P->swap;
+    fe->dither = p->dither;
+    fe->seed = p->seed;
+    fe->swap = p->swap;
 
-    if (P->PRE_EMPHASIS_ALPHA != 0)
-        FE->PRE_EMPHASIS_ALPHA = P->PRE_EMPHASIS_ALPHA;
+    if (p->pre_emphasis_alpha != 0)
+        fe->pre_emphasis_alpha = p->pre_emphasis_alpha;
     else
-        FE->PRE_EMPHASIS_ALPHA = (float32) DEFAULT_PRE_EMPHASIS_ALPHA;
+        fe->pre_emphasis_alpha = (float32) DEFAULT_PRE_EMPHASIS_ALPHA;
 
-    if (P->NUM_CEPSTRA != 0)
-        FE->NUM_CEPSTRA = P->NUM_CEPSTRA;
+    if (p->num_cepstra != 0)
+        fe->num_cepstra = p->num_cepstra;
     else
-        FE->NUM_CEPSTRA = DEFAULT_NUM_CEPSTRA;
+        fe->num_cepstra = DEFAULT_NUM_CEPSTRA;
 
-    if (P->FFT_SIZE != 0)
-        FE->FFT_SIZE = P->FFT_SIZE;
+    if (p->fft_size != 0)
+        fe->fft_size = p->fft_size;
     else
-        FE->FFT_SIZE = DEFAULT_FFT_SIZE;
+        fe->fft_size = DEFAULT_FFT_SIZE;
 
     /* Check fft size, compute fft order (log_2(n)) */
-    for (j = FE->FFT_SIZE, FE->fft_order = 0; j > 1; j >>= 1, FE->fft_order++) {
-        if (((j % 2) != 0) || (FE->FFT_SIZE <= 0)) {
+    for (j = fe->fft_size, fe->fft_order = 0; j > 1; j >>= 1, fe->fft_order++) {
+        if (((j % 2) != 0) || (fe->fft_size <= 0)) {
             E_FATAL("fft: number of points must be a power of 2 (is %d)\n",
-                    FE->FFT_SIZE);
+                    fe->fft_size);
         }
     }
 
-    FE->LOG_SPEC = P->logspec;
-    FE->transform = P->transform;
-    FE->remove_dc = P->remove_dc;
-    if (!FE->LOG_SPEC)
-        FE->FEATURE_DIMENSION = FE->NUM_CEPSTRA;
+    fe->log_spec = p->logspec;
+    fe->transform = p->transform;
+    fe->remove_dc = p->remove_dc;
+    if (!fe->log_spec)
+        fe->feature_dimension = fe->num_cepstra;
     else {
-        if (P->NUM_FILTERS != 0)
-            FE->FEATURE_DIMENSION = P->NUM_FILTERS;
+        if (p->num_filters != 0)
+            fe->feature_dimension = p->num_filters;
         else {
-            if (FE->SAMPLING_RATE == BB_SAMPLING_RATE)
-                FE->FEATURE_DIMENSION = DEFAULT_BB_NUM_FILTERS;
-            else if (FE->SAMPLING_RATE == NB_SAMPLING_RATE)
-                FE->FEATURE_DIMENSION = DEFAULT_NB_NUM_FILTERS;
+            if (fe->sampling_rate == BB_SAMPLING_RATE)
+                fe->feature_dimension = DEFAULT_BB_NUM_FILTERS;
+            else if (fe->sampling_rate == NB_SAMPLING_RATE)
+                fe->feature_dimension = DEFAULT_NB_NUM_FILTERS;
             else {
                 E_FATAL("Please define the number of MEL filters needed\n");
             }
@@ -1151,119 +1151,119 @@ fe_parse_general_params(param_t const *P, fe_t * FE)
 }
 
 void
-fe_parse_melfb_params(param_t const *P, melfb_t * MEL)
+fe_parse_melfb_params(param_t const *p, melfb_t * mel)
 {
-    if (P->SAMPLING_RATE != 0)
-        MEL->sampling_rate = P->SAMPLING_RATE;
+    if (p->sampling_rate != 0)
+        mel->sampling_rate = p->sampling_rate;
     else
-        MEL->sampling_rate = DEFAULT_SAMPLING_RATE;
+        mel->sampling_rate = DEFAULT_SAMPLING_RATE;
 
-    if (P->FFT_SIZE != 0)
-        MEL->fft_size = P->FFT_SIZE;
+    if (p->fft_size != 0)
+        mel->fft_size = p->fft_size;
     else {
-        if (MEL->sampling_rate == BB_SAMPLING_RATE)
-            MEL->fft_size = DEFAULT_BB_FFT_SIZE;
-        if (MEL->sampling_rate == NB_SAMPLING_RATE)
-            MEL->fft_size = DEFAULT_NB_FFT_SIZE;
+        if (mel->sampling_rate == BB_SAMPLING_RATE)
+            mel->fft_size = DEFAULT_BB_FFT_SIZE;
+        if (mel->sampling_rate == NB_SAMPLING_RATE)
+            mel->fft_size = DEFAULT_NB_FFT_SIZE;
         else
-            MEL->fft_size = DEFAULT_FFT_SIZE;
+            mel->fft_size = DEFAULT_FFT_SIZE;
     }
 
-    if (P->NUM_CEPSTRA != 0)
-        MEL->num_cepstra = P->NUM_CEPSTRA;
+    if (p->num_cepstra != 0)
+        mel->num_cepstra = p->num_cepstra;
     else
-        MEL->num_cepstra = DEFAULT_NUM_CEPSTRA;
+        mel->num_cepstra = DEFAULT_NUM_CEPSTRA;
 
-    if (P->NUM_FILTERS != 0)
-        MEL->num_filters = P->NUM_FILTERS;
+    if (p->num_filters != 0)
+        mel->num_filters = p->num_filters;
     else {
-        if (MEL->sampling_rate == BB_SAMPLING_RATE)
-            MEL->num_filters = DEFAULT_BB_NUM_FILTERS;
-        else if (MEL->sampling_rate == NB_SAMPLING_RATE)
-            MEL->num_filters = DEFAULT_NB_NUM_FILTERS;
+        if (mel->sampling_rate == BB_SAMPLING_RATE)
+            mel->num_filters = DEFAULT_BB_NUM_FILTERS;
+        else if (mel->sampling_rate == NB_SAMPLING_RATE)
+            mel->num_filters = DEFAULT_NB_NUM_FILTERS;
         else {
             E_WARN("Please define the number of MEL filters needed\n");
             E_FATAL("Modify include/fe.h and fe_sigproc.c\n");
         }
     }
 
-    if (P->UPPER_FILT_FREQ != 0)
-        MEL->upper_filt_freq = P->UPPER_FILT_FREQ;
+    if (p->upper_filt_freq != 0)
+        mel->upper_filt_freq = p->upper_filt_freq;
     else {
-        if (MEL->sampling_rate == BB_SAMPLING_RATE)
-            MEL->upper_filt_freq = (float32) DEFAULT_BB_UPPER_FILT_FREQ;
-        else if (MEL->sampling_rate == NB_SAMPLING_RATE)
-            MEL->upper_filt_freq = (float32) DEFAULT_NB_UPPER_FILT_FREQ;
+        if (mel->sampling_rate == BB_SAMPLING_RATE)
+            mel->upper_filt_freq = (float32) DEFAULT_BB_UPPER_FILT_FREQ;
+        else if (mel->sampling_rate == NB_SAMPLING_RATE)
+            mel->upper_filt_freq = (float32) DEFAULT_NB_UPPER_FILT_FREQ;
         else {
             E_WARN("Please define the upper filt frequency needed\n");
             E_FATAL("Modify include/fe.h and fe_sigproc.c\n");
         }
     }
 
-    if (P->LOWER_FILT_FREQ != 0)
-        MEL->lower_filt_freq = P->LOWER_FILT_FREQ;
+    if (p->lower_filt_freq != 0)
+        mel->lower_filt_freq = p->lower_filt_freq;
     else {
-        if (MEL->sampling_rate == BB_SAMPLING_RATE)
-            MEL->lower_filt_freq = (float32) DEFAULT_BB_LOWER_FILT_FREQ;
-        else if (MEL->sampling_rate == NB_SAMPLING_RATE)
-            MEL->lower_filt_freq = (float32) DEFAULT_NB_LOWER_FILT_FREQ;
+        if (mel->sampling_rate == BB_SAMPLING_RATE)
+            mel->lower_filt_freq = (float32) DEFAULT_BB_LOWER_FILT_FREQ;
+        else if (mel->sampling_rate == NB_SAMPLING_RATE)
+            mel->lower_filt_freq = (float32) DEFAULT_NB_LOWER_FILT_FREQ;
         else {
             E_WARN("Please define the lower filt frequency needed\n");
             E_FATAL("Modify include/fe.h and fe_sigproc.c\n");
         }
     }
 
-    MEL->doublewide = P->doublebw;
+    mel->doublewide = p->doublebw;
 
-    if (P->warp_type == NULL) {
-        MEL->warp_type = DEFAULT_WARP_TYPE;
+    if (p->warp_type == NULL) {
+        mel->warp_type = DEFAULT_WARP_TYPE;
     }
     else {
-        MEL->warp_type = P->warp_type;
+        mel->warp_type = p->warp_type;
     }
-    MEL->warp_params = P->warp_params;
-    MEL->lifter_val = P->lifter_val;
-    MEL->unit_area = P->unit_area;
-    MEL->round_filters = P->round_filters;
+    mel->warp_params = p->warp_params;
+    mel->lifter_val = p->lifter_val;
+    mel->unit_area = p->unit_area;
+    mel->round_filters = p->round_filters;
 
-    if (fe_warp_set(MEL->warp_type) != FE_SUCCESS) {
+    if (fe_warp_set(mel->warp_type) != FE_SUCCESS) {
         E_FATAL("Failed to initialize the warping function.\n");
     }
-    fe_warp_set_parameters(MEL->warp_params, MEL->sampling_rate);
+    fe_warp_set_parameters(mel->warp_params, mel->sampling_rate);
 }
 
 void
-fe_print_current(fe_t const *FE)
+fe_print_current(fe_t const *fe)
 {
     E_INFO("Current FE Parameters:\n");
-    E_INFO("\tSampling Rate:             %f\n", FE->SAMPLING_RATE);
-    E_INFO("\tFrame Size:                %d\n", FE->FRAME_SIZE);
-    E_INFO("\tFrame Shift:               %d\n", FE->FRAME_SHIFT);
-    E_INFO("\tFFT Size:                  %d\n", FE->FFT_SIZE);
+    E_INFO("\tSampling Rate:             %f\n", fe->sampling_rate);
+    E_INFO("\tFrame Size:                %d\n", fe->frame_size);
+    E_INFO("\tFrame Shift:               %d\n", fe->frame_shift);
+    E_INFO("\tFFT Size:                  %d\n", fe->fft_size);
     E_INFO("\tLower Frequency:           %g\n",
-           FE->MEL_FB->lower_filt_freq);
+           fe->mel_fb->lower_filt_freq);
     E_INFO("\tUpper Frequency:           %g\n",
-           FE->MEL_FB->upper_filt_freq);
-    E_INFO("\tNumber of filters:         %d\n", FE->MEL_FB->num_filters);
-    E_INFO("\tNumber of Overflow Samps:  %d\n", FE->NUM_OVERFLOW_SAMPS);
-    E_INFO("\tStart Utt Status:          %d\n", FE->START_FLAG);
+           fe->mel_fb->upper_filt_freq);
+    E_INFO("\tNumber of filters:         %d\n", fe->mel_fb->num_filters);
+    E_INFO("\tNumber of Overflow Samps:  %d\n", fe->num_overflow_samps);
+    E_INFO("\tStart Utt Status:          %d\n", fe->start_flag);
     E_INFO("Will %sremove DC offset at frame level\n",
-           FE->remove_dc ? "" : "not ");
-    if (FE->dither) {
+           fe->remove_dc ? "" : "not ");
+    if (fe->dither) {
         E_INFO("Will add dither to audio\n");
-        E_INFO("Dither seeded with %d\n", FE->seed);
+        E_INFO("Dither seeded with %d\n", fe->seed);
     }
     else {
         E_INFO("Will not add dither to audio\n");
     }
-    if (FE->MEL_FB->lifter_val) {
+    if (fe->mel_fb->lifter_val) {
         E_INFO("Will apply sine-curve liftering, period %d\n",
-               FE->MEL_FB->lifter_val);
+               fe->mel_fb->lifter_val);
     }
     E_INFO("Will %snormalize filters to unit area\n",
-           FE->MEL_FB->unit_area ? "" : "not ");
+           fe->mel_fb->unit_area ? "" : "not ");
     E_INFO("Will %sround filter frequencies to DFT points\n",
-           FE->MEL_FB->round_filters ? "" : "not ");
+           fe->mel_fb->round_filters ? "" : "not ");
     E_INFO("Will %suse double bandwidth in mel filter\n",
-           FE->MEL_FB->doublewide ? "" : "not ");
+           fe->mel_fb->doublewide ? "" : "not ");
 }

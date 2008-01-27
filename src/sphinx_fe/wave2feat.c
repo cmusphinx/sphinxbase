@@ -306,14 +306,13 @@ fe_convert_files(globals_t * P)
                 if (!P->params.logspec)
                     last_frame_cep =
                         (mfcc_t **) ckd_calloc_2d(1,
-                                                  FE->
-                                                  NUM_CEPSTRA,
+                                                  FE->num_cepstra,
                                                   sizeof(float32));
                 else
                     last_frame_cep =
                         (mfcc_t **) ckd_calloc_2d(1,
                                                   FE->
-                                                  MEL_FB->
+                                                  mel_fb->
                                                   num_filters,
                                                   sizeof(float32));
                 process_utt_return_value =
@@ -452,12 +451,12 @@ fe_convert_files(globals_t * P)
                 last_frame_cep =
                     (mfcc_t **) ckd_calloc_2d(1,
                                               FE->
-                                              NUM_CEPSTRA,
+                                              num_cepstra,
                                               sizeof(float32));
             else
                 last_frame_cep =
                     (mfcc_t **) ckd_calloc_2d(1,
-                                              FE->MEL_FB->
+                                              FE->mel_fb->
                                               num_filters,
                                               sizeof(float32));
             process_utt_return_value =
@@ -537,7 +536,7 @@ fe_validate_parameters(globals_t * P)
                 P->whichchan, P->nchans);
     }
 
-    if ((P->params.UPPER_FILT_FREQ * 2) > P->params.SAMPLING_RATE) {
+    if ((P->params.upper_filt_freq * 2) > P->params.sampling_rate) {
         E_WARN("Upper frequency higher than Nyquist frequency\n");
     }
 
@@ -611,15 +610,15 @@ fe_parse_options(int32 argc, char **argv)
 
     P->nchans = cmd_ln_int32("-nchans");
     P->whichchan = cmd_ln_int32("-whichchan");
-    P->params.PRE_EMPHASIS_ALPHA = cmd_ln_float32("-alpha");
-    P->params.SAMPLING_RATE = cmd_ln_float32("-samprate");
-    P->params.WINDOW_LENGTH = cmd_ln_float32("-wlen");
-    P->params.FRAME_RATE = cmd_ln_int32("-frate");
+    P->params.pre_emphasis_alpha = cmd_ln_float32("-alpha");
+    P->params.sampling_rate = cmd_ln_float32("-samprate");
+    P->params.window_length = cmd_ln_float32("-wlen");
+    P->params.frame_rate = cmd_ln_int32("-frate");
     P->output_endian = BIG;
-    P->params.NUM_FILTERS = cmd_ln_int32("-nfilt");
-    P->params.NUM_CEPSTRA = cmd_ln_int32("-ncep");
-    P->params.LOWER_FILT_FREQ = cmd_ln_float32("-lowerf");
-    P->params.UPPER_FILT_FREQ = cmd_ln_float32("-upperf");
+    P->params.num_filters = cmd_ln_int32("-nfilt");
+    P->params.num_cepstra = cmd_ln_int32("-ncep");
+    P->params.lower_filt_freq = cmd_ln_float32("-lowerf");
+    P->params.upper_filt_freq = cmd_ln_float32("-upperf");
     P->params.unit_area = cmd_ln_boolean("-unit_area");
     P->params.round_filters = cmd_ln_boolean("-round_filters");
     P->params.remove_dc = cmd_ln_boolean("-remove_dc");
@@ -627,7 +626,7 @@ fe_parse_options(int32 argc, char **argv)
     P->params.warp_type = cmd_ln_str("-warp_type");
     P->params.warp_params = cmd_ln_str("-warp_params");
 
-    P->params.FFT_SIZE = cmd_ln_int32("-nfft");
+    P->params.fft_size = cmd_ln_int32("-nfft");
     if (cmd_ln_int32("-doublebw")) {
         P->params.doublebw = 1;
     }
@@ -774,15 +773,15 @@ fe_count_frames(fe_t * FE, int32 nsamps, int32 count_partial_frames)
 {
     int32 frame_start, frame_count = 0;
 
-    assert(FE->FRAME_SIZE != 0);
-    for (frame_start = 0; frame_start + FE->FRAME_SIZE <= nsamps;
-         frame_start += FE->FRAME_SHIFT)
+    assert(FE->frame_size != 0);
+    for (frame_start = 0; frame_start + FE->frame_size <= nsamps;
+         frame_start += FE->frame_shift)
         frame_count++;
 
     /* dhuggins@cs, 2006-04-25: Update this to match the updated
      * partial frame condition in fe_process_utt(). */
     if (count_partial_frames) {
-        if (frame_count * FE->FRAME_SHIFT < nsamps)
+        if (frame_count * FE->frame_shift < nsamps)
             frame_count++;
     }
 
@@ -987,9 +986,9 @@ fe_openfiles(globals_t * P, fe_t * FE, char *infile, int32 * fp_in,
         /* compute number of frames and write cepfile header */
         numframes = fe_count_frames(FE, len, COUNT_PARTIAL);
         if (!P->params.logspec)
-            outlen = numframes * FE->NUM_CEPSTRA;
+            outlen = numframes * FE->num_cepstra;
         else
-            outlen = numframes * FE->MEL_FB->num_filters;
+            outlen = numframes * FE->mel_fb->num_filters;
         if (P->output_endian != P->machine_endian)
             SWAP_INT32(&outlen);
         if (write(fp, &outlen, 4) != 4) {
@@ -1132,9 +1131,9 @@ fe_writeblock_feat(globals_t * P, fe_t * FE, int32 fp, int32 nframes,
     float32 **ffeat;
 
     if (P->params.logspec)
-        length = nframes * FE->MEL_FB->num_filters;
+        length = nframes * FE->mel_fb->num_filters;
     else
-        length = nframes * FE->NUM_CEPSTRA;
+        length = nframes * FE->num_cepstra;
 
     ffeat = (float32 **) feat;
     fe_mfcc_to_float(FE, feat, ffeat, nframes);
@@ -1195,13 +1194,13 @@ fe_convert_with_dct(globals_t * P, fe_t * FE, char *infile, char *outfile)
     }
     if (P->convert == CEP2SPEC) {
         /* Convert MFCCs to logspectra. */
-        input_ncoeffs = FE->NUM_CEPSTRA;
-        output_ncoeffs = FE->MEL_FB->num_filters;
+        input_ncoeffs = FE->num_cepstra;
+        output_ncoeffs = FE->mel_fb->num_filters;
     }
     else {
         /* Convert logspectra to MFCCs. */
-        input_ncoeffs = FE->MEL_FB->num_filters;
-        output_ncoeffs = FE->NUM_CEPSTRA;
+        input_ncoeffs = FE->mel_fb->num_filters;
+        output_ncoeffs = FE->num_cepstra;
     }
     nfloats = nfloats * output_ncoeffs / input_ncoeffs;
 
@@ -1209,7 +1208,7 @@ fe_convert_with_dct(globals_t * P, fe_t * FE, char *infile, char *outfile)
         SWAP_INT32(&nfloats);
     fwrite(&nfloats, 4, 1, ofh);
     /* Always use the largest size since it's done inplace */
-    logspec = ckd_calloc(FE->MEL_FB->num_filters, sizeof(*logspec));
+    logspec = ckd_calloc(FE->mel_fb->num_filters, sizeof(*logspec));
 
     while (fread(logspec, 4, input_ncoeffs, ifh) == input_ncoeffs) {
         int32 i;

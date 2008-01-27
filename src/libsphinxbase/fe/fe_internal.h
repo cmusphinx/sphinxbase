@@ -88,15 +88,15 @@ enum {
 /* This will go away soon-ish. */
 typedef struct param_s param_t;
 struct param_s {
-    float32 SAMPLING_RATE;
-    int32 FRAME_RATE;
-    float32 WINDOW_LENGTH;
-    int32 NUM_CEPSTRA;
-    int32 NUM_FILTERS;
-    int32 FFT_SIZE;
-    float32 LOWER_FILT_FREQ;
-    float32 UPPER_FILT_FREQ;
-    float32 PRE_EMPHASIS_ALPHA;
+    float32 sampling_rate;
+    int32 frame_rate;
+    float32 window_length;
+    int32 num_cepstra;
+    int32 num_filters;
+    int32 fft_size;
+    float32 lower_filt_freq;
+    float32 upper_filt_freq;
+    float32 pre_emphasis_alpha;
     int32 swap;
     int32 dither;
     int32 seed;
@@ -145,27 +145,27 @@ struct melfb_s {
 
 /** Structure for the front-end computation. */
 struct fe_s {
-    float32 SAMPLING_RATE;
-    int32 FRAME_RATE;
-    int32 FRAME_SHIFT;
-    float32 WINDOW_LENGTH;
-    int32 FRAME_SIZE;
-    int32 FFT_SIZE;
+    float32 sampling_rate;
+    int32 frame_rate;
+    int32 frame_shift;
+    float32 window_length;
+    int32 frame_size;
+    int32 fft_size;
     int32 fft_order;
-    int32 LOG_SPEC;
-    int32 NUM_CEPSTRA;
-    int32 FEATURE_DIMENSION;
+    int32 log_spec;
+    int32 num_cepstra;
+    int32 feature_dimension;
     int32 swap;
     int32 dither;
     int32 seed;
-    float32 PRE_EMPHASIS_ALPHA;
-    int16 *OVERFLOW_SAMPS;
-    int32 NUM_OVERFLOW_SAMPS;    
-    melfb_t *MEL_FB;
-    int32 START_FLAG;
-    int16 PRIOR;
-    window_t *HAMMING_WINDOW;
-    int32 FRAME_COUNTER;
+    float32 pre_emphasis_alpha;
+    int16 *overflow_samps;
+    int32 num_overflow_samps;    
+    melfb_t *mel_fb;
+    int32 start_flag;
+    int16 prior;
+    window_t *hamming_window;
+    int32 frame_counter;
     int32 transform;
     int32 remove_dc;
     /* Twiddle factors for FFT. */
