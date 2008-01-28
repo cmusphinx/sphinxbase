@@ -236,7 +236,6 @@ fe_process_frame(fe_t * fe, int16 const *spch, int32 nsamps, mfcc_t * fr_cep)
     return fe_write_frame(fe, fr_cep);
 }
 
-
 int
 fe_process_utt(fe_t * fe, int16 const * spch, int32 nsamps,
                mfcc_t *** cep_block, int32 * nframes)
@@ -249,7 +248,6 @@ fe_process_utt(fe_t * fe, int16 const * spch, int32 nsamps,
     /* Are there enough samples to make at least 1 frame? */
     if (nsamps + fe->num_overflow_samps < fe->frame_size) {
         /* No, then store them and get out. */
-        assert(nsamps + fe->num_overflow_samps < fe->frame_size);
         memcpy(fe->overflow_samps + fe->num_overflow_samps,
                spch, nsamps * (sizeof(int16)));
         fe->num_overflow_samps += nsamps;
