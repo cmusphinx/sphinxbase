@@ -155,12 +155,7 @@ fe_init_dither(int32 seed)
 fe_t *
 fe_init(param_t const *P)
 {
-    fe_t *fe = (fe_t *) calloc(1, sizeof(fe_t));
-
-    if (fe == NULL) {
-        E_WARN("memory alloc failed in fe_init()\n");
-        return (NULL);
-    }
+    fe_t *fe = ckd_calloc(1, sizeof(*fe));
 
     /* transfer params to front end */
     fe_parse_general_params(P, fe);
@@ -186,23 +181,15 @@ fe_init(param_t const *P)
     }
 
     /* establish buffers for overflow samps and hamming window */
-    fe->overflow_samps = (int16 *) calloc(fe->frame_size, sizeof(int16));
-    fe->hamming_window =
-        (window_t *) calloc(fe->frame_size/2, sizeof(window_t));
-
-    if (fe->overflow_samps == NULL || fe->hamming_window == NULL) {
-        E_WARN("memory alloc failed in fe_init()\n");
-        return (NULL);
-    }
+    fe->overflow_samps = ckd_calloc(fe->frame_size, sizeof(int16));
+    fe->hamming_window = ckd_calloc(fe->frame_size/2, sizeof(window_t));
 
     /* create hamming window */
     fe_create_hamming(fe->hamming_window, fe->frame_size);
 
     /* init and fill appropriate filter structure */
-    if ((fe->mel_fb = (melfb_t *) calloc(1, sizeof(melfb_t))) == NULL) {
-        E_WARN("memory alloc failed in fe_init()\n");
-        return (NULL);
-    }
+    fe->mel_fb = ckd_calloc(1, sizeof(*fe->mel_fb));
+
     /* transfer params to mel fb */
     fe_parse_melfb_params(P, fe->mel_fb);
     fe_build_melfilters(fe->mel_fb);
@@ -210,15 +197,14 @@ fe_init(param_t const *P)
 
     /* Create temporary FFT, spectrum and mel-spectrum buffers. */
     /* FIXME: Gosh there are a lot of these. */
-    fe->spch = (int16 *) calloc(fe->frame_size, sizeof(*fe->spch));
-    fe->frame = (frame_t *) calloc(fe->fft_size, sizeof(*fe->frame));
-    fe->spec = (powspec_t *) calloc(fe->fft_size, sizeof(*fe->spec));
-    fe->mfspec = (powspec_t *) calloc(fe->mel_fb->num_filters,
-                                      sizeof(*fe->mfspec));
+    fe->spch = ckd_calloc(fe->frame_size, sizeof(*fe->spch));
+    fe->frame = ckd_calloc(fe->fft_size, sizeof(*fe->frame));
+    fe->spec = ckd_calloc(fe->fft_size, sizeof(*fe->spec));
+    fe->mfspec = ckd_calloc(fe->mel_fb->num_filters, sizeof(*fe->mfspec));
 
     /* create twiddle factors */
-    fe->ccc = (frame_t *)calloc(fe->fft_size / 4, sizeof(*fe->ccc));
-    fe->sss = (frame_t *)calloc(fe->fft_size / 4, sizeof(*fe->sss));
+    fe->ccc = ckd_calloc(fe->fft_size / 4, sizeof(*fe->ccc));
+    fe->sss = ckd_calloc(fe->fft_size / 4, sizeof(*fe->sss));
     fe_create_twiddle(fe);
 
     if (P->verbose) {
@@ -417,7 +403,7 @@ fe_logspec_to_mfcc(fe_t * fe, const mfcc_t * fr_spec, mfcc_t * fr_cep)
     powspec_t *powspec;
     int32 i;
 
-    powspec = malloc(fe->mel_fb->num_filters * sizeof(powspec_t));
+    powspec = ckd_malloc(fe->mel_fb->num_filters * sizeof(powspec_t));
     for (i = 0; i < fe->mel_fb->num_filters; ++i)
         powspec[i] = (powspec_t) fr_spec[i];
     fe_spec2cep(fe, powspec, fr_cep);
@@ -435,7 +421,7 @@ fe_logspec_dct2(fe_t * fe, const mfcc_t * fr_spec, mfcc_t * fr_cep)
     powspec_t *powspec;
     int32 i;
 
-    powspec = malloc(fe->mel_fb->num_filters * sizeof(powspec_t));
+    powspec = ckd_malloc(fe->mel_fb->num_filters * sizeof(powspec_t));
     for (i = 0; i < fe->mel_fb->num_filters; ++i)
         powspec[i] = (powspec_t) fr_spec[i];
     fe_dct2(fe, powspec, fr_cep, 0);
@@ -453,7 +439,7 @@ fe_mfcc_dct3(fe_t * fe, const mfcc_t * fr_cep, mfcc_t * fr_spec)
     powspec_t *powspec;
     int32 i;
 
-    powspec = malloc(fe->mel_fb->num_filters * sizeof(powspec_t));
+    powspec = ckd_malloc(fe->mel_fb->num_filters * sizeof(powspec_t));
     fe_dct3(fe, fr_cep, powspec);
     for (i = 0; i < fe->mel_fb->num_filters; ++i)
         fr_spec[i] = (mfcc_t) powspec[i];
