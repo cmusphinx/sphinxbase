@@ -31,4 +31,4 @@ run_program sphinx_cepview \
 > test-sphinx_fe-dither-seed.cepview.out 2>>$tmpout
 
 compare_table "WAVE2FEAT-DITHER-SEED test" test-sphinx_fe-dither-seed.cepview.out \
-    $tests/regression/chan3-dither.cepview
+    $tests/regression/chan3-dither.cepview 0.1

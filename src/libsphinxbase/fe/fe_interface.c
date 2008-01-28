@@ -198,7 +198,6 @@ fe_init(param_t const *P)
     /* create hamming window */
     fe_create_hamming(fe->hamming_window, fe->frame_size);
 
-
     /* init and fill appropriate filter structure */
     if ((fe->mel_fb = (melfb_t *) calloc(1, sizeof(melfb_t))) == NULL) {
         E_WARN("memory alloc failed in fe_init()\n");
@@ -210,13 +209,16 @@ fe_init(param_t const *P)
     fe_compute_melcosine(fe->mel_fb);
 
     /* Create temporary FFT, spectrum and mel-spectrum buffers. */
-    fe->fft = (frame_t *) calloc(fe->fft_size, sizeof(frame_t));
-    fe->spec = (powspec_t *) calloc(fe->fft_size, sizeof(powspec_t));
-    fe->mfspec = (powspec_t *) calloc(fe->mel_fb->num_filters, sizeof(powspec_t));
-    fe->ccc = (frame_t *)calloc(fe->fft_size / 4, sizeof(*fe->ccc));
-    fe->sss = (frame_t *)calloc(fe->fft_size / 4, sizeof(*fe->sss));
+    /* FIXME: Gosh there are a lot of these. */
+    fe->spch = (int16 *) calloc(fe->frame_size, sizeof(*fe->spch));
+    fe->frame = (frame_t *) calloc(fe->fft_size, sizeof(*fe->frame));
+    fe->spec = (powspec_t *) calloc(fe->fft_size, sizeof(*fe->spec));
+    fe->mfspec = (powspec_t *) calloc(fe->mel_fb->num_filters,
+                                      sizeof(*fe->mfspec));
 
     /* create twiddle factors */
+    fe->ccc = (frame_t *)calloc(fe->fft_size / 4, sizeof(*fe->ccc));
+    fe->sss = (frame_t *)calloc(fe->fft_size / 4, sizeof(*fe->sss));
     fe_create_twiddle(fe);
 
     if (P->verbose) {
@@ -242,223 +244,95 @@ fe_start_utt(fe_t * fe)
 }
 
 int32
-fe_process_frame(fe_t * fe, int16 * spch, int32 nsamps, mfcc_t * fr_cep)
+fe_process_frame(fe_t * fe, int16 const *spch, int32 nsamps, mfcc_t * fr_cep)
 {
-    int32 spbuf_len, i;
-    frame_t *spbuf;
-    int32 return_value = FE_SUCCESS;
-
-    spbuf_len = fe->frame_size;
-
-    /* assert(spbuf_len <= nsamps); */
-    if ((spbuf = (frame_t *) calloc(spbuf_len, sizeof(frame_t))) == NULL) {
-        E_FATAL("memory alloc failed in fe_process_frame()...exiting\n");
-    }
-
-    /* Added byte-swapping for Endian-ness compatibility */
-    if (fe->swap) 
-        for (i = 0; i < nsamps; i++)
-            SWAP_INT16(&spch[i]);
-
-    /* Add dither, if need. Warning: this may add dither twice to the
-       samples in overlapping frames. */
-    if (fe->dither) {
-        fe_dither(spch, spbuf_len);
-    }
-
-    /* pre-emphasis if needed,convert from int16 to float64 */
-    if (fe->pre_emphasis_alpha != 0.0) {
-        fe_pre_emphasis(spch, spbuf, spbuf_len,
-                        fe->pre_emphasis_alpha, fe->prior);
-        fe->prior = spch[fe->frame_shift - 1];  /* Z.A.B for frame by frame analysis  */
-    }
-    else {
-        fe_short_to_frame(spch, spbuf, spbuf_len);
-    }
-
-
-    /* frame based processing - let's make some cepstra... */
-    fe_hamming_window(spbuf, fe->hamming_window, fe->frame_size, fe->remove_dc);
-    return_value = fe_frame_to_fea(fe, spbuf, fr_cep);
-    free(spbuf);
-
-    return return_value;
+    fe_read_frame(fe, spch, nsamps);
+    return fe_write_frame(fe, fr_cep);
 }
 
 
-int32
-fe_process_utt(fe_t * fe, int16 * spch, int32 nsamps,
+int
+fe_process_utt(fe_t * fe, int16 const * spch, int32 nsamps,
                mfcc_t *** cep_block, int32 * nframes)
 {
-    int32 frame_start, frame_count = 0, whichframe = 0;
-    int32 i, spbuf_len, offset = 0;
-    frame_t *spbuf, *fr_data;
-    int16 *tmp_spch = spch;
-    mfcc_t **cep = NULL;
-    int32 return_value = FE_SUCCESS;
-    int32 frame_return_value;
+    int32 frame_count;
+    int16 const *inptr;
+    mfcc_t **cep;
+    int i;
 
-    /* Added byte-swapping for Endian-ness compatibility */
-    if (fe->swap) 
-        for (i = 0; i < nsamps; i++)
-            SWAP_INT16(&spch[i]);
-
-    /* are there enough samples to make at least 1 frame? */
-    if (nsamps + fe->num_overflow_samps >= fe->frame_size) {
-
-        /* if there are previous samples, pre-pend them to input speech samps */
-        if ((fe->num_overflow_samps > 0)) {
-
-            if ((tmp_spch =
-                 (int16 *) malloc(sizeof(int16) *
-                                  (fe->num_overflow_samps +
-                                   nsamps))) == NULL) {
-                E_WARN("memory alloc failed in fe_process_utt()\n");
-                return FE_MEM_ALLOC_ERROR;
-            }
-            /* RAH */
-            memcpy(tmp_spch, fe->overflow_samps, fe->num_overflow_samps * (sizeof(int16)));     /* RAH */
-            memcpy(tmp_spch + fe->num_overflow_samps, spch, nsamps * (sizeof(int16)));  /* RAH */
-            nsamps += fe->num_overflow_samps;
-            fe->num_overflow_samps = 0; /*reset overflow samps count */
-        }
-        /* compute how many complete frames  can be processed and which samples correspond to those samps */
-        frame_count = 0;
-        for (frame_start = 0;
-             frame_start + fe->frame_size <= nsamps;
-             frame_start += fe->frame_shift)
-            frame_count++;
-
-
-        if ((cep =
-             (mfcc_t **) fe_create_2d(frame_count + 1,
-                                      fe->feature_dimension,
-                                      sizeof(mfcc_t))) == NULL) {
-            E_WARN
-                ("memory alloc for cep failed in fe_process_utt()\n\tfe_create_2d(%ld,%d,%d)\n",
-                 (long int) (frame_count + 1),
-                 fe->feature_dimension, sizeof(mfcc_t));
-            return (FE_MEM_ALLOC_ERROR);
-        }
-        spbuf_len = (frame_count - 1) * fe->frame_shift + fe->frame_size;
-
-        if ((spbuf =
-             (frame_t *) calloc(spbuf_len, sizeof(frame_t))) == NULL) {
-            E_WARN("memory alloc failed in fe_process_utt()\n");
-            return (FE_MEM_ALLOC_ERROR);
-        }
-
-        /* Add dither, if requested */
-        if (fe->dither) {
-            fe_dither(tmp_spch, spbuf_len);
-        }
-
-        /* pre-emphasis if needed, convert from int16 to float64 */
-        if (fe->pre_emphasis_alpha != 0.0) {
-            fe_pre_emphasis(tmp_spch, spbuf, spbuf_len,
-                            fe->pre_emphasis_alpha, fe->prior);
-        }
-        else {
-            fe_short_to_frame(tmp_spch, spbuf, spbuf_len);
-        }
-
-        /* frame based processing - let's make some cepstra... */
-        fr_data = (frame_t *) calloc(fe->frame_size, sizeof(frame_t));
-        if (fr_data == NULL) {
-            E_WARN("memory alloc failed in fe_process_utt()\n");
-            return (FE_MEM_ALLOC_ERROR);
-        }
-
-        for (whichframe = 0; whichframe < frame_count; whichframe++) {
-
-            for (i = 0; i < fe->frame_size; i++)
-                fr_data[i] = spbuf[whichframe * fe->frame_shift + i];
-
-            fe_hamming_window(fr_data, fe->hamming_window, fe->frame_size, fe->remove_dc);
-
-            frame_return_value =
-                fe_frame_to_fea(fe, fr_data, cep[whichframe]);
-
-            if (FE_SUCCESS != frame_return_value) {
-                return_value = frame_return_value;
-            }
-        }
-        /* done making cepstra */
-
-
-        /* assign samples which don't fill an entire frame to FE overflow buffer for use on next pass */
-        if ((offset = ((frame_count) * fe->frame_shift)) < nsamps) {
-            memcpy(fe->overflow_samps, tmp_spch + offset,
-                   (nsamps - offset) * sizeof(int16));
-            fe->num_overflow_samps = nsamps - offset;
-            fe->prior = tmp_spch[offset - 1];
-            assert(fe->num_overflow_samps < fe->frame_size);
-        }
-
-        if (spch != tmp_spch)
-            free(tmp_spch);
-
-        free(spbuf);
-        free(fr_data);
-    }
-
-    /* if not enough total samps for a single frame, append new samps to
-       previously stored overlap samples */
-    else {
+    /* Are there enough samples to make at least 1 frame? */
+    if (nsamps + fe->num_overflow_samps < fe->frame_size) {
+        /* No, then store them and get out. */
+        assert(nsamps + fe->num_overflow_samps < fe->frame_size);
         memcpy(fe->overflow_samps + fe->num_overflow_samps,
-               tmp_spch, nsamps * (sizeof(int16)));
+               spch, nsamps * (sizeof(int16)));
         fe->num_overflow_samps += nsamps;
-        assert(fe->num_overflow_samps < fe->frame_size);
-        frame_count = 0;
+        *nframes = 0;
+        *cep_block = NULL;
+        return 0;
     }
 
-    *cep_block = cep;           /* MLS */
+    /* How many frames will we be able to get? */
+    frame_count = 1
+        + ((nsamps + fe->num_overflow_samps - fe->frame_size)
+           / fe->frame_shift);
+
+    /* Create the output buffer. */
+    cep = (mfcc_t **)ckd_calloc_2d(frame_count, fe->feature_dimension, sizeof(**cep));
+
+    /* Start processing, taking care of any incoming overflow. */
+    inptr = spch;
+    if (fe->num_overflow_samps) {
+        int offset = fe->frame_size - fe->num_overflow_samps;
+        /* Append start of spch to overflow samples to make a full frame. */
+        memcpy(fe->overflow_samps + fe->num_overflow_samps,
+               inptr, offset * sizeof(*inptr));
+        fe_read_frame(fe, fe->overflow_samps, fe->frame_size);
+        fe_write_frame(fe, cep[0]);
+        inptr += offset;
+        nsamps -= offset;
+    }
+    else {
+        fe_read_frame(fe, inptr, fe->frame_size);
+        fe_write_frame(fe, cep[0]);
+        inptr += fe->frame_size;
+        nsamps -= fe->frame_size;
+    }
+
+    /* Process all remaining frames. */
+    for (i = 1; i < frame_count; ++i) {
+        assert(nsamps >= fe->frame_shift);
+        fe_shift_frame(fe, inptr, fe->frame_shift);
+        fe_write_frame(fe, cep[i]);
+        inptr += fe->frame_shift;
+        nsamps -= fe->frame_shift;
+    }
+
+    /* We have to make sure the leftover sample buffer contains the
+     * previous (frame_size-frame_shift) samples so that
+     * fe_read_frame() will work as expected on it. */
+    assert(nsamps < fe->frame_shift);
+    fe->num_overflow_samps = nsamps + fe->frame_size - fe->frame_shift;
+    if (fe->num_overflow_samps > 0)
+        memcpy(fe->overflow_samps, inptr - (fe->frame_size - fe->frame_shift),
+               fe->num_overflow_samps * sizeof(*inptr));
+
+    *cep_block = cep;
     *nframes = frame_count;
-    return return_value;
+    return 0;
 }
 
 
 int32
 fe_end_utt(fe_t * fe, mfcc_t * cepvector, int32 * nframes)
 {
-    int32 pad_len = 0, frame_count = 0;
-    frame_t *spbuf;
-    int32 return_value = FE_SUCCESS;
+    int32 frame_count;
 
-    /* if there are any samples left in overflow buffer, pad zeros to
-       make a frame and then process that frame */
-
-    if ((fe->num_overflow_samps > 0)) {
-        pad_len = fe->frame_size - fe->num_overflow_samps;
-        memset(fe->overflow_samps + (fe->num_overflow_samps), 0,
-               pad_len * sizeof(int16));
-        fe->num_overflow_samps += pad_len;
-        assert(fe->num_overflow_samps == fe->frame_size);
-
-        if ((spbuf =
-             (frame_t *) calloc(fe->frame_size,
-                                sizeof(frame_t))) == NULL) {
-            E_WARN("memory alloc failed in fe_end_utt()\n");
-            return (FE_MEM_ALLOC_ERROR);
-        }
-
-        if (fe->dither) {
-            fe_dither(fe->overflow_samps, fe->frame_size);
-        }
-
-        if (fe->pre_emphasis_alpha != 0.0) {
-            fe_pre_emphasis(fe->overflow_samps, spbuf,
-                            fe->frame_size,
-                            fe->pre_emphasis_alpha, fe->prior);
-        }
-        else {
-            fe_short_to_frame(fe->overflow_samps, spbuf, fe->frame_size);
-        }
-
-        fe_hamming_window(spbuf, fe->hamming_window, fe->frame_size, fe->remove_dc);
-        return_value = fe_frame_to_fea(fe, spbuf, cepvector);
+    /* Process any remaining data. */
+    if (fe->num_overflow_samps > 0) {
+        fe_read_frame(fe, fe->overflow_samps, fe->num_overflow_samps);
+        fe_write_frame(fe, cepvector);
         frame_count = 1;
-        free(spbuf);            /* RAH */
     }
     else {
         frame_count = 0;
@@ -469,7 +343,7 @@ fe_end_utt(fe_t * fe, mfcc_t * cepvector, int32 * nframes)
     fe->start_flag = 0;
 
     *nframes = frame_count;
-    return return_value;
+    return 0;
 }
 
 int32
@@ -484,7 +358,8 @@ fe_close(fe_t * fe)
     ckd_free(fe->mel_fb->filt_width);
     ckd_free(fe->mel_fb->filt_coeffs);
     free(fe->mel_fb);
-    free(fe->fft);
+    free(fe->spch);
+    free(fe->frame);
     free(fe->ccc);
     free(fe->sss);
     free(fe->spec);

@@ -51,6 +51,7 @@
 
 #include "prim_type.h"
 #include "ckd_alloc.h"
+#include "byteorder.h"
 #include "fixpoint.h"
 #include "fe.h"
 #include "fe_internal.h"
@@ -282,6 +283,21 @@ fe_log(float32 x)
 }
 #endif
 
+static float32
+fe_mel(float32 x)
+{
+    float32 warped = fe_warp_unwarped_to_warped(x);
+
+    return (float32) (2595.0 * log10(1.0 + warped / 700.0));
+}
+
+static float32
+fe_melinv(float32 x)
+{
+    float32 warped = (float32) (700.0 * (pow(10.0, x / 2595.0) - 1.0));
+    return fe_warp_warped_to_unwarped(warped);
+}
+
 int32
 fe_build_melfilters(melfb_t *mel_fb)
 {
@@ -415,13 +431,10 @@ fe_compute_melcosine(melfb_t * mel_fb)
     float64 freqstep;
     int32 i, j;
 
-    if ((mel_fb->mel_cosine =
-         (mfcc_t **) fe_create_2d(mel_fb->num_cepstra,
+    mel_fb->mel_cosine =
+        (mfcc_t **) ckd_calloc_2d(mel_fb->num_cepstra,
                                   mel_fb->num_filters,
-                                  sizeof(mfcc_t))) == NULL) {
-        E_WARN("memory alloc failed in fe_compute_melcosine()\n");
-        return FE_MEM_ALLOC_ERROR;
-    }
+                                  sizeof(mfcc_t));
 
     freqstep = M_PI / mel_fb->num_filters;
     /* NOTE: The first row vector is actually unnecessary but we leave
@@ -451,34 +464,7 @@ fe_compute_melcosine(melfb_t * mel_fb)
     return (0);
 }
 
-
-float32
-fe_mel(float32 x)
-{
-    float32 warped = fe_warp_unwarped_to_warped(x);
-
-    return (float32) (2595.0 * log10(1.0 + warped / 700.0));
-}
-
-float32
-fe_melinv(float32 x)
-{
-    float32 warped = (float32) (700.0 * (pow(10.0, x / 2595.0) - 1.0));
-    return fe_warp_warped_to_unwarped(warped);
-}
-
-/* adds 1/2-bit noise */
-int32
-fe_dither(int16 * buffer, int32 nsamps)
-{
-    int32 i;
-    for (i = 0; i < nsamps; i++)
-        buffer[i] += (short) ((!(s3_rand_int31() % 4)) ? 1 : 0);
-
-    return 0;
-}
-
-void
+static void
 fe_pre_emphasis(int16 const *in, frame_t * out, int32 len,
                 float32 factor, int16 prior)
 {
@@ -499,28 +485,27 @@ fe_pre_emphasis(int16 const *in, frame_t * out, int32 len,
 #elif defined(FIXED_POINT)
     fixed32 fxd_alpha = FLOAT2FIX(factor);
     out[0] = ((fixed32)in[0] << DEFAULT_RADIX) - (prior * fxd_alpha);
-    for (i = 1; i < len; ++i) {
-        out[i] = ((fixed32)in[i] << DEFAULT_RADIX) - (in[i-1] * fxd_alpha);
-    }
+    for (i = 1; i < len; ++i)
+        out[i] = ((fixed32)in[i] << DEFAULT_RADIX)
+            - (fixed32)in[i-1] * fxd_alpha;
 #else
-    out[0] = (frame_t) in[0] - factor * (frame_t) prior;
-    for (i = 1; i < len; i++) {
-        out[i] = (frame_t) in[i] - factor * (frame_t) in[i - 1];
-    }
+    out[0] = (frame_t) in[0] - (frame_t) prior * factor;
+    for (i = 1; i < len; i++)
+        out[i] = (frame_t) in[i] - (frame_t) in[i-1] * factor;
 #endif
 }
 
-void
+static void
 fe_short_to_frame(int16 const *in, frame_t * out, int32 len)
 {
-#if defined(FIXED16)
-    memcpy(out, in, len * sizeof(*in));
-#elif defined(FIXED_POINT)
     int i;
+
+#if defined(FIXED16)
+    memcpy(out, in, len * sizeof(*out));
+#elif defined(FIXED_POINT)
     for (i = 0; i < len; i++)
         out[i] = (int32) in[i] << DEFAULT_RADIX;
 #else                           /* FIXED_POINT */
-    int i;
     for (i = 0; i < len; i++)
         out[i] = (frame_t) in[i];
 #endif                          /* FIXED_POINT */
@@ -544,8 +529,7 @@ fe_create_hamming(window_t * in, int32 in_len)
     }
 }
 
-
-void
+static void
 fe_hamming_window(frame_t * in, window_t * window, int32 in_len, int32 remove_dc)
 {
     int i;
@@ -581,28 +565,345 @@ fe_hamming_window(frame_t * in, window_t * window, int32 in_len, int32 remove_dc
 #endif
 }
 
-
-int32
-fe_frame_to_fea(fe_t * fe, frame_t * in, mfcc_t * fea)
+static int
+fe_spch_to_frame(fe_t *fe, int len)
 {
-    fe_spec_magnitude(fe, in, fe->frame_size, fe->spec, fe->fft_size);
-    fe_mel_spec(fe, fe->spec, fe->mfspec);
-    fe_mel_cep(fe, fe->mfspec, fea);
-    fe_lifter(fe, fea);
-    return 0;
+    /* Copy to the frame buffer. */
+    if (fe->pre_emphasis_alpha != 0.0) {
+        fe_pre_emphasis(fe->spch, fe->frame, len,
+                        fe->pre_emphasis_alpha, fe->prior);
+        if (len >= fe->frame_shift)
+            fe->prior = fe->spch[fe->frame_shift - 1];
+        else
+            fe->prior = fe->spch[len - 1];
+    }
+    else
+        fe_short_to_frame(fe->spch, fe->frame, len);
+
+    /* Zero pad up to FFT size. */
+    memset(fe->frame + len, 0,
+           (fe->fft_size - len) * sizeof(*fe->frame));
+
+    /* Window. */
+    fe_hamming_window(fe->frame, fe->hamming_window, fe->frame_size,
+                      fe->remove_dc);
+
+    return len;
 }
 
+int
+fe_read_frame(fe_t *fe, int16 const *in, int32 len)
+{
+    int i;
+
+    if (len > fe->frame_size)
+        len = fe->frame_size;
+
+    /* Read it into the raw speech buffer. */
+    memcpy(fe->spch, in, len * sizeof(*in));
+    /* Swap and dither if necessary. */
+    if (fe->swap)
+        for (i = 0; i < len; ++i)
+            SWAP_INT16(&fe->spch[i]);
+    if (fe->dither)
+        for (i = 0; i < len; ++i)
+            fe->spch[i] += (int16) ((!(s3_rand_int31() % 4)) ? 1 : 0);
+
+    return fe_spch_to_frame(fe, len);
+}
+
+int
+fe_shift_frame(fe_t *fe, int16 const *in, int32 len)
+{
+    int offset, i;
+
+    if (len > fe->frame_shift)
+        len = fe->frame_shift;
+    offset = fe->frame_size - fe->frame_shift;
+
+    /* Shift data into the raw speech buffer. */
+    memmove(fe->spch, fe->spch + fe->frame_shift,
+            offset * sizeof(*fe->spch));
+    memcpy(fe->spch + offset, in, len * sizeof(*fe->spch));
+    /* Swap and dither if necessary. */
+    if (fe->swap)
+        for (i = 0; i < len; ++i)
+            SWAP_INT16(&fe->spch[offset + i]);
+    if (fe->dither)
+        for (i = 0; i < len; ++i)
+            fe->spch[offset + i]
+                += (int16) ((!(s3_rand_int31() % 4)) ? 1 : 0);
+    
+    return fe_spch_to_frame(fe, offset + len);
+}
+
+/**
+ * Create arrays of twiddle factors.
+ */
 void
-fe_spec_magnitude(fe_t *fe,
-                  frame_t const *data, int32 data_len,
-                  powspec_t * spec, int32 fftsize)
+fe_create_twiddle(fe_t *fe)
+{
+    int i;
+
+    for (i = 0; i < fe->fft_size / 4; ++i) {
+        float64 a = 2 * M_PI * i / fe->fft_size;
+#ifdef FIXED16
+        fe->ccc[i] = (int16)(cos(a) * 0x8000);
+        fe->sss[i] = (int16)(sin(a) * 0x8000);
+#elif defined(FIXED_POINT)
+        fe->ccc[i] = FLOAT2COS(cos(a));
+        fe->sss[i] = FLOAT2COS(sin(a));
+#else
+        fe->ccc[i] = cos(a);
+        fe->sss[i] = sin(a);
+#endif
+    }
+}
+
+/* Translated from the FORTRAN (obviously) from "Real-Valued Fast
+ * Fourier Transform Algorithms" by Henrik V. Sorensen et al., IEEE
+ * Transactions on Acoustics, Speech, and Signal Processing, vol. 35,
+ * no.6.  The 16-bit version does a version of "block floating
+ * point" in order to avoid rounding errors.
+ */
+#if defined(FIXED16)
+static int
+fe_fft_real(fe_t *fe)
+{
+    int i, j, k, m, n, lz;
+    frame_t *x, xt, max;
+
+    x = fe->frame;
+    m = fe->fft_order;
+    n = fe->fft_size;
+
+    /* Bit-reverse the input. */
+    j = 0;
+    for (i = 0; i < n - 1; ++i) {
+        if (i < j) {
+            xt = x[j];
+            x[j] = x[i];
+            x[i] = xt;
+        }
+        k = n / 2;
+        while (k <= j) {
+            j -= k;
+            k /= 2;
+        }
+        j += k;
+    }
+    /* Determine how many bits of dynamic range are in the input. */
+    max = 0;
+    for (i = 0; i < n; ++i)
+        if (abs(x[i]) > max)
+            max = abs(x[i]);
+    /* The FFT has a gain of M bits, so we need to attenuate the input
+     * by M bits minus the number of leading zeroes in the input's
+     * range in order to avoid overflows.  */
+    for (lz = 0; lz < m; ++lz)
+        if (max & (1 << (15-lz)))
+            break;
+
+    /* Basic butterflies (2-point FFT, real twiddle factors):
+     * x[i]   = x[i] +  1 * x[i+1]
+     * x[i+1] = x[i] + -1 * x[i+1]
+     */
+    /* The quantization error introduced by attenuating the input at
+     * any given stage of the FFT has a cascading effect, so we hold
+     * off on it until it's absolutely necessary. */
+    for (i = 0; i < n; i += 2) {
+        int atten = (lz == 0);
+        xt = x[i] >> atten;
+        x[i]     = xt + (x[i + 1] >> atten);
+        x[i + 1] = xt - (x[i + 1] >> atten);
+    }
+
+    /* The rest of the butterflies, in stages from 1..m */
+    for (k = 1; k < m; ++k) {
+        int n1, n2, n4;
+        /* Start attenuating once we hit the number of leading zeros. */
+        int atten = (k >= lz);
+
+        n4 = k - 1;
+        n2 = k;
+        n1 = k + 1;
+        /* Stride over each (1 << (k+1)) points */
+        for (i = 0; i < n; i += (1 << n1)) {
+            /* Basic butterfly with real twiddle factors:
+             * x[i]          = x[i] +  1 * x[i + (1<<k)]
+             * x[i + (1<<k)] = x[i] + -1 * x[i + (1<<k)]
+             */
+            xt = x[i] >> atten;
+            x[i]             = xt + (x[i + (1 << n2)] >> atten);
+            x[i + (1 << n2)] = xt - (x[i + (1 << n2)] >> atten);
+
+            /* The other ones with real twiddle factors:
+             * x[i + (1<<k) + (1<<(k-1))]
+             *   = 0 * x[i + (1<<k-1)] + -1 * x[i + (1<<k) + (1<<k-1)]
+             * x[i + (1<<(k-1))]
+             *   = 1 * x[i + (1<<k-1)] +  0 * x[i + (1<<k) + (1<<k-1)]
+             */
+            x[i + (1 << n2) + (1 << n4)] = -x[i + (1 << n2) + (1 << n4)] >> atten;
+            x[i + (1 << n4)]             =  x[i + (1 << n4)] >> atten;
+            
+            /* Butterflies with complex twiddle factors.
+             * There are (1<<k-1) of them.
+             */
+            for (j = 1; j < (1 << n4); ++j) {
+                frame_t cc, ss, t1, t2;
+                int i1, i2, i3, i4;
+
+                i1 = i + j;
+                i2 = i + (1 << n2) - j;
+                i3 = i + (1 << n2) + j;
+                i4 = i + (1 << n2) + (1 << n2) - j;
+
+                /*
+                 * cc = real(W[j * n / (1<<(k+1))])
+                 * ss = imag(W[j * n / (1<<(k+1))])
+                 */
+                cc = fe->ccc[j << (m - n1)];
+                ss = fe->sss[j << (m - n1)];
+
+                /* There are some symmetry properties which allow us
+                 * to get away with only four multiplications here. */
+                {
+                    int32 tmp1, tmp2;
+                    tmp1 = (int32)x[i3] * cc + (int32)x[i4] * ss;
+                    tmp2 = (int32)x[i3] * ss - (int32)x[i4] * cc;
+                    t1 = (int16)(tmp1 >> 15) >> atten;
+                    t2 = (int16)(tmp2 >> 15) >> atten;
+                }
+
+                x[i4] = (x[i2] >> atten) - t2;
+                x[i3] = (-x[i2] >> atten) - t2;
+                x[i2] = (x[i1] >> atten) - t1;
+                x[i1] = (x[i1] >> atten) + t1;
+            }
+        }
+    }
+
+    /* Return the residual scaling factor. */
+    return lz;
+}
+#else /* !FIXED16 */
+static int
+fe_fft_real(fe_t *fe)
+{
+    int i, j, k, m, n;
+    frame_t *x, xt;
+
+    x = fe->frame;
+    m = fe->fft_order;
+    n = fe->fft_size;
+
+    /* Bit-reverse the input. */
+    j = 0;
+    for (i = 0; i < n - 1; ++i) {
+        if (i < j) {
+            xt = x[j];
+            x[j] = x[i];
+            x[i] = xt;
+        }
+        k = n / 2;
+        while (k <= j) {
+            j -= k;
+            k /= 2;
+        }
+        j += k;
+    }
+
+    /* Basic butterflies (2-point FFT, real twiddle factors):
+     * x[i]   = x[i] +  1 * x[i+1]
+     * x[i+1] = x[i] + -1 * x[i+1]
+     */
+    /* The quantization error introduced by attenuating the input at
+     * any given stage of the FFT has a cascading effect, so we hold
+     * off on it until it's absolutely necessary. */
+    for (i = 0; i < n; i += 2) {
+        xt = x[i];
+        x[i]     = (xt + x[i + 1]);
+        x[i + 1] = (xt - x[i + 1]);
+    }
+
+    /* The rest of the butterflies, in stages from 1..m */
+    for (k = 1; k < m; ++k) {
+        int n1, n2, n4;
+
+        n4 = k - 1;
+        n2 = k;
+        n1 = k + 1;
+        /* Stride over each (1 << (k+1)) points */
+        for (i = 0; i < n; i += (1 << n1)) {
+            /* Basic butterfly with real twiddle factors:
+             * x[i]          = x[i] +  1 * x[i + (1<<k)]
+             * x[i + (1<<k)] = x[i] + -1 * x[i + (1<<k)]
+             */
+            xt = x[i];
+            x[i]             = (xt + x[i + (1 << n2)]);
+            x[i + (1 << n2)] = (xt - x[i + (1 << n2)]);
+
+            /* The other ones with real twiddle factors:
+             * x[i + (1<<k) + (1<<(k-1))]
+             *   = 0 * x[i + (1<<k-1)] + -1 * x[i + (1<<k) + (1<<k-1)]
+             * x[i + (1<<(k-1))]
+             *   = 1 * x[i + (1<<k-1)] +  0 * x[i + (1<<k) + (1<<k-1)]
+             */
+            x[i + (1 << n2) + (1 << n4)] = -x[i + (1 << n2) + (1 << n4)];
+            x[i + (1 << n4)]             =  x[i + (1 << n4)];
+            
+            /* Butterflies with complex twiddle factors.
+             * There are (1<<k-1) of them.
+             */
+            for (j = 1; j < (1 << n4); ++j) {
+                frame_t cc, ss, t1, t2;
+                int i1, i2, i3, i4;
+
+                i1 = i + j;
+                i2 = i + (1 << n2) - j;
+                i3 = i + (1 << n2) + j;
+                i4 = i + (1 << n2) + (1 << n2) - j;
+
+                /*
+                 * cc = real(W[j * n / (1<<(k+1))])
+                 * ss = imag(W[j * n / (1<<(k+1))])
+                 */
+                cc = fe->ccc[j << (m - n1)];
+                ss = fe->sss[j << (m - n1)];
+
+                /* There are some symmetry properties which allow us
+                 * to get away with only four multiplications here. */
+                t1 = COSMUL(x[i3], cc) + COSMUL(x[i4], ss);
+                t2 = COSMUL(x[i3], ss) - COSMUL(x[i4], cc);
+
+                x[i4] = (x[i2] - t2);
+                x[i3] = (-x[i2] - t2);
+                x[i2] = (x[i1] - t1);
+                x[i1] = (x[i1] + t1);
+            }
+        }
+    }
+
+    /* This isn't used, but return it for completeness. */
+    return m;
+}
+#endif /* !FIXED16 */
+
+static void
+fe_spec_magnitude(fe_t *fe)
 {
     frame_t *fft;
-    int32 j, scale;
+    powspec_t *spec;
+    int32 j, scale, fftsize;
 
     /* Do FFT and get the scaling factor back (only actually used in
      * fixed-point).  Note the scaling factor is expressed in bits. */
-    fft = fe_fft_real(fe, data, data_len, &scale);
+    scale = fe_fft_real(fe);
+
+    /* Convenience pointers to make things less awkward below. */
+    fft = fe->frame;
+    spec = fe->spec;
+    fftsize = fe->fft_size;
 
     /* We need to scale things up the rest of the way to N. */
     scale = fe->fft_order - scale;
@@ -633,10 +934,15 @@ fe_spec_magnitude(fe_t *fe,
     }
 }
 
-void
-fe_mel_spec(fe_t * fe, powspec_t const *spec, powspec_t * mfspec)
+static void
+fe_mel_spec(fe_t * fe)
 {
     int whichfilt;
+    powspec_t *spec, *mfspec;
+
+    /* Convenience poitners. */
+    spec = fe->spec;
+    mfspec = fe->mfspec;
 
     for (whichfilt = 0; whichfilt < fe->mel_fb->num_filters; whichfilt++) {
         int spec_start, filt_start, i;
@@ -660,10 +966,14 @@ fe_mel_spec(fe_t * fe, powspec_t const *spec, powspec_t * mfspec)
     }
 }
 
-void
-fe_mel_cep(fe_t * fe, powspec_t * mfspec, mfcc_t * mfcep)
+static void
+fe_mel_cep(fe_t * fe, mfcc_t *mfcep)
 {
     int32 i;
+    powspec_t *mfspec;
+
+    /* Convenience pointer. */
+    mfspec = fe->mfspec;
 
     for (i = 0; i < fe->mel_fb->num_filters; ++i) {
 #ifndef FIXED_POINT /* It's already in log domain for fixed point */
@@ -785,327 +1095,27 @@ fe_dct3(fe_t * fe, const mfcc_t * mfcep, powspec_t * mflogspec)
     }
 }
 
-/**
- * Create arrays of twiddle factors.
- */
-void
-fe_create_twiddle(fe_t *fe)
+int32
+fe_write_frame(fe_t * fe, mfcc_t * fea)
 {
-    int i;
+    fe_spec_magnitude(fe);
+    fe_mel_spec(fe);
+    fe_mel_cep(fe, fea);
+    fe_lifter(fe, fea);
 
-    for (i = 0; i < fe->fft_size / 4; ++i) {
-        float64 a = 2 * M_PI * i / fe->fft_size;
-#ifdef FIXED16
-        fe->ccc[i] = (int16)(cos(a) * 0x8000);
-        fe->sss[i] = (int16)(sin(a) * 0x8000);
-#elif defined(FIXED_POINT)
-        fe->ccc[i] = FLOAT2COS(cos(a));
-        fe->sss[i] = FLOAT2COS(sin(a));
-#else
-        fe->ccc[i] = cos(a);
-        fe->sss[i] = sin(a);
-#endif
-    }
+    return 0;
 }
-
-/* Translated from the FORTRAN (obviously) from "Real-Valued Fast
- * Fourier Transform Algorithms" by Henrik V. Sorensen et al., IEEE
- * Transactions on Acoustics, Speech, and Signal Processing, vol. 35,
- * no.6.  The 16-bit version does a version of "block floating
- * point" in order to avoid rounding errors.
- */
-#if defined(FIXED16)
-frame_t *
-fe_fft_real(fe_t *fe, frame_t const *data, int data_len, int *out_shift)
-{
-    int i, j, k, m, n, lz, wrap;
-    frame_t *x, xt, max;
-
-    m = fe->fft_order;
-    n = fe->fft_size;
-    x = fe->fft;
-
-    wrap = (data_len < n) ? data_len : n;
-    memcpy(x, data, wrap * sizeof(*x));
-    if (data_len > n) {    /*aliasing */
-        E_WARN
-            ("Aliasing. Consider using fft size (%d) > buffer size (%d)\n",
-             n, data_len);
-        for (wrap = 0, j = n; j < data_len; wrap++, j++)
-            x[wrap] += data[j];
-    }
-    else { /* Zero padding */
-        memset(x + data_len, 0, (n - data_len) * sizeof(*x));
-    }
-
-    /* Bit-reverse the input. */
-    j = 0;
-    for (i = 0; i < n - 1; ++i) {
-        if (i < j) {
-            xt = x[j];
-            x[j] = x[i];
-            x[i] = xt;
-        }
-        k = n / 2;
-        while (k <= j) {
-            j -= k;
-            k /= 2;
-        }
-        j += k;
-    }
-    /* Determine how many bits of dynamic range are in the input. */
-    max = 0;
-    for (i = 0; i < n; ++i)
-        if (abs(x[i]) > max)
-            max = abs(x[i]);
-    /* The FFT has a gain of M bits, so we need to attenuate the input
-     * by M bits minus the number of leading zeroes in the input's
-     * range in order to avoid overflows.  */
-    for (lz = 0; lz < m; ++lz)
-        if (max & (1 << (15-lz)))
-            break;
-
-    /* Basic butterflies (2-point FFT, real twiddle factors):
-     * x[i]   = x[i] +  1 * x[i+1]
-     * x[i+1] = x[i] + -1 * x[i+1]
-     */
-    /* The quantization error introduced by attenuating the input at
-     * any given stage of the FFT has a cascading effect, so we hold
-     * off on it until it's absolutely necessary. */
-    for (i = 0; i < n; i += 2) {
-        int atten = (lz == 0);
-        xt = x[i] >> atten;
-        x[i]     = xt + (x[i + 1] >> atten);
-        x[i + 1] = xt - (x[i + 1] >> atten);
-    }
-
-    /* The rest of the butterflies, in stages from 1..m */
-    for (k = 1; k < m; ++k) {
-        int n1, n2, n4;
-        /* Start attenuating once we hit the number of leading zeros. */
-        int atten = (k >= lz);
-
-        n4 = k - 1;
-        n2 = k;
-        n1 = k + 1;
-        /* Stride over each (1 << (k+1)) points */
-        for (i = 0; i < n; i += (1 << n1)) {
-            /* Basic butterfly with real twiddle factors:
-             * x[i]          = x[i] +  1 * x[i + (1<<k)]
-             * x[i + (1<<k)] = x[i] + -1 * x[i + (1<<k)]
-             */
-            xt = x[i] >> atten;
-            x[i]             = xt + (x[i + (1 << n2)] >> atten);
-            x[i + (1 << n2)] = xt - (x[i + (1 << n2)] >> atten);
-
-            /* The other ones with real twiddle factors:
-             * x[i + (1<<k) + (1<<(k-1))]
-             *   = 0 * x[i + (1<<k-1)] + -1 * x[i + (1<<k) + (1<<k-1)]
-             * x[i + (1<<(k-1))]
-             *   = 1 * x[i + (1<<k-1)] +  0 * x[i + (1<<k) + (1<<k-1)]
-             */
-            x[i + (1 << n2) + (1 << n4)] = -x[i + (1 << n2) + (1 << n4)] >> atten;
-            x[i + (1 << n4)]             =  x[i + (1 << n4)] >> atten;
-            
-            /* Butterflies with complex twiddle factors.
-             * There are (1<<k-1) of them.
-             */
-            for (j = 1; j < (1 << n4); ++j) {
-                frame_t cc, ss, t1, t2;
-                int i1, i2, i3, i4;
-
-                i1 = i + j;
-                i2 = i + (1 << n2) - j;
-                i3 = i + (1 << n2) + j;
-                i4 = i + (1 << n2) + (1 << n2) - j;
-
-                /*
-                 * cc = real(W[j * n / (1<<(k+1))])
-                 * ss = imag(W[j * n / (1<<(k+1))])
-                 */
-                cc = fe->ccc[j << (m - n1)];
-                ss = fe->sss[j << (m - n1)];
-
-                /* There are some symmetry properties which allow us
-                 * to get away with only four multiplications here. */
-                {
-                    int32 tmp1, tmp2;
-                    tmp1 = (int32)x[i3] * cc + (int32)x[i4] * ss;
-                    tmp2 = (int32)x[i3] * ss - (int32)x[i4] * cc;
-                    t1 = (int16)(tmp1 >> 15) >> atten;
-                    t2 = (int16)(tmp2 >> 15) >> atten;
-                }
-
-                x[i4] = (x[i2] >> atten) - t2;
-                x[i3] = (-x[i2] >> atten) - t2;
-                x[i2] = (x[i1] >> atten) - t1;
-                x[i1] = (x[i1] >> atten) + t1;
-            }
-        }
-    }
-
-    /* Return the residual scaling factor. */
-    if (out_shift)
-        *out_shift = lz;
-
-    return x;
-}
-#else /* !FIXED16 */
-frame_t *
-fe_fft_real(fe_t *fe, frame_t const *data, int data_len, int *out_shift)
-{
-    int i, j, k, m, n, wrap;
-    frame_t *x, xt;
-
-    m = fe->fft_order;
-    n = fe->fft_size;
-    x = fe->fft;
-
-    wrap = (data_len < n) ? data_len : n;
-    memcpy(x, data, wrap * sizeof(*x));
-    if (data_len > n) {    /*aliasing */
-        E_WARN
-            ("Aliasing. Consider using fft size (%d) > buffer size (%d)\n",
-             n, data_len);
-        for (wrap = 0, j = n; j < data_len; wrap++, j++)
-            x[wrap] += data[j];
-    }
-    else { /* Zero padding */
-        memset(x + data_len, 0, (n - data_len) * sizeof(*x));
-    }
-
-    /* Bit-reverse the input. */
-    j = 0;
-    for (i = 0; i < n - 1; ++i) {
-        if (i < j) {
-            xt = x[j];
-            x[j] = x[i];
-            x[i] = xt;
-        }
-        k = n / 2;
-        while (k <= j) {
-            j -= k;
-            k /= 2;
-        }
-        j += k;
-    }
-
-    /* Basic butterflies (2-point FFT, real twiddle factors):
-     * x[i]   = x[i] +  1 * x[i+1]
-     * x[i+1] = x[i] + -1 * x[i+1]
-     */
-    /* The quantization error introduced by attenuating the input at
-     * any given stage of the FFT has a cascading effect, so we hold
-     * off on it until it's absolutely necessary. */
-    for (i = 0; i < n; i += 2) {
-        xt = x[i];
-        x[i]     = (xt + x[i + 1]);
-        x[i + 1] = (xt - x[i + 1]);
-    }
-
-    /* The rest of the butterflies, in stages from 1..m */
-    for (k = 1; k < m; ++k) {
-        int n1, n2, n4;
-
-        n4 = k - 1;
-        n2 = k;
-        n1 = k + 1;
-        /* Stride over each (1 << (k+1)) points */
-        for (i = 0; i < n; i += (1 << n1)) {
-            /* Basic butterfly with real twiddle factors:
-             * x[i]          = x[i] +  1 * x[i + (1<<k)]
-             * x[i + (1<<k)] = x[i] + -1 * x[i + (1<<k)]
-             */
-            xt = x[i];
-            x[i]             = (xt + x[i + (1 << n2)]);
-            x[i + (1 << n2)] = (xt - x[i + (1 << n2)]);
-
-            /* The other ones with real twiddle factors:
-             * x[i + (1<<k) + (1<<(k-1))]
-             *   = 0 * x[i + (1<<k-1)] + -1 * x[i + (1<<k) + (1<<k-1)]
-             * x[i + (1<<(k-1))]
-             *   = 1 * x[i + (1<<k-1)] +  0 * x[i + (1<<k) + (1<<k-1)]
-             */
-            x[i + (1 << n2) + (1 << n4)] = -x[i + (1 << n2) + (1 << n4)];
-            x[i + (1 << n4)]             =  x[i + (1 << n4)];
-            
-            /* Butterflies with complex twiddle factors.
-             * There are (1<<k-1) of them.
-             */
-            for (j = 1; j < (1 << n4); ++j) {
-                frame_t cc, ss, t1, t2;
-                int i1, i2, i3, i4;
-
-                i1 = i + j;
-                i2 = i + (1 << n2) - j;
-                i3 = i + (1 << n2) + j;
-                i4 = i + (1 << n2) + (1 << n2) - j;
-
-                /*
-                 * cc = real(W[j * n / (1<<(k+1))])
-                 * ss = imag(W[j * n / (1<<(k+1))])
-                 */
-                cc = fe->ccc[j << (m - n1)];
-                ss = fe->sss[j << (m - n1)];
-
-                /* There are some symmetry properties which allow us
-                 * to get away with only four multiplications here. */
-                t1 = COSMUL(x[i3], cc) + COSMUL(x[i4], ss);
-                t2 = COSMUL(x[i3], ss) - COSMUL(x[i4], cc);
-
-                x[i4] = (x[i2] - t2);
-                x[i3] = (-x[i2] - t2);
-                x[i2] = (x[i1] - t1);
-                x[i1] = (x[i1] + t1);
-            }
-        }
-    }
-
-    /* This isn't used, but set it for completeness. */
-    if (out_shift)
-        *out_shift = m;
-
-    return x;
-}
-#endif /* !FIXED16 */
 
 void *
 fe_create_2d(int32 d1, int32 d2, int32 elem_size)
 {
-    char *store;
-    void **out;
-    int32 i, j;
-    store = calloc(d1 * d2, elem_size);
-
-    if (store == NULL) {
-        E_WARN("fe_create_2d failed\n");
-        return (NULL);
-    }
-
-    out = calloc(d1, sizeof(void *));
-
-    if (out == NULL) {
-        E_WARN("fe_create_2d failed\n");
-        free(store);
-        return (NULL);
-    }
-
-    for (i = 0, j = 0; i < d1; i++, j += d2) {
-        out[i] = store + (j * elem_size);
-    }
-
-    return out;
+    return (void *)ckd_calloc_2d(d1, d2, elem_size);
 }
 
 void
 fe_free_2d(void *arr)
 {
-    if (arr != NULL) {
-        /* FIXME: memory leak */
-        free(((void **) arr)[0]);
-        free(arr);
-    }
-
+    ckd_free_2d((void **)arr);
 }
 
 void

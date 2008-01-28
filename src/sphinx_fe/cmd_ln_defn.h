@@ -183,7 +183,7 @@ static arg_t defn[] = {
   
   { "-blocksize",
     ARG_INT32,
-    ARG_STRINGIFY(DEFAULT_BLOCKSIZE),
+    "200000",
     "Block size, used to limit the number of samples used at a time when reading very large audio files" },
   
   { NULL, 0, NULL, NULL }

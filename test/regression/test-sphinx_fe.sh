@@ -26,4 +26,4 @@ run_program sphinx_cepview \
 -f test-sphinx_fe.mfc \
 > test-sphinx_fe.cepview 2>>$tmpout
 
-compare_table "WAVE2FEAT test" test-sphinx_fe.cepview $tests/regression/chan3.cepview
+compare_table "WAVE2FEAT test" test-sphinx_fe.cepview $tests/regression/chan3.cepview 0.1

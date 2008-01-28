@@ -27,4 +27,4 @@ run_program sphinx_cepview \
 > test-sphinx_fe-logspec.cepview.out 2>>$tmpout
 
 compare_table "WAVE2FEAT-LOGSPEC test" test-sphinx_fe-logspec.cepview.out \
-    $tests/regression/chan3-logspec.cepview
+    $tests/regression/chan3-logspec.cepview 0.2

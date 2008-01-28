@@ -27,4 +27,4 @@ run_program sphinx_cepview \
 > test-sphinx_fe-smoothspec.cepview.out 2>>$tmpout
 
 compare_table "WAVE2FEAT-SMOOTHSPEC test" test-sphinx_fe-smoothspec.cepview.out \
-    $tests/regression/chan3-smoothspec.cepview
+    $tests/regression/chan3-smoothspec.cepview 0.1
