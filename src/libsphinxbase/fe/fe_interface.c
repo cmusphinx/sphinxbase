@@ -237,73 +237,128 @@ fe_process_frame(fe_t * fe, int16 const *spch, int32 nsamps, mfcc_t * fr_cep)
 }
 
 int
-fe_process_utt(fe_t * fe, int16 const * spch, int32 nsamps,
-               mfcc_t *** cep_block, int32 * nframes)
+fe_process_frames(fe_t *fe,
+                  int16 const **inout_spch,
+                  int32 *inout_nsamps,
+                  mfcc_t **buf_cep,
+                  int32 *inout_nframes)
 {
     int32 frame_count;
-    int16 const *inptr;
-    mfcc_t **cep;
-    int i;
+    int i, n_overflow;
 
-    /* Are there enough samples to make at least 1 frame? */
-    if (nsamps + fe->num_overflow_samps < fe->frame_size) {
-        /* No, then store them and get out. */
+    /* Are there not enough samples to make at least 1 frame? */
+    if (*inout_nsamps + fe->num_overflow_samps < fe->frame_size) {
+        /* Append them to the overflow buffer. */
         memcpy(fe->overflow_samps + fe->num_overflow_samps,
-               spch, nsamps * (sizeof(int16)));
-        fe->num_overflow_samps += nsamps;
-        *nframes = 0;
-        *cep_block = NULL;
+               *inout_spch, *inout_nsamps * (sizeof(int16)));
+        fe->num_overflow_samps += *inout_nsamps;
+        /* Update input-output pointers and counters. */
+        *inout_spch += *inout_nsamps;
+        *inout_nsamps = 0;
+        /* We produced no frames of output, sorry! */
+        *inout_nframes = 0;
+        return 0;
+    }
+
+    /* Can't write a frame?  Then do nothing! */
+    if (*inout_nframes < 1) {
+        *inout_nframes = 0;
         return 0;
     }
 
     /* How many frames will we be able to get? */
     frame_count = 1
-        + ((nsamps + fe->num_overflow_samps - fe->frame_size)
+        + ((*inout_nsamps + fe->num_overflow_samps - fe->frame_size)
            / fe->frame_shift);
-
-    /* Create the output buffer. */
-    cep = (mfcc_t **)ckd_calloc_2d(frame_count, fe->feature_dimension, sizeof(**cep));
+    /* Limit it to the number of output frames available. */
+    if (frame_count > *inout_nframes)
+        frame_count = *inout_nframes;
 
     /* Start processing, taking care of any incoming overflow. */
-    inptr = spch;
     if (fe->num_overflow_samps) {
         int offset = fe->frame_size - fe->num_overflow_samps;
+
         /* Append start of spch to overflow samples to make a full frame. */
         memcpy(fe->overflow_samps + fe->num_overflow_samps,
-               inptr, offset * sizeof(*inptr));
+               *inout_spch, offset * sizeof(**inout_spch));
         fe_read_frame(fe, fe->overflow_samps, fe->frame_size);
-        fe_write_frame(fe, cep[0]);
-        inptr += offset;
-        nsamps -= offset;
+        fe_write_frame(fe, buf_cep[0]);
+        /* Update input-output pointers and counters. */
+        *inout_spch += offset;
+        *inout_nsamps -= offset;
     }
     else {
-        fe_read_frame(fe, inptr, fe->frame_size);
-        fe_write_frame(fe, cep[0]);
-        inptr += fe->frame_size;
-        nsamps -= fe->frame_size;
+        fe_read_frame(fe, *inout_spch, fe->frame_size);
+        fe_write_frame(fe, buf_cep[0]);
+        /* Update input-output pointers and counters. */
+        *inout_spch += fe->frame_size;
+        *inout_nsamps -= fe->frame_size;
     }
+    /* Update the number of remaining frames. */
+    --*inout_nframes;
 
     /* Process all remaining frames. */
     for (i = 1; i < frame_count; ++i) {
-        assert(nsamps >= fe->frame_shift);
-        fe_shift_frame(fe, inptr, fe->frame_shift);
-        fe_write_frame(fe, cep[i]);
-        inptr += fe->frame_shift;
-        nsamps -= fe->frame_shift;
+        assert(*inout_nsamps >= fe->frame_shift);
+        assert(*inout_nframes > 0);
+
+        fe_shift_frame(fe, *inout_spch, fe->frame_shift);
+        fe_write_frame(fe, buf_cep[i]);
+        /* Update input-output pointers and counters. */
+        *inout_spch += fe->frame_shift;
+        *inout_nsamps -= fe->frame_shift;
+        /* Update number of remaining frames. */
+        --*inout_nframes;
     }
 
-    /* We have to make sure the leftover sample buffer contains the
-     * previous (frame_size-frame_shift) samples so that
-     * fe_read_frame() will work as expected on it. */
-    assert(nsamps < fe->frame_shift);
-    fe->num_overflow_samps = nsamps + fe->frame_size - fe->frame_shift;
+    /* We might have quite a few samples left here.  At this point we
+     * have consumed everything up to *inout_spch, so the maximum
+     * number of samples beyond that point to store is
+     * fe->frame_shift.  In this case we will end up with a full frame
+     * of data in fe->overflow_samps, which will be processed next time
+     * this function is called. */
+    n_overflow = *inout_nsamps;
+    if (n_overflow > fe->frame_shift)
+        n_overflow = fe->frame_shift;
+    /* We then have to include the last (fe->frame_size -
+     * fe->frame_shift) worth of data that overlaps between frames. */
+    fe->num_overflow_samps = n_overflow + fe->frame_size - fe->frame_shift;
     if (fe->num_overflow_samps > 0)
-        memcpy(fe->overflow_samps, inptr - (fe->frame_size - fe->frame_shift),
-               fe->num_overflow_samps * sizeof(*inptr));
+        memcpy(fe->overflow_samps,
+               *inout_spch - (fe->frame_size - fe->frame_shift),
+               fe->num_overflow_samps * sizeof(**inout_spch));
 
-    *cep_block = cep;
-    *nframes = frame_count;
+    /* Finally update the frame counter with the number of frames we procesed. */
+    assert(*inout_nframes == 0);
+    *inout_nframes = frame_count;
     return 0;
+}
+
+int
+fe_process_utt(fe_t * fe, int16 const * spch, int32 nsamps,
+               mfcc_t *** cep_block, int32 * nframes)
+{
+    mfcc_t **cep;
+    int rv;
+
+    /* Are there enough samples to make at least 1 frame? */
+    if (nsamps + fe->num_overflow_samps < fe->frame_size) {
+        *nframes = 0;
+        cep = NULL;
+    }
+    else {
+        /* How many frames will we be able to get? */
+        *nframes = 1
+            + ((nsamps + fe->num_overflow_samps - fe->frame_size)
+               / fe->frame_shift);
+        /* Create the output buffer. */
+        cep = (mfcc_t **)ckd_calloc_2d(*nframes, fe->feature_dimension, sizeof(**cep));
+    }
+
+    /* Now just call fe_process_frames() with the allocated buffer. */
+    rv = fe_process_frames(fe, &spch, &nsamps, cep, nframes);
+    *cep_block = cep;
+    return rv;
 }
 
 

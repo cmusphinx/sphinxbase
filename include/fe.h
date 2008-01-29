@@ -417,7 +417,7 @@ int fe_process_frame(fe_t *fe, int16 const *spch,
  */
 SPHINXBASE_EXPORT
 int fe_process_frames(fe_t *fe,
-                      int16 **inout_spch,
+                      int16 const **inout_spch,
                       int32 *inout_nsamps,
                       mfcc_t **buf_cep,
                       int32 *inout_nframes);
