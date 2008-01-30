@@ -227,10 +227,10 @@ void fe_create_hamming(window_t *in, int32 in_len);
 void fe_create_twiddle(fe_t *fe);
 
 /* Miscellaneous processing functions. */
-void fe_spec2cep(fe_t * FE, const powspec_t * mflogspec, mfcc_t * mfcep);
-void fe_dct2(fe_t *FE, const powspec_t *mflogspec, mfcc_t *mfcep, int htk);
-void fe_dct3(fe_t *FE, const mfcc_t *mfcep, powspec_t *mflogspec);
-void fe_parse_general_params(param_t const *P, fe_t *FE);
+void fe_spec2cep(fe_t * fe, const powspec_t * mflogspec, mfcc_t * mfcep);
+void fe_dct2(fe_t *fe, const powspec_t *mflogspec, mfcc_t *mfcep, int htk);
+void fe_dct3(fe_t *fe, const mfcc_t *mfcep, powspec_t *mflogspec);
+void fe_parse_general_params(param_t const *P, fe_t *fe);
 void fe_parse_melfb_params(param_t const *P, melfb_t *MEL);
 void fe_print_current(fe_t const *fe);
 

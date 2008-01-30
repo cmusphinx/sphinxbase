@@ -455,7 +455,7 @@ void fe_free_2d(void *arr);
  * Convert a block of mfcc_t to float32 (can be done in-place)
  **/
 SPHINXBASE_EXPORT
-int fe_mfcc_to_float(fe_t *FE,
+int fe_mfcc_to_float(fe_t *fe,
                      mfcc_t **input,
                      float32 **output,
                      int32 nframes);
@@ -464,7 +464,7 @@ int fe_mfcc_to_float(fe_t *FE,
  * Convert a block of float32 to mfcc_t (can be done in-place)
  **/
 SPHINXBASE_EXPORT
-int fe_float_to_mfcc(fe_t *FE,
+int fe_float_to_mfcc(fe_t *fe,
                      float32 **input,
                      mfcc_t **output,
                      int32 nframes);
@@ -493,7 +493,7 @@ int fe_float_to_mfcc(fe_t *FE,
  * Also, it normalizes by 1/nfilt rather than 2/nfilt, for some reason.
  **/
 SPHINXBASE_EXPORT
-int fe_logspec_to_mfcc(fe_t *FE,  /**< A FE structure */
+int fe_logspec_to_mfcc(fe_t *fe,  /**< A fe structure */
 			 const mfcc_t *fr_spec, /**< One frame of spectrum */
 			 mfcc_t *fr_cep /**< One frame of cepstrum */
         );
@@ -507,7 +507,7 @@ int fe_logspec_to_mfcc(fe_t *FE,  /**< A FE structure */
  * coefficient in the output).
  **/
 SPHINXBASE_EXPORT
-int fe_logspec_dct2(fe_t *FE,  /**< A FE structure */
+int fe_logspec_dct2(fe_t *fe,  /**< A fe structure */
 		      const mfcc_t *fr_spec, /**< One frame of spectrum */
 		      mfcc_t *fr_cep /**< One frame of cepstrum */
         );
@@ -521,7 +521,7 @@ int fe_logspec_dct2(fe_t *FE,  /**< A FE structure */
  * coefficient in the input).
  **/
 SPHINXBASE_EXPORT
-int fe_mfcc_dct3(fe_t *FE,  /**< A FE structure */
+int fe_mfcc_dct3(fe_t *fe,  /**< A fe structure */
                  const mfcc_t *fr_cep, /**< One frame of cepstrum */
                  mfcc_t *fr_spec /**< One frame of spectrum */
         );
