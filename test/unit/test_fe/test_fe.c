@@ -34,9 +34,13 @@ main(int argc, char *argv[])
 	TEST_EQUAL(0, fe_start_utt(fe));
 	TEST_EQUAL(1024, fread(buf, sizeof(int16), 1024, raw));
 
+	nsamp = 1024;
+	TEST_EQUAL(0, fe_process_frames(fe, NULL, &nsamp, NULL, &nfr));
+	TEST_EQUAL(1024, nsamp);
+	TEST_EQUAL(4, nfr);
+
 	inptr = &buf[0];
 	outptr = &cepvec[0];
-	nsamp = 1024;
 	nfr = 1;
 
 	printf("%d %d %d %d %d\n", frame_size, frame_shift, inptr - buf, nsamp, nfr);

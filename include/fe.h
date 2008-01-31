@@ -410,6 +410,9 @@ int fe_process_frame(fe_t *fe, int16 const *spch,
  *                     Output: Number of samples remaining in input buffer.
  * @param buf_cep Two-dimensional buffer (allocated with
  *                ckd_calloc_2d()) which will receive frames of output data.
+ *                If this is NULL, no processing will be done, and the number
+ *                of output frames needed will be returned in
+ *                <code>*inout_frames</code>.
  * @param inout_nframes Input: Pointer to maximum number of frames to
  *                      generate.
  *                      Output: Number of frames actually generated.
