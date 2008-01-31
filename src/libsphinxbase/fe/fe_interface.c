@@ -339,10 +339,14 @@ fe_process_frames(fe_t *fe,
     /* We then have to include the last (fe->frame_size -
      * fe->frame_shift) worth of data that overlaps between frames. */
     fe->num_overflow_samps = n_overflow + fe->frame_size - fe->frame_shift;
-    if (fe->num_overflow_samps > 0)
+    if (fe->num_overflow_samps > 0) {
         memcpy(fe->overflow_samps,
                *inout_spch - (fe->frame_size - fe->frame_shift),
                fe->num_overflow_samps * sizeof(**inout_spch));
+        /* Update the input pointer to cover this stuff. */
+        *inout_spch += n_overflow;
+        *inout_nsamps -= n_overflow;
+    }
 
     /* Finally update the frame counter with the number of frames we procesed. */
     assert(*inout_nframes == 0);
