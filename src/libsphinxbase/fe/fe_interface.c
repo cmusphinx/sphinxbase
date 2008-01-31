@@ -229,6 +229,22 @@ fe_start_utt(fe_t * fe)
     return 0;
 }
 
+int
+fe_get_output_size(fe_t *fe)
+{
+    return (int)fe->feature_dimension;
+}
+
+void
+fe_get_input_size(fe_t *fe, int *out_frame_shift,
+                  int *out_frame_size)
+{
+    if (out_frame_shift)
+        *out_frame_shift = fe->frame_shift;
+    if (out_frame_size)
+        *out_frame_size = fe->frame_size;
+}
+
 int32
 fe_process_frame(fe_t * fe, int16 const *spch, int32 nsamps, mfcc_t * fr_cep)
 {
