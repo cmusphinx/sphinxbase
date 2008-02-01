@@ -262,15 +262,15 @@ fe_process_frames(fe_t *fe,
     int32 frame_count;
     int i, n_overflow;
 
-    /* Special case when buf_cep is NULL, return number of frames. */
+    /* In the special case where there is no output buffer, return the
+     * number of frames which would be generated. */
     if (buf_cep == NULL) {
-        if (*inout_nsamps + fe->num_overflow_samps < fe->frame_size) {
+        if (*inout_nsamps + fe->num_overflow_samps < fe->frame_size)
             *inout_nframes = 0;
-            return 0;
-        }
-        *inout_nframes = 1
-            + ((*inout_nsamps + fe->num_overflow_samps - fe->frame_size)
-               / fe->frame_shift);
+        else 
+            *inout_nframes = 1
+                + ((*inout_nsamps + fe->num_overflow_samps - fe->frame_size)
+                   / fe->frame_shift);
         return 0;
     }
 
