@@ -100,3 +100,22 @@ strip_fileext(const char *path, char *root)
         strncpy(root, path, i);
     }
 }
+
+/* Test if this path is absolute. */
+int
+path_is_absolute(const char *path)
+{
+#if defined(_WIN32) && !defined(_WIN32_WCE) /* FIXME: Also SymbianOS */
+    return /* Starts with drive letter : \ or / */
+        (strlen(path) >= 3
+         &&
+         ((path[0] >= 'A' && path[0] <= 'Z')
+          || (path[0] >= 'a' && path[0] <= 'z'))
+         && path[1] == ':'
+         && (path[2] == '/' || path[2] == '\\'));
+#elif defined(_WIN32_WCE)
+    return path[0] == '\\' || path[0] == '/';
+#else /* Assume Unix */
+    return path[0] == '/';
+#endif
+}

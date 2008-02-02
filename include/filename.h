@@ -81,7 +81,7 @@ extern "C" {
  * Caller must have allocated base.
  */
 SPHINXBASE_EXPORT
-void path2basename (const char *path, char *base);
+void path2basename(const char *path, char *base);
 
 
 /**
@@ -90,7 +90,13 @@ void path2basename (const char *path, char *base);
  * allocated root.
  */
 SPHINXBASE_EXPORT
-void strip_fileext (const char *file, char *root);
+void strip_fileext(const char *file, char *root);
+
+/**
+ * Test whether a pathname is absolute for the current OS.
+ */
+SPHINXBASE_EXPORT
+int path_is_absolute(const char *file);
 
 #ifdef __cplusplus
 }

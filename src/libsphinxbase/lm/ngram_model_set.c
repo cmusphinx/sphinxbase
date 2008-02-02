@@ -44,6 +44,7 @@
 #include <err.h>
 #include <ckd_alloc.h>
 #include <strfuncs.h>
+#include <filename.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -218,7 +219,7 @@ ngram_model_set_read(cmd_ln_t *config,
             while ((fscanf(ctlfp, "%1023s", str) == 1)
                    && (strcmp(str, "}") != 0)) {
                 char *deffile;
-                if (basedir && str[0] != '/' && str[0] != '\\')
+                if (basedir && !path_is_absolute(str))
                     deffile = string_join(basedir, str, NULL);
                 else
                     deffile = ckd_salloc(str);
