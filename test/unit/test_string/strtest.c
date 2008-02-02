@@ -61,6 +61,11 @@ main(int argc, char *argv[])
             return 1;
         }
         ckd_free(line);
+        line = fread_line(fp, &len);
+        if (line != NULL) {
+            printf("%p != NULL\n", line);
+            return 1;
+        }
     }
     else if (!strcmp(argv[1], "string_trim")) {
         char *foo = ckd_salloc("\t foo bar baz  \n");
