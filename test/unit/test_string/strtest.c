@@ -25,6 +25,31 @@ main(int argc, char *argv[])
         }
         return 0;
     }
+    else if (!strcmp(argv[1], "string_trim")) {
+        char *foo = ckd_salloc("\t foo bar baz  \n");
+        string_trim(foo, STRING_BOTH);
+        if (strcmp(foo, "foo bar baz") != 0) {
+            printf("'%s' != 'foo bar baz'\n", foo);
+            return 1;
+        }
+        string_trim(foo, STRING_BOTH);
+        if (strcmp(foo, "foo bar baz") != 0) {
+            printf("'%s' != 'foo bar baz'\n", foo);
+            return 1;
+        }
+        strcpy(foo, "foo\nbar\n\n");
+        string_trim(foo, STRING_END);
+        if (strcmp(foo, "foo\nbar") != 0) {
+            printf("'%s' != 'foo\\nbar'\n", foo);
+            return 1;
+        }
+        strcpy(foo, " \t \t foobar\n");
+        string_trim(foo, STRING_START);
+        if (strcmp(foo, "foobar\n") != 0) {
+            printf("'%s' != 'foobar\\n'\n", foo);
+            return 1;
+        }
+    }
     else if (!strcmp(argv[1], "str2words")) {
         char *line = strdup("    foo bar baz argh");
         char **words;

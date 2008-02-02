@@ -76,6 +76,33 @@ string_join(const char *base, ...)
     return out;
 }
 
+char *
+string_trim(char *string, enum string_edge_e which)
+{
+    ssize_t sub;
+    size_t len;
+
+    len = strlen(string);
+    if (which == STRING_START || which == STRING_BOTH) {
+        sub = strspn(string, " \t\n\r\f");
+        if (sub > 0) {
+            memmove(string, string + sub, len + 1 - sub);
+            len -= sub;
+        }
+    }
+    if (which == STRING_END || which == STRING_BOTH) {
+        sub = len;
+        while (--sub >= 0)
+            if (strchr(" \t\n\r\f", string[sub]) == NULL)
+                break;
+        if (sub == -1)
+            string[0] = '\0';
+        else
+            string[sub+1] = '\0';
+    }
+    return string;
+}
+
 int32
 str2words(char *line, char **ptr, int32 max_ptr)
 {

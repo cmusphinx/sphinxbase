@@ -817,9 +817,6 @@ fe_fft_real(fe_t *fe)
      * x[i]   = x[i] +  1 * x[i+1]
      * x[i+1] = x[i] + -1 * x[i+1]
      */
-    /* The quantization error introduced by attenuating the input at
-     * any given stage of the FFT has a cascading effect, so we hold
-     * off on it until it's absolutely necessary. */
     for (i = 0; i < n; i += 2) {
         xt = x[i];
         x[i]     = (xt + x[i + 1]);

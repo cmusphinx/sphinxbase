@@ -63,6 +63,23 @@ extern "C" {
 SPHINXBASE_EXPORT
 char *string_join(const char *base, ...);
 
+/**
+ * Which end of a string to operate on for string_trim().
+ */
+enum string_edge_e {
+    STRING_START,	/**< Beginning of string. */
+    STRING_END,		/**< End of string. */
+    STRING_BOTH		/**< Both ends of string. */
+};
+
+/**
+ * Remove whitespace from a string, modifying it in-place.
+ *
+ * @param which one of TRIM_START, TRIM_END, or TRIM_BOTH.
+ */
+SPHINXBASE_EXPORT
+char *string_trim(char *string, enum string_edge_e which);
+
 /* FIXME: Both of these string splitting functions basically suck.  I
  have attempted to fix them as best I can.  (dhuggins@cs, 20070808) */
 
