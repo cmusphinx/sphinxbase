@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include "strfuncs.h"
+#include "pio.h"
 #include "ckd_alloc.h"
 
 int
@@ -24,6 +25,42 @@ main(int argc, char *argv[])
             return 1;
         }
         return 0;
+    }
+    else if (!strcmp(argv[1], "fread_line")) {
+        FILE *fp = fopen(DATADIR "/_fread_line.txt", "r");
+        char *line;
+        size_t len;
+
+        if (fp == NULL) {
+            perror("Failed to open " DATADIR "/_fread_line.txt");
+            return 1;
+        }
+        line = fread_line(fp, &len);
+        printf("len = %d orig = %d\n", len,
+               strlen("Hello world!\n"));
+        if (strcmp(line, "Hello world!\n") != 0) {
+            printf("'%s' != 'Hello world!\\n'\n", line);
+            return 1;
+        }
+        ckd_free(line);
+        line = fread_line(fp, &len);
+        /* A line of exactly 127 characters. */
+        printf("len = %d orig = %d\n", len,
+               strlen("123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456\n"));
+        if (strcmp(line, "123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456\n") != 0) {
+            printf("'%s' != '123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456\\n'\n", line);
+            return 1;
+        }
+        ckd_free(line);
+        /* A very long line. */
+        line = fread_line(fp, &len);
+        printf("len = %d orig = %d\n", len,
+               strlen("All work and no play makes Jack a very dull boy.  All work and no play makes Jack a very dull boy.  All work and no play makes Jack a very dull boy.  All work and no play makes Jack a very dull boy.  All work and no play makes Jack a very dull boy.  All work and no play makes Jack a very dull boy.  \n"));
+        if (strcmp(line, "All work and no play makes Jack a very dull boy.  All work and no play makes Jack a very dull boy.  All work and no play makes Jack a very dull boy.  All work and no play makes Jack a very dull boy.  All work and no play makes Jack a very dull boy.  All work and no play makes Jack a very dull boy.  \n") != 0) {
+            printf("'%s' != 'All work and no play makes Jack a very dull boy.  All work and no play makes Jack a very dull boy.  All work and no play makes Jack a very dull boy.  All work and no play makes Jack a very dull boy.  All work and no play makes Jack a very dull boy.  All work and no play makes Jack a very dull boy.  \\n'\n", line);
+            return 1;
+        }
+        ckd_free(line);
     }
     else if (!strcmp(argv[1], "string_trim")) {
         char *foo = ckd_salloc("\t foo bar baz  \n");

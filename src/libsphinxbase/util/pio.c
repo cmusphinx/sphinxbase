@@ -269,6 +269,35 @@ fopen_compchk(char *file, int32 * ispipe)
 #endif /* NOT WINCE */
 }
 
+char *
+fread_line(FILE *stream, size_t *out_len)
+{
+    char *output, *outptr;
+    char buf[128];
+
+    output = outptr = NULL;
+    while (fgets(buf, sizeof(buf), stream)) {
+        size_t len = strlen(buf);
+        /* Append this data to the buffer. */
+        if (output == NULL) {
+            output = ckd_malloc(len + 1);
+            outptr = output;
+        }
+        else {
+            size_t cur = outptr - output;
+            output = ckd_realloc(output, cur + len + 1);
+            outptr = output + cur;
+        }
+        memcpy(outptr, buf, len + 1);
+        outptr += len;
+        /* Stop on a short read or end of line. */
+        if (len < sizeof(buf)-1 || buf[len-1] == '\n')
+            break;
+    }
+    if (out_len) *out_len = outptr - output;
+    return output;
+}
+
 
 #define FREAD_RETRY_COUNT	60
 

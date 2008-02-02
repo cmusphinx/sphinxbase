@@ -158,6 +158,16 @@ FILE *_myfopen(const char *file, char *mode,
 SPHINXBASE_EXPORT
 int32 fread_retry(void *pointer, int32 size, int32 num_items, FILE *stream);
 
+/**
+ * Read a line of arbitrary length from a file and return it as a
+ * newly allocated string.
+ *
+ * @param out_len Output: if not NULL, length of the string read.
+ * @return allocated string containing the line, or NULL on error or EOF.
+ */
+SPHINXBASE_EXPORT
+char *fread_line(FILE *stream, size_t *out_len);
+
 #ifdef _WIN32_WCE
 /* Fake this for WinCE which has no stat() */
 #include <windows.h>
