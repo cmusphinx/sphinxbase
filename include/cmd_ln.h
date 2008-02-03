@@ -160,7 +160,8 @@ cmd_ln_t *cmd_ln_get(void);
  * argument strings.  For example, to create the equivalent of passing
  * "-hmm foodir -dsratio 2 -lm bar.lm" on the command-line:
  *
- *  config = cmd_ln_init(defs, TRUE, "-hmm", "foodir", "-dsratio", "2", "-lm", "bar.lm");
+ *  config = cmd_ln_init(defs, TRUE, "-hmm", "foodir", "-dsratio", "2",
+ *                       "-lm", "bar.lm", NULL);
  *
  * Note that for simplicity, <strong>all</strong> arguments are passed
  * as strings, regardless of the actual underlying type.
