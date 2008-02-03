@@ -344,6 +344,10 @@ arg_dump_r(cmd_ln_t *cmdln, FILE * fp, const arg_t * defn, int32 doc)
     int32 namelen, deflen;
     anytype_t *vp;
 
+    /* No definitions, do nothing. */
+    if (defn == NULL)
+        return;
+
     /* Find max lengths of name and default value fields, and #entries in defn */
     n = arg_strlen(defn, &namelen, &deflen);
     /*    E_INFO("String length %d. Name length %d, Default Length %d\n",n, namelen, deflen); */
@@ -455,14 +459,20 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
 
     /* Build a hash table for argument definitions */
     defidx = hash_table_new(50, 0);
-    for (n = 0; defn[n].name; n++) {
-	void *v;
+    if (defn) {
+        for (n = 0; defn[n].name; n++) {
+            void *v;
 
-	v = hash_table_enter(defidx, defn[n].name, (void *)&defn[n]);
-        if (strict && (v != &defn[n])) {
-            E_ERROR("Duplicate argument name in definition: %s\n", defn[n].name);
-            goto error;
+            v = hash_table_enter(defidx, defn[n].name, (void *)&defn[n]);
+            if (strict && (v != &defn[n])) {
+                E_ERROR("Duplicate argument name in definition: %s\n", defn[n].name);
+                goto error;
+            }
         }
+    }
+    else {
+        /* No definitions. */
+        n = 0;
     }
 
     /* Allocate memory for argument values */
@@ -560,6 +570,67 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
         cmd_ln_free_r(cmdln);
     E_ERROR("cmd_ln_parse_r failed\n");
     return NULL;
+}
+
+cmd_ln_t *
+cmd_ln_init(cmd_ln_t *inout_cmdln, const arg_t *defn, int32 strict, ...)
+{
+    va_list args;
+    const char *arg, *val;
+    char **f_argv;
+    int32 f_argc;
+    cmd_ln_t *new_cmdln;
+
+    va_start(args, strict);
+    f_argc = 0;
+    while ((arg = va_arg(args, const char *))) {
+        ++f_argc;
+        val = va_arg(args, const char*);
+        if (val == NULL) {
+            E_ERROR("Number of arguments must be even!\n");
+            return NULL;
+        }
+        ++f_argc;
+    }
+    va_end(args);
+
+    /* Now allocate f_argv */
+    f_argv = ckd_calloc(f_argc, sizeof(*f_argv));
+    va_start(args, strict);
+    f_argc = 0;
+    while ((arg = va_arg(args, const char *))) {
+        f_argv[f_argc] = ckd_salloc(arg);
+        ++f_argc;
+        val = va_arg(args, const char*);
+        f_argv[f_argc] = ckd_salloc(val);
+        ++f_argc;
+    }
+    va_end(args);
+
+    new_cmdln = cmd_ln_parse_r(inout_cmdln, defn, f_argc, f_argv, strict);
+    /* If this failed then clean up and return NULL. */
+    if (new_cmdln == NULL) {
+        int32 i;
+        for (i = 0; i < f_argc; ++i)
+            ckd_free(f_argv[i]);
+        ckd_free(f_argv);
+        return NULL;
+    }
+    /* Otherwise, we need to add the contents of f_argv to the new object. */
+    if (new_cmdln == inout_cmdln) {
+        new_cmdln->f_argv = ckd_realloc(new_cmdln->f_argv,
+                                        (new_cmdln->f_argc + f_argc)
+                                        * sizeof(*new_cmdln->f_argv));
+        memcpy(new_cmdln->f_argv + new_cmdln->f_argc, f_argv,
+               f_argc * sizeof(*f_argv));
+        ckd_free(f_argv);
+        new_cmdln->f_argc = new_cmdln->f_argc + f_argc;
+    }
+    else {
+        new_cmdln->f_argc = f_argc;
+        new_cmdln->f_argv = f_argv;
+    }
+    return new_cmdln;
 }
 
 int
@@ -718,6 +789,8 @@ cmd_ln_parse_file(const arg_t * defn, const char *filename, int32 strict)
 void
 cmd_ln_print_help_r(cmd_ln_t *cmdln, FILE * fp, const arg_t * defn)
 {
+    if (defn == NULL)
+        return;
     fprintf(fp, "Arguments list definition:\n");
     arg_dump_r(cmdln, fp, defn, 1);
 }

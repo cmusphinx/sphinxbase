@@ -59,6 +59,7 @@
 #define _LIBUTIL_CMD_LN_H_
 
 #include <stdio.h>
+#include <stdarg.h>
 
 /* Win32/WinCE DLL gunk */
 #include <sphinxbase_export.h>
@@ -151,6 +152,26 @@ typedef struct cmd_ln_s cmd_ln_t;
  **/
 SPHINXBASE_EXPORT
 cmd_ln_t *cmd_ln_get(void);
+
+/**
+ * Create a cmd_ln_t from NULL-terminated list of arguments.
+ *
+ * This function creates a cmd_ln_t from a NULL-terminated list of
+ * argument strings.  For example, to create the equivalent of passing
+ * "-hmm foodir -dsratio 2 -lm bar.lm" on the command-line:
+ *
+ *  config = cmd_ln_init(defs, TRUE, "-hmm", "foodir", "-dsratio", "2", "-lm", "bar.lm");
+ *
+ * Note that for simplicity, <strong>all</strong> arguments are passed
+ * as strings, regardless of the actual underlying type.
+ *
+ * @param inout_cmdln Previous command-line to update, or NULL to create a new one.
+ * @param defn Array of argument name definitions, or NULL to allow any arguments.
+ * @param strict Whether to fail on duplicate or unknown arguments.
+ * @return A cmd_ln_t* containing the results of command line parsing, or NULL on failure.
+ */
+SPHINXBASE_EXPORT
+cmd_ln_t *cmd_ln_init(cmd_ln_t *inout_cmdln, const arg_t *defn, int32 strict, ...);
 
 /**
  * Parse the given list of arguments (name-value pairs) according to the given definitions.
