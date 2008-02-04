@@ -39,6 +39,12 @@ main(int argc, char *argv[])
            cmd_ln_boolean_r(config, "-c"),
            cmd_ln_float64_r(config, "-d"));
     cmd_ln_free_r(config);
+
+    config = cmd_ln_init(NULL, NULL, FALSE,
+                         "-b", "foobie", NULL);
+    printf("%s\n",
+           cmd_ln_str_r(config, "-b") ? cmd_ln_str_r(config, "-b") : "(null)");
+    cmd_ln_free_r(config);
            
     return 0;
 }
