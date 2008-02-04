@@ -79,7 +79,9 @@ fe_t *
 fe_init_auto_r(cmd_ln_t *config)
 {
     param_t p;
+    fe_t *fe;
 
+    /* FIXME: Do away with param_t soon. */
     fe_init_params(&p);
 
     p.sampling_rate = cmd_ln_float32_r(config, "-samprate");
@@ -131,8 +133,15 @@ fe_init_auto_r(cmd_ln_t *config)
 
     p.lifter_val = cmd_ln_int32_r(config, "-lifter");
 
-    return fe_init(&p);
+    fe = fe_init(&p);
+    fe->config = config;
+    return fe;
+}
 
+cmd_ln_t *
+fe_get_config(fe_t *fe)
+{
+    return fe->config;
 }
 
 void

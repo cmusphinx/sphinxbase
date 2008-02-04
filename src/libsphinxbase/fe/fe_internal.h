@@ -149,6 +149,8 @@ struct melfb_s {
 
 /** Structure for the front-end computation. */
 struct fe_s {
+    cmd_ln_t *config;
+
     float32 sampling_rate;
     int16 frame_rate;
     int16 frame_shift;

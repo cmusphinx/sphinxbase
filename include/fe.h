@@ -297,6 +297,12 @@ SPHINXBASE_EXPORT
 fe_t *fe_init_auto_r(cmd_ln_t *config);
 
 /**
+ * Retrieve the command-line object used to initialize this front-end.
+ */
+SPHINXBASE_EXPORT
+cmd_ln_t *fe_get_config(fe_t *fe);
+
+/**
  * Start processing an utterance.
  * @return 0 for success, <0 for error (see enum fe_error_e)
  */
