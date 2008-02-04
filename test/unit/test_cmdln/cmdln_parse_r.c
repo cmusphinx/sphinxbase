@@ -20,6 +20,8 @@ main(int argc, char *argv[])
     cmd_ln_t *config;
 
     config = cmd_ln_parse_r(NULL, defs, argc, argv, TRUE);
+    if (config == NULL)
+        return 1;
     printf("%d %s %d %f\n",
            cmd_ln_int32_r(config, "-a"),
            cmd_ln_str_r(config, "-b") ? cmd_ln_str_r(config, "-b") : "(null)",
@@ -29,10 +31,14 @@ main(int argc, char *argv[])
 
     config = cmd_ln_init(NULL, NULL, FALSE,
                          "-b", "foobie", NULL);
+    if (config == NULL)
+        return 1;
     cmd_ln_free_r(config);
 
     config = cmd_ln_init(NULL, defs, TRUE,
                          "-b", "foobie", NULL);
+    if (config == NULL)
+        return 1;
     printf("%d %s %d %f\n",
            cmd_ln_int32_r(config, "-a"),
            cmd_ln_str_r(config, "-b") ? cmd_ln_str_r(config, "-b") : "(null)",
@@ -42,6 +48,8 @@ main(int argc, char *argv[])
 
     config = cmd_ln_init(NULL, NULL, FALSE,
                          "-b", "foobie", NULL);
+    if (config == NULL)
+        return 1;
     printf("%s\n",
            cmd_ln_str_r(config, "-b") ? cmd_ln_str_r(config, "-b") : "(null)");
     cmd_ln_free_r(config);

@@ -494,20 +494,26 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
                 E_ERROR("Unknown argument name '%s'\n", argv[j]);
                 goto error;
             }
+            else if (defn == NULL)
+                v = NULL;
             else
                 continue;
         }
 	argdef = v;
 
         /* Enter argument value */
-        if ((v = arg_str2val(argdef->type, argv[j + 1])) == NULL) {
-            cmd_ln_print_help_r(cmdln, stderr, defn);
-            E_ERROR("Bad argument value for %s: %s\n", argv[j],
-                    argv[j + 1]);
-            goto error;
+        if (argdef == NULL)
+            v = arg_str2val(ARG_STRING, argv[j + 1]);
+        else {
+            if ((v = arg_str2val(argdef->type, argv[j + 1])) == NULL) {
+                cmd_ln_print_help_r(cmdln, stderr, defn);
+                E_ERROR("Bad argument value for %s: %s\n", argv[j],
+                        argv[j + 1]);
+                goto error;
+            }
         }
 
-        if ((vv = hash_table_enter(cmdln->ht, argdef->name, v)) != v) {
+        if ((vv = hash_table_enter(cmdln->ht, argv[j], v)) != v) {
 	    if (strict) {
 		ckd_free(v);
 		E_ERROR("Duplicate argument name in arguments: %s\n",
@@ -515,7 +521,7 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
 		goto error;
 	    }
 	    else {
-		vv = hash_table_replace(cmdln->ht, argdef->name, v);
+		vv = hash_table_replace(cmdln->ht, argv[j], v);
 		ckd_free(vv);
 	    }
         }
