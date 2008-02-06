@@ -87,6 +87,7 @@
 #define _LIBUTIL_CKD_ALLOC_H_
 
 #include <stdlib.h>
+#include <setjmp.h>
 
 /* Win32/WinCE DLL gunk */
 #include <sphinxbase_export.h>
@@ -107,6 +108,23 @@ extern "C" {
 /* Fool Emacs. */
 }
 #endif
+
+/**
+ * Control behaviour of the program when allocation fails.
+ *
+ * Although your program is probably toast when memory allocation
+ * fails, it is also probably a good idea to be able to catch these
+ * errors and alert the user in some way.  Either that, or you might
+ * want the program to call abort() so that you can debug the failed
+ * code.  This function allows you to control that behaviour.
+ *
+ * @param env Pointer to a <code>jmp_buf</code> initialized with
+ * setjmp(), or NULL to remove a previously set jump target.
+ * @param abort If non-zero, the program will call abort() when
+ * allocation fails rather than exiting or calling longjmp().
+ * @return Pointer to a previously set <code>jmp_buf</code>, if any.
+ */
+jmp_buf *ckd_set_jump(jmp_buf *env, int abort);
 
 /**
  * The following functions are similar to the malloc family, except that they have
@@ -132,66 +150,67 @@ void *__ckd_realloc__(void *ptr, size_t new_size,
  */
 SPHINXBASE_EXPORT
 char *__ckd_salloc__(const char *origstr,
-		     const char *caller_file, int32 caller_line);
+		     const char *caller_file, int caller_line);
 
 /**
  * Allocate a 2-D array and return ptr to it (ie, ptr to vector of ptrs).
  * The data area is allocated in one block so it can also be treated as a 1-D array.
  */
 SPHINXBASE_EXPORT
-void **__ckd_calloc_2d__(int32 d1, int32 d2,	/* In: #elements in the 2 dimensions */
-			 int32 elemsize,	/* In: Size (#bytes) of each element */
-			 const char *caller_file, int32 caller_line);	/* In */
+void *__ckd_calloc_2d__(size_t d1, size_t d2,	/* In: #elements in the 2 dimensions */
+                        size_t elemsize,	/* In: Size (#bytes) of each element */
+                        const char *caller_file, int caller_line);	/* In */
 
 /**
  * Allocate a 3-D array and return ptr to it.
  * The data area is allocated in one block so it can also be treated as a 1-D array.
  */
 SPHINXBASE_EXPORT
-void ***__ckd_calloc_3d__(int32 d1, int32 d2, int32 d3,	/* In: #elems in the dims */
-			  int32 elemsize,		/* In: Size (#bytes) per element */
-			  const char *caller_file, int32 caller_line);	/* In */
+void *__ckd_calloc_3d__(size_t d1, size_t d2, size_t d3,	/* In: #elems in the dims */
+                        size_t elemsize,		/* In: Size (#bytes) per element */
+                        const char *caller_file, int caller_line);	/* In */
 
 /**
  * Overlay a 3-D array over a previously allocated storage area.
  **/
 SPHINXBASE_EXPORT
-void *** __ckd_alloc_3d_ptr(int d1,
-                            int d2,
-                            int d3,
-                            void *store,
-                            size_t elem_size,
-                            char *caller_file,
-                            int caller_line);
+void * __ckd_alloc_3d_ptr(size_t d1,
+                          size_t d2,
+                          size_t d3,
+                          void *store,
+                          size_t elem_size,
+                          char *caller_file,
+                          int caller_line);
 
 /**
  * Overlay a s-D array over a previously allocated storage area.
  **/
 SPHINXBASE_EXPORT
-void ** __ckd_alloc_2d_ptr(int d1,
-                           int d2,
-                           void *store,
-                           size_t elem_size,
-                           char *caller_file,
-                           int caller_line);
+void *__ckd_alloc_2d_ptr(size_t d1,
+                         size_t d2,
+                         void *store,
+                         size_t elem_size,
+                         char *caller_file,
+                         int caller_line);
 
-/** Test and free a 1-D array 
+/**
+ * Test and free a 1-D array 
  */
 SPHINXBASE_EXPORT
 void ckd_free(void *ptr);
 
 /**
-   Free a 2-D array (ptr) previously allocated by ckd_calloc_2d 
-*/
+ * Free a 2-D array (ptr) previously allocated by ckd_calloc_2d 
+ */
 SPHINXBASE_EXPORT
-void ckd_free_2d(void **ptr);
+void ckd_free_2d(void *ptr);
 
 
 /** 
-    Free a 3-D array (ptr) previously allocated by ckd_calloc_3d 
-*/
+ * Free a 3-D array (ptr) previously allocated by ckd_calloc_3d 
+ */
 SPHINXBASE_EXPORT
-void ckd_free_3d(void ***ptr);
+void ckd_free_3d(void *ptr);
 
 /**
  * Macros to simplify the use of above functions.
@@ -251,7 +270,7 @@ void ckd_free_3d(void ***ptr);
  * anticipating future allocation requests.
  */
 SPHINXBASE_EXPORT
-char *__mymalloc__ (int32 elemsize, char *file, int32 line);
+char *__mymalloc__(size_t elemsize, char *file, int32 line);
 
 /**
  * Free a graph element (of given size) that was previously allocated using mymalloc.
@@ -259,7 +278,7 @@ char *__mymalloc__ (int32 elemsize, char *file, int32 line);
  * freelist pool.
  */
 SPHINXBASE_EXPORT
-void __myfree__ (char *elem, int32 elemsize, char *file, int32 line);
+void __myfree__(char *elem, size_t elemsize, char *file, int32 line);
 
 /**
  * Macros to simplify the use of __mymalloc__ and __myfree__.  One should use these, rather

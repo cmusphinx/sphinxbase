@@ -88,6 +88,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <stdarg.h>
 
 #ifdef _WIN32
 #pragma warning (disable: 4996)
@@ -97,6 +98,43 @@
 #include "ckd_alloc.h"
 #include "err.h"
 
+/**
+ * Target for longjmp() on failure.
+ * 
+ * FIXME: This should be in thread-local storage.
+ */
+static jmp_buf *ckd_target;
+static int jmp_abort;
+
+jmp_buf *
+ckd_set_jump(jmp_buf *env, int abort)
+{
+    jmp_buf *old;
+
+    if (abort)
+        jmp_abort = 1;
+
+    old = ckd_target;
+    ckd_target = env;
+    return old;
+}
+
+void
+ckd_fail(char *format, ...)
+{
+    va_list args;
+
+    va_start(args, format);
+    vfprintf(stderr, format, args);
+    va_end(args);
+
+    if (jmp_abort)
+        abort();
+    else if (ckd_target)
+        longjmp(*ckd_target, 1);
+    else
+        exit(-1);
+}
 
 void *
 __ckd_calloc__(size_t n_elem, size_t elem_size,
@@ -105,8 +143,8 @@ __ckd_calloc__(size_t n_elem, size_t elem_size,
     void *mem;
 
     if ((mem = calloc(n_elem, elem_size)) == NULL) {
-        E_FATAL("calloc(%d,%d) failed from %s(%d)\n", n_elem,
-                elem_size, caller_file, caller_line);
+        ckd_fail("calloc(%d,%d) failed from %s(%d)\n", n_elem,
+                 elem_size, caller_file, caller_line);
     }
 
     return mem;
@@ -119,8 +157,8 @@ __ckd_malloc__(size_t size, const char *caller_file, int caller_line)
     void *mem;
 
     if ((mem = malloc(size)) == NULL)
-        E_FATAL("malloc(%d) failed from %s(%d)\n", size,
-                caller_file, caller_line);
+        ckd_fail("malloc(%d) failed from %s(%d)\n", size,
+                 caller_file, caller_line);
 
     return mem;
 }
@@ -133,8 +171,8 @@ __ckd_realloc__(void *ptr, size_t new_size,
     void *mem;
 
     if ((mem = realloc(ptr, new_size)) == NULL) {
-        E_FATAL("realloc(%d) failed from %s(%d)\n", new_size,
-                caller_file, caller_line);
+        ckd_fail("realloc(%d) failed from %s(%d)\n", new_size,
+                 caller_file, caller_line);
     }
 
     return mem;
@@ -143,9 +181,9 @@ __ckd_realloc__(void *ptr, size_t new_size,
 
 char *
 __ckd_salloc__(const char *orig, const char *caller_file,
-               int32 caller_line)
+               int caller_line)
 {
-    int32 len;
+    size_t len;
     char *buf;
 
     len = strlen(orig) + 1;
@@ -156,12 +194,12 @@ __ckd_salloc__(const char *orig, const char *caller_file,
 }
 
 
-void **
-__ckd_calloc_2d__(int32 d1, int32 d2, int32 elemsize,
-                  const char *caller_file, int32 caller_line)
+void *
+__ckd_calloc_2d__(size_t d1, size_t d2, size_t elemsize,
+                  const char *caller_file, int caller_line)
 {
     char **ref, *mem;
-    int32 i, offset;
+    size_t i, offset;
 
     mem =
         (char *) __ckd_calloc__(d1 * d2, elemsize, caller_file,
@@ -173,7 +211,7 @@ __ckd_calloc_2d__(int32 d1, int32 d2, int32 elemsize,
     for (i = 0, offset = 0; i < d1; i++, offset += d2 * elemsize)
         ref[i] = mem + offset;
 
-    return ((void **) ref);
+    return ref;
 }
 
 
@@ -185,20 +223,21 @@ ckd_free(void *ptr)
 }
 
 void
-ckd_free_2d(void **ptr)
+ckd_free_2d(void *tmpptr)
 {
+    void **ptr = (void **)tmpptr;
     if (ptr)
         ckd_free(ptr[0]);
     ckd_free(ptr);
 }
 
 
-void ***
-__ckd_calloc_3d__(int32 d1, int32 d2, int32 d3, int32 elemsize,
-                  const char *caller_file, int32 caller_line)
+void *
+__ckd_calloc_3d__(size_t d1, size_t d2, size_t d3, size_t elemsize,
+                  const char *caller_file, int caller_line)
 {
     char ***ref1, **ref2, *mem;
-    int32 i, j, offset;
+    size_t i, j, offset;
 
     mem =
         (char *) __ckd_calloc__(d1 * d2 * d3, elemsize, caller_file,
@@ -221,13 +260,15 @@ __ckd_calloc_3d__(int32 d1, int32 d2, int32 d3, int32 elemsize,
         }
     }
 
-    return ((void ***) ref1);
+    return ref1;
 }
 
 
 void
-ckd_free_3d(void ***ptr)
+ckd_free_3d(void *inptr)
 {
+    void ***ptr = (void ***)inptr;
+
     if (ptr && ptr[0])
         ckd_free(ptr[0][0]);
     if (ptr)
@@ -236,10 +277,10 @@ ckd_free_3d(void ***ptr)
 }
 
 /* Layers a 3d array access structure over a preallocated storage area */
-void ***
-__ckd_alloc_3d_ptr(int d1,
-		   int d2,
-		   int d3,
+void *
+__ckd_alloc_3d_ptr(size_t d1,
+		   size_t d2,
+		   size_t d3,
 		   void *store,
 		   size_t elem_size,
 		   char *file,
@@ -247,7 +288,7 @@ __ckd_alloc_3d_ptr(int d1,
 {
     void **tmp1;
     void ***out;
-    int i, j;
+    size_t i, j;
     
     tmp1 = __ckd_calloc__(d1 * d2, sizeof(void *), file, line);
 
@@ -263,19 +304,19 @@ __ckd_alloc_3d_ptr(int d1,
     
     return out;
 }
-
-void **
-__ckd_alloc_2d_ptr(int d1,
-		   int d2,
+
+void *
+__ckd_alloc_2d_ptr(size_t d1,
+		   size_t d2,
 		   void *store,
 		   size_t elem_size,
 		   char *file,
 		   int line)
 {
     void **out;
-    int i, j;
+    size_t i, j;
     
-    out = (void **)__ckd_calloc__(d1, sizeof(void *), file, line);
+    out = __ckd_calloc__(d1, sizeof(void *), file, line);
     
     for (i = 0, j = 0; i < d1; i++, j += d2) {
 	out[i] = &((char *)store)[j*elem_size];
@@ -283,16 +324,16 @@ __ckd_alloc_2d_ptr(int d1,
 
     return out;
 }
-
+
 char *
-__mymalloc__(int32 elemsize, char *caller_file, int32 caller_line)
+__mymalloc__(size_t elemsize, char *caller_file, int caller_line)
 {
     return __listelem_alloc__(elemsize, caller_file, caller_line);
 }
 
 void
-__myfree__(char *elem, int32 elemsize, char *caller_file,
-           int32 caller_line)
+__myfree__(char *elem, size_t elemsize, char *caller_file,
+           int caller_line)
 {
     listelem_free(elem, elemsize);
 }
