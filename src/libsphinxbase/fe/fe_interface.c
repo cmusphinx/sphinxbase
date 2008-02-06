@@ -264,7 +264,7 @@ fe_process_frame(fe_t * fe, int16 const *spch, int32 nsamps, mfcc_t * fr_cep)
 int
 fe_process_frames(fe_t *fe,
                   int16 const **inout_spch,
-                  int32 *inout_nsamps,
+                  size_t *inout_nsamps,
                   mfcc_t **buf_cep,
                   int32 *inout_nframes)
 {
@@ -376,7 +376,7 @@ fe_process_frames(fe_t *fe,
 }
 
 int
-fe_process_utt(fe_t * fe, int16 const * spch, int32 nsamps,
+fe_process_utt(fe_t * fe, int16 const * spch, size_t nsamps,
                mfcc_t *** cep_block, int32 * nframes)
 {
     mfcc_t **cep;

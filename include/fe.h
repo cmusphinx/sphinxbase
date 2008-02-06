@@ -427,7 +427,7 @@ int fe_process_frame(fe_t *fe, int16 const *spch,
 SPHINXBASE_EXPORT
 int fe_process_frames(fe_t *fe,
                       int16 const **inout_spch,
-                      int32 *inout_nsamps,
+                      size_t *inout_nsamps,
                       mfcc_t **buf_cep,
                       int32 *inout_nframes);
 
@@ -449,7 +449,7 @@ int fe_process_frames(fe_t *fe,
 SPHINXBASE_EXPORT
 int fe_process_utt(fe_t *fe,  /**< A front end object */
                    int16 const *spch, /**< The speech samples */
-                   int32 nsamps, /**< number of samples*/
+                   size_t nsamps, /**< number of samples*/
                    mfcc_t ***cep_block, /**< Output pointer to cepstra */
                    int32 *nframes /**< Number of frames processed */
 	);
