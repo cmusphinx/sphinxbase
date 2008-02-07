@@ -370,7 +370,6 @@ fe_process_frames(fe_t *fe,
     }
 
     /* Finally update the frame counter with the number of frames we procesed. */
-    assert(*inout_nframes == 0);
     *inout_nframes = frame_count;
     return 0;
 }
