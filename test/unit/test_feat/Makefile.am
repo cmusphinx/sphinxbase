@@ -1,6 +1,4 @@
-check_PROGRAMS = test_feat
-
-test_feat_SRCS = test_feat.c
+check_PROGRAMS = test_feat test_feat_live
 
 INCLUDES = \
 	-I$(top_srcdir)/include \
@@ -8,6 +6,6 @@ INCLUDES = \
 
 LDADD = ${top_builddir}/src/libsphinxbase/libsphinxbase.la
 
-TESTS = $(srcdir)/_*.test
+TESTS = $(srcdir)/_*.test test_feat_live
 EXTRA_DIST = $(TESTS) $(srcdir)/_*.res
 CLEANFILES = *.out

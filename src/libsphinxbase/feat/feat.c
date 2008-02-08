@@ -995,19 +995,12 @@ feat_init(char *type, cmn_type_t cmn, int32 varnorm, agc_type_t agc, int32 brepo
 
     fcb->out_dim = fcb->stream_len[0];
     fcb->cepbuf = (mfcc_t **) ckd_calloc_2d(LIVEBUFBLOCKSIZE,
-                                             feat_cepsize(fcb),
-                                             sizeof(mfcc_t));
-    if (!fcb->cepbuf)
-        E_FATAL("Unable to allocate cepbuf ckd_calloc_2d(%ld,%d,%d)\n",
-                LIVEBUFBLOCKSIZE, feat_cepsize(fcb), sizeof(mfcc_t));
-    fcb->tmpcepbuf =
-        (mfcc_t **) ckd_calloc_2d(2 * feat_window_size(fcb) + 1,
-                                   feat_cepsize(fcb), sizeof(mfcc_t));
-    if (!fcb->tmpcepbuf)
-        E_FATAL
-            ("Unable to allocate tmpcepbuf ckd_calloc_2d(%ld,%d,%d)\n",
-             2 * feat_window_size(fcb) + 1, feat_cepsize(fcb),
-             sizeof(mfcc_t));
+                                            feat_cepsize(fcb),
+                                            sizeof(mfcc_t));
+    /* This one is actually just an array of pointers to "flatten out"
+     * wraparounds. */
+    fcb->tmpcepbuf = ckd_calloc(2 * feat_window_size(fcb) + 1,
+                                sizeof(*fcb->tmpcepbuf));
     return fcb;
 }
 
@@ -1180,146 +1173,141 @@ feat_s2mfc2feat(feat_t * fcb, const char *file, const char *dir, const char *cep
     return (nfr - win * 2);
 }
 
-int32
-feat_s2mfc2feat_block(feat_t * fcb, mfcc_t ** uttcep, int32 nfr,
-                      int32 beginutt, int32 endutt, mfcc_t *** ofeat)
+static int32
+feat_s2mfc2feat_block_utt(feat_t * fcb, mfcc_t ** uttcep,
+			  int32 nfr, mfcc_t *** ofeat)
 {
-    mfcc_t **cepbuf = NULL;
-    mfcc_t **tmpcepbuf = NULL;
-    int32 win, cepsize;
-    int32 i, j, nfeatvec, residualvecs;
-    int32 tmppos;
+    mfcc_t **cepbuf;
+    int32 i, win, cepsize;
 
-    assert(fcb->cepsize > 0);
     win = feat_window_size(fcb);
     cepsize = feat_cepsize(fcb);
 
-    if (beginutt && endutt && nfr > 0) {
-        /* Special case when we are asked to process the entire utterance. */
-        /* Copy and pad out the utterance (this requires that the
-         * feature computation functions always access the buffer via
-         * the frame pointers, which they do)  */
-        cepbuf = ckd_calloc(nfr + win * 2, sizeof(mfcc_t *));
-        memcpy(cepbuf + win, uttcep, nfr * sizeof(mfcc_t *));
-        for (i = 0; i < win; ++i) {
-            cepbuf[i] = ckd_calloc(cepsize, sizeof(mfcc_t));
-            memcpy(cepbuf[i], uttcep[0], cepsize * sizeof(mfcc_t));
-            cepbuf[nfr + win + i] = ckd_calloc(cepsize, sizeof(mfcc_t));
-            memcpy(cepbuf[nfr + win + i], uttcep[nfr - 1], cepsize * sizeof(mfcc_t));
-        }
-        feat_compute_utt(fcb, cepbuf, nfr + win * 2, win, ofeat);
-        for (i = 0; i < win; ++i) {
-            ckd_free(cepbuf[i]);
-            ckd_free(cepbuf[nfr + win + i]);
-        }
-        ckd_free(cepbuf);
-        return nfr;
+    /* Copy and pad out the utterance (this requires that the
+     * feature computation functions always access the buffer via
+     * the frame pointers, which they do)  */
+    cepbuf = ckd_calloc(nfr + win * 2, sizeof(mfcc_t *));
+    memcpy(cepbuf + win, uttcep, nfr * sizeof(mfcc_t *));
+    for (i = 0; i < win; ++i) {
+        cepbuf[i] = ckd_calloc(cepsize, sizeof(mfcc_t));
+        memcpy(cepbuf[i], uttcep[0], cepsize * sizeof(mfcc_t));
+        cepbuf[nfr + win + i] = ckd_calloc(cepsize, sizeof(mfcc_t));
+        memcpy(cepbuf[nfr + win + i], uttcep[nfr - 1], cepsize * sizeof(mfcc_t));
     }
+    /* Compute as usual. */
+    feat_compute_utt(fcb, cepbuf, nfr + win * 2, win, ofeat);
+    /* Free arrays of pointers. */
+    for (i = 0; i < win; ++i) {
+        ckd_free(cepbuf[i]);
+        ckd_free(cepbuf[nfr + win + i]);
+    }
+    ckd_free(cepbuf);
+    return nfr;
+}
 
-    cepbuf = fcb->cepbuf;
-    tmpcepbuf = fcb->tmpcepbuf;
-    assert(cepbuf);
-    assert(tmpcepbuf);
+int32
+feat_s2mfc2feat_live(feat_t * fcb, mfcc_t ** uttcep, int32 *inout_ncep,
+		     int32 beginutt, int32 endutt, mfcc_t *** ofeat)
+{
+    int32 win, cepsize, nbufcep;
+    int32 i, j, nfeatvec;
 
-    if (nfr >= LIVEBUFBLOCKSIZE) {
-        nfr = LIVEBUFBLOCKSIZE - 1;
+    /* Special case for entire utterances. */
+    if (beginutt && endutt && *inout_ncep > 0)
+        return feat_s2mfc2feat_block_utt(fcb, uttcep, *inout_ncep, ofeat);
+
+    win = feat_window_size(fcb);
+    cepsize = feat_cepsize(fcb);
+
+    /* Calculate how much data is in the buffer already. */
+    nbufcep = fcb->bufpos - fcb->curpos;
+    if (nbufcep < 0)
+	nbufcep = fcb->bufpos + LIVEBUFBLOCKSIZE - fcb->curpos;
+
+    /* Circular buffer holds LIVEBLOCKSIZE frames. */
+    if (nbufcep + *inout_ncep >= LIVEBUFBLOCKSIZE) {
+        *inout_ncep = LIVEBUFBLOCKSIZE - nbufcep - 1;
         endutt = 0;
     }
 
-    feat_cmn(fcb, uttcep, nfr, beginutt, endutt);
-    feat_agc(fcb, uttcep, nfr, beginutt, endutt);
+    /* FIXME: Don't modify the input! */
+    feat_cmn(fcb, uttcep, *inout_ncep, beginutt, endutt);
+    feat_agc(fcb, uttcep, *inout_ncep, beginutt, endutt);
 
-    residualvecs = 0;
-
-    if (beginutt && nfr > 0) {
-        /* Replicate first frame into the first win frames */
+    if (beginutt && *inout_ncep > 0) {
+        /* Replicate first frame into the first win frames. */
+        /* FIXME: Need to make sure the total number of frames doesn't
+         * exceed LIVEBUFBLOCKSIZE! */
         for (i = 0; i < win; i++) {
-            memcpy(cepbuf[i], uttcep[0], cepsize * sizeof(mfcc_t));
+            memcpy(fcb->cepbuf[fcb->bufpos++], uttcep[0],
+                   cepsize * sizeof(mfcc_t));
+            fcb->bufpos %= LIVEBUFBLOCKSIZE;
         }
-        fcb->bufpos = win;
-        fcb->bufpos %= LIVEBUFBLOCKSIZE;
         fcb->curpos = fcb->bufpos;
-        residualvecs -= win;
     }
 
-    for (i = 0; i < nfr; i++) {
-        assert(fcb->bufpos < LIVEBUFBLOCKSIZE);
-        memcpy(cepbuf[fcb->bufpos++], uttcep[i],
+    /* Copy in frame data to the circular buffer. */
+    for (i = 0; i < *inout_ncep; ++i) {
+        memcpy(fcb->cepbuf[fcb->bufpos++], uttcep[i],
                cepsize * sizeof(mfcc_t));
         fcb->bufpos %= LIVEBUFBLOCKSIZE;
+	++nbufcep;
     }
 
     if (endutt) {
+        int32 tpos; /* Index of last input frame. */
         /* Replicate last frame into the last win frames */
-        if (nfr > 0) {
-            for (i = 0; i < win; i++) {
-                assert(fcb->bufpos < LIVEBUFBLOCKSIZE);
-                memcpy(cepbuf[fcb->bufpos++], uttcep[nfr - 1],
-                       cepsize * sizeof(mfcc_t));
-                fcb->bufpos %= LIVEBUFBLOCKSIZE;
-            }
+        /* FIXME: Need to make sure the total number of frames doesn't
+         * exceed LIVEBUFBLOCKSIZE! */
+        if (fcb->bufpos == 0)
+            tpos = LIVEBUFBLOCKSIZE - 1;
+        else
+            tpos = fcb->bufpos - 1;
+        for (i = 0; i < win; ++i) {
+            memcpy(fcb->cepbuf[fcb->bufpos++], fcb->cepbuf[tpos],
+                   cepsize * sizeof(mfcc_t));
+            fcb->bufpos %= LIVEBUFBLOCKSIZE;
         }
-        else {
-            int32 tpos;
-
-            if (fcb->bufpos == 0)
-                tpos = LIVEBUFBLOCKSIZE-1;
-            else
-                tpos = fcb->bufpos;
-            for (i = 0; i < win; i++) {
-                assert(fcb->bufpos < LIVEBUFBLOCKSIZE);
-                assert(tpos < LIVEBUFBLOCKSIZE);
-                memmove(cepbuf[fcb->bufpos++], cepbuf[tpos],
-                        cepsize * sizeof(mfcc_t));
-                fcb->bufpos %= LIVEBUFBLOCKSIZE;
-            }
-        }
-        residualvecs += win;
+	nbufcep += win;
     }
 
-    nfeatvec = 0;
-    nfr += residualvecs;
+    /* Now calculate how many output frames we can actually create. */
+    nfeatvec = nbufcep - win;
+    if (nfeatvec <= 0)
+	return 0;
 
-    for (i = 0; i < nfr; i++, nfeatvec++) {
-        if (fcb->curpos < win || fcb->curpos > LIVEBUFBLOCKSIZE - win - 1) {
-            /* HACK! Just copy the frames and read them to compute_feat */
-            for (j = -win; j <= win; j++) {
-                tmppos =
-                    (j + fcb->curpos +
-                     LIVEBUFBLOCKSIZE) % LIVEBUFBLOCKSIZE;
-                memcpy(tmpcepbuf[win + j], cepbuf[tmppos],
-                       cepsize * sizeof(mfcc_t));
+    for (i = 0; i < nfeatvec; ++i) {
+        /* Handle wraparound cases. */
+        if (fcb->curpos - win < 0 || fcb->curpos + win >= LIVEBUFBLOCKSIZE) {
+            /* Use tmpcepbuf for this case.  Actually, we just need the pointers. */
+            for (j = -win; j <= win; ++j) {
+                int32 tmppos =
+                    (fcb->curpos + j + LIVEBUFBLOCKSIZE) % LIVEBUFBLOCKSIZE;
+		fcb->tmpcepbuf[win + j] = fcb->cepbuf[tmppos];
             }
-            fcb->compute_feat(fcb, tmpcepbuf + win, ofeat[i]);
+            fcb->compute_feat(fcb, fcb->tmpcepbuf + win, ofeat[i]);
         }
         else {
-            fcb->compute_feat(fcb, cepbuf + fcb->curpos, ofeat[i]);
+            fcb->compute_feat(fcb, fcb->cepbuf + fcb->curpos, ofeat[i]);
         }
-
-        fcb->curpos++;
+	/* Move the read pointer forward. */
+        ++fcb->curpos;
         fcb->curpos %= LIVEBUFBLOCKSIZE;
     }
 
-    if (fcb->lda) {
-        feat_lda_transform(fcb, ofeat, nfr);
-    }
+    if (fcb->lda)
+        feat_lda_transform(fcb, ofeat, nfeatvec);
 
-    return (nfeatvec);
-
+    return nfeatvec;
 }
 
-/*
- * RAH, remove memory allocated by feat_init
- * What is going on? feat_vector_alloc doesn't appear to be called
- */
 void
 feat_free(feat_t * f)
 {
     if (f) {
         if (f->cepbuf)
             ckd_free_2d((void **) f->cepbuf);
-        if (f->tmpcepbuf)
-            ckd_free_2d((void **) f->tmpcepbuf);
+        ckd_free(f->tmpcepbuf);
 
         if (f->name) {
             ckd_free((void *) f->name);

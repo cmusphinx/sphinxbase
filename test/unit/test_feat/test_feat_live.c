@@ -8,6 +8,7 @@
 
 #include "feat.h"
 #include "ckd_alloc.h"
+#include "test_macros.h"
 
 const mfcc_t data[6][13] = {
 	{ FLOAT2MFCC(15.114), FLOAT2MFCC(-1.424), FLOAT2MFCC(-0.953),
@@ -40,65 +41,75 @@ int
 main(int argc, char *argv[])
 {
 	feat_t *fcb;
-	mfcc_t **in_feats, ***out_feats;
-	int32 i, j, ncep;
-
-	/* Test "raw" features without concatenation */
-	fcb = feat_init(strdup("13"), CMN_NONE, 0, AGC_NONE, 1, 13);
-
-	in_feats = (mfcc_t **)ckd_alloc_2d_ptr(6, 13, data, sizeof(mfcc_t));
-	out_feats = (mfcc_t ***)ckd_calloc_3d(6, 1, 13, sizeof(mfcc_t));
-	ncep = 6;
-	feat_s2mfc2feat_live(fcb, in_feats, &ncep, 1, 1, out_feats);
-
-	for (i = 0; i < 6; ++i) {
-		for (j = 0; j < 13; ++j) {
-			printf("%.3f ", MFCC2FLOAT(out_feats[i][0][j]));
-		}
-		printf("\n");
-	}
-	feat_free(fcb);
-
-	/* Test "raw" features with concatenation */
-	fcb = feat_init(strdup("13:1"), CMN_NONE, 0, AGC_NONE, 1, 13);
+	mfcc_t **in_feats, ***out_feats, ***out_feats2, ***optr;
+	int32 i, j, ncep, nfr, nfr1, nfr2;
 
 	in_feats = (mfcc_t **)ckd_alloc_2d_ptr(6, 13, data, sizeof(mfcc_t));
 	out_feats = (mfcc_t ***)ckd_calloc_3d(8, 1, 39, sizeof(mfcc_t));
-	ncep = 6;
-	feat_s2mfc2feat_live(fcb, in_feats, &ncep, 1, 1, out_feats);
-
-	for (i = 0; i < 6; ++i) {
-		for (j = 0; j < 39; ++j) {
-			printf("%.3f ", MFCC2FLOAT(out_feats[i][0][j]));
-		}
-		printf("\n");
-	}
-	feat_free(fcb);
-
 	/* Test 1s_c_d_dd features */
 	fcb = feat_init(strdup("1s_c_d_dd"), CMN_NONE, 0, AGC_NONE, 1, 13);
 	ncep = 6;
-	feat_s2mfc2feat_live(fcb, in_feats, &ncep, 1, 1, out_feats);
-
-	for (i = 0; i < 6; ++i) {
+	nfr1 = feat_s2mfc2feat_live(fcb, in_feats, &ncep, 1, 1, out_feats);
+	printf("Processed %d input %d output frames\n", ncep, nfr1);
+	for (i = 0; i < nfr1; ++i) {
+		printf("%d: ", i);
 		for (j = 0; j < 39; ++j) {
 			printf("%.3f ", MFCC2FLOAT(out_feats[i][0][j]));
 		}
 		printf("\n");
 	}
+	feat_free(fcb);
 
-	/* Verify that the deltas are correct. */
-	for (i = 2; i < 4; ++i) {
-		for (j = 0; j < 13; ++j) {
-			if (fabs(MFCC2FLOAT(out_feats[i][0][13+j] - 
-					    (out_feats[i+2][0][j]
-					     - out_feats[i-2][0][j]))) > 0.01) {
-				printf("Delta mismatch in [%d][%d]\n", i, j);
-				return 1;
-			}
+	/* Test in "live" mode. */
+	fcb = feat_init(strdup("1s_c_d_dd"), CMN_NONE, 0, AGC_NONE, 1, 13);
+	optr = out_feats2 = (mfcc_t ***)ckd_calloc_3d(8, 1, 39, sizeof(mfcc_t));
+	nfr2 = 0;
+	ncep = 2;
+	nfr = feat_s2mfc2feat_live(fcb, in_feats, &ncep, TRUE, FALSE, optr);
+	printf("Processed %d input %d output frames\n", ncep, nfr);
+	nfr2 += nfr;
+	for (i = 0; i < nfr; ++i) {
+		printf("%d: ", i);
+		for (j = 0; j < 39; ++j) {
+			printf("%.3f ", MFCC2FLOAT(optr[i][0][j]));
+		}
+		printf("\n");
+	}
+	optr += nfr;
+
+	ncep = 2;
+	nfr = feat_s2mfc2feat_live(fcb, in_feats + 2, &ncep, FALSE, FALSE, optr);
+	nfr2 += nfr;
+	printf("Processed %d input %d output frames\n", ncep, nfr);
+	for (i = 0; i < nfr; ++i) {
+		printf("%d: ", i);
+		for (j = 0; j < 39; ++j) {
+			printf("%.3f ", MFCC2FLOAT(optr[i][0][j]));
+		}
+		printf("\n");
+	}
+	optr += nfr;
+
+	ncep = 2;
+	nfr = feat_s2mfc2feat_live(fcb, in_feats + 4, &ncep, FALSE, TRUE, optr);
+	nfr2 += nfr;
+	printf("Processed %d input %d output frames\n", ncep, nfr);
+	for (i = 0; i < nfr; ++i) {
+		printf("%d: ", i);
+		for (j = 0; j < 39; ++j) {
+			printf("%.3f ", MFCC2FLOAT(optr[i][0][j]));
+		}
+		printf("\n");
+	}
+	optr += nfr;
+	feat_free(fcb);
+
+	TEST_EQUAL(nfr1, nfr2);
+	for (i = 0; i < nfr1; ++i) {
+		for (j = 0; j < 39; ++j) {
+			TEST_EQUAL(out_feats[i][0][j], out_feats2[i][0][j]);
 		}
 	}
-	feat_free(fcb);
 
 	return 0;
 }

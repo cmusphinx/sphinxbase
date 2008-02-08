@@ -141,10 +141,11 @@ typedef struct feat_s {
                            means normalization*/
     agc_t *agc_struct;	/**< Structure that stores the temporary variables for acoustic
                            gain control*/
-    mfcc_t **cepbuf;	/**< TEMPORARY VARILABLE */
-    mfcc_t **tmpcepbuf;	/**< TEMPORARY VARILABLE */
-    int32   bufpos; /*  RAH 4.15.01 upgraded unsigned char variables to int32*/
-    int32   curpos; /*  RAH 4.15.01 upgraded unsigned char variables to int32*/
+
+    mfcc_t **cepbuf;    /**< Circular buffer of MFCC frames for live feature computation. */
+    mfcc_t **tmpcepbuf; /**< Array of pointers into cepbuf to handle border cases. */
+    int32   bufpos;     /**< Write index in cepbuf. */
+    int32   curpos;     /**< Read index in cepbuf. */
 
     mfcc_t ***lda; /**< Array of linear transformations (for LDA, MLLT, or whatever) */
     uint32 n_lda;   /**< Number of linear transformations in lda. */
@@ -353,25 +354,26 @@ int32 feat_s2mfc2feat(feat_t *fcb,	/**< In: Descriptor from feat_init() */
 
 
 /**
- * Feature computation routine for live mode decoder. Computes features
- * for blocks of incoming data. Retains an internal buffer for computing
- * deltas etc.
+ * Feature computation routine for live mode decoder.
+ *
+ * This function computes features for blocks of incoming data. It
+ * retains an internal buffer for computing deltas, which means that
+ * the number of output frames will not necessarily equal the number
+ * of input frames.
  *
  * If beginutt and endutt are both true, CMN_CURRENT and AGC_MAX will
  * be done.  Otherwise only CMN_PRIOR and AGC_EMAX will be done.
  *
- * Returns the number of frames actually computed - the caller is
- * responsible for checking to see if this is less than nfr.  You
- * should repeatedly call this function until all frames are
- * processed.
+ * @return The number of output frames actually computed.
  **/
 SPHINXBASE_EXPORT
-int32 feat_s2mfc2feat_block(feat_t  *fcb,     /**< In: Descriptor from feat_init() */
-                            mfcc_t **uttcep, /**< In: Incoming cepstral buffer */
-                            int32   nfr,      /**< In: Size of incoming buffer */
-                            int32 beginutt,   /**< In: Begining of utterance flag */
-                            int32 endutt,     /**< In: End of utterance flag */
-                            mfcc_t ***ofeat  /**< In: Output feature buffer */
+int32 feat_s2mfc2feat_live(feat_t  *fcb,     /**< In: Descriptor from feat_init() */
+                           mfcc_t **uttcep,  /**< In: Incoming cepstral buffer */
+                           int32 *inout_ncep,/**< In: Size of incoming buffer.
+                                                Out: Number of incoming frames consumed. */
+                           int32 beginutt,   /**< In: Begining of utterance flag */
+                           int32 endutt,     /**< In: End of utterance flag */
+                           mfcc_t ***ofeat   /**< In: Output feature buffer */
     );
 
 
