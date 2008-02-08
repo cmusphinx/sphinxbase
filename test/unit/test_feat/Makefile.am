@@ -1,4 +1,5 @@
 check_PROGRAMS = test_feat test_feat_live
+noinst_HEADERS = test_macros.h
 
 INCLUDES = \
 	-I$(top_srcdir)/include \

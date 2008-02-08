@@ -3,7 +3,7 @@
 
 set -e
 testname=`basename $0 .test`
-./cmdln_parse -a fw > $testname.out 2>&1
+./cmdln_parse > $testname.out 2>&1
 sed -ne 's,^-,-,p' < $testname.out > $testname.tmp.out \
     && mv $testname.tmp.out $testname.out
 compare_table defaults $testname.out $tests/unit/test_cmdln/$testname.res 100
