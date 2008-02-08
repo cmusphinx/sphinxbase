@@ -992,8 +992,6 @@ feat_init(char *type, cmn_type_t cmn, int32 varnorm, agc_type_t agc, int32 brepo
         /* HACK: hardwired initial estimates based on use of CMN (from Sphinx2) */
         agc_emax_set(fcb->agc_struct, (cmn != CMN_NONE) ? 5.0 : 10.0);
     fcb->agc = agc;
-
-    fcb->out_dim = fcb->stream_len[0];
     fcb->cepbuf = (mfcc_t **) ckd_calloc_2d(LIVEBUFBLOCKSIZE,
                                             feat_cepsize(fcb),
                                             sizeof(mfcc_t));
