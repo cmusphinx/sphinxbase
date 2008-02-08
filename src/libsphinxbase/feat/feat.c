@@ -1209,6 +1209,10 @@ feat_s2mfc2feat_live(feat_t * fcb, mfcc_t ** uttcep, int32 *inout_ncep,
 {
     int32 win, cepsize, nbufcep;
     int32 i, j, nfeatvec;
+    int32 zero = 0;
+
+    /* Avoid having to check this everywhere. */
+    if (inout_ncep == NULL) inout_ncep = &zero;
 
     /* Special case for entire utterances. */
     if (beginutt && endutt && *inout_ncep > 0)
