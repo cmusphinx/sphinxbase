@@ -830,6 +830,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\src\libsphinxbase\lm\lm3g_model.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\libsphinxbase\util\logmath.c"
 				>
 			</File>
@@ -857,6 +861,34 @@
 			</File>
 			<File
 				RelativePath="..\..\src\libsphinxbase\util\mmio.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libsphinxbase\lm\ngram_model.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libsphinxbase\lm\ngram_model_arpa.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libsphinxbase\lm\ngram_model_dmp.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libsphinxbase\lm\ngram_model_dmp32.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libsphinxbase\lm\ngram_model_fst.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libsphinxbase\lm\ngram_model_htk.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libsphinxbase\lm\ngram_model_set.c"
 				>
 			</File>
 			<File
@@ -1155,6 +1187,26 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\include\gau_cb.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\gau_cb_float64.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\gau_cb_int32.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\gau_file.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\gau_mix.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\include\genrand.h"
 				>
 			</File>
@@ -1183,6 +1235,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\src\libsphinxbase\lm\lm3g_model.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\logmath.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\include\matrix.h"
 				>
 			</File>
@@ -1192,6 +1252,26 @@
 			</File>
 			<File
 				RelativePath="..\..\include\mulaw.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\ngram_model.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libsphinxbase\lm\ngram_model_arpa.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libsphinxbase\lm\ngram_model_dmp.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libsphinxbase\lm\ngram_model_internal.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libsphinxbase\lm\ngram_model_set.h"
 				>
 			</File>
 			<File

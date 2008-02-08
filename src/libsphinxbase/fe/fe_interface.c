@@ -274,7 +274,7 @@ fe_process_frames(fe_t *fe,
     /* In the special case where there is no output buffer, return the
      * number of frames which would be generated. */
     if (buf_cep == NULL) {
-        if (*inout_nsamps + fe->num_overflow_samps < fe->frame_size)
+        if (*inout_nsamps + fe->num_overflow_samps < (size_t)fe->frame_size)
             *inout_nframes = 0;
         else 
             *inout_nframes = 1
@@ -284,7 +284,7 @@ fe_process_frames(fe_t *fe,
     }
 
     /* Are there not enough samples to make at least 1 frame? */
-    if (*inout_nsamps + fe->num_overflow_samps < fe->frame_size) {
+    if (*inout_nsamps + fe->num_overflow_samps < (size_t)fe->frame_size) {
         /* Append them to the overflow buffer. */
         memcpy(fe->overflow_samps + fe->num_overflow_samps,
                *inout_spch, *inout_nsamps * (sizeof(int16)));
@@ -336,7 +336,7 @@ fe_process_frames(fe_t *fe,
 
     /* Process all remaining frames. */
     for (i = 1; i < frame_count; ++i) {
-        assert(*inout_nsamps >= fe->frame_shift);
+        assert(*inout_nsamps >= (size_t)fe->frame_shift);
         assert(*inout_nframes > 0);
 
         fe_shift_frame(fe, *inout_spch, fe->frame_shift);
@@ -382,7 +382,7 @@ fe_process_utt(fe_t * fe, int16 const * spch, size_t nsamps,
     int rv;
 
     /* Are there enough samples to make at least 1 frame? */
-    if (nsamps + fe->num_overflow_samps < fe->frame_size) {
+    if (nsamps + fe->num_overflow_samps < (size_t)fe->frame_size) {
         *nframes = 0;
         cep = NULL;
     }

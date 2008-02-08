@@ -56,6 +56,11 @@
 #include <iconv.h>
 #endif
 
+#ifdef _WIN32
+#define strcasecmp(a,b) _stricmp(a,b)
+#define strncasecmp(a,b,n) _strnicmp(a,b,n)
+#endif
+
 ngram_file_type_t
 ngram_file_name_to_type(const char *file_name)
 {
@@ -748,7 +753,7 @@ ngram_model_add_class_word(ngram_model_t *model,
         return wid;
 
     /* This is the fixed probability of the new word. */
-    fprob = weight * 1.0 / (lmclass->n_words + lmclass->n_hash_inuse + 1);
+    fprob = weight * 1.0f / (lmclass->n_words + lmclass->n_hash_inuse + 1);
     /* Now normalize everything else to fit it in.  This is
      * accomplished by simply scaling all the other probabilities
      * by (1-fprob). */
@@ -912,7 +917,7 @@ read_classdef_file(hash_table_t *classes, const char *file_name)
                 float32 fprob;
 
                 if (n_words == 2)
-                    fprob = atof(wptr[1]);
+                    fprob = (float32)atof(wptr[1]);
                 else
                     fprob = 1.0f;
                 /* Add it to the list of words for this class. */

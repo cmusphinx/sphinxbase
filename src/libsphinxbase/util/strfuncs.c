@@ -79,19 +79,18 @@ string_join(const char *base, ...)
 char *
 string_trim(char *string, enum string_edge_e which)
 {
-    ssize_t sub;
     size_t len;
 
     len = strlen(string);
     if (which == STRING_START || which == STRING_BOTH) {
-        sub = strspn(string, " \t\n\r\f");
+        size_t sub = strspn(string, " \t\n\r\f");
         if (sub > 0) {
             memmove(string, string + sub, len + 1 - sub);
             len -= sub;
         }
     }
     if (which == STRING_END || which == STRING_BOTH) {
-        sub = len;
+        long sub = len;
         while (--sub >= 0)
             if (strchr(" \t\n\r\f", string[sub]) == NULL)
                 break;

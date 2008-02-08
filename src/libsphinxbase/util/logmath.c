@@ -397,7 +397,7 @@ logmath_add(logmath_t *lmath, int logb_x, int logb_y)
         /* Some kind of overflow has occurred, fail gracefully. */
         return r;
     }
-    if (d >= t->table_size) {
+    if ((size_t)d >= t->table_size) {
         /* If this happens, it's not actually an error, because the
          * last entry in the logadd table is guaranteed to be zero.
          * Therefore we just return the larger of the two values. */
