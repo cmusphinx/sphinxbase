@@ -327,6 +327,7 @@ void cmd_ln_free (void);
 /**
  * Re-entrant version of cmd_ln_free()
  **/
+SPHINXBASE_EXPORT
 void cmd_ln_free_r (cmd_ln_t *cmdln);
 
 #ifdef __cplusplus
