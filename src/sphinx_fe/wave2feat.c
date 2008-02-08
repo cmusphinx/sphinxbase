@@ -65,7 +65,6 @@
 #endif
 
 #include "fe.h"
-#include "fe_internal.h"
 #include "cmd_ln.h"
 #include "err.h"
 #include "ckd_alloc.h"
@@ -75,7 +74,7 @@
 #include "cmd_ln_defn.h"
 
 struct globals_s {
-    param_t params;
+    cmd_ln_t *config;
     int32 nskip;
     int32 runlen;
     char *wavfile;
@@ -95,6 +94,8 @@ struct globals_s {
     int32 nchans;
     int32 whichchan;
     int32 convert;
+    int32 verbose;
+    int32 logspec;
 };
 typedef struct globals_s globals_t;
 
@@ -103,7 +104,6 @@ int32 fe_convert_files(globals_t * P);
 int32 fe_build_filenames(globals_t * P, char *fileroot, char **infilename,
                          char **outfilename);
 char *fe_copystr(char *dest_str, char *src_str);
-int32 fe_count_frames(fe_t * FE, int32 nsamps, int32 count_partial_frames);
 int32 fe_readspch(globals_t * P, char *infile, int16 ** spdata,
                   int32 * splen);
 int32 fe_writefeat(fe_t * FE, char *outfile, int32 nframes,
@@ -170,7 +170,7 @@ fe_convert_files(globals_t * P)
     int32 warn_zero_energy = 0;
     int32 process_utt_return_value;
 
-    if ((FE = fe_init(&P->params)) == NULL) {
+    if ((FE = fe_init_auto_r(P->config)) == NULL) {
         E_ERROR("memory alloc failed...exiting\n");
         return (FE_MEM_ALLOC_ERROR);
     }
@@ -197,7 +197,7 @@ fe_convert_files(globals_t * P)
 
             fe_build_filenames(P, fileroot, &infile, &outfile);
 
-            if (P->params.verbose)
+            if (P->verbose)
                 E_INFO("%s\n", infile);
 
             if (P->convert) {
@@ -303,18 +303,10 @@ fe_convert_files(globals_t * P)
                     cep = NULL;
                 }
                 curr_block++;
-                if (!P->params.logspec)
-                    last_frame_cep =
-                        (mfcc_t **) ckd_calloc_2d(1,
-                                                  FE->num_cepstra,
-                                                  sizeof(float32));
-                else
-                    last_frame_cep =
-                        (mfcc_t **) ckd_calloc_2d(1,
-                                                  FE->
-                                                  mel_fb->
-                                                  num_filters,
-                                                  sizeof(float32));
+                last_frame_cep =
+                    (mfcc_t **) ckd_calloc_2d(1,
+                                              fe_get_output_size(FE),
+                                              sizeof(float32));
                 process_utt_return_value =
                     fe_end_utt(FE, last_frame_cep[0], &last_frame);
                 if (FE_ZERO_ENERGY_ERROR == process_utt_return_value) {
@@ -357,7 +349,7 @@ fe_convert_files(globals_t * P)
     else if (P->is_single) {
 
         fe_build_filenames(P, fileroot, &infile, &outfile);
-        if (P->params.verbose)
+        if (P->verbose)
             printf("%s\n", infile);
 
         /* Special case for doing various DCTs. */
@@ -447,18 +439,10 @@ fe_convert_files(globals_t * P)
             }
 
             curr_block++;
-            if (!P->params.logspec)
-                last_frame_cep =
-                    (mfcc_t **) ckd_calloc_2d(1,
-                                              FE->
-                                              num_cepstra,
-                                              sizeof(float32));
-            else
-                last_frame_cep =
-                    (mfcc_t **) ckd_calloc_2d(1,
-                                              FE->mel_fb->
-                                              num_filters,
-                                              sizeof(float32));
+            last_frame_cep =
+                (mfcc_t **) ckd_calloc_2d(1,
+                                          fe_get_output_size(FE),
+                                          sizeof(float32));
             process_utt_return_value =
                 fe_end_utt(FE, last_frame_cep[0], &last_frame);
             if (FE_ZERO_ENERGY_ERROR == process_utt_return_value) {
@@ -536,11 +520,12 @@ fe_validate_parameters(globals_t * P)
                 P->whichchan, P->nchans);
     }
 
-    if ((P->params.upper_filt_freq * 2) > P->params.sampling_rate) {
+    if ((cmd_ln_float32_r(P->config, "-upperf") * 2)
+        > cmd_ln_float32_r(P->config, "-samprate")) {
         E_WARN("Upper frequency higher than Nyquist frequency\n");
     }
 
-    if (P->params.doublebw) {
+    if (cmd_ln_boolean_r(P->config, "-doublebw")) {
         E_INFO("Will use double bandwidth filters\n");
     }
 
@@ -554,35 +539,31 @@ fe_parse_options(int32 argc, char **argv)
     int32 format;
     char *endian;
 
-    cmd_ln_parse(defn, argc, argv, TRUE);
+    P = ckd_calloc(1, sizeof(*P));
+    P->config = cmd_ln_parse_r(NULL, defn, argc, argv, TRUE);
 
-    if (cmd_ln_str("-argfile")) {
-        cmd_ln_parse_file(defn, cmd_ln_str("-argfile"), FALSE);
+    /* Load arguments from a feat.params file if requested. */
+    if (cmd_ln_str_r(P->config, "-argfile")) {
+        P->config = cmd_ln_parse_file_r(P->config, defn,
+                                        cmd_ln_str_r(P->config, "-argfile"),
+                                        FALSE);
     }
 
-    if ((P = (globals_t *) calloc(1, sizeof(globals_t))) == NULL) {
-        E_FATAL("memory alloc failed in fe_parse_options()\n...exiting\n");
-    }
-
-    fe_init_params(&P->params);
     P->nskip = P->runlen = -1;
-
-    P->wavfile = cmd_ln_str("-i");
+    P->wavfile = cmd_ln_str_r(P->config, "-i");
     if (P->wavfile != NULL) {
         P->is_single = 1;
     }
-
-    P->cepfile = cmd_ln_str("-o");
-
-    P->ctlfile = cmd_ln_str("-c");
+    P->cepfile = cmd_ln_str_r(P->config, "-o");
+    P->ctlfile = cmd_ln_str_r(P->config, "-c");
     if (P->ctlfile != NULL) {
         char *nskip;
         char *runlen;
 
         P->is_batch = 1;
 
-        nskip = cmd_ln_str("-nskip");
-        runlen = cmd_ln_str("-runlen");
+        nskip = cmd_ln_str_r(P->config, "-nskip");
+        runlen = cmd_ln_str_r(P->config, "-runlen");
         if (nskip != NULL) {
             P->nskip = atoi(nskip);
         }
@@ -590,52 +571,28 @@ fe_parse_options(int32 argc, char **argv)
             P->runlen = atoi(runlen);
         }
     }
-
-    P->wavdir = cmd_ln_str("-di");
-    P->cepdir = cmd_ln_str("-do");
-    P->wavext = cmd_ln_str("-ei");
-    P->cepext = cmd_ln_str("-eo");
-    format = cmd_ln_int32("-raw");
+    P->wavdir = cmd_ln_str_r(P->config, "-di");
+    P->cepdir = cmd_ln_str_r(P->config, "-do");
+    P->wavext = cmd_ln_str_r(P->config, "-ei");
+    P->cepext = cmd_ln_str_r(P->config, "-eo");
+    format = cmd_ln_int32_r(P->config, "-raw");
     if (format) {
         P->input_format = RAW;
     }
-    format = cmd_ln_int32("-nist");
+    format = cmd_ln_int32_r(P->config, "-nist");
     if (format) {
         P->input_format = NIST;
     }
-    format = cmd_ln_int32("-mswav");
+    format = cmd_ln_int32_r(P->config, "-mswav");
     if (format) {
         P->input_format = MSWAV;
     }
 
-    P->nchans = cmd_ln_int32("-nchans");
-    P->whichchan = cmd_ln_int32("-whichchan");
-    P->params.pre_emphasis_alpha = cmd_ln_float32("-alpha");
-    P->params.sampling_rate = cmd_ln_float32("-samprate");
-    P->params.window_length = cmd_ln_float32("-wlen");
-    P->params.frame_rate = cmd_ln_int32("-frate");
+    P->nchans = cmd_ln_int32_r(P->config, "-nchans");
+    P->whichchan = cmd_ln_int32_r(P->config, "-whichchan");
     P->output_endian = BIG;
-    P->params.num_filters = cmd_ln_int32("-nfilt");
-    P->params.num_cepstra = cmd_ln_int32("-ncep");
-    P->params.lower_filt_freq = cmd_ln_float32("-lowerf");
-    P->params.upper_filt_freq = cmd_ln_float32("-upperf");
-    P->params.unit_area = cmd_ln_boolean("-unit_area");
-    P->params.round_filters = cmd_ln_boolean("-round_filters");
-    P->params.remove_dc = cmd_ln_boolean("-remove_dc");
-
-    P->params.warp_type = cmd_ln_str("-warp_type");
-    P->params.warp_params = cmd_ln_str("-warp_params");
-
-    P->params.fft_size = cmd_ln_int32("-nfft");
-    if (cmd_ln_int32("-doublebw")) {
-        P->params.doublebw = 1;
-    }
-    else {
-        P->params.doublebw = 0;
-    }
-    P->blocksize = cmd_ln_int32("-blocksize");
-    P->params.verbose = cmd_ln_int32("-verbose");
-    endian = cmd_ln_str("-mach_endian");
+    P->blocksize = cmd_ln_int32_r(P->config, "-blocksize");
+    endian = cmd_ln_str_r(P->config, "-mach_endian");
     if (!strcmp("big", endian)) {
         P->machine_endian = BIG;
     }
@@ -647,7 +604,7 @@ fe_parse_options(int32 argc, char **argv)
             E_FATAL("Machine must be big or little Endian\n");
         }
     }
-    endian = cmd_ln_str("-input_endian");
+    endian = cmd_ln_str_r(P->config, "-input_endian");
     if (!strcmp("big", endian)) {
         P->input_endian = BIG;
     }
@@ -659,37 +616,14 @@ fe_parse_options(int32 argc, char **argv)
             E_FATAL("Input must be big or little Endian\n");
         }
     }
-    P->params.lifter_val = cmd_ln_int32("-lifter");
-    P->params.seed = cmd_ln_int32("-seed");
-    P->params.dither = cmd_ln_boolean("-dither");
 
-    if (cmd_ln_boolean("-logspec")) {
-        P->params.logspec = RAW_LOG_SPEC;
-    }
-    if (cmd_ln_boolean("-smoothspec")) {
-        P->params.logspec = SMOOTH_LOG_SPEC;
-    }
-    if (cmd_ln_boolean("-spec2cep")) {
+    if (cmd_ln_boolean_r(P->config, "-logspec")
+        || cmd_ln_boolean_r(P->config, "-smoothspec"))
+        P->logspec = TRUE;
+    if (cmd_ln_boolean_r(P->config, "-spec2cep"))
         P->convert = SPEC2CEP;
-    }
-    if (cmd_ln_boolean("-cep2spec")) {
+    if (cmd_ln_boolean_r(P->config, "-cep2spec"))
         P->convert = CEP2SPEC;
-    }
-
-    if (0 == strcmp(cmd_ln_str("-transform"), "dct"))
-        P->params.transform = DCT_II;
-    else if (0 == strcmp(cmd_ln_str("-transform"), "legacy")) {
-        if (P->convert == CEP2SPEC) {
-            E_FATAL("Cannot convert cepstra to spectra with legacy transform, use -transform dct\n");
-        }
-        P->params.transform = LEGACY_DCT;
-    }
-    else if (0 == strcmp(cmd_ln_str("-transform"), "htk"))
-        P->params.transform = DCT_HTK;
-    else {
-        E_WARN("Invalid transform type (values are 'dct', 'legacy', 'htk')\n");
-        return NULL;
-    }
 
     fe_validate_parameters(P);
 
@@ -766,26 +700,6 @@ fe_copystr(char *dest_str, char *src_str)
     *(s + src_len) = NULL_CHAR;
 
     return (s);
-}
-
-int32
-fe_count_frames(fe_t * FE, int32 nsamps, int32 count_partial_frames)
-{
-    int32 frame_start, frame_count = 0;
-
-    assert(FE->frame_size != 0);
-    for (frame_start = 0; frame_start + FE->frame_size <= nsamps;
-         frame_start += FE->frame_shift)
-        frame_count++;
-
-    /* dhuggins@cs, 2006-04-25: Update this to match the updated
-     * partial frame condition in fe_process_utt(). */
-    if (count_partial_frames) {
-        if (frame_count * FE->frame_shift < nsamps)
-            frame_count++;
-    }
-
-    return (frame_count);
 }
 
 int32
@@ -950,7 +864,7 @@ fe_openfiles(globals_t * P, fe_t * FE, char *infile, int32 * fp_in,
             
             P->nchans = hdr_buf->numchannels;
             /* DEBUG: Dump Info */
-            if (P->params.verbose) {
+            if (P->verbose) {
                 E_INFO("Reading MS Wav file %s:\n", infile);
                 E_INFO
                     ("\t16 bit PCM data, %d channels %d samples\n",
@@ -983,12 +897,18 @@ fe_openfiles(globals_t * P, fe_t * FE, char *infile, int32 * fp_in,
         return (FE_OUTPUT_FILE_OPEN_ERROR);
     }
     else {
-        /* compute number of frames and write cepfile header */
-        numframes = fe_count_frames(FE, len, COUNT_PARTIAL);
-        if (!P->params.logspec)
-            outlen = numframes * FE->num_cepstra;
-        else
-            outlen = numframes * FE->mel_fb->num_filters;
+        size_t nsamps = len;
+        int frame_shift, frame_size;
+
+        /* Compute number of frames and write cepfile header */
+        fe_process_frames(FE, NULL, &nsamps, NULL, &numframes);
+        /* This is sort of hacky... we need to figure out if there
+           will be a trailing frame from fe_end_utt() or not.  */
+        fe_get_input_size(FE, &frame_shift, &frame_size);
+        if (frame_size + (numframes - 1) * frame_shift < nsamps)
+            ++numframes;
+
+        outlen = numframes * fe_get_output_size(FE);
         if (P->output_endian != P->machine_endian)
             SWAP_INT32(&outlen);
         if (write(fp, &outlen, 4) != 4) {
@@ -1130,10 +1050,7 @@ fe_writeblock_feat(globals_t * P, fe_t * FE, int32 fp, int32 nframes,
     int32 i, length, nwritebytes;
     float32 **ffeat;
 
-    if (P->params.logspec)
-        length = nframes * FE->mel_fb->num_filters;
-    else
-        length = nframes * FE->num_cepstra;
+    length = nframes * fe_get_output_size(FE);
 
     ffeat = (float32 **) feat;
     fe_mfcc_to_float(FE, feat, ffeat, nframes);
@@ -1193,14 +1110,12 @@ fe_convert_with_dct(globals_t * P, fe_t * FE, char *infile, char *outfile)
         return (FE_INPUT_FILE_READ_ERROR);
     }
     if (P->convert == CEP2SPEC) {
-        /* Convert MFCCs to logspectra. */
-        input_ncoeffs = FE->num_cepstra;
-        output_ncoeffs = FE->mel_fb->num_filters;
+        input_ncoeffs = cmd_ln_int32_r(P->config, "-ncep");
+        output_ncoeffs = cmd_ln_int32_r(P->config, "-nfilt");
     }
     else {
-        /* Convert logspectra to MFCCs. */
-        input_ncoeffs = FE->mel_fb->num_filters;
-        output_ncoeffs = FE->num_cepstra;
+        input_ncoeffs = cmd_ln_int32_r(P->config, "-nfilt");
+        output_ncoeffs = cmd_ln_int32_r(P->config, "-ncep");
     }
     nfloats = nfloats * output_ncoeffs / input_ncoeffs;
 
@@ -1208,7 +1123,8 @@ fe_convert_with_dct(globals_t * P, fe_t * FE, char *infile, char *outfile)
         SWAP_INT32(&nfloats);
     fwrite(&nfloats, 4, 1, ofh);
     /* Always use the largest size since it's done inplace */
-    logspec = ckd_calloc(FE->mel_fb->num_filters, sizeof(*logspec));
+    logspec = ckd_calloc(cmd_ln_int32_r(P->config, "-nfilt"),
+                         sizeof(*logspec));
 
     while (fread(logspec, 4, input_ncoeffs, ifh) == input_ncoeffs) {
         int32 i;
@@ -1222,7 +1138,7 @@ fe_convert_with_dct(globals_t * P, fe_t * FE, char *infile, char *outfile)
             fe_mfcc_dct3(FE, (mfcc_t *)logspec, (mfcc_t *)logspec);
         }
         else {
-            if (P->params.transform == LEGACY_DCT)
+            if (0 == strcmp(cmd_ln_str_r(P->config, "-transform"), "legacy"))
                 fe_logspec_to_mfcc(FE, (mfcc_t *)logspec, (mfcc_t *)logspec);
             else
                 fe_logspec_dct2(FE, (mfcc_t *)logspec, (mfcc_t *)logspec);
