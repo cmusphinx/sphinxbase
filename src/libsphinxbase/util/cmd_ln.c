@@ -355,10 +355,10 @@ arg_dump_r(cmd_ln_t *cmdln, FILE * fp, const arg_t * defn, int32 doc)
     deflen = deflen & 0xfffffff8;       /* Previous tab position */
 
     fprintf(fp, "[NAME]");
-    for (l = 6; l < namelen; l += 8)    /* strlen("[NAME]") */
+    for (l = strlen("[NAME]"); l < namelen; l += 8)
         fprintf(fp, "\t");
     fprintf(fp, "\t[DEFLT]");
-    for (l = 6; l < deflen; l += 8)     /* strlen("[DEFLT]") */
+    for (l = strlen("[DEFLT]"); l < deflen; l += 8)
         fprintf(fp, "\t");
 
     if (doc) {
