@@ -15,10 +15,12 @@ main(int argc, char *argv[])
 	FILE *raw;
 	cmd_ln_t *config;
 	fe_t *fe;
-	int16 buf[2048], *inptr;
+	int16 buf[2048];
+	int16 const *inptr;
 	int32 frame_shift, frame_size;
 	mfcc_t cepvec[DEFAULT_NUM_CEPSTRA], *outptr;
-	int32 nfr, nsamp;
+	int32 nfr;
+	size_t nsamp;
 
 	TEST_ASSERT(config = cmd_ln_parse_r(NULL, fe_args, argc, argv, FALSE));
 	TEST_ASSERT(fe = fe_init_auto_r(config));
@@ -43,40 +45,34 @@ main(int argc, char *argv[])
 	outptr = &cepvec[0];
 	nfr = 1;
 
-	printf("%d %d %d %d %d\n", frame_size, frame_shift, inptr - buf, nsamp, nfr);
+	printf("frame_size %d frame_shift %d\n", frame_size, frame_shift);
 	/* Process the first frame. */
 	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, &outptr, &nfr));
-	/* This is somewhat dependent on the internals - there is at
-	 * most frame_shift worth of overflow data, which will be
-	 * consumed. */
-	TEST_EQUAL(inptr, buf + frame_size + frame_shift);
-	TEST_EQUAL(nsamp, 1024 - frame_size - frame_shift);
+	printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, nfr);
 	TEST_EQUAL(nfr, 1);
 
-	printf("%d %d %d %d %d\n", frame_size, frame_shift, inptr - buf, nsamp, nfr);
+	/* Note that this next one won't actually consume any frames
+	 * of input, because it already got sufficient overflow
+	 * samples last time around.  This is implementation-dependent
+	 * so we shouldn't actually test for it. */
 	outptr = &cepvec[0];
 	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, &outptr, &nfr));
-	TEST_EQUAL(inptr, buf + frame_size + 2 * frame_shift);
-	TEST_EQUAL(nsamp, 1024 - frame_size - 2 * frame_shift);
+	printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, nfr);
 	TEST_EQUAL(nfr, 1);
 
-	printf("%d %d %d %d %d\n", frame_size, frame_shift, inptr - buf, nsamp, nfr);
 	outptr = &cepvec[0];
 	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, &outptr, &nfr));
-	TEST_EQUAL(inptr, buf + frame_size + 3 * frame_shift);
-	TEST_EQUAL(nsamp, 1024 - frame_size - 3 * frame_shift);
+	printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, nfr);
 	TEST_EQUAL(nfr, 1);
 
-	printf("%d %d %d %d %d\n", frame_size, frame_shift, inptr - buf, nsamp, nfr);
 	outptr = &cepvec[0];
 	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, &outptr, &nfr));
-	TEST_EQUAL(inptr, buf + 1024);
-	TEST_EQUAL(nsamp, 0);
+	printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, nfr);
 	TEST_EQUAL(nfr, 1);
 
-	printf("%d %d %d %d %d\n", frame_size, frame_shift, inptr - buf, nsamp, nfr);
 	TEST_EQUAL(0, fe_end_utt(fe, cepvec, &nfr));
-	TEST_EQUAL(1, nfr);
+	printf("nfr %d\n", nfr);
+	TEST_EQUAL(nfr, 1);
 
 	fclose(raw);
 	fe_close(fe);
