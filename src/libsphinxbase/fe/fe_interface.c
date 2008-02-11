@@ -269,7 +269,8 @@ fe_process_frames(fe_t *fe,
                   int32 *inout_nframes)
 {
     int32 frame_count;
-    int i, n_overflow;
+    int i, n_overflow, orig_n_overflow;
+    int16 const *orig_spch;
 
     /* In the special case where there is no output buffer, return the
      * number of frames which would be generated. */
@@ -285,13 +286,15 @@ fe_process_frames(fe_t *fe,
 
     /* Are there not enough samples to make at least 1 frame? */
     if (*inout_nsamps + fe->num_overflow_samps < (size_t)fe->frame_size) {
-        /* Append them to the overflow buffer. */
-        memcpy(fe->overflow_samps + fe->num_overflow_samps,
-               *inout_spch, *inout_nsamps * (sizeof(int16)));
-        fe->num_overflow_samps += *inout_nsamps;
-        /* Update input-output pointers and counters. */
-        *inout_spch += *inout_nsamps;
-        *inout_nsamps = 0;
+        if (*inout_nsamps > 0) {
+            /* Append them to the overflow buffer. */
+            memcpy(fe->overflow_samps + fe->num_overflow_samps,
+                   *inout_spch, *inout_nsamps * (sizeof(int16)));
+            fe->num_overflow_samps += *inout_nsamps;
+            /* Update input-output pointers and counters. */
+            *inout_spch += *inout_nsamps;
+            *inout_nsamps = 0;
+        }
         /* We produced no frames of output, sorry! */
         *inout_nframes = 0;
         return 0;
@@ -303,6 +306,9 @@ fe_process_frames(fe_t *fe,
         return 0;
     }
 
+    /* Keep track of the original start of the buffer. */
+    orig_spch = *inout_spch;
+    orig_n_overflow = fe->num_overflow_samps;
     /* How many frames will we be able to get? */
     frame_count = 1
         + ((*inout_nsamps + fe->num_overflow_samps - fe->frame_size)
@@ -323,6 +329,7 @@ fe_process_frames(fe_t *fe,
         /* Update input-output pointers and counters. */
         *inout_spch += offset;
         *inout_nsamps -= offset;
+        fe->num_overflow_samps -= fe->frame_shift;
     }
     else {
         fe_read_frame(fe, *inout_spch, fe->frame_size);
@@ -344,29 +351,46 @@ fe_process_frames(fe_t *fe,
         /* Update input-output pointers and counters. */
         *inout_spch += fe->frame_shift;
         *inout_nsamps -= fe->frame_shift;
+        /* Amount of data behind the original input which is still needed. */
+        if (fe->num_overflow_samps > 0)
+            fe->num_overflow_samps -= fe->frame_shift;
         /* Update number of remaining frames. */
         --*inout_nframes;
     }
 
-    /* We might have quite a few samples left here.  At this point we
-     * have consumed everything up to *inout_spch, so the maximum
-     * number of samples beyond that point to store is
-     * fe->frame_shift.  In this case we will end up with a full frame
-     * of data in fe->overflow_samps, which will be processed next time
-     * this function is called. */
-    n_overflow = *inout_nsamps;
-    if (n_overflow > fe->frame_shift)
-        n_overflow = fe->frame_shift;
-    /* We then have to include the last (fe->frame_size -
-     * fe->frame_shift) worth of data that overlaps between frames. */
-    fe->num_overflow_samps = n_overflow + fe->frame_size - fe->frame_shift;
-    if (fe->num_overflow_samps > 0) {
-        memcpy(fe->overflow_samps,
-               *inout_spch - (fe->frame_size - fe->frame_shift),
-               fe->num_overflow_samps * sizeof(**inout_spch));
-        /* Update the input pointer to cover this stuff. */
-        *inout_spch += n_overflow;
-        *inout_nsamps -= n_overflow;
+    /* How many relevant overflow samples are there left? */
+    if (fe->num_overflow_samps <= 0) {
+        /* Maximum number of overflow samples past *inout_spch to save. */
+        n_overflow = *inout_nsamps;
+        if (n_overflow > fe->frame_shift)
+            n_overflow = fe->frame_shift;
+        fe->num_overflow_samps = fe->frame_size - fe->frame_shift;
+        /* Make sure this isn't an illegal read! */
+        if (fe->num_overflow_samps > *inout_spch - orig_spch)
+            fe->num_overflow_samps = *inout_spch - orig_spch;
+        fe->num_overflow_samps += n_overflow;
+        if (fe->num_overflow_samps > 0) {
+            memcpy(fe->overflow_samps,
+                   *inout_spch - (fe->frame_size - fe->frame_shift),
+                   fe->num_overflow_samps * sizeof(**inout_spch));
+            /* Update the input pointer to cover this stuff. */
+            *inout_spch += n_overflow;
+            *inout_nsamps -= n_overflow;
+        }
+    }
+    else {
+        /* There is still some relevant data left in the overflow buffer. */
+        /* Shift existing data to the beginning. */
+        memmove(fe->overflow_samps,
+                fe->overflow_samps + orig_n_overflow - fe->num_overflow_samps,
+                fe->num_overflow_samps * sizeof(*fe->overflow_samps));
+        /* Copy in whatever we had in the original speech buffer. */
+        n_overflow = *inout_spch - orig_spch;
+        if (n_overflow > fe->frame_size - fe->num_overflow_samps)
+            n_overflow = fe->frame_size - fe->num_overflow_samps;
+        memcpy(fe->overflow_samps + fe->num_overflow_samps,
+               orig_spch, n_overflow * sizeof(*orig_spch));
+        fe->num_overflow_samps += n_overflow;
     }
 
     /* Finally update the frame counter with the number of frames we procesed. */
