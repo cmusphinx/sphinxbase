@@ -59,7 +59,7 @@
 #include "cmn.h"
 
 void
-cmn_prior_set(cmn_t *cmn, mfcc_t * vec)
+cmn_prior_set(cmn_t *cmn, mfcc_t const * vec)
 {
     int32 i;
 

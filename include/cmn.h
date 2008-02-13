@@ -173,7 +173,7 @@ void cmn_prior_update(cmn_t *cmn);
  * Set the prior mean.
  */
 SPHINXBASE_EXPORT
-void cmn_prior_set(cmn_t *cmn, mfcc_t *vec);
+void cmn_prior_set(cmn_t *cmn, mfcc_t const *vec);
 
 /**
  * Get the prior mean.
