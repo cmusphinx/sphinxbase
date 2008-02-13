@@ -79,6 +79,7 @@ main(int argc, char *argv[])
 	inptr = &buf[0];
 	nfr = 5;
 	nsamp = 1024;
+	TEST_EQUAL(0, fe_start_utt(fe));
 	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, cepbuf2, &nfr));
 	printf("nfr %d\n", nfr);
 	TEST_EQUAL(nfr, 4);

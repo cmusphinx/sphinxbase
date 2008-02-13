@@ -1221,31 +1221,45 @@ feat_s2mfc2feat_live(feat_t * fcb, mfcc_t ** uttcep, int32 *inout_ncep,
     win = feat_window_size(fcb);
     cepsize = feat_cepsize(fcb);
 
+    /* Empty the input buffer on start of utterance. */
+    if (beginutt)
+        fcb->bufpos = fcb->curpos;
+
     /* Calculate how much data is in the buffer already. */
     nbufcep = fcb->bufpos - fcb->curpos;
     if (nbufcep < 0)
 	nbufcep = fcb->bufpos + LIVEBUFBLOCKSIZE - fcb->curpos;
+    /* Add any data that we have to replicate. */
+    if (beginutt && *inout_ncep > 0)
+        nbufcep += win;
+    if (endutt)
+        nbufcep += win;
 
-    /* Circular buffer holds LIVEBLOCKSIZE frames. */
-    if (nbufcep + *inout_ncep >= LIVEBUFBLOCKSIZE) {
-        *inout_ncep = LIVEBUFBLOCKSIZE - nbufcep - 1;
-        endutt = 0;
+    /* Only consume as much input as will fit in the buffer. */
+    if (nbufcep + *inout_ncep > LIVEBUFBLOCKSIZE) {
+        /* We also can't overwrite the trailing window, hence the
+         * reason why win is subtracted here. */
+        *inout_ncep = LIVEBUFBLOCKSIZE - nbufcep - win;
+        /* Cancel end of utterance processing. */
+        endutt = FALSE;
     }
 
     /* FIXME: Don't modify the input! */
     feat_cmn(fcb, uttcep, *inout_ncep, beginutt, endutt);
     feat_agc(fcb, uttcep, *inout_ncep, beginutt, endutt);
 
+    /* Replicate first frame into the first win frames if we're at the
+     * beginning of the utterance and there was some actual input to
+     * deal with.  (FIXME: Not entirely sure why that condition) */
     if (beginutt && *inout_ncep > 0) {
-        /* Replicate first frame into the first win frames. */
-        /* FIXME: Need to make sure the total number of frames doesn't
-         * exceed LIVEBUFBLOCKSIZE! */
         for (i = 0; i < win; i++) {
             memcpy(fcb->cepbuf[fcb->bufpos++], uttcep[0],
                    cepsize * sizeof(mfcc_t));
             fcb->bufpos %= LIVEBUFBLOCKSIZE;
         }
+        /* Move the current pointer past this data. */
         fcb->curpos = fcb->bufpos;
+        nbufcep -= win;
     }
 
     /* Copy in frame data to the circular buffer. */
@@ -1256,11 +1270,11 @@ feat_s2mfc2feat_live(feat_t * fcb, mfcc_t ** uttcep, int32 *inout_ncep,
 	++nbufcep;
     }
 
+    /* Replicate last frame into the last win frames if we're at the
+     * end of the utterance (even if there was no input, so we can
+     * flush the output). */
     if (endutt) {
         int32 tpos; /* Index of last input frame. */
-        /* Replicate last frame into the last win frames */
-        /* FIXME: Need to make sure the total number of frames doesn't
-         * exceed LIVEBUFBLOCKSIZE! */
         if (fcb->bufpos == 0)
             tpos = LIVEBUFBLOCKSIZE - 1;
         else
@@ -1270,13 +1284,12 @@ feat_s2mfc2feat_live(feat_t * fcb, mfcc_t ** uttcep, int32 *inout_ncep,
                    cepsize * sizeof(mfcc_t));
             fcb->bufpos %= LIVEBUFBLOCKSIZE;
         }
-	nbufcep += win;
     }
 
-    /* Now calculate how many output frames we can actually create. */
+    /* We have to leave the trailing window of frames. */
     nfeatvec = nbufcep - win;
     if (nfeatvec <= 0)
-	return 0;
+        return 0; /* Do nothing. */
 
     for (i = 0; i < nfeatvec; ++i) {
         /* Handle wraparound cases. */

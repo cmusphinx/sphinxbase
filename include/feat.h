@@ -361,8 +361,23 @@ int32 feat_s2mfc2feat(feat_t *fcb,	/**< In: Descriptor from feat_init() */
  * the number of output frames will not necessarily equal the number
  * of input frames.
  *
+ * <strong>It is very important</strong> to realize that the number of
+ * output frames can be <strong>greater than</strong> the number of
+ * input frames, specifically when <code>endutt</code> is true.  It is
+ * guaranteed to never exceed <code>*inout_ncep +
+ * feat_window_size(fcb)</code>.  You <strong>MUST</strong> have
+ * allocated at least that many frames in <code>ofeat</code>, or you
+ * will experience a buffer overflow.
+ *
  * If beginutt and endutt are both true, CMN_CURRENT and AGC_MAX will
  * be done.  Otherwise only CMN_PRIOR and AGC_EMAX will be done.
+ *
+ * If beginutt is false, endutt is true, and the number of input
+ * frames exceeds the input size, then end-of-utterance processing
+ * won't actually be done.  This condition can easily be checked,
+ * because <code>*inout_ncep</code> will equal the return value on
+ * exit, and will also be smaller than the value of
+ * <code>*inout_ncep</code> on entry.
  *
  * @return The number of output frames actually computed.
  **/
@@ -373,7 +388,9 @@ int32 feat_s2mfc2feat_live(feat_t  *fcb,     /**< In: Descriptor from feat_init(
                                                 Out: Number of incoming frames consumed. */
                            int32 beginutt,   /**< In: Begining of utterance flag */
                            int32 endutt,     /**< In: End of utterance flag */
-                           mfcc_t ***ofeat   /**< In: Output feature buffer */
+                           mfcc_t ***ofeat   /**< In: Output feature buffer.  See
+                                                <strong>VERY IMPORTANT</strong> note
+                                                about the size of this buffer above. */
     );
 
 
