@@ -385,12 +385,18 @@ fe_process_frames(fe_t *fe,
                 fe->overflow_samps + orig_n_overflow - fe->num_overflow_samps,
                 fe->num_overflow_samps * sizeof(*fe->overflow_samps));
         /* Copy in whatever we had in the original speech buffer. */
-        n_overflow = *inout_spch - orig_spch;
+        n_overflow = *inout_spch - orig_spch + *inout_nsamps;
         if (n_overflow > fe->frame_size - fe->num_overflow_samps)
             n_overflow = fe->frame_size - fe->num_overflow_samps;
         memcpy(fe->overflow_samps + fe->num_overflow_samps,
                orig_spch, n_overflow * sizeof(*orig_spch));
         fe->num_overflow_samps += n_overflow;
+        /* Advance the input pointers. */
+        if (n_overflow > *inout_spch - orig_spch) {
+            n_overflow -= (*inout_spch - orig_spch);
+            *inout_spch += n_overflow;
+            *inout_nsamps -= n_overflow;
+        }
     }
 
     /* Finally update the frame counter with the number of frames we procesed. */

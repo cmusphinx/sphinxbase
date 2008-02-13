@@ -2,6 +2,7 @@
 
 #include "fe.h"
 #include "cmd_ln.h"
+#include "ckd_alloc.h"
 
 #include "test_macros.h"
 
@@ -18,8 +19,8 @@ main(int argc, char *argv[])
 	int16 buf[2048];
 	int16 const *inptr;
 	int32 frame_shift, frame_size;
-	mfcc_t cepvec[DEFAULT_NUM_CEPSTRA], *outptr;
-	int32 nfr;
+	mfcc_t **cepbuf1, **cepbuf2;
+	int32 nfr, i;
 	size_t nsamp;
 
 	TEST_ASSERT(config = cmd_ln_parse_r(NULL, fe_args, argc, argv, FALSE));
@@ -41,13 +42,13 @@ main(int argc, char *argv[])
 	TEST_EQUAL(1024, nsamp);
 	TEST_EQUAL(4, nfr);
 
+	cepbuf1 = ckd_calloc_2d(5, DEFAULT_NUM_CEPSTRA, sizeof(**cepbuf1));
 	inptr = &buf[0];
-	outptr = &cepvec[0];
 	nfr = 1;
 
 	printf("frame_size %d frame_shift %d\n", frame_size, frame_shift);
 	/* Process the first frame. */
-	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, &outptr, &nfr));
+	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, &cepbuf1[0], &nfr));
 	printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, nfr);
 	TEST_EQUAL(nfr, 1);
 
@@ -55,25 +56,51 @@ main(int argc, char *argv[])
 	 * of input, because it already got sufficient overflow
 	 * samples last time around.  This is implementation-dependent
 	 * so we shouldn't actually test for it. */
-	outptr = &cepvec[0];
-	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, &outptr, &nfr));
+	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, &cepbuf1[1], &nfr));
 	printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, nfr);
 	TEST_EQUAL(nfr, 1);
 
-	outptr = &cepvec[0];
-	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, &outptr, &nfr));
+	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, &cepbuf1[2], &nfr));
 	printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, nfr);
 	TEST_EQUAL(nfr, 1);
 
-	outptr = &cepvec[0];
-	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, &outptr, &nfr));
+	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, &cepbuf1[3], &nfr));
 	printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, nfr);
 	TEST_EQUAL(nfr, 1);
 
-	TEST_EQUAL(0, fe_end_utt(fe, cepvec, &nfr));
+	TEST_EQUAL(0, fe_end_utt(fe, cepbuf1[4], &nfr));
 	printf("nfr %d\n", nfr);
 	TEST_EQUAL(nfr, 1);
 
+	/* What we *should* test is that the output we get by
+	 * processing one frame at a time is exactly the same as what
+	 * we get from doing them all at once.  So let's do that */
+	cepbuf2 = ckd_calloc_2d(5, DEFAULT_NUM_CEPSTRA, sizeof(**cepbuf2));
+	inptr = &buf[0];
+	nfr = 5;
+	nsamp = 1024;
+	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, cepbuf2, &nfr));
+	printf("nfr %d\n", nfr);
+	TEST_EQUAL(nfr, 4);
+	nfr = 1;
+	TEST_EQUAL(0, fe_end_utt(fe, cepbuf2[4], &nfr));
+	printf("nfr %d\n", nfr);
+	TEST_EQUAL(nfr, 1);
+
+	for (i = 0; i < 5; ++i) {
+		int j;
+		printf("%d: ", i);
+		for (j = 0; j < DEFAULT_NUM_CEPSTRA; ++j) {
+			printf("%.2f,%.2f ",
+			       MFCC2FLOAT(cepbuf1[i][j]),
+			       MFCC2FLOAT(cepbuf2[i][j]));
+			TEST_EQUAL_FLOAT(cepbuf1[i][j], cepbuf2[i][j]);
+		}
+		printf("\n");
+	}
+
+	ckd_free_2d(cepbuf1);
+	ckd_free_2d(cepbuf2);
 	fclose(raw);
 	fe_close(fe);
 	cmd_ln_free_r(config);
