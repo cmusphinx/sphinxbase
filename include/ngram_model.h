@@ -87,6 +87,18 @@ enum ngram_file_type_e {
 
 /**
  * Read an N-Gram model from a file on disk.
+ *
+ * @param config Optional pointer to a set of command-line arguments.
+ * Recognized arguments are:
+ *
+ *  - -mmap (boolean) whether to use memory-mapped I/O
+ *  - -lw (float32) language weight to apply to the model
+ *  - -wip (float32) word insertion penalty to apply to the model
+ *  - -uw (float32) unigram weight to apply to the model
+ *
+ * @param file_name path to the file to read.
+ * @param file_type type of the file, or NGRAM_AUTO to determine automatically.
+ * @return newly created ngram_model_t.
  */
 SPHINXBASE_EXPORT
 ngram_model_t *ngram_model_read(cmd_ln_t *config,
@@ -135,7 +147,7 @@ int ngram_model_recode(ngram_model_t *model, const char *from, const char *to);
  * values we actually need.  Call ngram_prob() if you want the "raw"
  * N-Gram probability estimate.
  *
- * To remove all weighting, call ngram_apply_weights(model, 1.0, 1.0, 0.0).
+ * To remove all weighting, call ngram_apply_weights(model, 1.0, 1.0, 1.0).
  */
 SPHINXBASE_EXPORT
 int ngram_model_apply_weights(ngram_model_t *model,

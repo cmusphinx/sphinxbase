@@ -97,30 +97,49 @@ ngram_model_read(cmd_ln_t *config,
                  ngram_file_type_t file_type,
 		 logmath_t *lmath)
 {
+    ngram_model_t *model = NULL;
+
     switch (file_type) {
     case NGRAM_AUTO: {
-        ngram_model_t *model;
-
         if ((model = ngram_model_arpa_read(config, file_name, lmath)) != NULL)
-            return model;
+            break;
         if ((model = ngram_model_dmp_read(config, file_name, lmath)) != NULL)
-            return model;
+            break;
         if ((model = ngram_model_dmp32_read(config, file_name, lmath)) != NULL)
-            return model;
+            break;
         return NULL;
     }
     case NGRAM_ARPA:
-        return ngram_model_arpa_read(config, file_name, lmath);
+        model = ngram_model_arpa_read(config, file_name, lmath);
+        break;
     case NGRAM_DMP:
-        return ngram_model_dmp_read(config, file_name, lmath);
+        model = ngram_model_dmp_read(config, file_name, lmath);
+        break;
     case NGRAM_DMP32:
-        return ngram_model_dmp32_read(config, file_name, lmath);
+        model = ngram_model_dmp32_read(config, file_name, lmath);
+        break;
     case NGRAM_FST:
     case NGRAM_HTK:
         return NULL; /* Unsupported format for reading. */
     }
 
-    return NULL; /* In case your compiler is really stupid. */
+    /* Now set weights based on config if present. */
+    if (config) {
+        float32 lw = 1.0;
+        float32 wip = 1.0;
+        float32 uw = 1.0;
+
+        if (cmd_ln_exists_r(config, "-lw"))
+            lw = cmd_ln_float32_r(config, "-lw");
+        if (cmd_ln_exists_r(config, "-wip"))
+            wip = cmd_ln_float32_r(config, "-wip");
+        if (cmd_ln_exists_r(config, "-uw"))
+            uw = cmd_ln_float32_r(config, "-uw");
+
+        ngram_model_apply_weights(model, lw, wip, uw);
+    }
+
+    return model;
 }
 
 int
