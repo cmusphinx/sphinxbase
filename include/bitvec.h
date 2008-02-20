@@ -60,13 +60,8 @@ extern "C" {
 }
 #endif
 
-#if SIZEOF_LONG == 8
-typedef unsigned long bitvec_t;
-#define BITVEC_BITS 64
-#else
-typedef uint32 bitvec_t;
 #define BITVEC_BITS 32
-#endif
+typedef uint32 bitvec_t;
 
 /**
  * Number of bitvec_t in a bit vector
