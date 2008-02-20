@@ -13,6 +13,7 @@ libsphinxutil_la_SOURCES = \
 	bio.c \
         case.c \
         ckd_alloc.c \
+	listelem_alloc.c \
         cmd_ln.c \
         err.c \
         filename.c \
@@ -24,7 +25,6 @@ libsphinxutil_la_SOURCES = \
 	logmath.c \
 	mmio.c \
         pio.c \
-	linklist.c \
 	matrix.c \
         profile.c \
         strfuncs.c \

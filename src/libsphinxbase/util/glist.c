@@ -68,7 +68,6 @@
 
 #include "glist.h"
 #include "ckd_alloc.h"
-#include "linklist.h"
 
 
 glist_t
@@ -257,21 +256,6 @@ glist_free(glist_t g)
         ckd_free((void *) gn);
     }
 }
-
-
-void
-glist_myfree(glist_t g, int32 datasize)
-{
-    gnode_t *gn;
-
-    while (g) {
-        gn = g;
-        g = gn->next;
-        listelem_free(gn->data.ptr, datasize);
-        ckd_free((char *) gn);
-    }
-}
-
 
 int32
 glist_count(glist_t g)

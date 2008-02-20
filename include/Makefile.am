@@ -27,7 +27,7 @@ pkginclude_HEADERS =				\
 	heap.h					\
 	info.h					\
 	libutil.h				\
-	linklist.h				\
+	listelem_alloc.h			\
 	logmath.h				\
 	matrix.h				\
 	mmio.h                                  \

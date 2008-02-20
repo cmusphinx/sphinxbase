@@ -127,9 +127,16 @@ extern "C" {
 jmp_buf *ckd_set_jump(jmp_buf *env, int abort);
 
 /**
- * The following functions are similar to the malloc family, except that they have
- * two additional parameters, caller_file and caller_line, for error reporting.
- * All functions print a diagnostic message and exit if any error occurs.
+ * Fail (with a message) according to behaviour specified by ckd_set_jump().
+ */
+void ckd_fail(char *format, ...);
+
+/*
+ * The following functions are similar to the malloc family, except
+ * that they have two additional parameters, caller_file and
+ * caller_line, for error reporting.  All functions print a diagnostic
+ * message if any error occurs, with any other behaviour determined by
+ * ckd_set_jump(), above.
  */
 
 SPHINXBASE_EXPORT
@@ -251,51 +258,26 @@ void ckd_free_3d(void *ptr);
 #define ckd_calloc_3d(d1,d2,d3,sz) __ckd_calloc_3d__((d1),(d2),(d3),(sz),__FILE__,__LINE__)
 
 /**
- * Macro for __ckd_calloc_2d_ptr
+ * Macro for __ckd_alloc_2d_ptr__
  */
 
 #define ckd_alloc_2d_ptr(d1, d2, bf, sz)    __ckd_alloc_2d_ptr((d1), (d2), (bf), (sz), __FILE__, __LINE__)
 
 /**
- * Macro for __ckd_calloc_3d_ptr
+ * Free only the pointer arrays allocated with ckd_alloc_2d_ptr().
+ */
+#define ckd_free_2d_ptr(bf) ckd_free(bf)
+
+/**
+ * Macro for __ckd_alloc_3d_ptr__
  */
 
 #define ckd_alloc_3d_ptr(d1, d2, d3, bf, sz) __ckd_alloc_3d_ptr((d1), (d2), (d3), (bf), (sz), __FILE__, __LINE__)
 
 /**
- * Functions for managing graph elements without wasting memory.
- * Allocate and return an element of size elemsize.  elemsize must be a multiple of
- * a pointer size.  The allocated element is not zeroed, unlike calloc.
- * The function internally allocates a block that can accommodate several such elements,
- * anticipating future allocation requests.
+ * Free only the pointer arrays allocated with ckd_alloc_3d_ptr().
  */
-SPHINXBASE_EXPORT
-char *__mymalloc__(size_t elemsize, char *file, int32 line);
-
-/**
- * Free a graph element (of given size) that was previously allocated using mymalloc.
- * The element is not really freed; it is returned to an internally maintained
- * freelist pool.
- */
-SPHINXBASE_EXPORT
-void __myfree__(char *elem, size_t elemsize, char *file, int32 line);
-
-/**
- * Macros to simplify the use of __mymalloc__ and __myfree__.  One should use these, rather
- * than target functions directly.
- * For debugging purposes one can redefine the following to malloc() and free().
- */
-
-/**
- * Macro for mymalloc
- */
-#define mymalloc(sz)		__mymalloc__((sz),__FILE__,__LINE__)
-
-/**
- * Macro for myfree
- */
-
-#define myfree(ptr,sz)		__myfree__(ptr,(sz),__FILE__,__LINE__)
+#define ckd_free_3d_ptr(bf) ckd_free_2d(bf)
 
 #ifdef __cplusplus
 }

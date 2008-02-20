@@ -41,44 +41,44 @@
  * Author: A cast of thousands, probably.
  */
 #include "lm3g_model.h"
-#include "linklist.h"
+#include "listelem_alloc.h"
 #include "ckd_alloc.h"
 
 #include <string.h>
 
 void
-lm3g_tginfo_free(ngram_model_t *base, tginfo_t **tginfo)
+lm3g_tginfo_free(ngram_model_t *base, lm3g_model_t *lm3g)
 {
         int32 u;
-	if (tginfo == NULL)
+	if (lm3g->tginfo == NULL)
 		return;
         for (u = 0; u < base->n_counts[0]; u++) {
 		tginfo_t *t, *next_t;
-		for (t = tginfo[u]; t; t = next_t) {
+		for (t = lm3g->tginfo[u]; t; t = next_t) {
 			next_t = t->next;
-			listelem_free(t, sizeof(*t));
+			listelem_free(lm3g->le, t);
 		}
         }
-        ckd_free(tginfo);
+        ckd_free(lm3g->tginfo);
 }
 
 void
-lm3g_tginfo_reset(ngram_model_t *base, tginfo_t **tginfo)
+lm3g_tginfo_reset(ngram_model_t *base, lm3g_model_t *lm3g)
 {
     int32 i;
     tginfo_t *t, *next_t, *prev_t;
 
     for (i = 0; i < base->n_counts[0]; i++) {
         prev_t = NULL;
-        for (t = tginfo[i]; t; t = next_t) {
+        for (t = lm3g->tginfo[i]; t; t = next_t) {
             next_t = t->next;
 
             if (!t->used) {
-                listelem_free((void *) t, sizeof(*t));
+                listelem_free(lm3g->le, (void *) t);
                 if (prev_t)
                     prev_t->next = next_t;
                 else
-                    tginfo[i] = next_t;
+                    lm3g->tginfo[i] = next_t;
             }
             else {
                 t->used = 0;

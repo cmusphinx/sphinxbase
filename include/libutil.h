@@ -91,6 +91,7 @@
 #include <bitvec.h>
 #include <case.h>
 #include <ckd_alloc.h>
+#include <listelem_alloc.h>
 #include <cmd_ln.h>
 #include <err.h>
 #include <filename.h>
@@ -98,7 +99,6 @@
 #include <hash_table.h>
 #include <heap.h>
 #include <pio.h>
-#include <linklist.h>
 #include <profile.h>
 #include <strfuncs.h>
 #include <unlimit.h>

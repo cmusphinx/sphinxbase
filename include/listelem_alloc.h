@@ -34,37 +34,13 @@
  * ====================================================================
  *
  */
-/*
- * linklist.h -- generic module for efficient memory management of linked list elements
- *		 of various sizes; a separate list for each size.  Elements must be
- * 		 a multiple of a pointer size.
- *
- * **********************************************
- * CMU ARPA Speech Project
- *
- * Copyright (c) 1996 Carnegie Mellon University.
- * ALL RIGHTS RESERVED.
- * **********************************************
- * 
- * HISTORY
- * $Log: linklist.h,v $
- * Revision 1.5  2005/06/22 03:07:58  arthchan2003
- * Add  keyword.
- *
- * Revision 1.3  2005/03/30 01:22:48  archan
- * Fixed mistakes in last updates. Add
- *
- * 
- * 27-Nov-95	M K Ravishankar (rkm@cs.cmu.edu) at Carnegie Mellon.
- * 		Created.
- */
 
+#ifndef __LISTELEM_ALLOC_H__
+#define __LISTELEM_ALLOC_H__
 
-#ifndef _LIBUTIL_LINKLIST_H_
-#define _LIBUTIL_LINKLIST_H_
-
-/** \file linklist.h
-    \brief This is *not* a linked list object!  It is actually a fast memory allocator.
+/** @file listelem_alloc.h
+ * @brief Fast memory allocator for uniformly sized objects
+ * @author M K Ravishankar <rkm@cs.cmu.edu>
  */
 #ifdef __cplusplus
 extern "C" {
@@ -74,43 +50,57 @@ extern "C" {
 }
 #endif
 
+#include <stdlib.h>
+
 /* Win32/WinCE DLL gunk */
 #include <sphinxbase_export.h>
 #include <prim_type.h>
 
 /**
- * Initialize the linklist allocator.
- *
- * The Win32 API is really stupid and won't allow CRITICAL_SECTIONS to
- * be initialized statically.  Therefore, this function has to be
- * called before your program uses listelem_alloc().  In general there
- * isn't any great need to worry about this since any code that is
- * going to use the linklist functions will do this for you.
+ * List element allocator object.
+ */
+typedef struct listelem_alloc_s listelem_alloc_t;
+
+/**
+ * Initialize and return a list element allocator.
  */
 SPHINXBASE_EXPORT
-void linklist_init(void);
+listelem_alloc_t * listelem_alloc_init(size_t elemsize);
 
-/** 
-    Allocate a link-list element of given size and return pointer to it 
-*/
-SPHINXBASE_EXPORT
-void *__listelem_alloc__ (int32 elemsize, char *file, int32 line);
-
-/** 
-    Macro of __listelem_alloc__
-*/
-#define listelem_alloc(sz)	__listelem_alloc__((sz),__FILE__,__LINE__)
-
-/** Free link-list element of given size 
+/**
+ * Finalize and release all memory associated with a list element allocator.
  */
 SPHINXBASE_EXPORT
-void listelem_free (void *elem, int32 elemsize);
+void listelem_alloc_free(listelem_alloc_t *le);
+
+
+/** 
+ * Allocate a list element and return pointer to it.
+ */
+SPHINXBASE_EXPORT
+void *__listelem_malloc__(listelem_alloc_t *le, char *file, int line);
+
+/** 
+ * Macro of __listelem_malloc__
+ */
+#define listelem_malloc(le)	__listelem_malloc__((le),__FILE__,__LINE__)
+
+/**
+ * Free list element of given size 
+ */
+SPHINXBASE_EXPORT
+void __listelem_free__(listelem_alloc_t *le, void *elem, char *file, int line);
+
+/** 
+ * Macro of __listelem_free__
+ */
+#define listelem_free(le,el)	__listelem_free__((le),(el),__FILE__,__LINE__)
 
 /**
    Print number of allocation, numer of free operation stats 
 */
 SPHINXBASE_EXPORT
-void linklist_stats ( void );
+void listelem_stats(listelem_alloc_t *le);
 
 
 #ifdef __cplusplus

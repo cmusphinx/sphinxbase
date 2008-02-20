@@ -1,4 +1,5 @@
-SUBDIRS=test_case				\
+SUBDIRS=test_alloc				\
+	test_case				\
 	test_string				\
 	test_cmdln				\
 	test_hash				\

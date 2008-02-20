@@ -244,15 +244,6 @@ void glist_free (glist_t g);
 
 
 /**
- * Free the user-defined data (i.e., g->data.ptr) contained at each node of the given
- * glist (using listelem_free()).  Then free the glist.  "datasize" is the size of the
- * user-defined data at each node, and is needed by myfree().
- */
-SPHINXBASE_EXPORT
-void glist_myfree (glist_t g, int32 datasize);
-
-
-/**
  * Free the given node, gn, of a glist, pred being its predecessor in the list.
  * Return ptr to the next node in the list after the freed node.
  */

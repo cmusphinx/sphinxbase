@@ -45,7 +45,7 @@
 #include "pio.h"
 #include "err.h"
 #include "byteorder.h"
-#include "linklist.h"
+#include "listelem_alloc.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -311,6 +311,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
         /* Initialize tginfo */
         model->lm3g.tginfo =
             ckd_calloc(base->n_1g_alloc, sizeof(tginfo_t *));
+        model->lm3g.le = listelem_alloc_init(sizeof(tginfo_t));
     }
 
     /* read n_prob2 and prob2 array (in memory) */
@@ -546,7 +547,7 @@ load_tginfo(ngram_model_dmp_t *model, int32 lw1, int32 lw2)
     tginfo_t *tginfo;
 
     /* First allocate space for tg information for bg lw1,lw2 */
-    tginfo = (tginfo_t *) listelem_alloc(sizeof(tginfo_t));
+    tginfo = (tginfo_t *) listelem_malloc(model->lm3g.le);
     tginfo->w1 = lw1;
     tginfo->tg = NULL;
     tginfo->next = model->lm3g.tginfo[lw2];
@@ -730,7 +731,8 @@ ngram_model_dmp_free(ngram_model_t *base)
         ckd_free(model->lm3g.prob3);
     }
 
-    lm3g_tginfo_free(base, model->lm3g.tginfo);
+    lm3g_tginfo_free(base, &model->lm3g);
+    listelem_alloc_free(model->lm3g.le);
 }
 
 static ngram_funcs_t ngram_model_dmp_funcs = {

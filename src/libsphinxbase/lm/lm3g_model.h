@@ -44,6 +44,8 @@
 #ifndef __NGRAM_MODEL_LM3G_H__
 #define __NGRAM_MODEL_LM3G_H__
 
+#include <listelem_alloc.h>
+
 #include "ngram_model_internal.h"
 
 /**
@@ -122,10 +124,11 @@ typedef struct lm3g_model_s {
                             trigram for bigram segment (i>>LOG_BG_SEG_SZ) */
     tginfo_t **tginfo;   /**< tginfo[lw2] is head of linked list of trigram information for
                             some cached subset of bigrams (*,lw2). */
+    listelem_alloc_t *le; /**< List element allocator for tginfo. */
 } lm3g_model_t;
 
-void lm3g_tginfo_free(ngram_model_t *base, tginfo_t **tginfo);
-void lm3g_tginfo_reset(ngram_model_t *base, tginfo_t **tginfo);
+void lm3g_tginfo_free(ngram_model_t *base, lm3g_model_t *lm3g);
+void lm3g_tginfo_reset(ngram_model_t *base, lm3g_model_t *lm3g);
 void lm3g_apply_weights(ngram_model_t *base,
 			lm3g_model_t *lm3g,
 			float32 lw, float32 wip, float32 uw);

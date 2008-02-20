@@ -216,6 +216,7 @@ doc/Makefile
 test/Makefile
 test/unit/testfuncs.sh
 test/unit/Makefile
+test/unit/test_alloc/Makefile
 test/unit/test_case/Makefile
 test/unit/test_string/Makefile
 test/unit/test_cmdln/Makefile
