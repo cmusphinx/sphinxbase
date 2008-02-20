@@ -35,3 +35,6 @@
 
 /* Use fixed-point computation */
 /* #undef FIXED_POINT */
+
+/* The size of `long', as computed by sizeof. */
+#define SIZEOF_LONG 4

@@ -41,3 +41,6 @@
 
 /* Enable matrix algebra with LAPACK */
 #define WITH_LAPACK
+
+/* The size of `long', as computed by sizeof. */
+#define SIZEOF_LONG 4

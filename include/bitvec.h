@@ -34,52 +34,23 @@
  * ====================================================================
  *
  */
-/*
- * bitvec.h -- Bit vector type.
- *
- * **********************************************
- * CMU ARPA Speech Project
- *
- * Copyright (c) 1999 Carnegie Mellon University.
- * ALL RIGHTS RESERVED.
- * **********************************************
- * 
- * HISTORY
- * $Log: bitvec.h,v $
- * Revision 1.7  2005/06/22 02:58:22  arthchan2003
- * Added  keyword
- *
- * Revision 1.3  2005/03/30 01:22:48  archan
- * Fixed mistakes in last updates. Add
- *
- * 
- * 13-Sep-1999	M K Ravishankar (rkm@cs.cmu.edu) at Carnegie Mellon
- * 		Added bitvec_uint32size().
- * 
- * 05-Mar-1999	M K Ravishankar (rkm@cs.cmu.edu) at Carnegie Mellon
- * 		Added bitvec_count_set().
- * 
- * 17-Jul-97	M K Ravishankar (rkm@cs.cmu.edu) at Carnegie Mellon
- * 		Created.
- */
-
 
 #ifndef _LIBUTIL_BITVEC_H_
 #define _LIBUTIL_BITVEC_H_
 
 /* Win32/WinCE DLL gunk */
 #include <sphinxbase_export.h>
+
+#include <sphinx_config.h>
 #include <prim_type.h>
 #include <ckd_alloc.h>
 
-  /** \file bitvec.h
-   * \brief An implementation of bit vector
-   *
-   * \warning: The bitvec functions is not for arbitrary usage!!  
-   * 
-   * Implementation of basic operations of bit vectors.  
-   *
-   */
+/** 
+ * @file bitvec.h
+ * @brief An implementation of bit vectors.
+ * 
+ * Implementation of basic operations of bit vectors.  
+ */
 
 #ifdef __cplusplus
 extern "C" {
@@ -89,74 +60,81 @@ extern "C" {
 }
 #endif
 
-typedef uint32 *bitvec_t;
+#if SIZEOF_LONG == 8
+typedef unsigned long bitvec_t;
+#define BITVEC_BITS 64
+#else
+typedef uint32 bitvec_t;
+#define BITVEC_BITS 32
+#endif
 
+/**
+ * Number of bitvec_t in a bit vector
+ */
+#define bitvec_size(n)	        (((n)+BITVEC_BITS-1)/BITVEC_BITS)
 
-  /**
-   * No. of uint32 words allocated to represent a bitvector of the given size n
-   */
-#define bitvec_uint32size(n)	(((n)+31)>>5)
+/**
+ * Allocate a bit vector.
+ */
+#define bitvec_alloc(n)		ckd_calloc(bitvec_size(n), sizeof(bitvec_t))
 
-  /**
-   * Allocate a bit vector.
-   */
-#define bitvec_alloc(n)		((bitvec_t) ckd_calloc (((n)+31)>>5, sizeof(uint32)))
+/**
+ * Free a bit vector.
+ */
+#define bitvec_free(v)		ckd_free(v)
 
-  /**
-   * Free a bit vector.
-   */
-#define bitvec_free(v)		ckd_free((char *)(v))
+/**
+ * Set the b-th bit of bit vector v
+ * @param v is a vector
+ * @param b is the bit which will be set
+ */
 
-  /**
-   * Set the b-th bit of bit vector v
-   * @param v is a vector
-   * @param b is the bit which will be set
-   */
+#define bitvec_set(v,b)		(v[(b)/BITVEC_BITS] |= (1UL << ((b) & (BITVEC_BITS-1))))
 
-#define bitvec_set(v,b)		(v[(b)>>5] |= (1 << ((b) & 0x001f)))
+/**
+ * Clear the b-th bit of bit vector v
+ * @param v is a vector
+ * @param b is the bit which will be set
+ */
 
-  /**
-   * Clear the b-th bit of bit vector v
-   * @param v is a vector
-   * @param b is the bit which will be set
-   */
+#define bitvec_clear(v,b)	(v[(b)/BITVEC_BITS] &= ~(1UL << ((b) & (BITVEC_BITS-1))))
 
-#define bitvec_clear(v,b)	(v[(b)>>5] &= ~(1 << ((b) & 0x001f)))
+/**
+ * Clear the n words bit vector v
+ * @param v is a vector
+ * @param n is the number of words. 
+ */
 
-  /**
-   * Clear the n words bit vector v
-   * @param v is a vector
-   * @param n is the number of words. 
-   */
+#define bitvec_clear_all(v,n)	memset(v, 0, (((n)+BITVEC_BITS-1)/BITVEC_BITS) * \
+                                       sizeof(bitvec_t))
 
-#define bitvec_clear_all(v,n)	memset(v, 0, (((n)+31)>>5)*sizeof(uint32))
+/**
+ * Check whether the b-th bit is set in vector v
+ * @param v is a vector
+ * @param b is the bit which will be checked
+ */
 
-  /**
-   * Check whether the b-th bit is set in vector v
-   * @param v is a vector
-   * @param b is the bit which will be checked
-   */
+#define bitvec_is_set(v,b)	(v[(b)/BITVEC_BITS] & (1UL << ((b) & (BITVEC_BITS-1))))
 
-#define bitvec_is_set(v,b)	(v[(b)>>5] & (1 << ((b) & 0x001f)))
-
-  /**
-   * Check whether the b-th bit is cleared in vector v
-   * @param v is a vector
-   * @param b is the bit which will be checked
-   */
+/**
+ * Check whether the b-th bit is cleared in vector v
+ * @param v is a vector
+ * @param b is the bit which will be checked
+ */
 
 #define bitvec_is_clear(v,b)	(! (bitvec_is_set(v,b)))
 
 
-  /**
-   * Return the number of bits set in the given bit-vector vec with length len
-   * @param vec is the bit vector
-   * @param len is the length of bit vector #vec
-   * @return the number of bits being set in vector #vec
-   */
+/**
+ * Return the number of bits set in the given bitvector.
+ *
+ * @param vec is the bit vector
+ * @param len is the length of bit vector #vec
+ * @return the number of bits being set in vector #vec
+ */
 SPHINXBASE_EXPORT
-int32 bitvec_count_set (bitvec_t vec,	/* In: Bit vector to search */
-			int32 len);	/* In: Lenght of above bit vector */
+size_t bitvec_count_set(bitvec_t *vec,	/* In: Bit vector to search */
+                        size_t len);	/* In: Lenght of above bit vector */
 
 #ifdef __cplusplus
 }

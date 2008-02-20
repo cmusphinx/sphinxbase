@@ -60,12 +60,13 @@
 
 #include "bitvec.h"
 
-
-int32
-bitvec_count_set(bitvec_t vec, int32 len)
+size_t
+bitvec_count_set(bitvec_t *vec, size_t len)
 {
-    int32 n, i;
+    size_t n, i;
 
+    /* NOTE: This can be done MUCH faster in assembly language on all
+     * sorts of platforms. */
     for (i = 0, n = 0; i < len; i++)
         if (bitvec_is_set(vec, i))
             n++;

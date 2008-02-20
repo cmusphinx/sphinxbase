@@ -37,6 +37,7 @@ AC_WORDS_BIGENDIAN
 AC_TYPE_SIGNAL
 AC_CHECK_TYPES(long long)
 AC_CHECK_SIZEOF(long long)
+AC_CHECK_SIZEOF(long)
 AM_ICONV
 
 dnl
@@ -217,6 +218,7 @@ test/Makefile
 test/unit/testfuncs.sh
 test/unit/Makefile
 test/unit/test_alloc/Makefile
+test/unit/test_bitvec/Makefile
 test/unit/test_case/Makefile
 test/unit/test_string/Makefile
 test/unit/test_cmdln/Makefile

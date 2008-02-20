@@ -1,4 +1,5 @@
 SUBDIRS=test_alloc				\
+	test_bitvec				\
 	test_case				\
 	test_string				\
 	test_cmdln				\
