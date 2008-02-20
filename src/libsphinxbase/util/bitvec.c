@@ -63,13 +63,23 @@
 size_t
 bitvec_count_set(bitvec_t *vec, size_t len)
 {
-    size_t n, i;
+    size_t words, bits, w, b, n;
+    bitvec_t *v;
 
-    /* NOTE: This can be done MUCH faster in assembly language on all
-     * sorts of platforms. */
-    for (i = 0, n = 0; i < len; i++)
-        if (bitvec_is_set(vec, i))
-            n++;
+    words = len / BITVEC_BITS;
+    bits = len % BITVEC_BITS;
+    v = vec;
+    n = 0;
+    for (w = 0; w < words; ++w, ++v) {
+        if (*v == 0)
+            continue;
+        for (b = 0; b < BITVEC_BITS; ++b)
+            if (*v & (1<<b))
+                ++n;
+    }
+    for (b = 0; b < bits; ++b)
+        if (*v & (1<<b))
+            ++n;
 
     return n;
 }
