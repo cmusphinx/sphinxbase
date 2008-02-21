@@ -95,9 +95,9 @@ typedef uint32 bitvec_t;
 #define bitvec_clear(v,b)	(v[(b)/BITVEC_BITS] &= ~(1UL << ((b) & (BITVEC_BITS-1))))
 
 /**
- * Clear the n words bit vector v
+ * Clear all n bits in bit vector v
  * @param v is a vector
- * @param n is the number of words. 
+ * @param n is the number of bits
  */
 
 #define bitvec_clear_all(v,n)	memset(v, 0, (((n)+BITVEC_BITS-1)/BITVEC_BITS) * \
