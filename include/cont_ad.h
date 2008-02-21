@@ -87,22 +87,26 @@
  * \file cont_ad.h
  * \brief Continuous A/D listening and silence filtering module.
  *
- * This module is intended to be interposed as a filter between any raw A/D source and the
- * application to remove silence regions.  Its main purpose is to remove regions of
- * silence from the raw input speech.  It is initialized with a raw A/D source function
- * (during the cont_ad_init call).  The application is responsible for setting up the A/D
- * source, turning recording on and off as it desires.  Filtered A/D data can be read by
- * the application using the cont_ad_read function.
+ * This module is intended to be interposed as a filter between any
+ * raw A/D source and the application to remove silence regions.  Its
+ * main purpose is to remove regions of silence from the raw input
+ * speech.  It is initialized with a raw A/D source function (during
+ * the cont_ad_init call).  The application is responsible for setting
+ * up the A/D source, turning recording on and off as it desires.
+ * Filtered A/D data can be read by the application using the
+ * cont_ad_read function.
  * 
- * In other words, the application calls cont_ad_read instead of the raw A/D source function
- * (e.g., ad_read in libad) to obtain filtered A/D data with silence regions removed.  This
- * module itself does not enforce any other structural changes to the application.
+ * In other words, the application calls cont_ad_read instead of the
+ * raw A/D source function (e.g., ad_read in libad) to obtain filtered
+ * A/D data with silence regions removed.  This module itself does not
+ * enforce any other structural changes to the application.
  * 
- * The cont_ad_read function also updates an "absolute" timestamp (see cont_ad_t.read_ts) at
- * the end of each invocation.  The timestamp indicates the total #samples of A/D data read
- * until this point, including data discarded as silence frames.  The application is
- * responsible for using this timestamp to make any policy decisions regarding utterance
- * boundaries or whatever.
+ * The cont_ad_read function also updates an "absolute" timestamp (see
+ * cont_ad_t.read_ts) at the end of each invocation.  The timestamp
+ * indicates the total number of samples of A/D data read until this
+ * point, including data discarded as silence frames.  The application
+ * is responsible for using this timestamp to make any policy
+ * decisions regarding utterance boundaries or whatever.
  */
 
 
@@ -129,7 +133,7 @@ extern "C" {
  */
 typedef struct spseg_s {
     int32 startfrm;	/**< Frame-id in adbuf (see below) of start of this segment */ 
-    int32 nfrm;		/**< #frames in segment (may wrap around adbuf) */
+    int32 nfrm;		/**< Number of frames in segment (may wrap around adbuf) */
     struct spseg_s *next;	/**< Next speech segment (with some intervening silence) */
 } spseg_t;
 
@@ -178,12 +182,12 @@ typedef struct {
     int32 eof;		/**< Whether the source ad device has encountered EOF */
   
     int32 spf;		/**< Samples/frame; audio level is analyzed within frames */
-    int32 adbufsize;	/**< Buffer size (#samples) */
+    int32 adbufsize;	/**< Buffer size (Number of samples) */
     int32 prev_sample;	/**< For pre-emphasis filter */
-    int32 headfrm;	/**< Frame # in adbuf with unconsumed A/D data */
-    int32 n_frm;	/**< #Complete frames of unconsumed A/D data in adbuf */
-    int32 n_sample;	/**< #Samples of unconsumed data in adbuf */
-    int32 tot_frm;	/**< Total #frames of A/D data read, including consumed ones */
+    int32 headfrm;	/**< Frame number in adbuf with unconsumed A/D data */
+    int32 n_frm;	/**< Number of complete frames of unconsumed A/D data in adbuf */
+    int32 n_sample;	/**< Number of samples of unconsumed data in adbuf */
+    int32 tot_frm;	/**< Total number of frames of A/D data read, including consumed ones */
     int32 noise_level;	/**< PWP: what we claim as the "current" noise level */
     
     int32 *pow_hist;	/**< Histogram of frame power, moving window, decayed */
@@ -204,7 +208,7 @@ typedef struct {
 			   (for transitioning from SILENCE to SPEECH state) */
     int32 thresh_sil;	/**< Frame considered to be silence if power <= thresh_sil
 			   (for transitioning from SPEECH to SILENCE state) */
-    int32 thresh_update;/**< #Frames before next update to pow_hist/thresholds */
+    int32 thresh_update;/**< Number of frames before next update to pow_hist/thresholds */
     float32 adapt_rate;	/**< Linear interpolation constant for rate at which noise level adapted
 			   to each estimate;
 			   range: 0-1; 0=> no adaptation, 1=> instant adaptation */
@@ -213,9 +217,9 @@ typedef struct {
 			   CONT_AD_STATE_SIL or CONT_AD_STATE_SPEECH.  Note: This is
 			   different from cont_ad_t.state. */
     int32 win_startfrm;	/**< Where next analysis window begins */
-    int32 win_validfrm;	/**< #Frames currently available from win_startfrm for analysis */
-    int32 n_other;	/**< If in SILENCE state, #frames in analysis window considered to
-			   be speech; otherwise #frames considered to be silence */
+    int32 win_validfrm;	/**< Number of frames currently available from win_startfrm for analysis */
+    int32 n_other;	/**< If in SILENCE state, number of frames in analysis window considered to
+			   be speech; otherwise number of frames considered to be silence */
     spseg_t *spseg_head;/**< First of unconsumed speech segments */
     spseg_t *spseg_tail;/**< Last of unconsumed speech segments */
     
@@ -230,10 +234,13 @@ typedef struct {
 } cont_ad_t;
 
 
-/*
+/**
+ * Initialize a continuous listening/silence filtering object.
+ *
  * One time initialization of a continuous listening/silence filtering object/module.
- * Return value: pointer to a READ-ONLY structure used in other calls to the object.
- * If any error occurs, the return value is NULL.
+ *
+ * @return A pointer to a READ-ONLY structure used in other calls to
+ * the object.  If any error occurs, the return value is NULL.
  */
 SPHINXBASE_EXPORT
 cont_ad_t *cont_ad_init (ad_rec_t *ad,	/**< In: The A/D source object to be filtered */
@@ -243,7 +250,9 @@ cont_ad_t *cont_ad_init (ad_rec_t *ad,	/**< In: The A/D source object to be filt
 					   required prototype definition. */
 			 );
 
-/*
+/**
+ * Initializes a continuous listening object which simply passes data through (!)
+ *
  * Like cont_ad_init, but put the module in raw mode; i.e., all data is passed
  * through, unfiltered.  (By special request.)
  */
@@ -252,7 +261,9 @@ cont_ad_t *cont_ad_init_rawmode (ad_rec_t *ad,
 				 int32 (*adfunc)(ad_rec_t *ad, int16 *buf, int32 max));
 
 
-/*
+/**
+ * Read raw audio data into the silence filter.
+ *
  * The main read routine for reading speech/silence segmented audio data.  Audio
  * data is copied into the caller provided buffer, much like a file read routine.
  * In normal mode, only speech segments are copied; silence segments are dropped.
@@ -267,18 +278,20 @@ cont_ad_t *cont_ad_init_rawmode (ad_rec_t *ad,
  *   cont_ad_t.seglen,
  *   cont_ad_t.siglvl.
  * 
- * Return value: #samples actually read, possibly 0; <0 if EOF on A/D source.
+ * Return value: Number of samples actually read, possibly 0; <0 if EOF on A/D source.
  */
 SPHINXBASE_EXPORT
 int32 cont_ad_read (cont_ad_t *r,	/**< In: Object pointer returned by cont_ad_init */
 		    int16 *buf,		/**< Out: On return, buf contains A/D data returned
 					   by this function, if any. */
-		    int32 max		/**< In: Max #samples to be filled into buf.
+		    int32 max		/**< In: Maximum number of samples to be filled into buf.
 					   NOTE: max must be at least 256; otherwise
 					   the functions returns -1. */
 	);
 
-/*
+/**
+ * Calibrate the silence filte.r
+ *
  * Calibration to determine an initial silence threshold.  This function can be called
  * any number of times.  It should be called at least once immediately after cont_ad_init.
  * The silence threshold is also updated internally once in a while, so this function
@@ -293,6 +306,8 @@ int32 cont_ad_calib (cont_ad_t *cont	/**< In: object pointer returned by cont_ad
 		     );
 
 /**
+ * Calibrate the silence filter without an audio device.
+ *
  * If the application has not passed an audio device into the silence filter
  * at initialisation,  this routine can be used to calibrate the filter. The
  * buf (of length max samples) should contain audio data for calibration. This
@@ -307,7 +322,9 @@ int32 cont_ad_calib_loop (cont_ad_t *r, int16 *buf, int32 max);
 
 
 /**
- * Set silence and speech threshold parameters.  The silence threshold is the max power
+ * Set silence and speech threshold parameters.
+ *
+ * The silence threshold is the max power
  * level, RELATIVE to the peak background noise level, in any silence frame.  Similarly,
  * the speech threshold is the min power level, RELATIVE to the peak background noise
  * level, in any speech frame.  In general, silence threshold <= speech threshold.
@@ -324,7 +341,7 @@ int32 cont_ad_set_thresh (cont_ad_t *cont,	/**< In: Object ptr from cont_ad_init
 
 
 /**
- * PWP 1/14/98 -- set the changable params.
+ * Set the changable parameters.
  *
  *   delta_sil, delta_speech, min_noise, and max_noise are in dB,
  *   winsize, speech_onset, sil_onset, leader and trailer are in frames of
@@ -353,7 +370,7 @@ int32 cont_ad_get_params (cont_ad_t *r, int32 *delta_sil, int32 *delta_speech,
 
 /**
  * Reset, discarding any accumulated speech segments.
- * Return value: 0 if successful, <0 otherwise.
+ * @return 0 if successful, <0 otherwise.
  */
 SPHINXBASE_EXPORT
 int32 cont_ad_reset (cont_ad_t *cont);	/* In: Object pointer from cont_ad_init */
@@ -375,7 +392,7 @@ void cont_ad_powhist_dump (FILE *fp, cont_ad_t *cont);
 
 /**
  * Detach the given continuous listening module from the associated audio device.
- * Return 0 if successful, -1 otherwise.
+ * @return 0 if successful, -1 otherwise.
  */
 SPHINXBASE_EXPORT
 int32 cont_ad_detach (cont_ad_t *c);
@@ -384,40 +401,47 @@ int32 cont_ad_detach (cont_ad_t *c);
 /**
  * Attach the continuous listening module to the given audio device/function.
  * (Like cont_ad_init, but without the calibration.)
- * Return 0 if successful, -1 otherwise.
+ * @return 0 if successful, -1 otherwise.
  */
 SPHINXBASE_EXPORT
 int32 cont_ad_attach (cont_ad_t *c, ad_rec_t *a, int32 (*func)(ad_rec_t *, int16 *, int32));
 
 
-/*
+/**
+ * Set a file for dumping raw audio input.
+ *
  * The application can ask cont_ad to dump the raw audio input that cont_ad
  * processes to a file.  Use this function to give the FILE* to the cont_ad
  * object.  If invoked with fp == NULL, dumping is turned off.  The application
  * is responsible for opening and closing the file.  If fp is non-NULL, cont_ad
  * assumes the file pointer is valid and opened for writing.
- * Return 0 if successful, -1 otherwise.
+ *
+ * @return 0 if successful, -1 otherwise.
  */
 SPHINXBASE_EXPORT
 int32 cont_ad_set_rawfp (cont_ad_t *c,	/* The cont_ad object being addressed */
 			 FILE *fp);	/* File to which raw audio data is to
 					   be dumped; NULL to stop dumping. */
 
-/*
- * Set the file to which cont_ad logs its progress.  Mainly for debugging.  If
- * fp is NULL, logging is turned off.
- * Return 0 if successful, -1 otherwise.
+/**
+ * Set the file to which cont_ad logs its progress.
+ *
+ * Mainly for debugging.  If <code>fp</code> is NULL, logging is turned off.
+ *
+ * @return 0 if successful, -1 otherwise.
  */
 SPHINXBASE_EXPORT
 int32 cont_ad_set_logfp (cont_ad_t *c,	/* The cont_ad object being addressed */
 			 FILE *fp);	/* File to which logs are written;
 					   NULL to stop logging. */
 
-/*
- * Set the silence and speech thresholds. For this to remain permanently in
- * effect, the auto_thresh field of the continuous listening module should be
- * set to FALSE or 0.  Otherwise the thresholds may be modified by the noise-
- * level adaptation.
+/**
+ * Set the silence and speech thresholds.
+ *
+ * For this to remain permanently in effect, the auto_thresh field of
+ * the continuous listening module should be set to FALSE or 0.
+ * Otherwise the thresholds may be modified by the noise- level
+ * adaptation.
  */
 SPHINXBASE_EXPORT
 int32 cont_set_thresh(cont_ad_t *r, int32 silence, int32 speech);

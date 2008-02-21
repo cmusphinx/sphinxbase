@@ -170,7 +170,7 @@ SPHINXBASE_EXPORT
 void ptmr_start (ptmr_t *tmr /**< The timer*/
 	);
 
-/**< Stop timing and accumulate tmr->{t_cpu, t_elapsed, t_tot_cpu, t_tot_elapsed} */
+/** Stop timing and accumulate tmr->{t_cpu, t_elapsed, t_tot_cpu, t_tot_elapsed} */
 SPHINXBASE_EXPORT
 void ptmr_stop (ptmr_t *tmr  /**< The timer*/
 	);

@@ -75,6 +75,7 @@ enum string_edge_e {
 /**
  * Remove whitespace from a string, modifying it in-place.
  *
+ * @param string string to trim, contents will be modified.
  * @param which one of TRIM_START, TRIM_END, or TRIM_BOTH.
  */
 SPHINXBASE_EXPORT
@@ -115,11 +116,14 @@ int32 str2words (char *line,	/**< In/Out: line to be parsed.  This
  * Yet another attempt at a clean "next-word-in-string" function.  See arguments below.
  * @return Length of word returned, or -1 if nothing found.
  * This allows you to scan through a line:
+ *
+ * <pre>
  * while ((n = nextword(line, delim, &word, &delimfound)) >= 0) {
  *     ... do something with word ..
  *     word[n] = delimfound;
  *     line = word + n;
  * }
+ * </pre>
  */
 SPHINXBASE_EXPORT
 int32 nextword (char *line, /**< Input: String being searched for next word.

@@ -294,11 +294,6 @@ typedef struct {
 
 #else
 
-/**
-   \struct ad_rec_t
-   \brief Dummy definition for systems without A/D stuff 
-*/
-
 #define DEFAULT_DEVICE NULL
 typedef struct {
     int32 sps;		/**< Samples/sec */
@@ -309,11 +304,14 @@ typedef struct {
 #endif
 
 
-/*
- * Open audio device for recording.  Opened in non-blocking mode and placed in idle
- * state.  Return value: pointer to read-only ad_rec_t structure if successful, NULL
- * otherwise.  The return value to be used as the first argument to other recording
- * functions.
+/**
+ * Open a specific audio device for recording.
+ *
+ * The device is opened in non-blocking mode and placed in idle state.
+ *
+ * @return pointer to read-only ad_rec_t structure if successful, NULL
+ * otherwise.  The return value to be used as the first argument to
+ * other recording functions.
  */
 SPHINXBASE_EXPORT
 ad_rec_t *ad_open_dev (
@@ -321,13 +319,18 @@ ad_rec_t *ad_open_dev (
 	int32 samples_per_sec /**< Samples per second */
 	);
 
+/**
+ * Open the default audio device with a given sampling rate.
+ */
 SPHINXBASE_EXPORT
 ad_rec_t *ad_open_sps (
 		       int32 samples_per_sec /**< Samples per second */
 		       );
 
 
-/* Like ad_open_sps but with default samples/sec and bufsize */
+/**
+ * Open the default audio device.
+ */
 SPHINXBASE_EXPORT
 ad_rec_t *ad_open ( void );
 
@@ -407,7 +410,9 @@ SPHINXBASE_EXPORT
 int32 ad_close_play (ad_play_t *);
 
 
-/*
+/**
+ * Queue a block of audio samples for playback.
+ *
  * Write the next block of [len] samples from rawbuf to the A/D device for playback.
  * The device may queue less than len samples, possibly 0, since it is non-blocking.
  * The application should resubmit the remaining data to be played.
@@ -419,7 +424,7 @@ int32 ad_write (ad_play_t *, int16 *buf, int32 len);
 
 /* ------ MISCELLANEOUS ------- */
 
-/*
+/**
  * Convert mu-law data to int16 linear PCM format.
  */
 SPHINXBASE_EXPORT

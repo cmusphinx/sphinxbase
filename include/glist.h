@@ -115,28 +115,39 @@ typedef gnode_t *glist_t;	/** Head of a list of gnodes */
 
 
 /**
- * Create and insert a new list node, with the given user-defined data, at the HEAD
+ * Create and prepend a new list node, with the given user-defined data, at the HEAD
  * of the given generic list.  Return the new list thus formed.
  * g may be NULL to indicate an initially empty list.
- * (Too bad there's no function overloading.)
  */
 SPHINXBASE_EXPORT
 glist_t glist_add_ptr (glist_t g,  /**< a link list */
 		       void *ptr   /**< a pointer */
 	);
-  
+
+/**
+ * Create and prepend a new list node containing an integer.
+ */  
 SPHINXBASE_EXPORT
 glist_t glist_add_int32 (glist_t g, /**< a link list */
 			 int32 val  /**< an integer value */
 	);
+/**
+ * Create and prepend a new list node containing an unsigned integer.
+ */  
 SPHINXBASE_EXPORT
 glist_t glist_add_uint32 (glist_t g,  /**< a link list */
 			  uint32 val  /**< an unsigned integer value */
 	);
+/**
+ * Create and prepend a new list node containing a single-precision float.
+ */  
 SPHINXBASE_EXPORT
 glist_t glist_add_float32 (glist_t g, /**< a link list */
 			   float32 val /**< a float32 vlaue */
 	);
+/**
+ * Create and prepend a new list node containing a double-precision float.
+ */  
 SPHINXBASE_EXPORT
 glist_t glist_add_float64 (glist_t g, /**< a link list */
 			   float64 val  /**< a float64 vlaue */
@@ -149,23 +160,34 @@ glist_t glist_add_float64 (glist_t g, /**< a link list */
  * the given generic node gn.  gn cannot be NULL.
  * Return ptr to the newly created gnode_t.
  */
-
 SPHINXBASE_EXPORT
 gnode_t *glist_insert_ptr (gnode_t *gn, /**< a generic node which ptr will be inserted after it*/
 			   void *ptr /**< pointer inserted */
 	);
+/**
+ * Create and insert a new list node containing an integer.
+ */  
 SPHINXBASE_EXPORT
 gnode_t *glist_insert_int32 (gnode_t *gn, /**< a generic node which a value will be inserted after it*/
 			     int32 val /**< int32 inserted */
 	);
+/**
+ * Create and insert a new list node containing an unsigned integer.
+ */  
 SPHINXBASE_EXPORT
 gnode_t *glist_insert_uint32 (gnode_t *gn, /**< a generic node which a value will be inserted after it*/
 			      uint32 val /**< uint32 inserted */
 	);
+/**
+ * Create and insert a new list node containing a single-precision float.
+ */  
 SPHINXBASE_EXPORT
 gnode_t *glist_insert_float32 (gnode_t *gn, /**< a generic node which a value will be inserted after it*/
 			       float32 val /**< float32 inserted */
 	);
+/**
+ * Create and insert a new list node containing a double-precision float.
+ */  
 SPHINXBASE_EXPORT
 gnode_t *glist_insert_float64 (gnode_t *gn, /**< a generic node which a value will be inserted after it*/
 			       float64 val /**< float64 inserted */

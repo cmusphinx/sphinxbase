@@ -108,12 +108,14 @@ extern "C" {
 
 /**
  * Read binary file format header: has the following format
+ * <pre>
  *     s3
  *     <argument-name> <argument-value>
  *     <argument-name> <argument-value>
  *     ...
  *     endhdr
  *     4-byte byte-order word used to find file byte ordering relative to host machine.
+ * </pre>
  * Lines beginning with # are ignored.
  * Memory for name and val allocated by this function; use bio_hdrarg_free to free them.
  * @return: 0 if successful, -1 otherwise.
@@ -172,17 +174,19 @@ int32 bio_fwrite(void *buf,
 
 /**
  * Read a 1-d array (fashioned after fread):
- *     4-byte array size (returned in n_el)
- *     memory allocated for the array and read (returned in buf)
+ *
+ *  - 4-byte array size (returned in n_el)
+ *  - memory allocated for the array and read (returned in buf)
+ * 
  * Byteswapping and checksum accumulation performed as necessary.
  * Fails fatally if expected data not read.
- * Return value: #array elements allocated and read; -1 if error.
+ * Return value: number of array elements allocated and read; -1 if error.
  */
 SPHINXBASE_EXPORT
 int32 bio_fread_1d (void **buf,		/**< Out: contains array data; allocated by this
 					   function; can be freed using ckd_free */
 		    size_t el_sz,	/**< In: Array element size */
-		    uint32 *n_el,	/**< Out: #array elements allocated/read */
+		    uint32 *n_el,	/**< Out: Number of array elements allocated/read */
 		    FILE *fp,		/**< In: File to read */
 		    int32 sw,		/**< In: Byteswap iff (swap != 0) */
 		    uint32 *ck	/**< In/Out: Accumulated checksum */
@@ -190,11 +194,13 @@ int32 bio_fread_1d (void **buf,		/**< Out: contains array data; allocated by thi
 
 /**
  * Read a 2-d matrix:
- *     4-byte # rows, # columns (returned in d1, d2, d3)
- *     memory allocated for the array and read (returned in buf)
+ *
+ * - 4-byte # rows, # columns (returned in d1, d2, d3)
+ * - memory allocated for the array and read (returned in buf)
+ *
  * Byteswapping and checksum accumulation performed as necessary.
  * Fails fatally if expected data not read.
- * Return value: #array elements allocated and read; -1 if error.
+ * Return value: number of array elements allocated and read; -1 if error.
  */
 SPHINXBASE_EXPORT
 int32 bio_fread_2d(void ***arr,
@@ -207,11 +213,13 @@ int32 bio_fread_2d(void ***arr,
 
 /**
  * Read a 3-d array (set of matrices)
- *     4-byte # matrices, # rows, # columns (returned in d1, d2, d3)
- *     memory allocated for the array and read (returned in buf)
+ *
+ * - 4-byte # matrices, # rows, # columns (returned in d1, d2, d3)
+ * - memory allocated for the array and read (returned in buf)
+ *
  * Byteswapping and checksum accumulation performed as necessary.
  * Fails fatally if expected data not read.
- * Return value: #array elements allocated and read; -1 if error.
+ * Return value: number of array elements allocated and read; -1 if error.
  */
 SPHINXBASE_EXPORT
 int32 bio_fread_3d(void ****arr,

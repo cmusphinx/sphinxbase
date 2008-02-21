@@ -114,9 +114,9 @@ typedef struct feat_s {
     char *name;		/**<  Printable name for this feature type */
     int32 cepsize;	/**< Size of input speech vector (typically, a cepstrum vector) */
     int32 cepsize_used;	/**< No. of cepstrum vector dimensions actually used (0 onwards) */
-    int32 n_stream;	/**< #Feature streams; e.g., 4 in Sphinx-II */
+    int32 n_stream;	/**< Number of feature streams; e.g., 4 in Sphinx-II */
     int32 *stream_len;	/**< Vector length of each feature stream */
-    int32 window_size;	/**< #Extra frames around given input frame needed to compute
+    int32 window_size;	/**< Number of extra frames around given input frame needed to compute
                            corresponding output feature (so total = window_size*2 + 1) */
 
     cmn_type_t cmn;	/**< Type of CMN to be performed on each utterance */
@@ -164,18 +164,21 @@ typedef struct feat_s {
 
 /**
  * Read feature vectors from the given file.  Feature file format:
- *   Line containing the single word: s3
- *   File header including any argument value pairs/line and other text (e.g.,
+ *
+ * - Line containing the single word: s3
+ * - File header including any argument value pairs/line and other text (e.g.,
  * 	'chksum0 yes', 'version 1.0', as in other S3 format binary files)
- *   Header ended by line containing the single word: endhdr
- *   (int32) Byte-order magic number (0x11223344)
- *   (int32) No. of frames in file (N)
- *   (int32) No. of feature streams (S)
- *   (int32 x S) Width or dimensionality of each feature stream (sum = L)
- *   (mfcc_t) Feature vector data (NxL mfcc_t items).
- *   (uint32) Checksum (if present).
+ * - Header ended by line containing the single word: endhdr
+ * - (int32) Byte-order magic number (0x11223344)
+ * - (int32) No. of frames in file (N)
+ * - (int32) No. of feature streams (S)
+ * - (int32 x S) Width or dimensionality of each feature stream (sum = L)
+ * - (mfcc_t) Feature vector data (NxL mfcc_t items).
+ * - (uint32) Checksum (if present).
+ *
  * (Note that this routine does NOT verify the checksum.)
- * Return value: # frames read if successful, -1 if error.
+ *
+ * @return # frames read if successful, -1 if error.
  */
 SPHINXBASE_EXPORT
 int32 feat_readfile(feat_t *fcb,	/** In: Control block from feat_init() */
@@ -185,24 +188,25 @@ int32 feat_readfile(feat_t *fcb,	/** In: Control block from feat_init() */
                     int32 ef,
                     mfcc_t ***feat,	/** Out: Data structure to be filled with read
 					    data; allocate using feat_array_alloc() */
-		    int32 maxfrq	/** In: #Frames allocated for feat above; error if
+		    int32 maxfrq	/** In: Number of frames allocated for feat above; error if
 					    attempt to read more than this amount. */
     );
 /**
  * Counterpart to feat_readfile.  Feature data is assumed to be in a contiguous block
  * starting from feat[0][0][0].  (NOTE: No checksum is written.)
- * Return value: # frames read if successful, -1 if error.
+ * @return # frames read if successful, -1 if error.
  */
 SPHINXBASE_EXPORT
 int32 feat_writefile(feat_t *fcb,	/** In: Control block from feat_init() */
 		     char *file,	/** In: File to write */
 		     mfcc_t ***feat,	/** In: Feature data to be written */
-		     int32 nfr		/** In: #Frames to be written */
+		     int32 nfr		/** In: Number of frames to be written */
     );
 
 /**
  * Read Sphinx-II format mfc file (s2mfc = Sphinx-II format MFC data).
- * Return value: #frames read (plus padding) if successful, -1 if
+ *
+ * @return # frames read (plus padding) if successful, -1 if
  * error (e.g., mfc array too small).  If out_mfc is NULL, no actual
  * reading will be done, and the number of frames (plus padding) that
  * would be read is returned.
@@ -217,7 +221,7 @@ int32 feat_s2mfc_read(char *file,	/** In: Sphinx-II format MFC file to be read *
 		mfcc_t ***out_mfc,	/** Out: 2-D array to be filled with read data;
 					    this will be allocated internally and must be
                                             freed with ckd_free_2d(). */
-		int32 maxfr,		/** In: #Frames of mfc array allocated; error if
+		int32 maxfr,		/** In: Number of frames of mfc array allocated; error if
 					    attempt to read more than this amount.  Pass -1
                                             to read as many frames as available. */
 		int32 cepsize		/** In: Length of each MFC vector. */
@@ -226,17 +230,19 @@ int32 feat_s2mfc_read(char *file,	/** In: Sphinx-II format MFC file to be read *
 /**
  * Allocate an array to hold several frames worth of feature vectors.  The returned value
  * is the mfcc_t ***data array, organized as follows:
- *   data[0][0] = frame 0 stream 0 vector, data[0][1] = frame 0 stream 1 vector, ...
- *   data[1][0] = frame 1 stream 0 vector, data[0][1] = frame 1 stream 1 vector, ...
- *   data[2][0] = frame 2 stream 0 vector, data[0][1] = frame 2 stream 1 vector, ...
- *   ...
+ *
+ * - data[0][0] = frame 0 stream 0 vector, data[0][1] = frame 0 stream 1 vector, ...
+ * - data[1][0] = frame 1 stream 0 vector, data[0][1] = frame 1 stream 1 vector, ...
+ * - data[2][0] = frame 2 stream 0 vector, data[0][1] = frame 2 stream 1 vector, ...
+ * - ...
+ *
  * NOTE: For I/O convenience, the entire data area is allocated as one contiguous block.
- * Return value: Pointer to the allocated space if successful, NULL if any error.
+ * @return pointer to the allocated space if successful, NULL if any error.
  */
 SPHINXBASE_EXPORT
 mfcc_t ***feat_array_alloc(feat_t *fcb,	/**< In: Descriptor from feat_init(), used
-					   to obtain #streams and stream sizes */
-                           int32 nfr	/**< In: #Frames for which to allocate */
+					   to obtain number of streams and stream sizes */
+                           int32 nfr	/**< In: Number of frames for which to allocate */
     );
 /**
  * Like feat_array_alloc except that only a single frame is allocated.  Hence, one
@@ -244,7 +250,7 @@ mfcc_t ***feat_array_alloc(feat_t *fcb,	/**< In: Descriptor from feat_init(), us
  */
 SPHINXBASE_EXPORT
 mfcc_t **feat_vector_alloc(feat_t *fcb  /**< In: Descriptor from feat_init(),
-                                           used to obtain #streams and 
+                                           used to obtain number of streams and 
                                            stream sizes */
     );
 /**
@@ -263,12 +269,15 @@ void feat_vector_free(mfcc_t **feat);
  * Initialize feature module to use the selected type of feature stream.  
  * One-time only * initialization at the beginning of the program.  Input type 
  * is a string defining the  kind of input->feature conversion desired:
- *   "s2_4x":   s2mfc->Sphinx-II 4-feature stream,
- *   "s3_1x39": s2mfc->Sphinx-3 single feature stream,
- *   "n1,n2,n3,...": Explicit feature vector layout spec. with comma-separated 
+ *
+ * - "s2_4x":     s2mfc->Sphinx-II 4-feature stream,
+ * - "1s_c_d_dd": s2mfc->Sphinx 3.x single feature stream,
+ * - "s3_1x39":   s2mfc->Sphinx 3.0 single feature stream,
+ * - "n1,n2,n3,...": Explicit feature vector layout spec. with comma-separated 
  *   feature stream lengths.  In this case, the input data is already in the 
  *   feature format and there is no conversion necessary.
- * Return value: (feat_t *) descriptor if successful, NULL if error.  Caller 
+ *
+ * @return (feat_t *) descriptor if successful, NULL if error.  Caller 
  * must not directly modify the contents of the returned value.
  */
 SPHINXBASE_EXPORT
@@ -313,20 +322,22 @@ void feat_lda_transform(feat_t *fcb,		/**< In: Descriptor from feat_init() */
 SPHINXBASE_EXPORT
 void feat_print(feat_t *fcb,		/**< In: Descriptor from feat_init() */
 		mfcc_t ***feat,		/**< In: Feature data to be printed */
-		int32 nfr,		/**< In: #Frames of feature data above */
+		int32 nfr,		/**< In: Number of frames of feature data above */
 		FILE *fp		/**< In: Output file pointer */
     );
 
   
 /**
  * Read a specified MFC file (or given segment within it), perform
- * CMN/AGC as indicated by * fcb, and compute feature vectors.
- * Feature vectors are computed for the entire segment specified, by
- * including additional surrounding or padding frames to accommodate
- * the feature windows.  Return value: #Frames of feature vectors
- * computed if successful; -1 if any error.  If feat is NULL, then no
- * actual computation will be done, and the number of frames which
- * must be allocated will be returned.
+ * CMN/AGC as indicated by <code>fcb</code>, and compute feature
+ * vectors.  Feature vectors are computed for the entire segment
+ * specified, by including additional surrounding or padding frames to
+ * accommodate the feature windows.
+ *
+ * @return Number of frames of feature vectors computed if successful;
+ * -1 if any error.  <code>If</code> feat is NULL, then no actual
+ * computation will be done, and the number of frames which must be
+ * allocated will be returned.
  * 
  * A note on how the file path is constructed: If the control file
  * already specifies extension or absolute path, then these are not
@@ -346,7 +357,7 @@ int32 feat_s2mfc2feat(feat_t *fcb,	/**< In: Descriptor from feat_init() */
                                                file */
 		      mfcc_t ***feat,	/**< Out: Computed feature vectors; 
 					   caller must allocate this space */
-		      int32 maxfr	/**< In: Available space (#frames) in 
+		      int32 maxfr	/**< In: Available space (number of frames) in 
 					   above feat array; it must be 
 					   sufficient to hold the result.
                                            Pass -1 for no limit. */

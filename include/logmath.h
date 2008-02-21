@@ -35,9 +35,8 @@
  *
  */
 /**
- * \file logmath.h
- *
- * \brief Fast integer logarithmic addition operations.
+ * @file logmath.h
+ * @brief Fast integer logarithmic addition operations.
  *
  * In evaluating HMM models, probability values are often kept in log
  * domain, to avoid overflow.  To enable these logprob values to be
@@ -49,17 +48,21 @@
  * when adding two probability values.  This problem can be solved by
  * table lookup.  Note that:
  *
- * b^z = b^x + b^y
- * b^z = b^x(1 + b^{y-x})     = b^y(1 + e^{x-y})
- * z   = x + log_b(1 + b^{y-x}) = y + log_b(1 + b^{x-y})
+ *  - \f$ b^z = b^x + b^y \f$
+ *  - \f$ b^z = b^x(1 + b^{y-x})     = b^y(1 + e^{x-y}) \f$
+ *  - \f$ z   = x + log_b(1 + b^{y-x}) = y + log_b(1 + b^{x-y}) \f$
  *
- * So when y > x, z = y + logadd_table[-(x-y)]
- *    when x > y, z = x + logadd_table[-(y-x)]
- *    where logadd_table[n] = log_b(1 + b^{-n})
+ * So:
+ * 
+ *  - when \f$ y > x, z = y + logadd\_table[-(x-y)] \f$
+ *  - when \f$ x > y, z = x + logadd\_table[-(y-x)] \f$
+ *  - where \f$ logadd\_table[n] = log_b(1 + b^{-n}) \f$
  *
- * The first entry in logadd_table is simply log_b(2.0), for the case
- * where y == x and thus z = log_b(2x) = log_b(2) + x.  The last entry
- * is zero, where log_b(x+y) = x = y due to loss of precision.
+ * The first entry in <i>logadd_table</i> is
+ * simply \f$ log_b(2.0) \f$, for
+ * the case where \f$ y = x \f$ and thus
+ * \f$ z = log_b(2x) = log_b(2) + x \f$.  The last entry is zero,
+ * where \f$ log_b(x+y) = x = y \f$ due to loss of precision.
  *
  * Since this table can be quite large particularly for small
  * logbases, an option is provided to compress it by dropping the
@@ -111,7 +114,7 @@ typedef struct logmath_s logmath_t;
 
 /**
  * Initialize a log math computation table.
- * @param logbase The base B in which computation is to be done.
+ * @param base The base B in which computation is to be done.
  * @param shift Log values are shifted right by this many bits.
  * @param use_table Whether to use an add table or not
  * @return The newly created log math table.

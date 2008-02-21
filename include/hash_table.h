@@ -77,8 +77,9 @@
  */
 
 
-/** \file hash.h
- * \brief Hash table implementation
+/**
+ * @file hash_table.h
+ * @brief Hash table implementation
  *
  * This hash tables are intended for associating a pointer/integer
  * "value" with a char string "key", (e.g., an ID with a word string).
@@ -178,7 +179,7 @@ typedef struct {
  * Return value: READ-ONLY handle to allocated hash table.
  */
 SPHINXBASE_EXPORT
-hash_table_t * hash_table_new(int32 size,	/**< In: Expected #entries in the table */
+hash_table_t * hash_table_new(int32 size,	/**< In: Expected number of entries in the table */
                               int32 casearg  	/**< In: Whether case insensitive for key
                                                    comparisons. When 1, case is insentitive,
                                                    0, case is sensitive. */
@@ -349,7 +350,7 @@ int32 hash_table_lookup_bkey_int32(hash_table_t *h,/**< In: Handle of hash table
  */
 SPHINXBASE_EXPORT
 glist_t hash_table_tolist(hash_table_t *h,	/**< In: Hash table from which list is to be generated */
-                          int32 *count		/**< Out: #entries in the list.
+                          int32 *count		/**< Out: Number of entries in the list.
                                                    If this is NULL, no count will be returned. */
 
 	);

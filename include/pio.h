@@ -97,7 +97,7 @@
  * Custom fopen with error checking is implemented. fopen_comp can
  * open a file with .z, .Z, .gz or .GZ extension
  *  
- * \Warning Usage of stat_retry will results in 100s of waiting time
+ * WARNING: Usage of stat_retry will results in 100s of waiting time
  * if the file doesn't exist.  
 */
 
@@ -162,6 +162,7 @@ int32 fread_retry(void *pointer, int32 size, int32 num_items, FILE *stream);
  * Read a line of arbitrary length from a file and return it as a
  * newly allocated string.
  *
+ * @param stream The file handle to read from.
  * @param out_len Output: if not NULL, length of the string read.
  * @return allocated string containing the line, or NULL on error or EOF.
  */

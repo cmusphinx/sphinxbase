@@ -65,14 +65,14 @@
 struct listelem_alloc_s {
     char **freelist;            /**< ptr to first element in freelist */
     glist_t blocks;             /**< Linked list of blocks allocated. */
-    size_t elemsize;            /**< #(char *) in element */
-    size_t blocksize;           /**< #elements to alloc if run out of free elments */
-    size_t blk_alloc;           /**< #Alloc operations before increasing blocksize */
+    size_t elemsize;            /**< Number of (char *) in element */
+    size_t blocksize;           /**< Number of elements to alloc if run out of free elments */
+    size_t blk_alloc;           /**< Number of alloc operations before increasing blocksize */
     size_t n_alloc;
     size_t n_freed;
 };
 
-#define MIN_ALLOC	50      /**< Min #elements to allocate in one block */
+#define MIN_ALLOC	50      /**< Minimum number of elements to allocate in one block */
 /**
  * Allocate a new block of elements.
  */

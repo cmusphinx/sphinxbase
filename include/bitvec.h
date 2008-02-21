@@ -124,8 +124,8 @@ typedef uint32 bitvec_t;
  * Return the number of bits set in the given bitvector.
  *
  * @param vec is the bit vector
- * @param len is the length of bit vector #vec
- * @return the number of bits being set in vector #vec
+ * @param len is the length of bit vector <code>vec</code>
+ * @return the number of bits being set in vector <code>vec</code>
  */
 SPHINXBASE_EXPORT
 size_t bitvec_count_set(bitvec_t *vec,	/* In: Bit vector to search */

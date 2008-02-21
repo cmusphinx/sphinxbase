@@ -82,29 +82,18 @@ extern "C" {
 }
 #endif
 
-
-/* Arguments of these types are OPTIONAL */
-
-/** \def ARG_INT32
- * Type of 32-bit integer
- * \def ARG_FLOAT32
- * Type of 32-bit floating-point number
- * \def ARG_FLOAT64
- * Type of 64-bit floating-point number
- * \def ARG_STRING
- * Type of String
- * \def ARG_BOOLEAN
- * Type of Boolean
+/**
+ * Argument type constants used in #arg_t
  */
-
 typedef enum argtype_s {  
+/* Arguments of these types are OPTIONAL */
     ARG_REQUIRED = 1,
     ARG_INT32 = 2,
     ARG_FLOAT32 = 4,
     ARG_FLOAT64 = 6,
     ARG_STRING = 8,
     ARG_BOOLEAN = 16,
-/** Arguments of these types are REQUIRED */
+/* Arguments of these types are REQUIRED */
     REQARG_INT32 = (ARG_INT32 | ARG_REQUIRED),
     REQARG_FLOAT32 = (ARG_FLOAT32 | ARG_REQUIRED),
     REQARG_FLOAT64 = (ARG_FLOAT64 | ARG_REQUIRED),
@@ -125,7 +114,7 @@ typedef enum argtype_s {
 #endif
 
 /** \struct arg_t
-    \brief A structure for storing one argument. 
+    \brief Argument definition structure.
 */
 
 typedef struct {
@@ -183,7 +172,7 @@ cmd_ln_t *cmd_ln_init(cmd_ln_t *inout_cmdln, const arg_t *defn, int32 strict, ..
  */
 SPHINXBASE_EXPORT
 int32 cmd_ln_parse (const arg_t *defn,	/**< In: Array of argument name definitions */
-		    int32 argc,		/**< In: #Actual arguments */
+		    int32 argc,		/**< In: Number of actual arguments */
 		    char *argv[],	/**< In: Actual arguments */
                     int32 strict        /**< In: Fail on duplicate or unknown
                                            arguments, or no arguments? */
@@ -198,7 +187,7 @@ SPHINXBASE_EXPORT
 cmd_ln_t *cmd_ln_parse_r(cmd_ln_t *inout_cmdln, /**< In/Out: Previous command-line to update,
                                                      or NULL to create a new one. */
                          const arg_t *defn,	/**< In: Array of argument name definitions */
-                         int32 argc,		/**< In: #Actual arguments */
+                         int32 argc,		/**< In: Number of actual arguments */
                          char *argv[],		/**< In: Actual arguments */
                          int32 strict           /**< In: Fail on duplicate or unknown
                                                    arguments, or no arguments? */
@@ -238,8 +227,8 @@ cmd_ln_t *cmd_ln_parse_file_r(cmd_ln_t *inout_cmdln, /**< In/Out: Previous comma
  */
 
 SPHINXBASE_EXPORT
-void cmd_ln_appl_enter(int argc,   /**< In: #Actual arguments */
-		       char *argv[], /**< In: Actual arguments */
+void cmd_ln_appl_enter(int argc,   /**< In: Number of actual arguments */
+		       char *argv[], /**< In: Number of actual arguments */
 		       const char* default_argfn, /**< In: default argument file name*/
 		       const arg_t *defn /**< Command-line argument definition */
 	);

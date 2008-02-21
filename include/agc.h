@@ -90,7 +90,6 @@ extern "C" {
 #endif
 
 /**
- * \enum agc_type_t
  * Types of acoustic gain control to apply to the features.
  */
 typedef enum agc_type_e {
@@ -142,7 +141,7 @@ void agc_free(agc_t *agc);
 SPHINXBASE_EXPORT
 void agc_max(agc_t *agc,	/**< In: AGC structure (not used) */
              mfcc_t **mfc,	/**< In/Out: mfc[f] = cepstrum vector in frame f */
-             int32 n_frame	/**< In: #frames of cepstrum vectors supplied */
+             int32 n_frame	/**< In: number of frames of cepstrum vectors supplied */
     );
 
 /**
@@ -153,7 +152,7 @@ void agc_max(agc_t *agc,	/**< In: AGC structure (not used) */
 SPHINXBASE_EXPORT
 void agc_emax(agc_t *agc,	/**< In: AGC structure */
               mfcc_t **mfc,	/**< In/Out: mfc[f] = cepstrum vector in frame f */
-              int32 n_frame	/**< In: #frames of cepstrum vectors supplied */
+              int32 n_frame	/**< In: number of frames of cepstrum vectors supplied */
     );
 
 /**
@@ -181,7 +180,7 @@ void agc_emax_set(agc_t *agc, float32 m);
 SPHINXBASE_EXPORT
 void agc_noise(agc_t *agc,	/**< In: AGC structure */
                mfcc_t **mfc,	/**< In/Out: mfc[f] = cepstrum vector in frame f */
-               int32 n_frame	/**< In: #frames of cepstrum vectors supplied */
+               int32 n_frame	/**< In: number of frames of cepstrum vectors supplied */
     );
 
 /**

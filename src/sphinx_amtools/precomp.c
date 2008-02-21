@@ -35,8 +35,7 @@
  *
  */
 /**
- * \file gmm_precomp.c
- * GMM precomputation tool.
+ * @file precomp.c GMM precomputation tool.
  */
 #include <gau_cb.h>
 #include <gau_cb_int32.h>

@@ -105,7 +105,6 @@ extern "C" {
  */
 
 /**
- * \enum cmn_type_t
  * Types of cepstral mean normalization to apply to the features.
  */
 typedef enum cmn_type_e {
@@ -146,7 +145,7 @@ void cmn (cmn_t *cmn,   /**< In/Out: cmn normalization, which contains the cmn_m
 	  int32 varnorm,/**< In: if not FALSE, variance normalize the input vectors
 			   to have unit variance (along each dimension independently);
 			   Irrelevant if no cmn is performed */
-	  int32 n_frame /**< In: #frames of mfc vectors */
+	  int32 n_frame /**< In: Number of frames of mfc vectors */
 	);
 
 #define CMN_WIN_HWM     800     /* #frames after which window shifted */

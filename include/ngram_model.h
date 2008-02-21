@@ -35,8 +35,8 @@
  *
  */
 /**
- * \file ngram_model.h
- * \author David Huggins-Daines <dhuggins@cs.cmu.edu>
+ * @file ngram_model.h
+ * @author David Huggins-Daines <dhuggins@cs.cmu.edu>
  *
  * N-Gram language models
  */
@@ -74,6 +74,10 @@ typedef struct ngram_class_s ngram_class_t;
  * File types for N-Gram files
  */
 typedef enum ngram_file_type_e ngram_file_type_t;
+
+/**
+ * File types for N-Gram files
+ */
 enum ngram_file_type_e {
     NGRAM_AUTO,  /**< Determine file type automatically */
     NGRAM_ARPA,  /**< ARPABO text format (the standard) */
@@ -98,6 +102,7 @@ enum ngram_file_type_e {
  *
  * @param file_name path to the file to read.
  * @param file_type type of the file, or NGRAM_AUTO to determine automatically.
+ * @param lmath Log-math parameters to use for probability calculations.
  * @return newly created ngram_model_t.
  */
 SPHINXBASE_EXPORT
@@ -162,7 +167,9 @@ int ngram_model_apply_weights(ngram_model_t *model,
  * Therefore, if you wanted to get the N-Gram score for "a whole joy",
  * you would call:
  *
+ * <pre>
  *  score = ngram_score(model, "joy", "whole", "a", NULL);
+ * </pre>
  *
  * This is not the function to use in decoding, because it has some
  * overhead for looking up words.  Use ngram_ng_score(),
@@ -173,7 +180,7 @@ int ngram_model_apply_weights(ngram_model_t *model,
  * If one of the words is not in the LM's vocabulary, the result will
  * depend on whether this is an open or closed vocabulary language
  * model.  For an open-vocabulary model, unknown words are all mapped
- * to the unigram <UNK> which has a non-zero probability and also
+ * to the unigram &lt;UNK&gt; which has a non-zero probability and also
  * participates in higher-order N-Grams.  Therefore, you will get a
  * score of some sort in this case.
  *
@@ -239,6 +246,7 @@ int32 ngram_ng_prob(ngram_model_t *model, int32 wid, int32 *history,
  * removed, since there is no way to know which order of N-Gram
  * generated <code>score</code>.
  * 
+ * @param model The N-Gram model from which score was obtained.
  * @param score The N-Gram score to convert
  * @return The raw log-probability value.
  */
@@ -381,11 +389,13 @@ ngram_model_t *ngram_model_set_init(cmd_ln_t *config,
  * the type used in Sphinx-II and Sphinx-III.
  * File format (optional stuff is indicated by enclosing in []):
  * 
+ * <pre>
  *   [{ LMClassFileName LMClassFilename ... }]
  *   TrigramLMFileName LMName [{ LMClassName LMClassName ... }]
  *   TrigramLMFileName LMName [{ LMClassName LMClassName ... }]
  *   ...
  * (There should be whitespace around the { and } delimiters.)
+ * </pre>
  * 
  * This is an extension of the older format that had only TrigramLMFilenName
  * and LMName pairs.  The new format allows a set of LMClass files to be read
@@ -445,6 +455,7 @@ ngram_model_t *ngram_model_set_interp(ngram_model_t *set,
 /**
  * Add a language model to a set.
  *
+ * @param set The language model set to add to.
  * @param model The language model to add.
  * @param name The name to associate with this model.
  * @param weight Interpolation weight for this model, relative to the
@@ -463,6 +474,7 @@ ngram_model_t *ngram_model_set_add(ngram_model_t *set,
 /**
  * Remove a language model from a set.
  *
+ * @param set The language model set to remove from.
  * @param name The name associated with the model to remove.
  * @param reuse_widmap Reuse the existing word-ID mapping in
  *                     <code>set</code>.

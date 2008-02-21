@@ -128,12 +128,12 @@ void outerproduct(float32 **out_a, float32 *x, float32 *y, int32 len);
  * @param out_c The output matrix C.
  * @param a The input matrix A.
  * @param b The input matrix B.
+ * @param n Dimensionality of A and B.
  **/
 SPHINXBASE_EXPORT
 void matrixmultiply(float32 **out_c, /* = */
                     float32 **a, /* * */ float32 **b,
-                    int32 n /**< dimension of a and b. */
-    );
+                    int32 n);
 
 /**
  * Multiply a symmetric matrix by a constant in-place.
