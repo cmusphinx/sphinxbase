@@ -30,6 +30,10 @@ class NGramModel(object):
         """
         self._lmath = _sphinxbase.logmath_init(1.0001, 0, False)
         self._lm = _sphinxbase.ngram_model_read(file, self._lmath)
+        self.lw = lw
+        self.wip = wip
+        self.uw = uw
+        self.n = 3     # FIXME: Get this from the underlying model
         _sphinxbase.ngram_model_apply_weights(self._lm, lw, wip, uw)
 
     def __del__(self):
