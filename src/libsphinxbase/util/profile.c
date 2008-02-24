@@ -65,10 +65,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if !(defined(WIN32) || defined(_WIN32_WCE)) || defined(GNUWINCE)
+#if (!(defined(WIN32) || defined(_WIN32_WCE)) || defined(GNUWINCE)) && !defined(__ADSPBLACKFIN__)
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/resource.h>
+#elif defined(__ADSPBLACKFIN__)
+
 #else
 #include <windows.h>
 #ifndef _WIN32_WCE

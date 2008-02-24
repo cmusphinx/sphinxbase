@@ -54,7 +54,7 @@
 #include <assert.h>
 #ifdef HAVE_ICONV
 #include <iconv.h>
-#endif
+#endif 
 
 #ifdef _WIN32
 #define strcasecmp(a,b) _stricmp(a,b)
@@ -70,7 +70,7 @@ ngram_file_name_to_type(const char *file_name)
     if (ext == NULL) {
         return NGRAM_ARPA; /* Default file type */
     }
-    if (0 == strcasecmp(ext, ".gz")) {
+    if (0 == strcmp_nocase(ext, ".gz")) {
         while (--ext >= file_name) {
             if (*ext == '.') break;
         }
@@ -78,15 +78,15 @@ ngram_file_name_to_type(const char *file_name)
             return NGRAM_ARPA; /* Default file type */
         }
     }
-    if (0 == strncasecmp(ext, ".ARPA", 5))
+    if (0 == strcmp_nocase(ext, ".ARPA", 5))
         return NGRAM_ARPA;
-    if (0 == strncasecmp(ext, ".DMP", 4))
+    if (0 == strcmp_nocase(ext, ".DMP", 4))
         return NGRAM_DMP;
-    if (0 == strncasecmp(ext, ".DMP32", 6))
+    if (0 == strcmp_nocase(ext, ".DMP32", 6))
         return NGRAM_DMP32;
-    if (0 == strncasecmp(ext, ".FST", 4))
+    if (0 == strcmp_nocase(ext, ".FST", 4))
         return NGRAM_FST;
-    if (0 == strncasecmp(ext, ".SLF", 4))
+    if (0 == strcmp_nocase(ext, ".SLF", 4))
         return NGRAM_HTK;
     return NGRAM_ARPA; /* Default file type */
 }

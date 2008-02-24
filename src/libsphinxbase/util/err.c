@@ -67,7 +67,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#if ((!defined(_WIN32)) && (!defined(_SGI_SOURCE)))
+#if ((!defined(_WIN32)) && (!defined(_SGI_SOURCE)) &&!defined(__ADSPBLACKFIN__))
 #include <sys/errno.h>
 #else
 #include <errno.h>
@@ -87,17 +87,19 @@ _E__pr_info_header_wofn(char const *msg)
 void
 _E__pr_header(char const *f, long ln, char const *msg)
 {
+    char *fname = strrchr(f,'\\');
     (void) fflush(stderr);
-    (void) fprintf(stderr, "%s: \"%s\", line %ld: ", msg, f, ln);
+    (void) fprintf(stderr, "%s: \"%s\", line %ld: ", msg, fname == NULL? f:fname+1, ln);
 }
 
 void
 _E__pr_info_header(char const *f, long ln, char const *msg)
 {
+    char *fname = strrchr(f,'\\');
     (void) fflush(stderr);
 
     /* make different format so as not to be parsed by emacs compile */
-    (void) fprintf(stderr, "%s: %s(%ld): ", msg, f, ln);
+    (void) fprintf(stderr, "%s: %s(%ld): ", msg, fname == NULL? f:fname+1, ln);
 }
 
 void
@@ -137,8 +139,11 @@ _E__die_error(char const *fmt, ...)
     va_end(pvar);
 
     (void) fflush(stderr);
-
-    exit(-1);
+#if defined(__ADSPBLACKFIN__)
+    while(1);
+#else 
+	exit(-1);
+#endif
 }
 
 void
@@ -157,7 +162,12 @@ _E__fatal_sys_error(char const *fmt, ...)
 
     (void) fflush(stderr);
 
-    exit(errno);
+#if defined(__ADSPBLACKFIN__)
+    while(1);
+#else 
+	exit(-1);
+#endif
+
 }
 
 void
@@ -188,7 +198,12 @@ _E__abort_error(char const *fmt, ...)
 
     (void) fflush(stderr);
 
-    abort();
+#if defined(__ADSPBLACKFIN__)
+    while(1);
+#else 
+	abort();
+#endif
+
 }
 
 #ifdef TEST

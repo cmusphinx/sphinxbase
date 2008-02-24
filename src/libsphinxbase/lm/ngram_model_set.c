@@ -186,7 +186,7 @@ ngram_model_set_read(cmd_ln_t *config,
     FILE *ctlfp;
     glist_t lms = NULL;
     glist_t lmnames = NULL;
-    char str[1024];
+    __BIGSTACKVARIABLE__ char str[1024];
     ngram_model_t *set = NULL;
     hash_table_t *classes;
     char *basedir, *c;

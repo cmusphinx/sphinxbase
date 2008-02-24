@@ -826,7 +826,8 @@ feat_init(char *type, cmn_type_t cmn, int32 varnorm, agc_type_t agc, int32 brepo
 {
     feat_t *fcb;
     int32 i, l, k;
-    char wd[16384], *strp;
+    __BIGSTACKVARIABLE__ char wd[16384];
+    char *strp;
 
     if (cepsize == 0)
         cepsize = 13;
@@ -1100,7 +1101,7 @@ int32
 feat_s2mfc2feat(feat_t * fcb, const char *file, const char *dir, const char *cepext,
                 int32 sf, int32 ef, mfcc_t *** feat, int32 maxfr)
 {
-    char path[16384];
+    __BIGSTACKVARIABLE__ char path[16384];
     int32 win, nfr;
     int32 file_length, cepext_length;
     mfcc_t **mfc;

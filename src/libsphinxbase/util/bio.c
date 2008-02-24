@@ -80,7 +80,7 @@
 static void
 bcomment_read(FILE * fp)
 {
-    char iline[16384];
+    __BIGSTACKVARIABLE__ char iline[16384];
 
     while (fgets(iline, sizeof(iline), fp) != NULL) {
         if (strcmp(iline, END_COMMENT) == 0)
@@ -152,7 +152,7 @@ bio_writehdr_version(FILE * fp, char *version)
 int32
 bio_readhdr(FILE * fp, char ***argname, char ***argval, int32 * swap)
 {
-    char line[16384], word[4096];
+    __BIGSTACKVARIABLE__ char line[16384], word[4096];
     int32 i, l;
     int32 lineno;
 

@@ -83,7 +83,7 @@
 #define _LIBUTIL_IO_H_
 
 #include <stdio.h>
-#ifndef _WIN32_WCE
+#if !defined(_WIN32_WCE) && !defined(__ADSPBLACKFIN__)
 #include <sys/stat.h>
 #endif
 
@@ -177,6 +177,14 @@ struct stat {
     DWORD st_size;
 };
 #endif /* _WIN32_WCE */
+
+#if defined(__ADSPBLACKFIN__)
+struct stat {
+    int32 st_mtime;
+    int32 st_size;
+};
+
+#endif
 
 /**
  * Like fread_retry, but for stat.  Arguments identical to regular stat.

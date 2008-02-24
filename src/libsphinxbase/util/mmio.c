@@ -61,7 +61,8 @@
 # else /* !GNUWINCE */
 #  include <windows.h>
 # endif /* !GNUWINCE */
-#else /* !_WIN32 */
+#elif defined(__ADSPBLACKFIN__) /* !_WIN32 */
+#else
 # include <unistd.h>
 # include <fcntl.h>
 # include <sys/stat.h>
@@ -169,8 +170,33 @@ mmio_file_ptr(mmio_file_t *mf)
     return (void *)mf;
 }
 
-#else                           /* !WIN32 */
+#elif __ADSPBLACKFIN__                           /* !WIN32 */
 
+struct mmio_file_s {
+};
+
+mmio_file_t *
+mmio_file_read(const char *filename)
+{
+ 	E_FATAL("mmio is not implemented on this platform!");
+    return NULL;
+}
+
+void
+mmio_file_unmap(mmio_file_t *mf)
+{
+ 	E_FATAL("mmio is not implemented on this platform!");
+}
+
+void *
+mmio_file_ptr(mmio_file_t *mf)
+{
+ 	E_FATAL("mmio is not implemented on this platform!");
+    return NULL;
+}
+
+
+#else
 struct mmio_file_s {
     void *ptr;
     size_t mapsize;

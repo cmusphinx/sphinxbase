@@ -139,7 +139,11 @@ ngram_model_dmp_read(cmd_ln_t *config,
         }
         else {
             E_INFO("Will use memory-mapped I/O for LM file\n");
+#ifndef __ADSPBLACKFIN__            
             fd = fileno(fp);
+#else
+			E_FATAL("memory mapping is not supported at the moment.");
+#endif
         }
     }
 

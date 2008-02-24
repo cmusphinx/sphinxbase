@@ -664,7 +664,7 @@ cmd_ln_parse_file_r(cmd_ln_t *inout_cmdln, const arg_t * defn, const char *filen
     char **tmp_argv;
     int argc;
     int argv_size;
-    char str[ARG_MAX_LENGTH];
+    __BIGSTACKVARIABLE__ char str[ARG_MAX_LENGTH];
     int len = 0;
     int ch;
     int quoting;

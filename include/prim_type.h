@@ -82,11 +82,26 @@
  * particular data type actually depends on the host machine
  * architecture, type of compiler and how the compiler were compiled.
  */
+ 
 #ifdef __cplusplus
 extern "C" {
 #endif
 #if 0
 } /* Fool Emacs into not indenting things. */
+#endif
+
+#ifdef __ADSPBLACKFIN__
+#ifndef HAVE_LONG_LONG
+#define HAVE_LONG_LONG
+#endif
+#ifndef ssize_t
+#define ssize_t signed int
+#endif
+
+#define SIZEOF_LONG_LONG 8
+#define __BIGSTACKVARIABLE__ static
+#else
+#define __BIGSTACKVARIABLE__
 #endif
 
 /* Assume P64 or LP64 (quite reasonable, really) */

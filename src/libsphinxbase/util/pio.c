@@ -79,7 +79,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#if !(defined(WIN32) || defined(_WIN32_WCE))
+#if !(defined(WIN32) || defined(_WIN32_WCE) || defined(__ADSPBLACKFIN__))
 #include <unistd.h>
 #endif
 #include <assert.h>
@@ -93,7 +93,7 @@ fopen_comp(const char *file, char *mode, int32 * ispipe)
 {
     FILE *fp;
 
-#if defined(_WIN32_WCE) || defined(GNUWINCE)
+#if defined(_WIN32_WCE) || defined(GNUWINCE) || defined(__ADSPBLACKFIN__)
     *ispipe = 0; /* No popen() on WinCE */
 #else /* NOT WINCE */
     int32 k, isgz;
@@ -121,7 +121,7 @@ fopen_comp(const char *file, char *mode, int32 * ispipe)
 #endif /* NOT WINCE */
 
     if (*ispipe) {
-#if defined(_WIN32_WCE) || defined(GNUWINCE)
+#if defined(_WIN32_WCE) || defined(GNUWINCE) || defined(__ADSPBLACKFIN__)
         /* Shouldn't get here, anyway */
         E_FATAL("No popen() on WinCE\n");
 #else
@@ -188,7 +188,7 @@ void
 fclose_comp(FILE * fp, int32 ispipe)
 {
     if (ispipe) {
-#if defined(_WIN32_WCE) || defined(GNUWINCE)
+#if defined(_WIN32_WCE) || defined(GNUWINCE) || defined(__ADSPBLACKFIN__)
 #elif defined(WIN32)
         _pclose(fp);
 #else
@@ -203,7 +203,7 @@ fclose_comp(FILE * fp, int32 ispipe)
 FILE *
 fopen_compchk(char *file, int32 * ispipe)
 {
-#if defined(_WIN32_WCE) || defined(GNUWINCE)
+#if defined(_WIN32_WCE) || defined(GNUWINCE) || defined(__ADSPBLACKFIN__)
     *ispipe = 0; /* No popen() on WinCE */
     /* And therefore the rest of this function is useless. */
     return (fopen_comp(file, "r", ispipe));
@@ -334,7 +334,7 @@ fread_retry(void *pointer, int32 size, int32 num_items, FILE * stream)
             --n_retry_rem;
 
             loc += n_items_read * size;
-#if !(defined(_WIN32) || defined(GNUWINCE))
+#if !(defined(_WIN32) || defined(GNUWINCE) || defined(__ADSPBLACKFIN__))
             sleep(1);
 #endif
         }
@@ -387,14 +387,29 @@ stat_retry(char *file, struct stat * statbuf)
 {
     int32 i;
 
+    
+    
     for (i = 0; i < STAT_RETRY_COUNT; i++) {
+
+#ifdef __ADSPBLACKFIN__
+		FILE *fp;
+
+		if ((fp=(FILE *)fopen(file, "r")!= 0))
+		{
+		    fseek( fp, 0, SEEK_END);
+		    statbuf->st_size = ftell( fp );
+		    fclose(fp);
+		    return 0;
+		}
+	
+#else      
         if (stat(file, statbuf) == 0)
             return 0;
-
+#endif // __ADSPBLACKFIN__
         if (i == 0) {
             E_ERROR_SYSTEM("stat(%s) failed; retrying...\n", file);
         }
-#if (! WIN32)
+#if (! WIN32 && !defined(__ADSPBLACKFIN__))
         sleep(1);
 #endif
     }
@@ -402,7 +417,7 @@ stat_retry(char *file, struct stat * statbuf)
     return -1;
 }
 
-
+#if !defined(__ADSPBLACKFIN__)
 int32
 stat_mtime(char *file)
 {
@@ -413,6 +428,8 @@ stat_mtime(char *file)
 
     return ((int32) statbuf.st_mtime);
 }
+#endif // __ADSPBLACKFIN__
+
 #endif
 
 FILE *
@@ -425,12 +442,12 @@ _myfopen(const char *file, char *mode, char *pgm, int32 line)
         fprintf(stderr,
                 "FATAL_ERROR: \"%s\", line %d: fopen(%s,%s) failed; ",
                 pgm, line, file, mode);
-#ifndef _WIN32_WCE
+#if ! (defined(_WIN32_WCE) || defined(__ADSPBLACKFIN__))
         perror("");
 #endif
         fflush(stderr);
 
-#ifdef _WIN32_WCE
+#if defined(_WIN32_WCE) || defined(__ADSPBLACKFIN__)
         exit(-1);
 #else
         exit(errno);
