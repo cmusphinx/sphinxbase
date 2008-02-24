@@ -7,7 +7,8 @@ libsphinxfe_la_SOURCES =			\
 	fe_warp.c				\
 	fe_warp_inverse_linear.c		\
 	fe_warp_piecewise_linear.c		\
-	fixlog.c
+	fixlog.c                                \
+	pitch.c
 
 noinst_HEADERS =				\
 	fe_internal.h				\
