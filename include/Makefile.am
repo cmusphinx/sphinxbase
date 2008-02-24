@@ -34,7 +34,7 @@ pkginclude_HEADERS =				\
 	mulaw.h					\
 	ngram_model.h				\
 	pio.h					\
-	pitch.h					\
+	yin.h					\
 	prim_type.h				\
 	profile.h				\
 	sphinx_config.h				\

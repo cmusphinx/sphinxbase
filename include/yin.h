@@ -28,7 +28,7 @@
  */
 
 /**
- * @file pitch.h Implementation of pitch estimation
+ * @file yin.h Implementation of pitch estimation
  * @author David Huggins-Daines <dhuggins@cs.cmu.edu>
  *
  * This implements part of the YIN algorithm:
@@ -38,8 +38,8 @@
  * Society of America, 111 (4), April 2002.
  */
 
-#ifndef __PITCH_H__
-#define __PITCH_H__
+#ifndef __YIN_H__
+#define __YIN_H__
 
 #ifdef __cplusplus
 extern "C"
@@ -53,37 +53,37 @@ extern "C"
 /**
  * Frame-based moving-window pitch estimator.
  */
-typedef struct pitch_est_s pitch_est_t;
+typedef struct yin_s yin_t;
 
 /**
  * Initialize moving-window pitch estimation.
  */
-pitch_est_t *pitch_est_init(int frame_size, float search_threshold,
-			    float search_range, int smooth_window);
+yin_t *yin_init(int frame_size, float search_threshold,
+                float search_range, int smooth_window);
 
 /**
  * Free a moving-window pitch estimator.
  */
-void pitch_est_free(pitch_est_t *pe);
+void yin_free(yin_t *pe);
 
 /**
  * Start processing an utterance.
  */
-void pitch_est_start(pitch_est_t *pe);
+void yin_start(yin_t *pe);
 
 /**
  * Mark the end of an utterance.
  */
-void pitch_est_end(pitch_est_t *pe);
+void yin_end(yin_t *pe);
 
 /**
  * Feed a frame of data to the pitch estimator.
  *
  * @param pe Pitch estimator.
  * @param frame Frame of <code>frame_size</code> (see
- * pitch_est_init()) samples of audio data.
+ * yin_init()) samples of audio data.
  */
-void pitch_est_write(pitch_est_t *pe, int16 const *frame);
+void yin_write(yin_t *pe, int16 const *frame);
 
 /**
  * Read a raw estimated pitch value from the pitch estimator.
@@ -98,11 +98,11 @@ void pitch_est_write(pitch_est_t *pe, int16 const *frame);
  * @return Non-zero if enough data was avaliable to return a pitch
  *         estimate, zero otherwise.
  */
-int pitch_est_read(pitch_est_t *pe, int16 *out_period, int16 *out_bestdiff);
+int yin_read(yin_t *pe, int16 *out_period, int16 *out_bestdiff);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __PITCH_H__ */
+#endif /* __YIN_H__ */
 

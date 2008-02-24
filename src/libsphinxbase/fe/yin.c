@@ -28,7 +28,7 @@
  */
 
 /**
- * @file pitch.c Implementation of pitch extraction.
+ * @file yin.c Implementation of pitch extraction.
  * @author David Huggins-Daines <dhuggins@cs.cmu.edu>
  */
 
@@ -39,14 +39,14 @@
  * Society of America, 111 (4), April 2002.
  */
 
-#include "pitch.h"
+#include "yin.h"
 #include "prim_type.h"
 #include "ckd_alloc.h"
 #include "fixpoint.h"
 
 #include <stdio.h>
 
-struct pitch_est_s {
+struct yin_s {
     int16 frame_size;       /** Size of analysis frame. */
     int16 search_threshold; /**< Threshold for finding period, in Q15 */
     int16 search_range;     /**< Range around best local estimate to search, in Q15 */
@@ -122,11 +122,11 @@ cmn_diff(int16 const *signal, int32 *out_diff, int ndiff)
     }
 }
 
-pitch_est_t *
-pitch_est_init(int frame_size, float search_threshold,
-	       float search_range, int smooth_window)
+yin_t *
+yin_init(int frame_size, float search_threshold,
+         float search_range, int smooth_window)
 {
-    pitch_est_t *pe;
+    yin_t *pe;
 
     pe = ckd_calloc(1, sizeof(*pe));
     pe->frame_size = frame_size;
@@ -142,7 +142,7 @@ pitch_est_init(int frame_size, float search_threshold,
 }
 
 void
-pitch_est_free(pitch_est_t *pe)
+yin_free(yin_t *pe)
 {
     ckd_free_2d(pe->diff_window);
     ckd_free(pe->period_window);
@@ -150,7 +150,7 @@ pitch_est_free(pitch_est_t *pe)
 }
 
 void
-pitch_est_start(pitch_est_t *pe)
+yin_start(yin_t *pe)
 {
     /* Reset the circular window pointers. */
     pe->wstart = pe->endut = 0;
@@ -158,7 +158,7 @@ pitch_est_start(pitch_est_t *pe)
 }
 
 void
-pitch_est_end(pitch_est_t *pe)
+yin_end(yin_t *pe)
 {
     pe->endut = 1;
 }
@@ -187,7 +187,7 @@ thresholded_search(int32 *diff_window, fixed32 threshold, int start, int end)
 }
 
 void
-pitch_est_write(pitch_est_t *pe, int16 const *frame)
+yin_write(yin_t *pe, int16 const *frame)
 {
     int outptr, difflen;
 
@@ -214,7 +214,7 @@ pitch_est_write(pitch_est_t *pe, int16 const *frame)
 }
 
 int
-pitch_est_read(pitch_est_t *pe, int16 *out_period, int16 *out_bestdiff)
+yin_read(yin_t *pe, int16 *out_period, int16 *out_bestdiff)
 {
     int wstart, wlen, half_wsize, i;
     int best, best_diff, search_width, low_period, high_period;
