@@ -1,4 +1,4 @@
-/* -*- c-file-style: "linux"; indent-tabs-mode: t -*- */
+/* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright (c) 2008 Beyond Access, Inc.  All rights reserved.
  * 
@@ -99,8 +99,6 @@ void pitch_est_write(pitch_est_t *pe, int16 const *frame);
  *         estimate, zero otherwise.
  */
 int pitch_est_read(pitch_est_t *pe, int16 *out_period, int16 *out_bestdiff);
-
-
 
 #ifdef __cplusplus
 }

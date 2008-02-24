@@ -1,4 +1,4 @@
-/* -*- c-file-style: "linux"; indent-tabs-mode: t -*- */
+/* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /*
  * Copyright (c) 2008 Beyond Access, Inc.  All rights reserved.
  * 
@@ -47,18 +47,18 @@
 #include <stdio.h>
 
 struct pitch_est_s {
-	int16 frame_size;       /** Size of analysis frame. */
-	int16 search_threshold; /**< Threshold for finding period, in Q15 */
-	int16 search_range;     /**< Range around best local estimate to search, in Q15 */
-	int16 nfr;              /**< Number of frames read so far. */
+    int16 frame_size;       /** Size of analysis frame. */
+    int16 search_threshold; /**< Threshold for finding period, in Q15 */
+    int16 search_range;     /**< Range around best local estimate to search, in Q15 */
+    int16 nfr;              /**< Number of frames read so far. */
 
-	unsigned char wsize;    /**< Size of smoothing window. */
-	unsigned char wstart;   /**< First frame in window. */
-	unsigned char wcur;     /**< Current frame of analysis. */
-	unsigned char endut;    /**< Hoch Hech! Are we at the utterance end? */
+    unsigned char wsize;    /**< Size of smoothing window. */
+    unsigned char wstart;   /**< First frame in window. */
+    unsigned char wcur;     /**< Current frame of analysis. */
+    unsigned char endut;    /**< Hoch Hech! Are we at the utterance end? */
 
-	fixed32 **diff_window;  /**< Window of difference function outputs. */
-	int16 *period_window;   /**< Window of best period estimates. */
+    fixed32 **diff_window;  /**< Window of difference function outputs. */
+    int16 *period_window;   /**< Window of best period estimates. */
 };
 
 /**
@@ -67,239 +67,239 @@ struct pitch_est_s {
 static void
 cmn_diff(int16 const *signal, int32 *out_diff, int ndiff)
 {
-	uint32 cum, cshift;
-	int32 t, tscale;
+    uint32 cum, cshift;
+    int32 t, tscale;
 
-	out_diff[0] = 32768;
-	cum = 0;
-	cshift = 0;
+    out_diff[0] = 32768;
+    cum = 0;
+    cshift = 0;
 
-	/* Determine how many bits we can scale t up by below. */
-	for (tscale = 0; tscale < 32; ++tscale)
-		if (ndiff & (1<<(31-tscale)))
-			break;
-	--tscale; /* Avoid teh overflowz. */
-	/* printf("tscale is %d (ndiff - 1) << tscale is %d\n",
-	   tscale, (ndiff-1) << tscale); */
+    /* Determine how many bits we can scale t up by below. */
+    for (tscale = 0; tscale < 32; ++tscale)
+        if (ndiff & (1<<(31-tscale)))
+            break;
+    --tscale; /* Avoid teh overflowz. */
+    /* printf("tscale is %d (ndiff - 1) << tscale is %d\n",
+       tscale, (ndiff-1) << tscale); */
 
-	/* Somewhat elaborate block floating point implementation.
-	 * The fp implementation of this is really a lot simpler. */
-	for (t = 1; t < ndiff; ++t) {
-		uint32 dd, dshift, norm;
-		int j;
+    /* Somewhat elaborate block floating point implementation.
+     * The fp implementation of this is really a lot simpler. */
+    for (t = 1; t < ndiff; ++t) {
+        uint32 dd, dshift, norm;
+        int j;
 
-		dd = 0;
-		dshift = 0;
-		for (j = 0; j < ndiff; ++j) {
-			int diff = signal[j] - signal[t + j];
-			/* Guard against overflows. */
-			if (dd > (1<<tscale)) {
-				dd >>= 1;
-				++dshift;
-			}
-			dd += (diff * diff) >> dshift;
-		}
-		/* Make sure the diffs and cum are shifted to the same
-		 * scaling factor (usually dshift will be zero) */
-		if (dshift > cshift) {
-			cum += dd << (dshift-cshift);
-		}
-		else {
-			cum += dd >> (cshift-dshift);
-		}
+        dd = 0;
+        dshift = 0;
+        for (j = 0; j < ndiff; ++j) {
+            int diff = signal[j] - signal[t + j];
+            /* Guard against overflows. */
+            if (dd > (1<<tscale)) {
+                dd >>= 1;
+                ++dshift;
+            }
+            dd += (diff * diff) >> dshift;
+        }
+        /* Make sure the diffs and cum are shifted to the same
+         * scaling factor (usually dshift will be zero) */
+        if (dshift > cshift) {
+            cum += dd << (dshift-cshift);
+        }
+        else {
+            cum += dd >> (cshift-dshift);
+        }
 
-		/* Guard against overflows and also ensure that (t<<tscale) > cum. */
-		while (cum > (1<<tscale)) {
-			cum >>= 1;
-			++cshift;
-		}
-		/* Calculate the normalizer in high precision. */
-		norm = (t << tscale) / cum;
-		/* Do a long multiply and shift down to Q15. */
-		out_diff[t] = ((long long)dd * norm) >> (tscale - 15 + cshift - dshift);
-		/* printf("dd %d cshift %d dshift %d scaledt %d cum %d norm %d cmn %d\n",
-		   dd, cshift, dshift, (t<<tscale), cum, norm, out_diff[t]); */
-	}
+        /* Guard against overflows and also ensure that (t<<tscale) > cum. */
+        while (cum > (1<<tscale)) {
+            cum >>= 1;
+            ++cshift;
+        }
+        /* Calculate the normalizer in high precision. */
+        norm = (t << tscale) / cum;
+        /* Do a long multiply and shift down to Q15. */
+        out_diff[t] = ((long long)dd * norm) >> (tscale - 15 + cshift - dshift);
+        /* printf("dd %d cshift %d dshift %d scaledt %d cum %d norm %d cmn %d\n",
+           dd, cshift, dshift, (t<<tscale), cum, norm, out_diff[t]); */
+    }
 }
 
 pitch_est_t *
 pitch_est_init(int frame_size, float search_threshold,
 	       float search_range, int smooth_window)
 {
-	pitch_est_t *pe;
+    pitch_est_t *pe;
 
-	pe = ckd_calloc(1, sizeof(*pe));
-	pe->frame_size = frame_size;
-	pe->search_threshold = (int16)(search_threshold * 32768);
-	pe->search_range = (int16)(search_range * 32768);
-	pe->wsize = smooth_window * 2 + 1;
-	pe->diff_window = ckd_calloc_2d(pe->wsize,
-					 pe->frame_size / 2,
-					 sizeof(**pe->diff_window));
-	pe->period_window = ckd_calloc(pe->wsize,
-				       sizeof(*pe->period_window));
-	return pe;
+    pe = ckd_calloc(1, sizeof(*pe));
+    pe->frame_size = frame_size;
+    pe->search_threshold = (int16)(search_threshold * 32768);
+    pe->search_range = (int16)(search_range * 32768);
+    pe->wsize = smooth_window * 2 + 1;
+    pe->diff_window = ckd_calloc_2d(pe->wsize,
+                                    pe->frame_size / 2,
+                                    sizeof(**pe->diff_window));
+    pe->period_window = ckd_calloc(pe->wsize,
+                                   sizeof(*pe->period_window));
+    return pe;
 }
 
 void
 pitch_est_free(pitch_est_t *pe)
 {
-	ckd_free_2d(pe->diff_window);
-	ckd_free(pe->period_window);
-	ckd_free(pe);
+    ckd_free_2d(pe->diff_window);
+    ckd_free(pe->period_window);
+    ckd_free(pe);
 }
 
 void
 pitch_est_start(pitch_est_t *pe)
 {
-	/* Reset the circular window pointers. */
-	pe->wstart = pe->endut = 0;
-	pe->nfr = 0;
+    /* Reset the circular window pointers. */
+    pe->wstart = pe->endut = 0;
+    pe->nfr = 0;
 }
 
 void
 pitch_est_end(pitch_est_t *pe)
 {
-	pe->endut = 1;
+    pe->endut = 1;
 }
 
 int
 thresholded_search(int32 *diff_window, fixed32 threshold, int start, int end)
 {
-	int i, min, argmin;
+    int i, min, argmin;
 
-	min = 32768;
-	argmin = 0;
-	for (i = start; i < end; ++i) {
-		int diff = diff_window[i];
+    min = 32768;
+    argmin = 0;
+    for (i = start; i < end; ++i) {
+        int diff = diff_window[i];
 
-		if (diff < threshold) {
-			min = diff;
-			argmin = i;
-			break;
-		}
-		if (diff < min) {
-			min = diff;
-			argmin = i;
-		}
-	}
-	return argmin;
+        if (diff < threshold) {
+            min = diff;
+            argmin = i;
+            break;
+        }
+        if (diff < min) {
+            min = diff;
+            argmin = i;
+        }
+    }
+    return argmin;
 }
 
 void
 pitch_est_write(pitch_est_t *pe, int16 const *frame)
 {
-	int outptr, difflen;
+    int outptr, difflen;
 
-	/* Rotate the window one frame forward. */
-	++pe->wstart;
-	/* Fill in the frame before wstart. */
-	outptr = pe->wstart - 1;
-	/* Wrap around the window pointer. */
-	if (pe->wstart == pe->wsize)
-		pe->wstart = 0;
+    /* Rotate the window one frame forward. */
+    ++pe->wstart;
+    /* Fill in the frame before wstart. */
+    outptr = pe->wstart - 1;
+    /* Wrap around the window pointer. */
+    if (pe->wstart == pe->wsize)
+        pe->wstart = 0;
 
-	/* Now calculate normalized difference function. */
-	difflen = pe->frame_size / 2;
-	cmn_diff(frame, pe->diff_window[outptr], difflen);
+    /* Now calculate normalized difference function. */
+    difflen = pe->frame_size / 2;
+    cmn_diff(frame, pe->diff_window[outptr], difflen);
 
-	/* Find the first point under threshold.  If not found, then
-	 * use the absolute minimum. */
-	pe->period_window[outptr]
-		= thresholded_search(pe->diff_window[outptr],
-				     pe->search_threshold, 0, difflen);
+    /* Find the first point under threshold.  If not found, then
+     * use the absolute minimum. */
+    pe->period_window[outptr]
+        = thresholded_search(pe->diff_window[outptr],
+                             pe->search_threshold, 0, difflen);
 
-	/* Increment total number of frames. */
-	++pe->nfr;
+    /* Increment total number of frames. */
+    ++pe->nfr;
 }
 
 int
 pitch_est_read(pitch_est_t *pe, int16 *out_period, int16 *out_bestdiff)
 {
-	int wstart, wlen, half_wsize, i;
-	int best, best_diff, search_width, low_period, high_period;
+    int wstart, wlen, half_wsize, i;
+    int best, best_diff, search_width, low_period, high_period;
 
-	half_wsize = (pe->wsize-1)/2;
-	/* Without any smoothing, just return the current value (don't
-	 * need to do anything to the current poitner either). */
-	if (half_wsize == 0) {
-		if (pe->endut)
-			return 0;
-		*out_period = pe->period_window[0];
-		*out_bestdiff = pe->diff_window[0][pe->period_window[0]];
-		return 1;
-	}
+    half_wsize = (pe->wsize-1)/2;
+    /* Without any smoothing, just return the current value (don't
+     * need to do anything to the current poitner either). */
+    if (half_wsize == 0) {
+        if (pe->endut)
+            return 0;
+        *out_period = pe->period_window[0];
+        *out_bestdiff = pe->diff_window[0][pe->period_window[0]];
+        return 1;
+    }
 
-	/* We can't do anything unless we have at least (wsize-1)/2 + 1
-	 * frames, unless we're at the end of the utterance. */
-	if (pe->endut == 0 && pe->nfr < half_wsize + 1) {
-		/* Don't increment the current pointer either. */
-		return 0;
-	}
+    /* We can't do anything unless we have at least (wsize-1)/2 + 1
+     * frames, unless we're at the end of the utterance. */
+    if (pe->endut == 0 && pe->nfr < half_wsize + 1) {
+        /* Don't increment the current pointer either. */
+        return 0;
+    }
 
-	/* Establish the smoothing window. */
-	/* End of utterance. */
-	if (pe->endut) {
-		/* We are done (no more data) when pe->wcur = pe->wstart. */
-		if (pe->wcur == pe->wstart)
-			return 0;
-		/* I.e. pe->wcur (circular minus) half_wsize. */
-		wstart = (pe->wcur + pe->wsize - half_wsize) % pe->wsize;
-		/* Number of frames from wstart up to pe->wstart. */
-		wlen = pe->wstart - wstart;
-		if (wlen < 0) wlen += pe->wsize;
-		/*printf("ENDUT! ");*/
-	}
-	/* Beginning of utterance. */
-	else if (pe->nfr < pe->wsize) {
-		wstart = 0;
-		wlen = pe->nfr;
-	}
-	/* Normal case, it is what it is. */
-	else {
-		wstart = pe->wstart;
-		wlen = pe->wsize;
-	}
+    /* Establish the smoothing window. */
+    /* End of utterance. */
+    if (pe->endut) {
+        /* We are done (no more data) when pe->wcur = pe->wstart. */
+        if (pe->wcur == pe->wstart)
+            return 0;
+        /* I.e. pe->wcur (circular minus) half_wsize. */
+        wstart = (pe->wcur + pe->wsize - half_wsize) % pe->wsize;
+        /* Number of frames from wstart up to pe->wstart. */
+        wlen = pe->wstart - wstart;
+        if (wlen < 0) wlen += pe->wsize;
+        /*printf("ENDUT! ");*/
+    }
+    /* Beginning of utterance. */
+    else if (pe->nfr < pe->wsize) {
+        wstart = 0;
+        wlen = pe->nfr;
+    }
+    /* Normal case, it is what it is. */
+    else {
+        wstart = pe->wstart;
+        wlen = pe->wsize;
+    }
 
-	/* Now (finally) look for the best local estimate. */
-	/*printf("Searching for local estimate in %d frames around %d from %d\n",
-	  wlen, pe->wcur, wstart); */
-	best = pe->period_window[pe->wcur];
-	best_diff = pe->diff_window[pe->wcur][best];
-	for (i = 0; i < wlen; ++i) {
-		int j = wstart + i;
-		int diff;
+    /* Now (finally) look for the best local estimate. */
+    /*printf("Searching for local estimate in %d frames around %d from %d\n",
+      wlen, pe->wcur, wstart); */
+    best = pe->period_window[pe->wcur];
+    best_diff = pe->diff_window[pe->wcur][best];
+    for (i = 0; i < wlen; ++i) {
+        int j = wstart + i;
+        int diff;
 
-		j %= pe->wsize;
-		diff = pe->diff_window[j][pe->period_window[j]];
-		if (diff < best_diff) {
-			best_diff = diff;
-			best = pe->period_window[j];
-		}
-	}
-	/* If it's the same as the current one then return it. */
-	if (best == pe->period_window[pe->wcur]) {
-		/* Increment the current pointer. */
-		if (++pe->wcur == pe->wsize)
-			pe->wcur = 0;
-		*out_period = best;
-		*out_bestdiff = best_diff;
-		return 1;
-	}
-	/* Otherwise, redo the search inside a narrower range. */
-	search_width = best * pe->search_range / 32768;
-	if (search_width == 0) search_width = 1;
-	low_period = best - search_width;
-	high_period = best + search_width;
-	if (low_period < 0) low_period = 0;
-	if (high_period > pe->frame_size / 2) high_period = pe->frame_size / 2;
-	*out_period = thresholded_search(pe->diff_window[pe->wcur],
-					 pe->search_threshold,
-					 low_period, high_period);
-	*out_bestdiff = pe->diff_window[pe->wcur][*out_period];
+        j %= pe->wsize;
+        diff = pe->diff_window[j][pe->period_window[j]];
+        if (diff < best_diff) {
+            best_diff = diff;
+            best = pe->period_window[j];
+        }
+    }
+    /* If it's the same as the current one then return it. */
+    if (best == pe->period_window[pe->wcur]) {
+        /* Increment the current pointer. */
+        if (++pe->wcur == pe->wsize)
+            pe->wcur = 0;
+        *out_period = best;
+        *out_bestdiff = best_diff;
+        return 1;
+    }
+    /* Otherwise, redo the search inside a narrower range. */
+    search_width = best * pe->search_range / 32768;
+    if (search_width == 0) search_width = 1;
+    low_period = best - search_width;
+    high_period = best + search_width;
+    if (low_period < 0) low_period = 0;
+    if (high_period > pe->frame_size / 2) high_period = pe->frame_size / 2;
+    *out_period = thresholded_search(pe->diff_window[pe->wcur],
+                                     pe->search_threshold,
+                                     low_period, high_period);
+    *out_bestdiff = pe->diff_window[pe->wcur][*out_period];
 
-	/* Increment the current pointer. */
-	if (++pe->wcur == pe->wsize)
-		pe->wcur = 0;
-	return 1;
+    /* Increment the current pointer. */
+    if (++pe->wcur == pe->wsize)
+        pe->wcur = 0;
+    return 1;
 }
