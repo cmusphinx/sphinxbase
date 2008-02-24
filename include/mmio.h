@@ -35,10 +35,9 @@
  *
  */
 /**
- * \file mmio.h 
- * \author David Huggins-Daines <dhuggins@cs.cmu.edu>
- * 
- * Memory-mapped I/O wrappers for files.
+ * @file mmio.h 
+ * @brief Memory-mapped I/O wrappers for files.
+ * @author David Huggins-Daines <dhuggins@cs.cmu.edu>
  **/
 
 #ifndef __MMIO_H__

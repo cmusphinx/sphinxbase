@@ -28,7 +28,8 @@
  */
 
 /**
- * @file yin.h Implementation of pitch estimation
+ * @file yin.h
+ * @brief Implementation of pitch estimation
  * @author David Huggins-Daines <dhuggins@cs.cmu.edu>
  *
  * This implements part of the YIN algorithm:
@@ -89,7 +90,7 @@ void yin_write(yin_t *pe, int16 const *frame);
  * Read a raw estimated pitch value from the pitch estimator.
  *
  * @param pe Pitch estimator.
- * @param out_pitch Output: an estimate of the period (*not* the pitch)
+ * @param out_period Output: an estimate of the period (*not* the pitch)
  *                  of the signal in samples.
  * @param out_bestdiff Output: the minimum normalized difference value
  *                     associated with <code>*out_pitch</code>, in Q15

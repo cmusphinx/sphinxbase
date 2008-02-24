@@ -36,9 +36,8 @@
  */
 /**
  * @file ngram_model.h
+ * @brief N-Gram language models
  * @author David Huggins-Daines <dhuggins@cs.cmu.edu>
- *
- * N-Gram language models
  */
 
 #ifndef __NGRAM_MODEL_H__

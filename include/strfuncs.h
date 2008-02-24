@@ -35,7 +35,8 @@
  *
  */
 /**
- * \file strfuncs.h -- miscellaneous useful string functions
+ * @file strfuncs.h
+ * @brief Miscellaneous useful string functions
  */
 
 #ifndef __SB_STRFUNCS_H__
