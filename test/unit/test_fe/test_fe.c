@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "fe.h"
 #include "cmd_ln.h"
@@ -16,10 +17,10 @@ main(int argc, char *argv[])
 	FILE *raw;
 	cmd_ln_t *config;
 	fe_t *fe;
-	int16 buf[2048];
+	int16 buf[1024];
 	int16 const *inptr;
 	int32 frame_shift, frame_size;
-	mfcc_t **cepbuf1, **cepbuf2;
+	mfcc_t **cepbuf1, **cepbuf2, **cptr;
 	int32 nfr, i;
 	size_t nsamp;
 
@@ -86,6 +87,101 @@ main(int argc, char *argv[])
 	nfr = 1;
 	TEST_EQUAL(0, fe_end_utt(fe, cepbuf2[4], &nfr));
 	printf("nfr %d\n", nfr);
+	TEST_EQUAL(nfr, 1);
+
+	for (i = 0; i < 5; ++i) {
+		int j;
+		printf("%d: ", i);
+		for (j = 0; j < DEFAULT_NUM_CEPSTRA; ++j) {
+			printf("%.2f,%.2f ",
+			       MFCC2FLOAT(cepbuf1[i][j]),
+			       MFCC2FLOAT(cepbuf2[i][j]));
+			TEST_EQUAL_FLOAT(cepbuf1[i][j], cepbuf2[i][j]);
+		}
+		printf("\n");
+	}
+
+	/* Now, also test to make sure that even if we feed data in
+	 * little tiny bits we can still make things work. */
+	memset(cepbuf2[0], 0, 5 * DEFAULT_NUM_CEPSTRA * sizeof(**cepbuf2));
+	inptr = &buf[0];
+	cptr = &cepbuf2[0];
+	nfr = 5;
+	i = 5;
+	nsamp = 256;
+	TEST_EQUAL(0, fe_start_utt(fe));
+	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, cptr, &i));
+	printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, i);
+	cptr += i;
+	nfr -= i;
+	i = nfr;
+	nsamp = 256;
+	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, cptr, &i));
+	printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, i);
+	cptr += i;
+	nfr -= i;
+	i = nfr;
+	nsamp = 256;
+	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, cptr, &i));
+	printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, i);
+	cptr += i;
+	nfr -= i;
+	i = nfr;
+	nsamp = 256;
+	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, cptr, &i));
+	printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, i);
+	cptr += i;
+	nfr -= i;
+	TEST_EQUAL(0, fe_end_utt(fe, *cptr, &nfr));
+	printf("nfr %d\n", nfr);
+	TEST_EQUAL(nfr, 1);
+
+	for (i = 0; i < 5; ++i) {
+		int j;
+		printf("%d: ", i);
+		for (j = 0; j < DEFAULT_NUM_CEPSTRA; ++j) {
+			printf("%.2f,%.2f ",
+			       MFCC2FLOAT(cepbuf1[i][j]),
+			       MFCC2FLOAT(cepbuf2[i][j]));
+			TEST_EQUAL_FLOAT(cepbuf1[i][j], cepbuf2[i][j]);
+		}
+		printf("\n");
+	}
+
+	/* And now, finally, test fe_process_utt() */
+	inptr = &buf[0];
+	i = 0;
+	TEST_EQUAL(0, fe_start_utt(fe));
+	TEST_EQUAL(0, fe_process_utt(fe, inptr, 256, &cptr, &nfr));
+	printf("i %d nfr %d\n", i, nfr);
+	if (nfr)
+		memcpy(cepbuf2[i], cptr[0], nfr * DEFAULT_NUM_CEPSTRA * sizeof(**cptr));
+	ckd_free_2d(cptr);
+	i += nfr;
+	inptr += 256;
+	TEST_EQUAL(0, fe_process_utt(fe, inptr, 256, &cptr, &nfr));
+	printf("i %d nfr %d\n", i, nfr);
+	if (nfr)
+		memcpy(cepbuf2[i], cptr[0], nfr * DEFAULT_NUM_CEPSTRA * sizeof(**cptr));
+	ckd_free_2d(cptr);
+	i += nfr;
+	inptr += 256;
+	TEST_EQUAL(0, fe_process_utt(fe, inptr, 256, &cptr, &nfr));
+	printf("i %d nfr %d\n", i, nfr);
+	if (nfr)
+		memcpy(cepbuf2[i], cptr[0], nfr * DEFAULT_NUM_CEPSTRA * sizeof(**cptr));
+	ckd_free_2d(cptr);
+	i += nfr;
+	inptr += 256;
+	TEST_EQUAL(0, fe_process_utt(fe, inptr, 256, &cptr, &nfr));
+	printf("i %d nfr %d\n", i, nfr);
+	if (nfr)
+		memcpy(cepbuf2[i], cptr[0], nfr * DEFAULT_NUM_CEPSTRA * sizeof(**cptr));
+	ckd_free_2d(cptr);
+	i += nfr;
+	inptr += 256;
+	TEST_EQUAL(0, fe_end_utt(fe, cepbuf2[i], &nfr));
+	printf("i %d nfr %d\n", i, nfr);
 	TEST_EQUAL(nfr, 1);
 
 	for (i = 0; i < 5; ++i) {

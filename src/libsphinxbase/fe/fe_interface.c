@@ -411,23 +411,17 @@ fe_process_utt(fe_t * fe, int16 const * spch, size_t nsamps,
     mfcc_t **cep;
     int rv;
 
-    /* Are there enough samples to make at least 1 frame? */
-    if (nsamps + fe->num_overflow_samps < (size_t)fe->frame_size) {
-        *nframes = 0;
-        cep = NULL;
-    }
-    else {
-        /* How many frames will we be able to get? */
-        *nframes = 1
-            + ((nsamps + fe->num_overflow_samps - fe->frame_size)
-               / fe->frame_shift);
-        /* Create the output buffer. */
+    /* Figure out how many frames we will need. */
+    fe_process_frames(fe, NULL, &nsamps, NULL, nframes);
+    /* Create the output buffer (it has to exist, even if there are no output frames). */
+    if (*nframes)
         cep = (mfcc_t **)ckd_calloc_2d(*nframes, fe->feature_dimension, sizeof(**cep));
-    }
-
+    else
+        cep = (mfcc_t **)ckd_calloc_2d(1, fe->feature_dimension, sizeof(**cep));
     /* Now just call fe_process_frames() with the allocated buffer. */
     rv = fe_process_frames(fe, &spch, &nsamps, cep, nframes);
     *cep_block = cep;
+
     return rv;
 }
 
