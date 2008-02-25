@@ -93,7 +93,7 @@ cmn_diff(int16 const *signal, int32 *out_diff, int ndiff)
         for (j = 0; j < ndiff; ++j) {
             int diff = signal[j] - signal[t + j];
             /* Guard against overflows. */
-            if (dd > (1<<tscale)) {
+            if (dd > (1UL<<tscale)) {
                 dd >>= 1;
                 ++dshift;
             }
@@ -109,14 +109,15 @@ cmn_diff(int16 const *signal, int32 *out_diff, int ndiff)
         }
 
         /* Guard against overflows and also ensure that (t<<tscale) > cum. */
-        while (cum > (1<<tscale)) {
+        while (cum > (1UL<<tscale)) {
             cum >>= 1;
             ++cshift;
         }
         /* Calculate the normalizer in high precision. */
         norm = (t << tscale) / cum;
         /* Do a long multiply and shift down to Q15. */
-        out_diff[t] = ((long long)dd * norm) >> (tscale - 15 + cshift - dshift);
+        out_diff[t] = (int32)(((long long)dd * norm)
+								>> (tscale - 15 + cshift - dshift));
         /* printf("dd %d cshift %d dshift %d scaledt %d cum %d norm %d cmn %d\n",
            dd, cshift, dshift, (t<<tscale), cum, norm, out_diff[t]); */
     }

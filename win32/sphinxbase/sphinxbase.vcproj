@@ -808,26 +808,8 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxbase\util\linklist.c"
+				RelativePath="..\..\src\libsphinxbase\util\listelem_alloc.c"
 				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						AdditionalIncludeDirectories=""
-						PreprocessorDefinitions=""
-					/>
-				</FileConfiguration>
 			</File>
 			<File
 				RelativePath="..\..\src\libsphinxbase\lm\lm3g_model.c"
@@ -1089,6 +1071,10 @@
 					/>
 				</FileConfiguration>
 			</File>
+			<File
+				RelativePath="..\..\src\libsphinxbase\fe\yin.c"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -1231,7 +1217,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\include\linklist.h"
+				RelativePath="..\..\include\listelem_alloc.h"
 				>
 			</File>
 			<File
@@ -1308,6 +1294,10 @@
 			</File>
 			<File
 				RelativePath="..\..\include\unlimit.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\yin.h"
 				>
 			</File>
 		</Filter>
