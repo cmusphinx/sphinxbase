@@ -47,10 +47,10 @@
 #include <stdio.h>
 
 struct yin_s {
-    int16 frame_size;       /** Size of analysis frame. */
-    int16 search_threshold; /**< Threshold for finding period, in Q15 */
-    int16 search_range;     /**< Range around best local estimate to search, in Q15 */
-    int16 nfr;              /**< Number of frames read so far. */
+    uint16 frame_size;       /** Size of analysis frame. */
+    uint16 search_threshold; /**< Threshold for finding period, in Q15 */
+    uint16 search_range;     /**< Range around best local estimate to search, in Q15 */
+    uint16 nfr;              /**< Number of frames read so far. */
 
     unsigned char wsize;    /**< Size of smoothing window. */
     unsigned char wstart;   /**< First frame in window. */
@@ -58,7 +58,7 @@ struct yin_s {
     unsigned char endut;    /**< Hoch Hech! Are we at the utterance end? */
 
     fixed32 **diff_window;  /**< Window of difference function outputs. */
-    int16 *period_window;   /**< Window of best period estimates. */
+    uint16 *period_window;  /**< Window of best period estimates. */
 };
 
 /**
@@ -117,7 +117,7 @@ cmn_diff(int16 const *signal, int32 *out_diff, int ndiff)
         norm = (t << tscale) / cum;
         /* Do a long multiply and shift down to Q15. */
         out_diff[t] = (int32)(((long long)dd * norm)
-								>> (tscale - 15 + cshift - dshift));
+                              >> (tscale - 15 + cshift - dshift));
         /* printf("dd %d cshift %d dshift %d scaledt %d cum %d norm %d cmn %d\n",
            dd, cshift, dshift, (t<<tscale), cum, norm, out_diff[t]); */
     }
@@ -131,8 +131,8 @@ yin_init(int frame_size, float search_threshold,
 
     pe = ckd_calloc(1, sizeof(*pe));
     pe->frame_size = frame_size;
-    pe->search_threshold = (int16)(search_threshold * 32768);
-    pe->search_range = (int16)(search_range * 32768);
+    pe->search_threshold = (uint16)(search_threshold * 32768);
+    pe->search_range = (uint16)(search_range * 32768);
     pe->wsize = smooth_window * 2 + 1;
     pe->diff_window = ckd_calloc_2d(pe->wsize,
                                     pe->frame_size / 2,
@@ -215,7 +215,7 @@ yin_write(yin_t *pe, int16 const *frame)
 }
 
 int
-yin_read(yin_t *pe, int16 *out_period, int16 *out_bestdiff)
+yin_read(yin_t *pe, uint16 *out_period, uint16 *out_bestdiff)
 {
     int wstart, wlen, half_wsize, i;
     int best, best_diff, search_width, low_period, high_period;

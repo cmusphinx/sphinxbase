@@ -99,7 +99,7 @@ void yin_write(yin_t *pe, int16 const *frame);
  * @return Non-zero if enough data was avaliable to return a pitch
  *         estimate, zero otherwise.
  */
-int yin_read(yin_t *pe, int16 *out_period, int16 *out_bestdiff);
+int yin_read(yin_t *pe, uint16 *out_period, uint16 *out_bestdiff);
 
 #ifdef __cplusplus
 }
