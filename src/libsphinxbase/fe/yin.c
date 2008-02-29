@@ -301,10 +301,15 @@ yin_read(yin_t *pe, uint16 *out_period, uint16 *out_bestdiff)
     if (low_period < 0) low_period = 0;
     if (high_period > pe->frame_size / 2) high_period = pe->frame_size / 2;
     /* printf("Searching from %d to %d\n", low_period, high_period); */
-    *out_period = thresholded_search(pe->diff_window[pe->wcur],
-                                     pe->search_threshold,
-                                     low_period, high_period);
-    *out_bestdiff = pe->diff_window[pe->wcur][*out_period];
+    best = thresholded_search(pe->diff_window[pe->wcur],
+                              pe->search_threshold,
+                              low_period, high_period);
+    best_diff = pe->diff_window[pe->wcur][best];
+
+    if (out_period)
+        *out_period = (best > 65535) ? 65535 : best;
+    if (out_bestdiff)
+        *out_bestdiff = (best_diff > 65535) ? 65535 : best_diff;
 
     /* Increment the current pointer. */
     if (++pe->wcur == pe->wsize)
