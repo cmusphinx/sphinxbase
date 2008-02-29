@@ -60,35 +60,30 @@
  * 		Created.
  */
 
+#include <config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#if (!(defined(WIN32) || defined(_WIN32_WCE)) || defined(GNUWINCE)) && !defined(__ADSPBLACKFIN__)
-#include <unistd.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#elif defined(__ADSPBLACKFIN__)
-
-#else
-#include <windows.h>
-#ifndef _WIN32_WCE
-#include <time.h>
-#endif
+#if defined(HAVE_UNISTD_H) /* I know this, this is Unix... */
+# include <unistd.h>
+# include <sys/time.h>
+# include <sys/resource.h>
+#elif defined(_WIN32)
+# include <windows.h>
+# ifndef _WIN32_WCE
+#  include <time.h>
+# endif
 #endif
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 #pragma warning (disable: 4996)
 #endif
 
 #include "profile.h"
 #include "err.h"
 #include "ckd_alloc.h"
-
-#if (__ALPHA_OSF1__)
-extern uint32 rpcc(void);       /* On an alpha, use the RPCC instruction */
-#endif
 
 #ifdef _WIN32_WCE
 DWORD unlink(const char *filename)
@@ -151,55 +146,6 @@ pctr_free(pctr_t * pc)
 }
 
 
-int32
-host_pclk(int32 dummy)
-{
-    int32 mhz = 0;
-#if (__ALPHA_OSF1__)
-    int32 i, j, k, besti, bestj, diff;
-    uint32 rpcc_start, rpcc_end;
-    struct rusage start, stop;
-    float64 t;
-
-    memset(&start, 0, sizeof(struct rusage));
-    memset(&stop, 0, sizeof(struct rusage));
-
-    getrusage(RUSAGE_SELF, &start);
-    rpcc_start = rpcc();
-    /* Consume some cpu cycles; dummy to forced compiler not to optimize loop away */
-    dummy &= 0x7fffffff;
-    dummy |= 0x70000000;
-    for (i = 1; i < 100000000; i++)
-        if (i > dummy)
-            return (i);
-    rpcc_end = rpcc();
-    getrusage(RUSAGE_SELF, &stop);
-
-    t = (stop.ru_utime.tv_sec - start.ru_utime.tv_sec) +
-        ((stop.ru_utime.tv_usec - start.ru_utime.tv_usec) * 0.000001);
-    mhz = ((rpcc_end - rpcc_start) / t) * 0.000001 + 0.5;
-    diff = (int32) 0x7fffffff;
-    for (i = 100; i <= 1000; i += 100) {
-        for (j = 1; j <= 10; j++) {
-            k = i / j - mhz;
-            if (k < 0)
-                k = -k;
-            if (k < diff) {
-                diff = k;
-                besti = i;
-                bestj = j;
-            }
-        }
-    }
-    mhz = besti / bestj;
-    E_INFO("%d ticks in %.3f sec; machine clock rate = %d MHz\n",
-           rpcc_end - rpcc_start, t, mhz);
-#endif
-
-    return mhz;
-}
-
-
 #if (WIN32) && !defined(GNUWINCE)
 
 #define TM_LOWSCALE	1e-7
@@ -216,7 +162,7 @@ make_sec(FILETIME * tm)
     return (dt);
 }
 
-#else
+#else /* NOT WINDOWS */
 
 static float64
 make_sec(struct timeval *s)

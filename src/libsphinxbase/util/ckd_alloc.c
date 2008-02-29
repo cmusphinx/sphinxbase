@@ -141,7 +141,7 @@ __ckd_calloc__(size_t n_elem, size_t elem_size,
 {
     void *mem;
 
-#ifdef __ADSPBLACKFIN__
+#if defined(__ADSPBLACKFIN__) && !defined(__linux__)
     if ((mem = heap_calloc(heap_lookup(1),n_elem, elem_size)) == NULL)
     	if ((mem = heap_calloc(heap_lookup(0),n_elem, elem_size)) == NULL) 
     	{
@@ -165,7 +165,7 @@ __ckd_malloc__(size_t size, const char *caller_file, int caller_line)
 {
     void *mem;
 
-#ifdef __ADSPBLACKFIN__
+#if defined(__ADSPBLACKFIN__) && !defined(__linux__)
     if ((mem = heap_malloc(heap_lookup(0),size)) == NULL)
        	if ((mem = heap_malloc(heap_lookup(1),size)) == NULL) 
 #else
@@ -183,7 +183,7 @@ __ckd_realloc__(void *ptr, size_t new_size,
                 const char *caller_file, int caller_line)
 {
     void *mem;
-#ifdef __ADSPBLACKFIN__
+#if defined(__ADSPBLACKFIN__) && !defined(__linux__)
     if ((mem = heap_realloc(heap_lookup(0),ptr, new_size)) == NULL) {
 #else
     if ((mem = realloc(ptr, new_size)) == NULL) {
@@ -236,7 +236,7 @@ void
 ckd_free(void *ptr)
 {
     if (ptr)
-#ifdef __ADSPBLACKFIN__    
+#if defined(__ADSPBLACKFIN__) && !defined(__linux__)
         heap_free(0,ptr);
 #else
 		free(ptr);

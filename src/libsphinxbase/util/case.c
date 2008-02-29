@@ -113,3 +113,28 @@ strcmp_nocase(const char *str1, const char *str2)
 
     return 0;
 }
+
+int32
+strncmp_nocase(const char *str1, const char *str2, size_t len)
+{
+    char c1, c2;
+
+    if (str1 && str2) {
+        size_t n;
+
+        for (n = 0; n < len; ++n) {
+            c1 = *(str1++);
+            c1 = UPPER_CASE(c1);
+            c2 = *(str2++);
+            c2 = UPPER_CASE(c2);
+            if (c1 != c2)
+                return (c1 - c2);
+            if (c1 == '\0')
+                return 0;
+        }
+    }
+    else
+        return (str1 == NULL) ? -1 : 1;
+
+    return 0;
+}

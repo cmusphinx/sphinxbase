@@ -49,17 +49,13 @@
 #include "err.h"
 #include "logmath.h"
 #include "strfuncs.h"
+#include "case.h"
 
 #include <string.h>
 #include <assert.h>
 #ifdef HAVE_ICONV
 #include <iconv.h>
 #endif 
-
-#ifdef _WIN32
-#define strcasecmp(a,b) _stricmp(a,b)
-#define strncasecmp(a,b,n) _strnicmp(a,b,n)
-#endif
 
 ngram_file_type_t
 ngram_file_name_to_type(const char *file_name)
@@ -78,15 +74,16 @@ ngram_file_name_to_type(const char *file_name)
             return NGRAM_ARPA; /* Default file type */
         }
     }
-    if (0 == strcmp_nocase(ext, ".ARPA", 5))
+    /* We use strncmp because there might be a .gz on the end. */
+    if (0 == strncmp_nocase(ext, ".ARPA", 5))
         return NGRAM_ARPA;
-    if (0 == strcmp_nocase(ext, ".DMP", 4))
-        return NGRAM_DMP;
-    if (0 == strcmp_nocase(ext, ".DMP32", 6))
+    if (0 == strncmp_nocase(ext, ".DMP32", 6))
         return NGRAM_DMP32;
-    if (0 == strcmp_nocase(ext, ".FST", 4))
+    if (0 == strncmp_nocase(ext, ".DMP", 4))
+        return NGRAM_DMP;
+    if (0 == strncmp_nocase(ext, ".FST", 4))
         return NGRAM_FST;
-    if (0 == strcmp_nocase(ext, ".SLF", 4))
+    if (0 == strncmp_nocase(ext, ".SLF", 4))
         return NGRAM_HTK;
     return NGRAM_ARPA; /* Default file type */
 }

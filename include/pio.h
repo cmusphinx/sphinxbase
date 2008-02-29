@@ -83,7 +83,7 @@
 #define _LIBUTIL_IO_H_
 
 #include <stdio.h>
-#if !defined(_WIN32_WCE) && !defined(__ADSPBLACKFIN__)
+#if !defined(_WIN32_WCE) && !(defined(__ADSPBLACKFIN__) && !defined(__linux__))
 #include <sys/stat.h>
 #endif
 
@@ -178,7 +178,7 @@ struct stat {
 };
 #endif /* _WIN32_WCE */
 
-#if defined(__ADSPBLACKFIN__)
+#if defined(__ADSPBLACKFIN__) && !defined(__linux__)
 struct stat {
     int32 st_mtime;
     int32 st_size;

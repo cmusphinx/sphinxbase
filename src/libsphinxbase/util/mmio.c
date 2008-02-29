@@ -61,8 +61,8 @@
 # else /* !GNUWINCE */
 #  include <windows.h>
 # endif /* !GNUWINCE */
-#elif defined(__ADSPBLACKFIN__) /* !_WIN32 */
-#else
+#elif defined(__ADSPBLACKFIN__) && !defined(__linux__)
+#else /* !_WIN32 */
 # include <unistd.h>
 # include <fcntl.h>
 # include <sys/stat.h>
@@ -70,7 +70,7 @@
 # include <sys/mman.h>
 #endif /* !_WIN32 */
 
-#if defined(UNDER_CE) || defined(GNUWINCE)
+#if defined(_WIN32_WCE) || defined(GNUWINCE)
 struct mmio_file_s {
 	int dummy;
 };
@@ -124,9 +124,7 @@ mmio_file_unmap(mmio_file_t *mf)
         E_ERROR("Failed to UnmapViewOfFile: %08x\n", GetLastError());
     }
 }
-
-#elif defined(WIN32)
-
+#elif defined(WIN32) /* !WINCE */
 struct mmio_file_s {
 	int dummy;
 };
@@ -170,9 +168,11 @@ mmio_file_ptr(mmio_file_t *mf)
     return (void *)mf;
 }
 
-#elif __ADSPBLACKFIN__                           /* !WIN32 */
-
+#else /* !WIN32, !WINCE */
+#if defined(__ADSPBLACKFIN__) /* This is true for both uClinux and VisualDSP++,
+                                 but actually we need a better way to detect it. */
 struct mmio_file_s {
+    int dummy;
 };
 
 mmio_file_t *
@@ -194,9 +194,7 @@ mmio_file_ptr(mmio_file_t *mf)
  	E_FATAL("mmio is not implemented on this platform!");
     return NULL;
 }
-
-
-#else
+#else /* !__ADSPBLACKFIN__ */
 struct mmio_file_s {
     void *ptr;
     size_t mapsize;
@@ -250,4 +248,5 @@ mmio_file_ptr(mmio_file_t *mf)
 {
     return mf->ptr;
 }
-#endif
+#endif /* !__ADSPBLACKFIN__ */ 
+#endif /* !(WINCE || WIN32) */

@@ -67,11 +67,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#if ((!defined(_WIN32)) && (!defined(_SGI_SOURCE)) &&!defined(__ADSPBLACKFIN__))
-#include <sys/errno.h>
-#else
 #include <errno.h>
-#endif
 
 #include "err.h"
 
@@ -139,7 +135,7 @@ _E__die_error(char const *fmt, ...)
     va_end(pvar);
 
     (void) fflush(stderr);
-#if defined(__ADSPBLACKFIN__)
+#if defined(__ADSPBLACKFIN__) && !defined(__linux__)
     while(1);
 #else 
 	exit(-1);
@@ -162,7 +158,7 @@ _E__fatal_sys_error(char const *fmt, ...)
 
     (void) fflush(stderr);
 
-#if defined(__ADSPBLACKFIN__)
+#if defined(__ADSPBLACKFIN__) && !defined(__linux__)
     while(1);
 #else 
 	exit(-1);
@@ -198,7 +194,7 @@ _E__abort_error(char const *fmt, ...)
 
     (void) fflush(stderr);
 
-#if defined(__ADSPBLACKFIN__)
+#if defined(__ADSPBLACKFIN__) && !defined(__linux__)
     while(1);
 #else 
 	abort();

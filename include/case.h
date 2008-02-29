@@ -76,6 +76,7 @@
 
 #include <prim_type.h>
 #include <sphinxbase_export.h>
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -118,7 +119,13 @@ void lcase(char *str);
    * @param str2 is the second string. 
    */
 SPHINXBASE_EXPORT
-int32 strcmp_nocase (const char *str1, const char *str2);
+int32 strcmp_nocase(const char *str1, const char *str2);
+
+/**
+ * Like strcmp_nocase() but with a maximum length.
+ */
+SPHINXBASE_EXPORT
+int32 strncmp_nocase(const char *str1, const char *str2, size_t len);
 
 
 #ifdef __cplusplus

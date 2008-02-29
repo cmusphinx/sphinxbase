@@ -75,11 +75,12 @@
  * 		Started.
  */
 
+#include <config.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#if !(defined(WIN32) || defined(_WIN32_WCE) || defined(__ADSPBLACKFIN__))
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #include <assert.h>
@@ -93,9 +94,9 @@ fopen_comp(const char *file, char *mode, int32 * ispipe)
 {
     FILE *fp;
 
-#if defined(_WIN32_WCE) || defined(GNUWINCE) || defined(__ADSPBLACKFIN__)
+#ifndef HAVE_POPEN
     *ispipe = 0; /* No popen() on WinCE */
-#else /* NOT WINCE */
+#else /* HAVE_POPEN */
     int32 k, isgz;
     k = strlen(file);
 #if defined(WIN32)
@@ -118,10 +119,10 @@ fopen_comp(const char *file, char *mode, int32 * ispipe)
         }
     }
 #endif /* NOT WIN32 */
-#endif /* NOT WINCE */
+#endif /* HAVE_POPEN */
 
     if (*ispipe) {
-#if defined(_WIN32_WCE) || defined(GNUWINCE) || defined(__ADSPBLACKFIN__)
+#ifndef HAVE_POPEN
         /* Shouldn't get here, anyway */
         E_FATAL("No popen() on WinCE\n");
 #else
@@ -174,7 +175,7 @@ fopen_comp(const char *file, char *mode, int32 * ispipe)
             return NULL;
         }
 #endif /* NOT WIN32 */
-#endif /* NOT WINCE */
+#endif /* HAVE_POPEN */
     }
     else {
         fp = fopen(file, mode);
@@ -188,11 +189,12 @@ void
 fclose_comp(FILE * fp, int32 ispipe)
 {
     if (ispipe) {
-#if defined(_WIN32_WCE) || defined(GNUWINCE) || defined(__ADSPBLACKFIN__)
-#elif defined(WIN32)
+#ifdef HAVE_POPEN
+#if defined(WIN32)
         _pclose(fp);
 #else
         pclose(fp);
+#endif
 #endif
     }
     else
@@ -203,11 +205,11 @@ fclose_comp(FILE * fp, int32 ispipe)
 FILE *
 fopen_compchk(char *file, int32 * ispipe)
 {
-#if defined(_WIN32_WCE) || defined(GNUWINCE) || defined(__ADSPBLACKFIN__)
+#ifndef HAVE_POPEN
     *ispipe = 0; /* No popen() on WinCE */
     /* And therefore the rest of this function is useless. */
     return (fopen_comp(file, "r", ispipe));
-#else /* NOT WINCE */
+#else /* HAVE_POPEN */
     char tmpfile[16384];
     int32 k, isgz;
     struct stat statbuf;
@@ -266,7 +268,7 @@ fopen_compchk(char *file, int32 * ispipe)
     }
 
     return (fopen_comp(tmpfile, "r", ispipe));
-#endif /* NOT WINCE */
+#endif /* HAVE_POPEN */
 }
 
 char *
@@ -334,7 +336,7 @@ fread_retry(void *pointer, int32 size, int32 num_items, FILE * stream)
             --n_retry_rem;
 
             loc += n_items_read * size;
-#if !(defined(_WIN32) || defined(GNUWINCE) || defined(__ADSPBLACKFIN__))
+#ifdef HAVE_UNISTD_H
             sleep(1);
 #endif
         }
@@ -391,7 +393,7 @@ stat_retry(char *file, struct stat * statbuf)
     
     for (i = 0; i < STAT_RETRY_COUNT; i++) {
 
-#ifdef __ADSPBLACKFIN__
+#ifndef HAVE_SYS_STAT_H
 		FILE *fp;
 
 		if ((fp=(FILE *)fopen(file, "r")!= 0))
@@ -402,14 +404,14 @@ stat_retry(char *file, struct stat * statbuf)
 		    return 0;
 		}
 	
-#else      
+#else /* HAVE_SYS_STAT_H */
         if (stat(file, statbuf) == 0)
             return 0;
-#endif // __ADSPBLACKFIN__
+#endif
         if (i == 0) {
             E_ERROR_SYSTEM("stat(%s) failed; retrying...\n", file);
         }
-#if (! WIN32 && !defined(__ADSPBLACKFIN__))
+#ifdef HAVE_UNISTD_H
         sleep(1);
 #endif
     }
@@ -417,7 +419,7 @@ stat_retry(char *file, struct stat * statbuf)
     return -1;
 }
 
-#if !defined(__ADSPBLACKFIN__)
+#ifdef HAVE_SYS_STAT_H
 int32
 stat_mtime(char *file)
 {
@@ -428,9 +430,8 @@ stat_mtime(char *file)
 
     return ((int32) statbuf.st_mtime);
 }
-#endif // __ADSPBLACKFIN__
-
-#endif
+#endif /* HAVE_SYS_STAT_H */
+#endif /* !_WIN32_WCE */
 
 FILE *
 _myfopen(const char *file, char *mode, char *pgm, int32 line)
@@ -442,12 +443,12 @@ _myfopen(const char *file, char *mode, char *pgm, int32 line)
         fprintf(stderr,
                 "FATAL_ERROR: \"%s\", line %d: fopen(%s,%s) failed; ",
                 pgm, line, file, mode);
-#if ! (defined(_WIN32_WCE) || defined(__ADSPBLACKFIN__))
+#ifdef HAVE_ERRNO_H
         perror("");
 #endif
         fflush(stderr);
 
-#if defined(_WIN32_WCE) || defined(__ADSPBLACKFIN__)
+#ifdef HAVE_ERRNO_H
         exit(-1);
 #else
         exit(errno);
