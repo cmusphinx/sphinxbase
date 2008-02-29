@@ -14,7 +14,7 @@ main(int argc, char *argv[])
 	yin_t *pe;
 	int16 *buf;
 	size_t nsamp, start;
-	short period, bestdiff;
+	uint16 period, bestdiff;
 	int nfr;
 
 	/* To make life easier, read the whole thing. */
