@@ -6,6 +6,7 @@ EXTRA_DIST =					\
 	chan3-smoothspec.cepview		\
 	chan3.mfc				\
 	chan3.raw				\
+	chan3.f0				\
 	tutorial-check.sh			\
         crontab					\
 	polite.gram				\
@@ -18,11 +19,12 @@ EXTRA_DIST =					\
 
 CLEANFILES = test*.err test*.out		\
 	test-sphinx_fe.mfc			\
-	test-sphinx_fe.cepview
+	test-sphinx_fe.cepview			\
+	test-sphinx_pitch.f0
 
 # Disable sphinx_fe tests for now if fixed-point due to imprecision
 if FIXED_POINT
-TESTS = $(srcdir)/test-cepview.sh
+TESTS = $(srcdir)/test-cepview.sh $(srcdir)/test-sphinx_pitch.sh
 else
 TESTS = $(srcdir)/test-*.sh
 endif
