@@ -137,12 +137,12 @@ static arg_t defn[] = {
     "Number of frames on either side of the current frame to use for smoothing." },
 
   { "-voice_thresh",
-    ARG_INT32,
+    ARG_FLOAT32,
     "0.1",
     "Threshold of normalized difference under which to search for the fundamental period." },
 
   { "-search_range",
-    ARG_INT32,
+    ARG_FLOAT32,
     "0.2",
     "Fraction of the best local estimate to use as a search range for smoothing." },
 
@@ -447,7 +447,7 @@ extract_pitch(const char *in, const char *out)
                     /* Time point. */
                     (double)nsamps/sps,
                     /* "Probability" of voicing. */
-                    1.0 - (double)bestdiff / 32768,
+                    bestdiff > 32768 ? 0.0 : 1.0 - (double)bestdiff / 32768,
                     /* Pitch (possibly bogus) */
                     period == 0 ? sps : (double)sps / period);
             nsamps += fshift;
@@ -463,7 +463,7 @@ extract_pitch(const char *in, const char *out)
                     /* Time point. */
                     (double)nsamps/sps,
                     /* "Probability" of voicing. */
-                    1.0 - (double)bestdiff / 32768,
+                    bestdiff > 32768 ? 0.0 : 1.0 - (double)bestdiff / 32768,
                     /* Pitch (possibly bogus) */
                     period == 0 ? sps : (double)sps / period);
     }
