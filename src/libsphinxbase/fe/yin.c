@@ -169,7 +169,7 @@ thresholded_search(int32 *diff_window, fixed32 threshold, int start, int end)
 {
     int i, min, argmin;
 
-    min = 32768;
+    min = INT_MAX;
     argmin = 0;
     for (i = start; i < end; ++i) {
         int diff = diff_window[i];
@@ -263,8 +263,8 @@ yin_read(yin_t *pe, uint16 *out_period, uint16 *out_bestdiff)
     }
 
     /* Now (finally) look for the best local estimate. */
-    /*printf("Searching for local estimate in %d frames around %d from %d\n",
-      wlen, pe->wcur, wstart); */
+    /* printf("Searching for local estimate in %d frames around %d\n",
+       wlen, pe->nfr + 1 - wlen); */
     best = pe->period_window[pe->wcur];
     best_diff = pe->diff_window[pe->wcur][best];
     for (i = 0; i < wlen; ++i) {
@@ -273,11 +273,15 @@ yin_read(yin_t *pe, uint16 *out_period, uint16 *out_bestdiff)
 
         j %= pe->wsize;
         diff = pe->diff_window[j][pe->period_window[j]];
+        /* printf("%.2f,%.2f ", 1.0 - (double)diff/32768,
+           pe->period_window[j] ? 8000.0/pe->period_window[j] : 8000.0); */
         if (diff < best_diff) {
             best_diff = diff;
             best = pe->period_window[j];
         }
     }
+    /* printf("best: %.2f, %.2f\n", 1.0 - (double)best_diff/32768,
+       best ? 8000.0/best : 8000.0); */
     /* If it's the same as the current one then return it. */
     if (best == pe->period_window[pe->wcur]) {
         /* Increment the current pointer. */
@@ -289,11 +293,14 @@ yin_read(yin_t *pe, uint16 *out_period, uint16 *out_bestdiff)
     }
     /* Otherwise, redo the search inside a narrower range. */
     search_width = best * pe->search_range / 32768;
+    /* printf("Search width = %d * %.2f = %d\n",
+       best, (double)pe->search_range/32768, search_width); */
     if (search_width == 0) search_width = 1;
     low_period = best - search_width;
     high_period = best + search_width;
     if (low_period < 0) low_period = 0;
     if (high_period > pe->frame_size / 2) high_period = pe->frame_size / 2;
+    /* printf("Searching from %d to %d\n", low_period, high_period); */
     *out_period = thresholded_search(pe->diff_window[pe->wcur],
                                      pe->search_threshold,
                                      low_period, high_period);
