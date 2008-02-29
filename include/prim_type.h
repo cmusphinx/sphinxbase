@@ -98,7 +98,7 @@ extern "C" {
 #  define HAVE_LONG_LONG
 # endif
 # ifndef ssize_t
-#  typedef signed int ssize_t
+	typedef signed int ssize_t;
 # endif
 # define SIZEOF_LONG_LONG 8
 # define __BIGSTACKVARIABLE__ static

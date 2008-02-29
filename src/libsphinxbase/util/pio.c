@@ -449,9 +449,9 @@ _myfopen(const char *file, char *mode, char *pgm, int32 line)
         fflush(stderr);
 
 #ifdef HAVE_ERRNO_H
-        exit(-1);
-#else
         exit(errno);
+#else
+        exit(-1);
 #endif
     }
 
