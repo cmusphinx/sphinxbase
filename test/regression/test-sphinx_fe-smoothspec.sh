@@ -4,7 +4,7 @@
 tmpout="test-sphinx_fe-smoothspec.out"
 
 echo "WAVE2FEAT-SMOOTHSPEC TEST"
-run_program sphinx_fe \
+run_program sphinx_fe/sphinx_fe \
 -smoothspec yes \
 -samprate 11025 \
 -frate 105 \
@@ -20,7 +20,7 @@ run_program sphinx_fe \
 -o test-sphinx_fe-smoothspec.logspec.out  \
 -raw yes > $tmpout 2>&1 
 
-run_program sphinx_cepview \
+run_program sphinx_cepview/sphinx_cepview \
 -i 36 \
 -d 36 \
 -f test-sphinx_fe-smoothspec.logspec.out \

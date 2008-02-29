@@ -10,7 +10,8 @@ rm -f $tmpout
 JSGF_PATH=$tests/regression
 export JSGF_PATH
 for r in $rules; do
-    run_program sphinx_jsgf2fsg $tests/regression/test.gram $r > $r.out 2>>$tmpout
+    run_program sphinx_jsgf2fsg/sphinx_jsgf2fsg \
+	$tests/regression/test.gram $r > $r.out 2>>$tmpout
     compare_table $r $r.out $tests/regression/$r.fsg
 done
 

@@ -6,7 +6,7 @@ tmpout="test-sphinx_fe-dither-seed.out"
 # Run sphinx_fe with dither and seed, so it is repeatable. There's
 # nothing special about the seed. Just chose it because it's pretty
 echo "WAVE2FEAT-DITHER-SEED TEST"
-run_program sphinx_fe \
+run_program sphinx_fe/sphinx_fe \
 -dither 1 \
 -seed 1234 \
 -samprate 11025 \
@@ -24,7 +24,7 @@ run_program sphinx_fe \
 -o test-sphinx_fe-dither-seed.mfc.out  \
 -raw 1 > $tmpout 2>&1 
 
-run_program sphinx_cepview \
+run_program sphinx_cepview/sphinx_cepview \
 -i 13 \
 -d 13 \
 -f test-sphinx_fe-dither-seed.mfc.out \

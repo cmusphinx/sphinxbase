@@ -116,7 +116,7 @@ static arg_t defn[] = {
     "0",
     "Sampling rate of audio data (will be determined automatically if 0)" },
 
-  { "-data_endian",
+  { "-input_endian",
     ARG_STRING,
     NULL,
     "Endianness of audio data (will be determined automatically if not given)" },
@@ -217,7 +217,7 @@ read_riff_header(FILE *infh)
     int16 shortval;
 
     /* RIFF files are little-endian by definition. */
-    cmd_ln_set_str("-data_endian", "little");
+    cmd_ln_set_str("-input_endian", "little");
 
     /* Read in all the header chunks and etcetera. */
     TRY_FREAD(id, 1, 4, infh);
@@ -352,10 +352,10 @@ read_nist_header(FILE *infh)
     }
     ++c;
     if (0 == memcmp(c, "01", 2)) {
-        cmd_ln_set_str("-data_endian", "little");
+        cmd_ln_set_str("-input_endian", "little");
     }
     else if (0 == memcmp(c, "10", 2)) {
-        cmd_ln_set_str("-data_endian", "big");
+        cmd_ln_set_str("-input_endian", "big");
     }
     else {
         E_ERROR("Unknown byte order %s\n", c);
@@ -413,11 +413,11 @@ extract_pitch(const char *in, const char *out)
     }
     else if (cmd_ln_boolean("-raw")) {
         /* Just use some defaults for sampling rate and endian. */
-        if (cmd_ln_str("-data_endian") == NULL) {
+        if (cmd_ln_str("-input_endian") == NULL) {
             if (WORDS_BIGENDIAN)
-                cmd_ln_set_str("-data_endian", "big");
+                cmd_ln_set_str("-input_endian", "big");
             else
-                cmd_ln_set_str("-data_endian", "little");
+                cmd_ln_set_str("-input_endian", "little");
         }
         if (cmd_ln_int32("-samprate") == 0)
             cmd_ln_set_int32("-samprate", 16000);
@@ -504,7 +504,7 @@ run_control_file(const char *ctl)
     /* Whether to guess sampling rate */
     guess_sps = (cmd_ln_int32("-samprate") == 0);
     /* Whether to guess endian */
-    guess_endian = (cmd_ln_str("-data_endian") == NULL);
+    guess_endian = (cmd_ln_str("-input_endian") == NULL);
 
     if ((ctlfh = fopen(ctl, "r")) == NULL) {
         E_ERROR_SYSTEM("Failed to open control file %s", ctl);
@@ -555,7 +555,7 @@ run_control_file(const char *ctl)
         if (guess_sps)
             cmd_ln_set_int32("-samprate", 0);
         if (guess_endian)
-            cmd_ln_set_str("-data_endian", NULL);
+            cmd_ln_set_str("-input_endian", NULL);
 
         rv = extract_pitch(infile, outfile);
 

@@ -4,7 +4,7 @@
 tmpout="test-sphinx_fe.out"
 
 echo "WAVE2FEAT TEST"
-run_program sphinx_fe \
+run_program sphinx_fe/sphinx_fe \
 -samprate 11025 \
 -frate 105 \
 -wlen 0.024 \
@@ -20,7 +20,7 @@ run_program sphinx_fe \
 -o test-sphinx_fe.mfc  \
 -raw 1 > $tmpout 2>&1 
 
-run_program sphinx_cepview \
+run_program sphinx_cepview/sphinx_cepview \
 -i 13 \
 -d 13 \
 -f test-sphinx_fe.mfc \
