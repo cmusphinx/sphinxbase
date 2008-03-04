@@ -50,8 +50,8 @@ extern "C" {
 #ifndef int32
     typedef long int32;
 #endif
-#ifndef uint32
-    typedef unsigned long uint32;
+#ifndef pa_uint32
+    typedef unsigned long pa_uint32;
 #endif
 #ifndef int16
     typedef short int16;
@@ -72,11 +72,11 @@ extern "C" {
 /************************************************************************************/
 
     typedef struct internalPortAudioStream {
-        uint32 past_Magic;      /* ID for struct to catch bugs. */
+        pa_uint32 past_Magic;      /* ID for struct to catch bugs. */
 
         /* Begin user specified information. */
-        uint32 past_FramesPerUserBuffer;
-        uint32 past_NumUserBuffers;
+        pa_uint32 past_FramesPerUserBuffer;
+        pa_uint32 past_NumUserBuffers;
         double past_SampleRate; /* Closest supported sample rate. */
         int past_NumInputChannels;
         int past_NumOutputChannels;
@@ -86,7 +86,7 @@ extern "C" {
         PaSampleFormat past_OutputSampleFormat;
         PortAudioCallback *past_Callback;
         void *past_UserData;
-        uint32 past_Flags;
+        pa_uint32 past_Flags;
         /* End user specified information. */
 
         void *past_DeviceData;
@@ -99,11 +99,11 @@ extern "C" {
         volatile int past_StopNow;      /* Background should stop playing now. */
         /* These buffers are used when the native format does not match the user format. */
         void *past_InputBuffer;
-        uint32 past_InputBufferSize;    /* Size in bytes of the input buffer. */
+        pa_uint32 past_InputBufferSize;    /* Size in bytes of the input buffer. */
         void *past_OutputBuffer;
-        uint32 past_OutputBufferSize;
+        pa_uint32 past_OutputBufferSize;
         /* Measurements */
-        uint32 past_NumCallbacks;
+        pa_uint32 past_NumCallbacks;
         PaTimestamp past_FrameCount;    /* Frames output to buffer. */
         /* For measuring CPU utilization. */
         double past_AverageInsideCount;
