@@ -396,7 +396,7 @@ stat_retry(char *file, struct stat * statbuf)
 #ifndef HAVE_SYS_STAT_H
 		FILE *fp;
 
-		if ((fp=(FILE *)fopen(file, "r")!= 0))
+		if ((fp=(FILE *)fopen(file, "r"))!= 0)
 		{
 		    fseek( fp, 0, SEEK_END);
 		    statbuf->st_size = ftell( fp );
@@ -419,18 +419,21 @@ stat_retry(char *file, struct stat * statbuf)
     return -1;
 }
 
-#ifdef HAVE_SYS_STAT_H
 int32
 stat_mtime(char *file)
 {
     struct stat statbuf;
 
+#ifdef HAVE_SYS_STAT_H
     if (stat(file, &statbuf) != 0)
         return -1;
+#else /* HAVE_SYS_STAT_H */
+    if (stat_retry(file, &statbuf) != 0)
+        return -1;
+#endif /* HAVE_SYS_STAT_H */
 
     return ((int32) statbuf.st_mtime);
 }
-#endif /* HAVE_SYS_STAT_H */
 #endif /* !_WIN32_WCE */
 
 FILE *

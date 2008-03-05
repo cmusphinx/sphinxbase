@@ -53,3 +53,7 @@
 
 /* We do have perror */
 #define HAVE_PERROR 1
+
+/* We have sys/stat.h */
+#define HAVE_SYS_STAT_H 1
+
