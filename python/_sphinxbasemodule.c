@@ -14,6 +14,49 @@
 #include <logmath.h>
 #include <ckd_alloc.h>
 
+/**
+ * Generic not-type-safe pointer object for all our various types.
+ */
+typedef struct sb_ptr_s {
+	PyObject_HEAD
+	void *ptr;
+} sb_ptr_t;
+
+static PyTypeObject sb_ptrType = {
+	PyObject_HEAD_INIT(NULL)
+	0,                         /* ob_size */
+	"_sphinxbase.ptr",         /* tp_name */
+	sizeof(sb_ptr_t),          /* tp_basicsize */
+	0,                         /* tp_itemsize */
+	0,                         /* tp_dealloc */
+	0,                         /* tp_print */
+	0,                         /* tp_getattr */
+	0,                         /* tp_setattr */
+	0,                         /* tp_compare */
+	0,                         /* tp_repr */
+	0,                         /* tp_as_number */
+	0,                         /* tp_as_sequence */
+	0,                         /* tp_as_mapping */
+	0,                         /* tp_hash  */
+	0,                         /* tp_call */
+	0,                         /* tp_str */
+	0,                         /* tp_getattro */
+	0,                         /* tp_setattro */
+	0,                         /* tp_as_buffer */
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE, /* tp_flags */
+	"Generic pointer object for SphinxBase" /* tp_doc */	
+};
+
+static PyObject *
+sb_ptr_new(void *ptr)
+{
+	sb_ptr_t *sbp;
+
+	sbp = (sb_ptr_t *)sb_ptrType.tp_alloc(&sb_ptrType, 0);
+	sbp->ptr = ptr;
+	return (PyObject *)sbp;
+}
+
 static PyObject *
 sb_logmath_init(PyObject *self, PyObject *args)
 {
@@ -28,20 +71,18 @@ sb_logmath_init(PyObject *self, PyObject *args)
 		PyErr_SetString(PyExc_RuntimeError, "Failed to create logmath_t");
 		return NULL;
 	}
-	/* This is not particularly type-safe, but this interface is
-	 * not exposed to the user. */
-	return Py_BuildValue("l", (long)lmath);
+	return sb_ptr_new(lmath);
 }
 
 static PyObject *
 sb_logmath_free(PyObject *self, PyObject *args)
 {
-	logmath_t *lmath;
+	sb_ptr_t *lmath;
 
-	if (!PyArg_ParseTuple(args, "l", &lmath))
+	if (!PyArg_ParseTuple(args, "O", &lmath))
 		return NULL;
 
-	logmath_free(lmath);
+	logmath_free(lmath->ptr);
 
 	Py_INCREF(Py_None);
 	return Py_None;
@@ -50,43 +91,41 @@ sb_logmath_free(PyObject *self, PyObject *args)
 static PyObject *
 sb_logmath_log_to_ln(PyObject *self, PyObject *args)
 {
-	logmath_t *lmath;
+	sb_ptr_t *lmath;
 	int logval;
 
-	if (!PyArg_ParseTuple(args, "li", &lmath, &logval))
+	if (!PyArg_ParseTuple(args, "Oi", &lmath, &logval))
 		return NULL;
 
-	return Py_BuildValue("d", logmath_log_to_ln(lmath, logval));
+	return Py_BuildValue("d", logmath_log_to_ln(lmath->ptr, logval));
 }
 
 static PyObject *
 sb_ngram_model_read(PyObject *self, PyObject *args)
 {
-	logmath_t *lmath;
+	sb_ptr_t *lmath;
 	ngram_model_t *lm;
 	char const *file;
 
-	if (!PyArg_ParseTuple(args, "sl", &file, &lmath))
+	if (!PyArg_ParseTuple(args, "sO", &file, &lmath))
 		return NULL;
 
-	if ((lm = ngram_model_read(NULL, file, NGRAM_AUTO, lmath)) == NULL) {
+	if ((lm = ngram_model_read(NULL, file, NGRAM_AUTO, lmath->ptr)) == NULL) {
 		PyErr_SetString(PyExc_IOError, "N-Gram model could not be read");
 		return NULL;
 	}
-	/* This is not particularly type-safe, but this interface is
-	 * not exposed to the user. */
-	return Py_BuildValue("l", (long)lm);
+	return sb_ptr_new(lm);
 }
 
 static PyObject *
 sb_ngram_model_free(PyObject *self, PyObject *args)
 {
-	ngram_model_t *lm;
+	sb_ptr_t *lm;
 
-	if (!PyArg_ParseTuple(args, "l", &lm))
+	if (!PyArg_ParseTuple(args, "O", &lm))
 		return NULL;
 
-	ngram_model_free(lm);
+	ngram_model_free(lm->ptr);
 
 	Py_INCREF(Py_None);
 	return Py_None;
@@ -95,13 +134,13 @@ sb_ngram_model_free(PyObject *self, PyObject *args)
 static PyObject *
 sb_ngram_model_apply_weights(PyObject *self, PyObject *args)
 {
-	ngram_model_t *lm;
+	sb_ptr_t *lm;
 	float lw, wip, uw;
 
-	if (!PyArg_ParseTuple(args, "lfff", &lm, &lw, &wip, &uw))
+	if (!PyArg_ParseTuple(args, "Offf", &lm, &lw, &wip, &uw))
 		return NULL;
 
-	ngram_model_apply_weights(lm, lw, wip, uw);
+	ngram_model_apply_weights(lm->ptr, lw, wip, uw);
 
 	Py_INCREF(Py_None);
 	return Py_None;
@@ -111,7 +150,7 @@ static PyObject *
 sb_ngram_score_helper(PyObject *self, PyObject *args,
 		      int32 (*scorer)(ngram_model_t *, int32, int32 *, int32, int32 *))
 {
-	ngram_model_t *lm;
+	sb_ptr_t *lm;
 	PyObject *obj;
 	char const *str;
 	int32 *history;
@@ -125,16 +164,11 @@ sb_ngram_score_helper(PyObject *self, PyObject *args,
 		PyErr_SetString(PyExc_ValueError, "usage: ngram_score(lm, word, ...)");
 		return NULL;
 	}
-	obj = PyTuple_GET_ITEM(args, 0);
-	if (!PyInt_Check(obj)) {
-		PyErr_SetString(PyExc_TypeError, "lm is not an integer (?!)");
-		return NULL;
-	}
-	lm = (ngram_model_t *)PyInt_AS_LONG(obj);
+	lm = (sb_ptr_t *)PyTuple_GET_ITEM(args, 0);
 	obj = PyTuple_GET_ITEM(args, 1);
 	if ((str = PyString_AsString(obj)) == NULL)
 		return NULL;
-	wid = ngram_wid(lm, str);
+	wid = ngram_wid(lm->ptr, str);
 	n_hist -= 2;
 	history = ckd_calloc(n_hist, sizeof(*history));
 	for (i = 0; i < n_hist; ++i) {
@@ -143,9 +177,9 @@ sb_ngram_score_helper(PyObject *self, PyObject *args,
 			ckd_free(history);
 			return NULL;
 		}
-		history[i] = ngram_wid(lm, str);
+		history[i] = ngram_wid(lm->ptr, str);
 	}
-	score = (*scorer)(lm, wid, history, n_hist, &n_used);
+	score = (*scorer)(lm->ptr, wid, history, n_hist, &n_used);
 	ckd_free(history);
 
 	return Py_BuildValue("(ii)", score, n_used);
@@ -166,12 +200,12 @@ sb_ngram_prob(PyObject *self, PyObject *args)
 static PyObject *
 sb_ngram_zero(PyObject *self, PyObject *args)
 {
-	ngram_model_t *lm;
+	sb_ptr_t *lm;
 
-	if (!PyArg_ParseTuple(args, "l", &lm))
+	if (!PyArg_ParseTuple(args, "O", &lm))
 		return NULL;
 
-	return Py_BuildValue("i", ngram_zero(lm));
+	return Py_BuildValue("i", ngram_zero(lm->ptr));
 }
 
 static PyMethodDef sphinxbase_methods[] = {
@@ -200,5 +234,12 @@ static PyMethodDef sphinxbase_methods[] = {
 PyMODINIT_FUNC
 init_sphinxbase(void)
 {
-	(void) Py_InitModule("_sphinxbase", sphinxbase_methods);
+	PyObject *m;
+
+	sb_ptrType.tp_new = PyType_GenericNew;
+	if (PyType_Ready(&sb_ptrType) < 0)
+		return;
+	m = Py_InitModule("_sphinxbase", sphinxbase_methods);
+	Py_INCREF(&sb_ptrType);
+	PyModule_AddObject(m, "ptr", (PyObject *)&sb_ptrType);
 }
