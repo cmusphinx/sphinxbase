@@ -162,41 +162,117 @@ arg_sort(const arg_t * defn, int32 n)
     return pos;
 }
 
+static size_t
+strnappend(char **dest, size_t *dest_allocation, 
+       const char *source, size_t n)
+{
+    size_t source_len, required_allocation;
+    
+    if(dest == NULL || dest_allocation == NULL) return -1;
+    if(*dest == NULL && *dest_allocation != 0) return -1;
+    if(source == NULL) return *dest_allocation;
+
+    source_len = strlen(source);
+    if(n && n<source_len) source_len = n;
+
+    required_allocation = (*dest? strlen(*dest): 0) + source_len + 1;
+    if(*dest_allocation < required_allocation) {
+    if(*dest_allocation == 0) {
+        *dest = ckd_calloc(required_allocation * 2, 1);
+    } else {
+        *dest = ckd_realloc(*dest, required_allocation * 2);
+    }
+    *dest_allocation = required_allocation*2;
+    } 
+    
+    strncat(*dest, source, source_len);
+    
+    return *dest_allocation;
+}
+
+static size_t
+strappend(char **dest, size_t *dest_allocation, 
+       const char *source)
+{
+    return strnappend(dest, dest_allocation, source, 0);
+}
+
+static char*
+arg_resolve_env(const char *str)
+{
+    char *resolved_str=NULL;
+    char env_name[100];
+    const char *env_val;
+    size_t alloced=0;
+    const char *i=str, *j;
+
+    /* calculate required resolved_str size */
+    do {
+        j = strstr(i, "$(");
+        if(j != NULL) {
+            if (j != i) {
+                strnappend(&resolved_str, &alloced, i, j-i); i = j;
+            }
+            j = strchr(i+2, ')');
+            if(j != NULL) {
+                if(j-(i+2) < 100) {
+                    strncpy(env_name, i+2, j-(i+2));
+                    env_name[j-(i+2)] = '\0';
+                    env_val = getenv(env_name);
+                    if(env_val) strappend(&resolved_str, &alloced, env_val);
+                }
+                i = j+1;
+            } else {
+                /* unclosed, copy and skip */
+                j = i+2;
+                strnappend(&resolved_str, &alloced, i, j-i); i = j;
+            }
+        } else {
+            strappend(&resolved_str, &alloced, i);
+        }
+    } while(j != NULL);
+
+    return resolved_str;
+}
+
 static anytype_t *
 arg_str2val(argtype_t t, const char *str)
 {
     anytype_t val, *v;
+    char *e_str;
 
     if (!str) {
 	/* For lack of a better default value. */
 	memset(&val, 0, sizeof(val));
     }
     else {
+        e_str = arg_resolve_env(str);
+
         switch (t) {
         case ARG_INT32:
         case REQARG_INT32:
-            if (sscanf(str, "%d", &val.i_32) != 1)
+            if (sscanf(e_str, "%d", &val.i_32) != 1)
                 return NULL;
             break;
         case ARG_FLOAT32:
         case REQARG_FLOAT32:
-            if (sscanf(str, "%f", &val.fl_32) != 1)
+            if (sscanf(e_str, "%f", &val.fl_32) != 1)
                 return NULL;
             break;
         case ARG_FLOAT64:
         case REQARG_FLOAT64:
-            if (sscanf(str, "%lf", &val.fl_64) != 1)
+            if (sscanf(e_str, "%lf", &val.fl_64) != 1)
                 return NULL;
             break;
         case ARG_BOOLEAN:
         case REQARG_BOOLEAN:
-            if ((str[0] == 'y') || (str[0] == 't') ||
-                (str[0] == 'Y') || (str[0] == 'T') || (str[0] == '1')) {
+            if ((e_str[0] == 'y') || (e_str[0] == 't') ||
+                (e_str[0] == 'Y') || (e_str[0] == 'T') || (e_str[0] == '1')) {
                 val.i_32 = TRUE;
             }
-            else if ((str[0] == 'n') || (str[0] == 'f') ||
-                     (str[0] == 'N') || (str[0] == 'F') |
-                     (str[0] == '0')) {
+            else if ((e_str[0] == 'n') || (e_str[0] == 'f') ||
+                     (e_str[0] == 'N') || (e_str[0] == 'F') |
+                     (e_str[0] == '0')) {
                 val.i_32 = FALSE;
             }
             else {
@@ -205,13 +281,13 @@ arg_str2val(argtype_t t, const char *str)
             break;
         case ARG_STRING:
         case REQARG_STRING:
-            /* This const-casting is okay because we know these
-             * strings won't ever be written to. */
-            val.ptr = (char *)str;
+            val.ptr = ckd_salloc(e_str);
             break;
         default:
             E_FATAL("Unknown argument type: %d\n", t);
         }
+    
+        free(e_str);
     }
 
     v = ckd_calloc(1, sizeof(*v));
