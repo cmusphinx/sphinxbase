@@ -763,7 +763,7 @@ feat_1s_c_d_dd_cep2feat(feat_t * fcb, mfcc_t ** mfc, mfcc_t ** feat)
            && (feat_cepsize_used(fcb) > 0));
     assert(feat_n_stream(fcb) == 1);
     assert(feat_stream_len(fcb, 0) == feat_cepsize_used(fcb) * 3);
-    assert(feat_window_size(fcb) == 3);
+    assert(feat_window_size(fcb) == FEAT_DCEP_WIN + 1);
 
     /* CEP */
     memcpy(feat[0], mfc[0], feat_cepsize_used(fcb) * sizeof(mfcc_t));
@@ -889,7 +889,7 @@ feat_init(char *type, cmn_type_t cmn, int32 varnorm, agc_type_t agc, int32 brepo
         fcb->stream_len = (int32 *) ckd_calloc(1, sizeof(int32));
         fcb->stream_len[0] = cepsize * 3;
         fcb->out_dim = cepsize * 3;
-        fcb->window_size = 3;   /* FEAT_DCEP_WIN + 1 */
+        fcb->window_size = FEAT_DCEP_WIN + 1;   /* FEAT_DCEP_WIN + 1 */
         fcb->compute_feat = feat_1s_c_d_dd_cep2feat;
     }
     else if (strncmp(type, "cep_dcep", 8) == 0 || strncmp(type, "1s_c_d", 6) == 0) {
@@ -987,11 +987,16 @@ feat_init(char *type, cmn_type_t cmn, int32 varnorm, agc_type_t agc, int32 brepo
         fcb->cmn_struct = cmn_init(feat_cepsize(fcb));
     fcb->cmn = cmn;
     fcb->varnorm = varnorm;
-    if (agc != AGC_NONE)
+    if (agc != AGC_NONE) {
         fcb->agc_struct = agc_init();
-    if (agc == AGC_EMAX)
+        /*
+         * No need to check if agc is set to EMAX; agc_emax_set() changes only emax related things
+         * Moreover, if agc is not NONE and block mode is used, feat_agc() SILENTLY
+         * switches to EMAX
+         */
         /* HACK: hardwired initial estimates based on use of CMN (from Sphinx2) */
         agc_emax_set(fcb->agc_struct, (cmn != CMN_NONE) ? 5.0 : 10.0);
+    }
     fcb->agc = agc;
     fcb->cepbuf = (mfcc_t **) ckd_calloc_2d(LIVEBUFBLOCKSIZE,
                                             feat_cepsize(fcb),
