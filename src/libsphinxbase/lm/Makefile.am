@@ -1,5 +1,8 @@
 noinst_LTLIBRARIES = libsphinxlm.la
 
+AM_YFLAGS = -d
+BUILT_SOURCES = jsgf_parser.h
+
 libsphinxlm_la_SOURCES =			\
 	lm3g_model.c				\
 	ngram_model.c				\
@@ -8,16 +11,23 @@ libsphinxlm_la_SOURCES =			\
 	ngram_model_set.c			\
 	ngram_model_dmp32.c			\
 	ngram_model_fst.c			\
-	ngram_model_htk.c
+	ngram_model_htk.c			\
+	jsgf.c					\
+	jsgf_scanner.c				\
+	jsgf_parser.y
 
-noinst_HEADERS = ngram_model_internal.h \
-	ngram_model_dmp.h \
-	ngram_model_set.h \
-	ngram_model_arpa.h \
-	lm3g_model.h
+noinst_HEADERS = ngram_model_internal.h		\
+	ngram_model_dmp.h			\
+	ngram_model_set.h			\
+	ngram_model_arpa.h			\
+	lm3g_model.h				\
+	jsgf_scanner.h				\
+	jsgf_parser.h
 
 INCLUDES = -I$(top_srcdir)/include \
            -I$(top_builddir)/include 
 
-LIBOBJS = @LIBOBJS@
-
+# Nobody has the version of Flex needed to regenerate the scanner, so
+# we can't give it a name that would induce Make to try to build it.
+# Hence the underscore.  Sorry folks.
+EXTRA_DIST = fsg2dot.pl _jsgf_scanner.l

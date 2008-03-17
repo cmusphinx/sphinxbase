@@ -26,6 +26,7 @@ pkginclude_HEADERS =				\
 	hash_table.h				\
 	heap.h					\
 	info.h					\
+	jsgf.h					\
 	libutil.h				\
 	listelem_alloc.h			\
 	logmath.h				\

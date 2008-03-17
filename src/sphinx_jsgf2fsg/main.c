@@ -68,7 +68,6 @@ write_fsg(jsgf_t *grammar, const char *name)
 int
 main(int argc, char *argv[])
 {
-    int yyrv;
     jsgf_t *jsgf;
 
     jsgf = jsgf_parse_file(argc > 1 ? argv[1] : NULL, NULL);
@@ -77,5 +76,5 @@ main(int argc, char *argv[])
     }
     write_fsg(jsgf, argc > 2 ? argv[2] : NULL);
 
-    return yyrv;
+    return 0;
 }
