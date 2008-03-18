@@ -30,4 +30,4 @@ INCLUDES = -I$(top_srcdir)/include \
 # Nobody has the version of Flex needed to regenerate the scanner, so
 # we can't give it a name that would induce Make to try to build it.
 # Hence the underscore.  Sorry folks.
-EXTRA_DIST = fsg2dot.pl _jsgf_scanner.l
+EXTRA_DIST = _jsgf_scanner.l
