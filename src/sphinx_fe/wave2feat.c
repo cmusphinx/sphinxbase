@@ -905,7 +905,8 @@ fe_openfiles(globals_t * P, fe_t * FE, char *infile, int32 * fp_in,
         /* This is sort of hacky... we need to figure out if there
            will be a trailing frame from fe_end_utt() or not.  */
         fe_get_input_size(FE, &frame_shift, &frame_size);
-        if (frame_size + (numframes - 1) * frame_shift < nsamps)
+        /* Don't ask me why this has to be <= rather than <, it just does... */
+        if (frame_size + (numframes - 1) * frame_shift <= len)
             ++numframes;
 
         outlen = numframes * fe_get_output_size(FE);
