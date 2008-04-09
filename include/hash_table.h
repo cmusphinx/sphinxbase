@@ -165,6 +165,11 @@ typedef struct {
 	int32 nocase;		/** Whether case insensitive for key comparisons */
 } hash_table_t;
 
+typedef struct hash_iter_s {
+	hash_table_t *ht;  /**< Hash table we are iterating over. */
+	hash_entry_t *ent; /**< Current entry in that table. */
+	size_t idx;        /**< Index of next bucket to search. */
+} hash_iter_t;
 
 /** Access macros */
 #define hash_entry_val(e)	((e)->val)
@@ -344,6 +349,26 @@ int32 hash_table_lookup_bkey_int32(hash_table_t *h,/**< In: Handle of hash table
                                    int32 *val	/**< Out: *val = value associated with key.
                                                    If this is NULL, no value will be returned. */
 	);
+
+/**
+ * Start iterating over key-value pairs in a hash table.
+ */
+hash_iter_t *hash_table_iter(hash_table_t *h);
+
+/**
+ * Get the next key-value pair in iteration.
+ *
+ * This function automatically frees the iterator object upon reaching
+ * the final entry.
+ *
+ * @return the next entry in the hash table, or NULL if done.
+ */
+hash_iter_t *hash_table_iter_next(hash_iter_t *itor);
+
+/**
+ * Delete an unfinished iterator.
+ */
+void hash_table_iter_free(hash_iter_t *itor);
 
 /**
  * Build a glist of valid hash_entry_t pointers from the given hash table.  Return the list.

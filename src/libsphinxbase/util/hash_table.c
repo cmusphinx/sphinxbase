@@ -621,6 +621,48 @@ hash_table_tolist(hash_table_t * h, int32 * count)
     return g;
 }
 
+hash_iter_t *
+hash_table_iter(hash_table_t *h)
+{
+	hash_iter_t *itor;
+
+	itor = ckd_calloc(1, sizeof(*itor));
+	itor->ht = h;
+	return hash_table_iter_next(itor);
+}
+
+hash_iter_t *
+hash_table_iter_next(hash_iter_t *itor)
+{
+	/* If there is an entry, walk down its list. */
+	if (itor->ent)
+		itor->ent = itor->ent->next;
+	/* If we got to the end of the chain, or we had no entry, scan
+	 * forward in the table to find the next non-empty bucket. */
+	if (itor->ent == NULL) {
+		while (itor->idx < itor->ht->size
+		       && itor->ht->table[itor->idx].key == NULL) 
+			++itor->idx;
+		/* If we did not find one then delete the iterator and
+		 * return NULL. */
+		if (itor->idx == itor->ht->size) {
+			hash_table_iter_free(itor);
+			return NULL;
+		}
+		/* Otherwise use this next entry. */
+		itor->ent = itor->ht->table + itor->idx;
+		/* Increase idx for the next time around. */
+		++itor->idx;
+	}
+	return itor;
+}
+
+void
+hash_table_iter_free(hash_iter_t *itor)
+{
+	ckd_free(itor);
+}
+
 void
 hash_table_free(hash_table_t * h)
 {
