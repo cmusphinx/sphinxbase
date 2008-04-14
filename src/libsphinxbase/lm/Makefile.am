@@ -12,6 +12,7 @@ libsphinxlm_la_SOURCES =			\
 	ngram_model_dmp32.c			\
 	ngram_model_fst.c			\
 	ngram_model_htk.c			\
+	fsg_model.c				\
 	jsgf.c					\
 	jsgf_scanner.c				\
 	jsgf_parser.y

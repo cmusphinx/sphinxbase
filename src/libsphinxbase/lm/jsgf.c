@@ -299,6 +299,59 @@ expand_rule(jsgf_t *grammar, jsgf_rule_t *rule)
     return rule->exit;
 }
 
+jsgf_rule_t *
+jsgf_get_rule(jsgf_t *grammar, char const *name)
+{
+    void *val;
+
+    if (hash_table_lookup(grammar->rules, name, &val) < 0)
+        return NULL;
+    return (jsgf_rule_t *)val;
+}
+
+
+fsg_model_t *
+jsgf_build_fsg(jsgf_t *grammar, jsgf_rule_t *rule, logmath_t *lmath)
+{
+    fsg_model_t *fsg;
+
+    gnode_t *gn;
+
+    /* Clear previous links */
+    for (gn = grammar->links; gn; gn = gnode_next(gn)) {
+        ckd_free(gnode_ptr(gn));
+    }
+    glist_free(grammar->links);
+    grammar->links = NULL;
+    rule->entry = rule->exit = 0;
+    grammar->nstate = 0;
+    expand_rule(grammar, rule);
+
+    fsg = fsg_model_init(rule->name, lmath, grammar->nstate);
+    grammar->links = glist_reverse(grammar->links);
+    for (gn = grammar->links; gn; gn = gnode_next(gn)) {
+        jsgf_link_t *link = gnode_ptr(gn);
+
+        if (link->atom) {
+            if (jsgf_atom_is_rule(link->atom)) {
+                fsg_model_null_trans_add(fsg, link->from, link->to,
+                                        logmath_log(lmath, link->atom->weight));
+            }
+            else {
+                int wid = fsg_model_word_add(fsg, link->atom->name);
+                fsg_model_trans_add(fsg, link->from, link->to,
+                                   logmath_log(lmath, link->atom->weight), wid);
+            }
+        }
+        else {
+            fsg_model_null_trans_add(fsg, link->from, link->to, 0);
+        }            
+    }
+    fsg_model_null_trans_closure(fsg, NULL);
+
+    return fsg;
+}
+
 int
 jsgf_write_fsg(jsgf_t *grammar, jsgf_rule_t *rule, FILE *outfh)
 {

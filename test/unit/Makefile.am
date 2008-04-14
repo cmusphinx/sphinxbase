@@ -9,4 +9,5 @@ SUBDIRS=test_alloc				\
 	test_feat				\
 	test_gmm				\
 	test_logmath				\
-	test_ngram
+	test_ngram				\
+	test_fsg

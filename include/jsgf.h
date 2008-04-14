@@ -48,7 +48,8 @@
 #include <hash_table.h>
 #include <glist.h>
 #include <stdio.h>
-
+#include <fsg_model.h>
+#include <logmath.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -113,7 +114,12 @@ jsgf_t *jsgf_grammar_new(jsgf_t *parent);
 jsgf_t *jsgf_parse_file(const char *filename, jsgf_t *parent);
 void jsgf_grammar_free(jsgf_t *jsgf);
 void jsgf_add_link(jsgf_t *grammar, jsgf_atom_t *atom, int from, int to);
+
+jsgf_rule_t *jsgf_get_rule(jsgf_t *grammar, char const *name);
+
+fsg_model_t *jsgf_build_fsg(jsgf_t *grammar, jsgf_rule_t *rule, logmath_t *lmath);
 int jsgf_write_fsg(jsgf_t *grammar, jsgf_rule_t *rule, FILE *outfh);
+
 jsgf_atom_t *jsgf_atom_new(char *name, float weight);
 jsgf_atom_t *jsgf_kleene_new(jsgf_t *jsgf, jsgf_atom_t *atom, int plus);
 jsgf_rule_t *jsgf_optional_new(jsgf_t *jsgf, jsgf_rhs_t *exp);

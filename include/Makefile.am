@@ -16,6 +16,7 @@ pkginclude_HEADERS =				\
 	fe.h					\
 	filename.h				\
 	fixpoint.h				\
+	fsg_model.h				\
 	gau_cb.h				\
 	gau_cb_int32.h				\
 	gau_cb_float64.h			\
