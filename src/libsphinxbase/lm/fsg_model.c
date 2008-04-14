@@ -231,7 +231,7 @@ fsg_model_null_trans_closure(fsg_model_t * fsg, glist_t nulls)
 }
 
 int
-fsg_model_word_add(fsg_model_t *fsg, char const *word)
+fsg_model_word_id(fsg_model_t *fsg, char const *word)
 {
     int wid;
 
@@ -241,11 +241,29 @@ fsg_model_word_add(fsg_model_t *fsg, char const *word)
             break;
     }
     /* If not found, add this to the vocab. */
-    if (wid == fsg->n_word) {
+    if (wid == fsg->n_word)
+        return -1;
+    return wid;
+}
+
+int
+fsg_model_word_add(fsg_model_t *fsg, char const *word)
+{
+    int wid;
+
+    /* Search for an existing word matching this. */
+    wid = fsg_model_word_id(fsg, word);
+    /* If not found, add this to the vocab. */
+    if (wid == -1) {
+        wid = fsg->n_word;
         if (fsg->n_word == fsg->n_word_alloc) {
             fsg->n_word_alloc += 10;
             fsg->vocab = ckd_realloc(fsg->vocab,
                                      fsg->n_word_alloc * sizeof(*fsg->vocab));
+            if (fsg->silwords)
+                fsg->silwords = bitvec_realloc(fsg->silwords, fsg->n_word_alloc);
+            if (fsg->altwords)
+                fsg->altwords = bitvec_realloc(fsg->altwords, fsg->n_word_alloc);
         }
         ++fsg->n_word;
         fsg->vocab[wid] = ckd_salloc(word);
@@ -254,7 +272,8 @@ fsg_model_word_add(fsg_model_t *fsg, char const *word)
 }
 
 int
-fsg_model_add_silence(fsg_model_t * fsg, char const *silword, float32 silprob)
+fsg_model_add_silence(fsg_model_t * fsg, char const *silword,
+                      int state, float32 silprob)
 {
     int32 logsilp;
     int n_trans, silwid, src;
@@ -263,15 +282,82 @@ fsg_model_add_silence(fsg_model_t * fsg, char const *silword, float32 silprob)
 
     silwid = fsg_model_word_add(fsg, silword);
     logsilp = (int32) (logmath_log(fsg->lmath, silprob) * fsg->lw);
+    if (fsg->silwords == NULL)
+        fsg->silwords = bitvec_alloc(fsg->n_word_alloc);
+    bitvec_set(fsg->silwords, silwid);
 
     n_trans = 0;
-    for (src = 0; src < fsg->n_state; src++) {
-        fsg_model_trans_add(fsg, src, src, logsilp, silwid);
-        n_trans++;
+    if (state == -1) {
+        for (src = 0; src < fsg->n_state; src++) {
+            fsg_model_trans_add(fsg, src, src, logsilp, silwid);
+            ++n_trans;
+        }
+    }
+    else {
+        fsg_model_trans_add(fsg, state, state, logsilp, silwid);
+        ++n_trans;
     }
 
+    E_INFO("Added %d silence word transitions\n", n_trans);
     return n_trans;
 }
+
+int
+fsg_model_add_alt(fsg_model_t * fsg, char const *baseword,
+                  char const *altword)
+{
+    int i, j, basewid, altwid;
+    int ntrans;
+
+    /* FIXME: This will get slow, eventually... */
+    for (basewid = 0; basewid < fsg->n_word; ++basewid)
+        if (0 == strcmp(fsg->vocab[basewid], baseword))
+            break;
+    if (basewid == fsg->n_word) {
+        E_ERROR("Base word %s not present in FSG vocabulary!\n", baseword);
+        return -1;
+    }
+    altwid = fsg_model_word_add(fsg, altword);
+    if (fsg->altwords == NULL)
+        fsg->altwords = bitvec_alloc(fsg->n_word_alloc);
+    bitvec_set(fsg->altwords, altwid);
+
+    E_INFO("Adding alternate word transitions (%s,%s) to FSG\n",
+           baseword, altword);
+
+    /* Look for all transitions involving baseword and duplicate them. */
+    /* FIXME: This will also get slow, eventually... */
+    ntrans = 0;
+    for (i = 0; i < fsg->n_state; ++i) {
+        for (j = 0; j < fsg->n_state; ++j) {
+            glist_t trans;
+            gnode_t *gn;
+
+            trans = fsg->trans[i][j];
+            for (gn = trans; gn; gn = gnode_next(gn)) {
+                fsg_link_t *fl = gnode_ptr(gn);
+                if (fl->wid == basewid) {
+                    fsg_link_t *link;
+
+                    /* Create transition object */
+                    link = listelem_malloc(fsg->link_alloc);
+                    link->from_state = i;
+                    link->to_state = j;
+                    link->logs2prob = fl->logs2prob; /* FIXME!!!??? */
+                    link->wid = altwid;
+
+                    trans =
+                        glist_add_ptr(trans, (void *) link);
+                    ++ntrans;
+                }
+            }
+        }
+    }
+
+    E_INFO("Added %d alternate word transitions\n", ntrans);
+    return ntrans;
+}
+
 
 fsg_model_t *
 fsg_model_init(char const *name, logmath_t *lmath, int32 n_state)
@@ -311,7 +397,7 @@ fsg_model_read(FILE * fp, logmath_t *lmath)
     float32 p;
 
     lineno = 0;
-    vocab = hash_table_new(16, FALSE);
+    vocab = hash_table_new(32, FALSE);
     wordptr = NULL;
     lineptr = NULL;
     nulls = NULL;
@@ -507,6 +593,8 @@ fsg_model_free(fsg_model_t * fsg)
             glist_free(fsg->trans[i][j]);
     ckd_free(fsg->vocab);
     listelem_alloc_free(fsg->link_alloc);
+    bitvec_free(fsg->silwords);
+    bitvec_free(fsg->altwords);
     ckd_free_2d(fsg->trans);
     ckd_free_2d(fsg->null_trans);
     ckd_free(fsg->name);

@@ -56,6 +56,7 @@
 #include <glist.h>
 #include <logmath.h>
 #include <hash_table.h>
+#include <bitvec.h>
 #include <listelem_alloc.h>
 
 /*
@@ -87,6 +88,8 @@ typedef struct fsg_model_s {
     int32 n_word;       /**< Number of unique words in this FSG */
     int32 n_word_alloc; /**< Number of words allocated in vocab */
     char **vocab;       /**< Vocabulary for this FSG. */
+    bitvec_t *silwords; /**< Indicates which words are silence/fillers. */
+    bitvec_t *altwords; /**< Indicates which words are pronunciation alternates. */
     logmath_t *lmath;	/**< Pointer to log math computation object. */
     int32 n_state;	/**< #states in FSG */
     int32 start_state;	/**< Must be in the range [0..n_state-1] */
@@ -108,10 +111,27 @@ typedef struct fsg_model_s {
 #define fsg_model_n_state(f)		((f)->n_state)
 #define fsg_model_start_state(f)	((f)->start_state)
 #define fsg_model_final_state(f)	((f)->final_state)
+#define fsg_model_log(f,p)		logmath_log((f)->lmath, p)
 #define fsg_model_lw(f)			((f)->lw)
 #define fsg_model_trans(f,i,j)		((f)->trans[i][j])
 #define fsg_model_null_trans(f,i,j)	((f)->null_trans[i][j])
+#define fsg_model_n_word(f)		((f)->n_word)
 #define fsg_model_word_str(f,wid)       ((f)->vocab[wid])
+
+/**
+ * Have silence transitions been added?
+ */
+#define fsg_model_has_sil(f)            ((f)->silwords != NULL)
+
+/**
+ * Have alternate word transitions been added?
+ */
+#define fsg_model_has_alt(f)            ((f)->altwords != NULL)
+
+#define fsg_model_is_filler(f,wid) \
+    (fsg_model_has_sil(f) ? bitvec_is_set((f)->silwords, wid) : FALSE)
+#define fsg_model_is_alt(f,wid) \
+    (fsg_model_has_alt(f) ? bitvec_is_set((f)->altwords, wid) : FALSE)
 
 /**
  * Create a new FSG.
@@ -177,13 +197,20 @@ void fsg_model_free(fsg_model_t *);
 int fsg_model_word_add(fsg_model_t *fsg, char const *word);
 
 /**
+ * Look up a word in the FSG vocabulary.
+ *
+ * @return Word ID for this word
+ */
+int fsg_model_word_id(fsg_model_t *fsg, char const *word);
+
+/**
  * Add the given transition to the FSG transition matrix.
  *
  * Duplicates (i.e., two transitions between the same states, with the
  * same word label) are flagged and only the highest prob retained.
  */
 void fsg_model_trans_add(fsg_model_t * fsg,
-                        int32 from, int32 to, int32 logp, int32 wid);
+                         int32 from, int32 to, int32 logp, int32 wid);
 
 /**
  * Add a null transition between the given states.
@@ -206,7 +233,18 @@ int32 fsg_model_null_trans_add(fsg_model_t * fsg, int32 from, int32 to, int32 lo
 glist_t fsg_model_null_trans_closure(fsg_model_t * fsg, glist_t nulls);
 
 /**
- * Add silence and filler word transitions to given FSG
+ * Add silence word transitions to each state in given FSG.
+ *
+ * @param state state to add a self-loop to, or -1 for all states.
+ * @param silprob probability of silence transition.
  */
+int fsg_model_add_silence(fsg_model_t * fsg, char const *silword,
+                          int state, float32 silprob);
+
+/**
+ * Add alternate pronunciation transitions for a word in given FSG.
+ */
+int fsg_model_add_alt(fsg_model_t * fsg, char const *baseword,
+                      char const *altword);
 
 #endif /* __FSG_MODEL_H__ */

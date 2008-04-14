@@ -14,8 +14,15 @@ main(int argc, char *argv[])
 	/* Initialize a logmath object to pass to fsg_model_read */
 	lmath = logmath_init(1.0001, 0, 0);
 	jsgf = jsgf_parse_file(LMDIR "/polite.gram", NULL);
+	TEST_ASSERT(jsgf);
 	rule = jsgf_get_rule(jsgf, "<polite.startPolite>");
+	TEST_ASSERT(rule);
 	fsg = jsgf_build_fsg(jsgf, rule, lmath);
+	TEST_ASSERT(fsg);
+
+	TEST_ASSERT(fsg_model_add_silence(fsg, "<sil>", 0.3));
+	TEST_ASSERT(fsg_model_add_silence(fsg, "++NOISE++", 0.3));
+	TEST_ASSERT(fsg_model_add_alt(fsg, "please", "please(2)"));
 
 	jsgf_grammar_free(jsgf);
 	fsg_model_free(fsg);

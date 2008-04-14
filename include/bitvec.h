@@ -74,6 +74,11 @@ typedef uint32 bitvec_t;
 #define bitvec_alloc(n)		ckd_calloc(bitvec_size(n), sizeof(bitvec_t))
 
 /**
+ * Resize a bit vector.
+ */
+#define bitvec_realloc(v,n)	ckd_realloc(v, bitvec_size(n) * sizeof(bitvec_t))
+
+/**
  * Free a bit vector.
  */
 #define bitvec_free(v)		ckd_free(v)
