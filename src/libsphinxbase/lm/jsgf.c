@@ -328,6 +328,8 @@ jsgf_build_fsg(jsgf_t *grammar, jsgf_rule_t *rule, logmath_t *lmath, float32 lw)
     expand_rule(grammar, rule);
 
     fsg = fsg_model_init(rule->name, lmath, lw, grammar->nstate);
+    fsg->start_state = rule->entry;
+    fsg->final_state = rule->exit;
     grammar->links = glist_reverse(grammar->links);
     for (gn = grammar->links; gn; gn = gnode_next(gn)) {
         jsgf_link_t *link = gnode_ptr(gn);
