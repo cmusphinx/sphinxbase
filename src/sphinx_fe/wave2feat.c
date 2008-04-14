@@ -104,11 +104,6 @@ int32 fe_convert_files(globals_t * P);
 int32 fe_build_filenames(globals_t * P, char *fileroot, char **infilename,
                          char **outfilename);
 char *fe_copystr(char *dest_str, char *src_str);
-int32 fe_readspch(globals_t * P, char *infile, int16 ** spdata,
-                  int32 * splen);
-int32 fe_writefeat(fe_t * FE, char *outfile, int32 nframes,
-                   mfcc_t ** feat);
-int32 fe_free_param(globals_t * P);
 int32 fe_openfiles(globals_t * P, fe_t * FE, char *infile, int32 * fp_in,
                    int32 * nsamps, int32 * nframes, int32 * nblocks,
                    char *outfile, int32 * fp_out);
