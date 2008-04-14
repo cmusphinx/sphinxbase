@@ -42,7 +42,7 @@
 #include <ckd_alloc.h>
 #include <err.h>
 
-#include "jsgf.h"
+#include "jsgf_internal.h"
 #include "jsgf_parser.h"
 #include "jsgf_scanner.h"
 

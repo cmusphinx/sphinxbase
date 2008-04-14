@@ -73,7 +73,7 @@ typedef union YYSTYPE
        jsgf_atom_t *atom;
 }
 /* Line 1489 of yacc.c.  */
-#line 77 "jsgf_parser.h"
+#line 77 "../../../../src/libsphinxbase/lm/jsgf_parser.h"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1

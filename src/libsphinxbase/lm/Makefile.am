@@ -22,6 +22,7 @@ noinst_HEADERS = ngram_model_internal.h		\
 	ngram_model_set.h			\
 	ngram_model_arpa.h			\
 	lm3g_model.h				\
+	jsgf_internal.h				\
 	jsgf_scanner.h				\
 	jsgf_parser.h
 

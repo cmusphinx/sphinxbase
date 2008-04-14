@@ -39,7 +39,7 @@
 #define __JSGF_H__
 
 /**
- * \file jsgf.h
+ * @file jsgf.h JSGF grammar compiler
  *
  * This file defines the data structures for parsing JSGF grammars
  * into Sphinx finite-state grammars.
@@ -61,70 +61,82 @@ extern "C" {
 
 typedef struct jsgf_s jsgf_t;
 typedef struct jsgf_rule_s jsgf_rule_t;
-typedef struct jsgf_rhs_s jsgf_rhs_t;
-typedef struct jsgf_atom_s jsgf_atom_t;
-typedef struct jsgf_link_s jsgf_link_t;
 
-struct jsgf_s {
-    char *version;  /**< JSGF version (from header) */
-    char *charset;  /**< JSGF charset (default UTF-8) */
-    char *locale;   /**< JSGF locale (default C) */
-    char *name;     /**< Grammar name */
-
-    hash_table_t *rules;   /**< Defined or imported rules in this grammar. */
-    hash_table_t *imports; /**< Pointers to imported grammars. */
-    jsgf_t *parent;        /**< Parent grammar (if this is an imported one) */
-    glist_t searchpath;    /**< List of directories to search for grammars. */
-
-    /* Scratch variables for FSG conversion. */
-    int nstate;            /**< Number of generated states. */
-    glist_t links;	   /**< Generated FSG links. */
-    glist_t rulestack;     /**< Stack of currently expanded rules. */
-};
-
-struct jsgf_rule_s {
-    char *name;      /**< Rule name (NULL for an alternation/grouping) */
-    int public;      /**< Is this rule marked 'public'? */
-    jsgf_rhs_t *rhs; /**< Expansion */
-
-    int entry;       /**< Entry state for current instance of this rule. */
-    int exit;        /**< Exit state for current instance of this rule. */
-};
-
-struct jsgf_rhs_s {
-    glist_t atoms;   /**< Sequence of items */
-    jsgf_rhs_t *alt; /**< Linked list of alternates */
-};
-
-struct jsgf_atom_s {
-    char *name;        /**< Rule or token name */
-    glist_t tags;      /**< Tags, if any (glist_t of char *) */
-    float weight;      /**< Weight (default 1) */
-};
-
-struct jsgf_link_s {
-    jsgf_atom_t *atom; /**< Name, tags, weight */
-    int from;          /**< From state */
-    int to;            /**< To state */
-};
-
-#define jsgf_atom_is_rule(atom) ((atom)->name[0] == '<')
-
+/**
+ * Create a new JSGF grammar.
+ *
+ * @param parent optional parent grammar for this one (NULL, usually).
+ * @return new JSGF grammar object, or NULL on failure.
+ */
 jsgf_t *jsgf_grammar_new(jsgf_t *parent);
-jsgf_t *jsgf_parse_file(const char *filename, jsgf_t *parent);
-void jsgf_grammar_free(jsgf_t *jsgf);
-void jsgf_add_link(jsgf_t *grammar, jsgf_atom_t *atom, int from, int to);
 
+/**
+ * Parse a JSGF grammar from a file.
+ *
+ * @param parent optional parent grammar for this one (NULL, usually).
+ * @return new JSGF grammar object, or NULL on failure.
+ */
+jsgf_t *jsgf_parse_file(const char *filename, jsgf_t *parent);
+
+/**
+ * Free a JSGF grammar.
+ */
+void jsgf_grammar_free(jsgf_t *jsgf);
+
+/**
+ * Iterator over rules in a grammar
+ */
+typedef hash_iter_t jsgf_rule_iter_t;
+
+
+/**
+ * Get an iterator over all rules in a grammar.
+ */
+jsgf_rule_iter_t *jsgf_rule_iter(jsgf_t *grammar);
+
+/**
+ * Advance an iterator to the next rule in the grammar.
+ */
+#define jsgf_rule_iter_next(itor) hash_table_iter_next(itor)
+
+/**
+ * Get the current rule in a rule iterator.
+ */
+#define jsgf_rule_iter_rule(itor) ((jsgf_rule_t *)(itor)->ent->val)
+
+/**
+ * Free a rule iterator (if the end hasn't been reached).
+ */
+#define jsgf_rule_iter_free(itor) hash_table_iter_free(itor)
+
+/**
+ * Get a rule by name from a grammar.
+ */
 jsgf_rule_t *jsgf_get_rule(jsgf_t *grammar, char const *name);
 
-fsg_model_t *jsgf_build_fsg(jsgf_t *grammar, jsgf_rule_t *rule, logmath_t *lmath, float32 lw);
-int jsgf_write_fsg(jsgf_t *grammar, jsgf_rule_t *rule, FILE *outfh);
+/**
+ * Get the rule name from a rule.
+ */
+char const *jsgf_rule_name(jsgf_rule_t *rule);
 
-jsgf_atom_t *jsgf_atom_new(char *name, float weight);
-jsgf_atom_t *jsgf_kleene_new(jsgf_t *jsgf, jsgf_atom_t *atom, int plus);
-jsgf_rule_t *jsgf_optional_new(jsgf_t *jsgf, jsgf_rhs_t *exp);
-jsgf_rule_t *jsgf_define_rule(jsgf_t *jsgf, char *name, jsgf_rhs_t *rhs, int public);
-jsgf_rule_t *jsgf_import_rule(jsgf_t *jsgf, char *name);
+/**
+ * Test if a rule is public or not.
+ */
+int jsgf_rule_public(jsgf_rule_t *rule);
+
+/**
+ * Build a Sphinx FSG object from a JSGF rule.
+ */
+fsg_model_t *jsgf_build_fsg(jsgf_t *grammar, jsgf_rule_t *rule,
+                            logmath_t *lmath, float32 lw);
+
+/**
+ * Convert a JSGF rule to Sphinx FSG text form.
+ *
+ * This does a direct conversion without doing transitive closure on
+ * null transitions and so forth.
+ */
+int jsgf_write_fsg(jsgf_t *grammar, jsgf_rule_t *rule, FILE *outfh);
 
 #ifdef __cplusplus
 }

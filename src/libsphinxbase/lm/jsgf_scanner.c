@@ -544,7 +544,7 @@ static yyconst flex_int16_t yy_chk[218] =
 /* YOU MUST USE FLEX 2.5.33 OR NEWER TO PROCESS THIS FILE!!! */
 #line 39 "jsgf_scanner.l"
 
-#include "jsgf.h"
+#include "jsgf_internal.h"
 #include "jsgf_parser.h"
 
 

@@ -622,7 +622,7 @@ fsg_model_write(fsg_model_t * fsg, FILE * fp)
             for (gn = fsg->trans[i][j]; gn; gn = gnode_next(gn)) {
                 tl = (fsg_link_t *) gnode_ptr(gn);
 
-                fprintf(fp, "%s %d %d %.3e %s\n", FSG_MODEL_TRANSITION_DECL,
+                fprintf(fp, "%s %d %d %f %s\n", FSG_MODEL_TRANSITION_DECL,
                         tl->from_state, tl->to_state,
                         logmath_exp(fsg->lmath, tl->logs2prob / fsg->lw),
                         (tl->wid < 0) ? "" : fsg_model_word_str(fsg, tl->wid));
@@ -631,7 +631,7 @@ fsg_model_write(fsg_model_t * fsg, FILE * fp)
             /* Print null transitions */
             tl = fsg->null_trans[i][j];
             if (tl) {
-                fprintf(fp, "%s %d %d %.3e\n",
+                fprintf(fp, "%s %d %d %f\n",
                         FSG_MODEL_TRANSITION_DECL,
                         tl->from_state, tl->to_state,
                         logmath_exp(fsg->lmath, tl->logs2prob / fsg->lw));

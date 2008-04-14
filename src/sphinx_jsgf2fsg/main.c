@@ -45,23 +45,23 @@
 static int
 write_fsg(jsgf_t *grammar, const char *name)
 {
-    glist_t rules;
-    int32 nrules;
-    gnode_t *gn;
+    jsgf_rule_iter_t *itor;
+    logmath_t *lmath = logmath_init(1.0001, 0, FALSE);
 
-    rules = hash_table_tolist(grammar->rules, &nrules);
-    for (gn = rules; gn; gn = gnode_next(gn)) {
-        hash_entry_t *he = gnode_ptr(gn);
-        jsgf_rule_t *rule = hash_entry_val(he);
+    for (itor = jsgf_rule_iter(grammar); itor;
+         itor = jsgf_rule_iter_next(itor)) {
+        jsgf_rule_t *rule = jsgf_rule_iter_rule(itor);
+        char const *rule_name = jsgf_rule_name(rule);
 
-        if ((name == NULL && rule->public)
-            || (name && 0 == strncmp(rule->name + 1, name, strlen(rule->name) - 2))) {
+        if ((name == NULL && jsgf_rule_public(rule))
+            || (name && 0 == strncmp(rule_name + 1, name, strlen(rule_name) - 2))) {
             jsgf_write_fsg(grammar, rule, stdout);
+            jsgf_rule_iter_free(itor);
             break;
         }
     }
-    glist_free(rules);
 
+    logmath_free(lmath);
     return 0;
 }
 

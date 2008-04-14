@@ -43,7 +43,7 @@
 #include "hash_table.h"
 #include "err.h"
 
-#include "jsgf.h"
+#include "jsgf_internal.h"
 #include "jsgf_parser.h"
 #include "jsgf_scanner.h"
 
@@ -299,6 +299,12 @@ expand_rule(jsgf_t *grammar, jsgf_rule_t *rule)
     return rule->exit;
 }
 
+jsgf_rule_iter_t *
+jsgf_rule_iter(jsgf_t *grammar)
+{
+    return hash_table_iter(grammar->rules);
+}
+
 jsgf_rule_t *
 jsgf_get_rule(jsgf_t *grammar, char const *name)
 {
@@ -309,6 +315,17 @@ jsgf_get_rule(jsgf_t *grammar, char const *name)
     return (jsgf_rule_t *)val;
 }
 
+char const *
+jsgf_rule_name(jsgf_rule_t *rule)
+{
+    return rule->name;
+}
+
+int
+jsgf_rule_public(jsgf_rule_t *rule)
+{
+    return rule->public;
+}
 
 fsg_model_t *
 jsgf_build_fsg(jsgf_t *grammar, jsgf_rule_t *rule, logmath_t *lmath, float32 lw)
@@ -593,4 +610,3 @@ jsgf_parse_file(const char *filename, jsgf_t *parent)
 
     return jsgf;
 }
-

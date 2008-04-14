@@ -99,7 +99,7 @@
 #include <ckd_alloc.h>
 #include <err.h>
 
-#include "jsgf.h"
+#include "jsgf_internal.h"
 #include "jsgf_parser.h"
 #include "jsgf_scanner.h"
 
@@ -136,7 +136,7 @@ typedef union YYSTYPE
        jsgf_atom_t *atom;
 }
 /* Line 187 of yacc.c.  */
-#line 140 "jsgf_parser.c"
+#line 140 "../../../../src/libsphinxbase/lm/jsgf_parser.c"
 	YYSTYPE;
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
 # define YYSTYPE_IS_DECLARED 1
@@ -149,7 +149,7 @@ typedef union YYSTYPE
 
 
 /* Line 216 of yacc.c.  */
-#line 153 "jsgf_parser.c"
+#line 153 "../../../../src/libsphinxbase/lm/jsgf_parser.c"
 
 #ifdef short
 # undef short
@@ -1513,7 +1513,7 @@ yyreduce:
 
 
 /* Line 1267 of yacc.c.  */
-#line 1517 "jsgf_parser.c"
+#line 1517 "../../../../src/libsphinxbase/lm/jsgf_parser.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
