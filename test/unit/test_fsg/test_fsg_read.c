@@ -11,13 +11,14 @@ main(int argc, char *argv[])
 	/* Initialize a logmath object to pass to fsg_model_read */
 	lmath = logmath_init(1.0001, 0, 0);
 	/* Read a FSG. */
-	fsg = fsg_model_readfile(LMDIR "/goforward.fsg", lmath);
+	fsg = fsg_model_readfile(LMDIR "/goforward.fsg", lmath, 7.5);
 	TEST_ASSERT(fsg);
 
-	TEST_ASSERT(fsg_model_add_silence(fsg, "<sil>", 0.3));
-	TEST_ASSERT(fsg_model_add_silence(fsg, "++NOISE++", 0.3));
+	TEST_ASSERT(fsg_model_add_silence(fsg, "<sil>", -1, 0.3));
+	TEST_ASSERT(fsg_model_add_silence(fsg, "++NOISE++", -1, 0.3));
 	TEST_ASSERT(fsg_model_add_alt(fsg, "FORWARD", "FORWARD(2)"));
 
+	fsg_model_write(fsg, stdout);
 	fsg_model_free(fsg);
 	logmath_free(lmath);
 

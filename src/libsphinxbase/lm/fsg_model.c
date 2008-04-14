@@ -360,7 +360,7 @@ fsg_model_add_alt(fsg_model_t * fsg, char const *baseword,
 
 
 fsg_model_t *
-fsg_model_init(char const *name, logmath_t *lmath, int32 n_state)
+fsg_model_init(char const *name, logmath_t *lmath, float32 lw, int32 n_state)
 {
     fsg_model_t *fsg;
 
@@ -370,6 +370,7 @@ fsg_model_init(char const *name, logmath_t *lmath, int32 n_state)
     fsg->lmath = lmath;
     fsg->name = name ? ckd_salloc(name) : NULL;
     fsg->n_state = n_state;
+    fsg->lw = lw;
 
     /* Allocate non-epsilon transition matrix array */
     fsg->trans = ckd_calloc_2d(fsg->n_state, fsg->n_state,
@@ -381,7 +382,7 @@ fsg_model_init(char const *name, logmath_t *lmath, int32 n_state)
 }
 
 fsg_model_t *
-fsg_model_read(FILE * fp, logmath_t *lmath)
+fsg_model_read(FILE * fp, logmath_t *lmath, float32 lw)
 {
     fsg_model_t *fsg;
     hash_table_t *vocab;
@@ -439,7 +440,7 @@ fsg_model_read(FILE * fp, logmath_t *lmath)
     }
 
     /* Now create the FSG. */
-    fsg = fsg_model_init(fsgname, lmath, n_state);
+    fsg = fsg_model_init(fsgname, lmath, lw, n_state);
     ckd_free(fsgname);
     fsgname = NULL;
 
@@ -475,7 +476,7 @@ fsg_model_read(FILE * fp, logmath_t *lmath)
     lastwid = 0;
     n_trans = n_null_trans = 0;
     for (;;) {
-        int32 wid;
+        int32 wid, tprob;
 
         n = nextline_str2words(fp, &lineno, &lineptr, &wordptr);
         if (n <= 0) {
@@ -509,6 +510,7 @@ fsg_model_read(FILE * fp, logmath_t *lmath)
             goto parse_error;
         }
 
+        tprob = (int32)(logmath_log(lmath, p) * fsg->lw);
         /* Add word to "dictionary". */
         if (n > 4) {
             if (hash_table_lookup_int32(vocab, wordptr[4], &wid) < 0) {
@@ -516,11 +518,11 @@ fsg_model_read(FILE * fp, logmath_t *lmath)
                 wid = lastwid;
                 ++lastwid;
             }
-            fsg_model_trans_add(fsg, i, j, logmath_log(lmath, p), wid);
+            fsg_model_trans_add(fsg, i, j, tprob, wid);
             ++n_trans;
         }
         else {
-            if (fsg_model_null_trans_add(fsg, i, j, logmath_log(lmath, p)) == 1) {
+            if (fsg_model_null_trans_add(fsg, i, j, tprob) == 1) {
                 ++n_null_trans;
                 nulls = glist_add_ptr(nulls, fsg->null_trans[i][j]);
             }
@@ -563,7 +565,7 @@ fsg_model_read(FILE * fp, logmath_t *lmath)
 
 
 fsg_model_t *
-fsg_model_readfile(const char *file, logmath_t *lmath)
+fsg_model_readfile(const char *file, logmath_t *lmath, float32 lw)
 {
     FILE *fp;
     fsg_model_t *fsg;
@@ -572,7 +574,7 @@ fsg_model_readfile(const char *file, logmath_t *lmath)
         E_ERROR("fopen(%s,r) failed\n", file);
         return NULL;
     }
-    fsg = fsg_model_read(fp, lmath);
+    fsg = fsg_model_read(fp, lmath, lw);
     fclose(fp);
     return fsg;
 }
@@ -599,4 +601,65 @@ fsg_model_free(fsg_model_t * fsg)
     ckd_free_2d(fsg->null_trans);
     ckd_free(fsg->name);
     ckd_free(fsg);
+}
+
+
+void
+fsg_model_write(fsg_model_t * fsg, FILE * fp)
+{
+    int32 i, j;
+    gnode_t *gn;
+    fsg_link_t *tl;
+
+    fprintf(fp, "%s\n", FSG_MODEL_BEGIN_DECL);
+    fprintf(fp, "%s %d\n", FSG_MODEL_NUM_STATES_DECL, fsg->n_state);
+    fprintf(fp, "%s %d\n", FSG_MODEL_START_STATE_DECL, fsg->start_state);
+    fprintf(fp, "%s %d\n", FSG_MODEL_FINAL_STATE_DECL, fsg->final_state);
+
+    for (i = 0; i < fsg->n_state; i++) {
+        for (j = 0; j < fsg->n_state; j++) {
+            /* Print non-null transitions */
+            for (gn = fsg->trans[i][j]; gn; gn = gnode_next(gn)) {
+                tl = (fsg_link_t *) gnode_ptr(gn);
+
+                fprintf(fp, "%s %d %d %.3e %s\n", FSG_MODEL_TRANSITION_DECL,
+                        tl->from_state, tl->to_state,
+                        logmath_exp(fsg->lmath, tl->logs2prob / fsg->lw),
+                        (tl->wid < 0) ? "" : fsg_model_word_str(fsg, tl->wid));
+            }
+
+            /* Print null transitions */
+            tl = fsg->null_trans[i][j];
+            if (tl) {
+                fprintf(fp, "%s %d %d %.3e\n",
+                        FSG_MODEL_TRANSITION_DECL,
+                        tl->from_state, tl->to_state,
+                        logmath_exp(fsg->lmath, tl->logs2prob / fsg->lw));
+            }
+        }
+    }
+
+    fprintf(fp, "%c\n", FSG_MODEL_COMMENT_CHAR);
+    fprintf(fp, "%s\n", FSG_MODEL_END_DECL);
+
+    fflush(fp);
+}
+
+void
+fsg_model_writefile(fsg_model_t *fsg, char const *file)
+{
+    FILE *fp;
+
+    assert(fsg);
+
+    E_INFO("Writing FSG file '%s'\n", file);
+
+    if ((fp = fopen(file, "w")) == NULL) {
+        E_ERROR("fopen(%s,r) failed\n", file);
+        return;
+    }
+
+    fsg_model_write(fsg, fp);
+
+    fclose(fp);
 }

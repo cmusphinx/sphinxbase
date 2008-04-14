@@ -311,7 +311,7 @@ jsgf_get_rule(jsgf_t *grammar, char const *name)
 
 
 fsg_model_t *
-jsgf_build_fsg(jsgf_t *grammar, jsgf_rule_t *rule, logmath_t *lmath)
+jsgf_build_fsg(jsgf_t *grammar, jsgf_rule_t *rule, logmath_t *lmath, float32 lw)
 {
     fsg_model_t *fsg;
 
@@ -327,7 +327,7 @@ jsgf_build_fsg(jsgf_t *grammar, jsgf_rule_t *rule, logmath_t *lmath)
     grammar->nstate = 0;
     expand_rule(grammar, rule);
 
-    fsg = fsg_model_init(rule->name, lmath, grammar->nstate);
+    fsg = fsg_model_init(rule->name, lmath, lw, grammar->nstate);
     grammar->links = glist_reverse(grammar->links);
     for (gn = grammar->links; gn; gn = gnode_next(gn)) {
         jsgf_link_t *link = gnode_ptr(gn);

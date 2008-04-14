@@ -117,7 +117,7 @@ void jsgf_add_link(jsgf_t *grammar, jsgf_atom_t *atom, int from, int to);
 
 jsgf_rule_t *jsgf_get_rule(jsgf_t *grammar, char const *name);
 
-fsg_model_t *jsgf_build_fsg(jsgf_t *grammar, jsgf_rule_t *rule, logmath_t *lmath);
+fsg_model_t *jsgf_build_fsg(jsgf_t *grammar, jsgf_rule_t *rule, logmath_t *lmath, float32 lw);
 int jsgf_write_fsg(jsgf_t *grammar, jsgf_rule_t *rule, FILE *outfh);
 
 jsgf_atom_t *jsgf_atom_new(char *name, float weight);

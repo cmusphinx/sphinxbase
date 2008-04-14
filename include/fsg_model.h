@@ -136,7 +136,8 @@ typedef struct fsg_model_s {
 /**
  * Create a new FSG.
  */
-fsg_model_t *fsg_model_init(char const *name, logmath_t *lmath, int32 n_state);
+fsg_model_t *fsg_model_init(char const *name, logmath_t *lmath,
+                            float32 lw, int32 n_state);
 
 /**
  * Read a word FSG from the given file and return a pointer to the structure
@@ -177,12 +178,12 @@ fsg_model_t *fsg_model_init(char const *name, logmath_t *lmath, int32 n_state);
  * Return value: a new fsg_model_t structure if the file is successfully
  * read, NULL otherwise.
  */
-fsg_model_t *fsg_model_readfile(const char *file, logmath_t *lmath);
+fsg_model_t *fsg_model_readfile(const char *file, logmath_t *lmath, float32 lw);
 
 /**
  * Like fsg_model_readfile(), but from an already open stream.
  */
-fsg_model_t *fsg_model_read(FILE *fp, logmath_t *lmath);
+fsg_model_t *fsg_model_read(FILE *fp, logmath_t *lmath, float32 lw);
 
 /**
  * Free the given word FSG.
@@ -246,5 +247,15 @@ int fsg_model_add_silence(fsg_model_t * fsg, char const *silword,
  */
 int fsg_model_add_alt(fsg_model_t * fsg, char const *baseword,
                       char const *altword);
+
+/**
+ * Write FSG to a file.
+ */
+void fsg_model_write(fsg_model_t *fsg, FILE *fp);
+
+/**
+ * Write FSG to a file.
+ */
+void fsg_model_writefile(fsg_model_t *fsg, char const *file);
 
 #endif /* __FSG_MODEL_H__ */
