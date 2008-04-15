@@ -171,11 +171,11 @@ cmd_ln_t *cmd_ln_init(cmd_ln_t *inout_cmdln, const arg_t *defn, int32 strict, ..
  * Return value: 0 if successful, -1 if error.
  */
 SPHINXBASE_EXPORT
-int32 cmd_ln_parse (const arg_t *defn,	/**< In: Array of argument name definitions */
-		    int32 argc,		/**< In: Number of actual arguments */
-		    char *argv[],	/**< In: Actual arguments */
-                    int32 strict        /**< In: Fail on duplicate or unknown
-                                           arguments, or no arguments? */
+int32 cmd_ln_parse(const arg_t *defn,  /**< In: Array of argument name definitions */
+                   int32 argc,	       /**< In: Number of actual arguments */
+                   char *argv[],       /**< In: Actual arguments */
+                   int32 strict        /**< In: Fail on duplicate or unknown
+                                          arguments, or no arguments? */
 	);
 
 /**

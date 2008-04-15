@@ -71,31 +71,78 @@
 
 #include "err.h"
 
+/*
+ * FIXME: This needs to go in TLS.
+ *
+ * We use -1 to start since stderr isn't a constant.  Bleah.
+ */
+static FILE *logfp = (FILE *)-1;
+
+FILE *
+err_set_logfp(FILE *newfp)
+{
+    FILE *oldfp;
+
+    if (logfp == (FILE *)-1)
+        logfp = stderr;
+    oldfp = logfp;
+    logfp = newfp;
+    return oldfp;
+}
+
+int
+err_set_logfile(char const *file)
+{
+    FILE *newfp;
+
+    if ((newfp = fopen(file, "a")) == NULL)
+        return -1;
+    if (logfp != (FILE *)-1 && logfp != stdout && logfp != stderr)
+        fclose(logfp);
+    logfp = newfp;
+    return 0;
+}
+
+
 void
 _E__pr_info_header_wofn(char const *msg)
 {
-    (void) fflush(stderr);
-
+    if (logfp == (FILE *)-1)
+        logfp = stderr;
+    if (logfp == NULL)
+        return;
+    fflush(logfp);
     /* make different format so as not to be parsed by emacs compile */
-    (void) fprintf(stderr, "%s:\t", msg);
+    fprintf(logfp, "%s:\t", msg);
 }
 
 void
 _E__pr_header(char const *f, long ln, char const *msg)
 {
-    char *fname = strrchr(f,'\\');
-    (void) fflush(stderr);
-    (void) fprintf(stderr, "%s: \"%s\", line %ld: ", msg, fname == NULL? f:fname+1, ln);
+    char const *fname;
+
+    if (logfp == (FILE *)-1)
+        logfp = stderr;
+    if (logfp == NULL)
+        return;
+    fname = strrchr(f,'\\');
+    fflush(logfp);
+    fprintf(logfp, "%s: \"%s\", line %ld: ", msg, fname == NULL? f:fname+1, ln);
 }
 
 void
 _E__pr_info_header(char const *f, long ln, char const *msg)
 {
-    char *fname = strrchr(f,'\\');
-    (void) fflush(stderr);
+    char const *fname;
 
+    if (logfp == (FILE *)-1)
+        logfp = stderr;
+    if (logfp == NULL)
+        return;
+    fname = strrchr(f,'\\');
+    fflush(logfp);
     /* make different format so as not to be parsed by emacs compile */
-    (void) fprintf(stderr, "%s: %s(%ld): ", msg, fname == NULL? f:fname+1, ln);
+    fprintf(logfp, "%s: %s(%ld): ", msg, fname == NULL? f:fname+1, ln);
 }
 
 void
@@ -103,11 +150,15 @@ _E__pr_warn(char const *fmt, ...)
 {
     va_list pvar;
 
+    if (logfp == (FILE *)-1)
+        logfp = stderr;
+    if (logfp == NULL)
+        return;
     va_start(pvar, fmt);
-    (void) vfprintf(stderr, fmt, pvar);
+    vfprintf(logfp, fmt, pvar);
     va_end(pvar);
 
-    (void) fflush(stderr);
+    fflush(logfp);
 }
 
 void
@@ -115,11 +166,15 @@ _E__pr_info(char const *fmt, ...)
 {
     va_list pvar;
 
+    if (logfp == (FILE *)-1)
+        logfp = stderr;
+    if (logfp == NULL)
+        return;
     va_start(pvar, fmt);
-    (void) vfprintf(stderr, fmt, pvar);
+    vfprintf(logfp, fmt, pvar);
     va_end(pvar);
 
-    (void) fflush(stderr);
+    fflush(logfp);
 }
 
 void
@@ -127,14 +182,15 @@ _E__die_error(char const *fmt, ...)
 {
     va_list pvar;
 
-    va_start(pvar, fmt);
+    if (logfp == (FILE *)-1)
+        logfp = stderr;
+    if (logfp) {
+        va_start(pvar, fmt);
+        vfprintf(logfp, fmt, pvar);
+        fflush(logfp);
+        va_end(pvar);
+    }
 
-    (void) vfprintf(stderr, fmt, pvar);
-    (void) fflush(stderr);
-
-    va_end(pvar);
-
-    (void) fflush(stderr);
 #if defined(__ADSPBLACKFIN__) && !defined(__linux__)
     while(1);
 #else 
@@ -147,16 +203,20 @@ _E__fatal_sys_error(char const *fmt, ...)
 {
     va_list pvar;
 
-    va_start(pvar, fmt);
-    (void) vfprintf(stderr, fmt, pvar);
-    va_end(pvar);
+    if (logfp == (FILE *)-1)
+        logfp = stderr;
+    if (logfp) {
+        va_start(pvar, fmt);
+        vfprintf(logfp, fmt, pvar);
+        va_end(pvar);
 
-    putc(';', stderr);
-    putc(' ', stderr);
+        putc(';', logfp);
+        putc(' ', logfp);
 
-    perror("");
+        fprintf(logfp, "%s\n", strerror(errno));
+        fflush(logfp);
+    }
 
-    (void) fflush(stderr);
 
 #if defined(__ADSPBLACKFIN__) && !defined(__linux__)
     while(1);
@@ -171,16 +231,21 @@ _E__sys_error(char const *fmt, ...)
 {
     va_list pvar;
 
+    if (logfp == (FILE *)-1)
+        logfp = stderr;
+    if (logfp == NULL)
+        return;
+
     va_start(pvar, fmt);
-    (void) vfprintf(stderr, fmt, pvar);
+    vfprintf(logfp, fmt, pvar);
     va_end(pvar);
 
-    putc(';', stderr);
-    putc(' ', stderr);
+    putc(';', logfp);
+    putc(' ', logfp);
 
     perror("");
 
-    (void) fflush(stderr);
+    fflush(logfp);
 }
 
 void
@@ -188,11 +253,14 @@ _E__abort_error(char const *fmt, ...)
 {
     va_list pvar;
 
-    va_start(pvar, fmt);
-    (void) vfprintf(stderr, fmt, pvar);
-    va_end(pvar);
-
-    (void) fflush(stderr);
+    if (logfp == (FILE *)-1)
+        logfp = stderr;
+    if (logfp) {
+        va_start(pvar, fmt);
+        vfprintf(logfp, fmt, pvar);
+        va_end(pvar);
+        fflush(logfp);
+    }
 
 #if defined(__ADSPBLACKFIN__) && !defined(__linux__)
     while(1);

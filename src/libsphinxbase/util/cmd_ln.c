@@ -97,14 +97,6 @@ struct cmd_ln_s {
 
 /** Global command-line, for non-reentrant API. */
 cmd_ln_t *global_cmdln;
-
-
-/*variables that allow redirecting all files to a log file */
-#ifndef _WIN32_WCE /* FIXME: this is all BOGUS BOGUS BOGUS */
-static FILE orig_stdout, orig_stderr;
-#endif
-static FILE *logfp;
-
 static void arg_dump_r(cmd_ln_t *cmdln, FILE * fp, const arg_t * defn, int32 doc);
 
 /*
@@ -308,8 +300,6 @@ cmd_ln_appl_enter(int argc, char *argv[],
 {
     /* Look for default or specified arguments file */
     const char *str;
-    int32 i;
-    char *logfile;
 
     str = NULL;
 
@@ -352,63 +342,11 @@ cmd_ln_appl_enter(int argc, char *argv[],
     else {
         cmd_ln_parse(defn, argc, argv, TRUE);
     }
-
-    logfp = NULL;
-    if ((logfile = cmd_ln_str("-logfn")) != NULL) {
-        if ((logfp = fopen(logfile, "w")) == NULL) {
-            E_ERROR
-                ("fopen(%s,w) failed; logging to stdout/stderr\n",
-                 logfile);
-        }
-        else {
-#ifdef HAVE_UNISTD_H
-	    dup2(fileno(logfp), 1);
-	    dup2(fileno(logfp), 2);
-#else /* !HAVE_UNISTD_H */
-#ifndef _WIN32_WCE
-            *stdout = *logfp;
-            *stderr = *logfp;
-#endif /* !_WIN32_WCE */
-#endif /* !HAVE_UNISTD_H */
-
-            E_INFO("Command line:\n");
-            for (i = 0; i < argc; i++) {
-                if (argv[i][0] == '-')
-                    printf("\\\n\t");
-                printf("%s ", argv[i]);
-            }
-            printf("\n\n");
-            fflush(stdout);
-            /* Make sure all messages go in order. */
-#ifndef _WIN32_WCE
-            setbuf(stdout, NULL);
-#endif /* !_WIN32_WCE */
-            /* Make sure the arguments go there too. */
-            arg_dump_r(global_cmdln,logfp, defn, 0);
-
-        }
-    }
-    /*
-     * Repeated in cmd_ln_access()
-     */
-    /*
-       E_INFO("Default configuration (superseded by the above):\n");
-       cmd_ln_print_help(stderr, defn);
-       printf ("\n");
-       fflush(stdout);
-     */
 }
 
 void
 cmd_ln_appl_exit()
 {
-    if (logfp) {
-        fclose(logfp);
-#ifndef _WIN32_WCE
-        *stdout = orig_stdout;
-        *stderr = orig_stderr;
-#endif
-    }
     cmd_ln_free();
 }
 

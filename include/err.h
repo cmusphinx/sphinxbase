@@ -60,6 +60,7 @@
 #define _LIBUTIL_ERR_H_
 
 #include <stdarg.h>
+#include <stdio.h>
 #ifndef _WIN32_WCE
 #include <errno.h>
 #endif
@@ -67,10 +68,11 @@
 /* Win32/WinCE DLL gunk */
 #include <sphinxbase_export.h>
 
-/**\file err.h
- *\brief Implementation of error checking routine with flush. 
+/**
+ * @file err.h
+ * @brief Implementation of logging routines. 
  *
- *Logging, warning and error message output funtionality is provided in this file.
+ * Logging, warning and error message output funtionality is provided in this file.
  */
 
 /* 01.18.01 RAH, allow for C++ compiles */
@@ -83,35 +85,46 @@ extern "C" {
 #endif
 
 SPHINXBASE_EXPORT
-void _E__pr_header( char const *file, long line, char const *msg );
+void _E__pr_header(char const *file, long line, char const *msg);
 SPHINXBASE_EXPORT
-void _E__pr_info_header( char const *file, long line, char const *tag );
+void _E__pr_info_header(char const *file, long line, char const *tag);
 SPHINXBASE_EXPORT
 void _E__pr_info_header_wofn(char const *msg);
 SPHINXBASE_EXPORT
-void _E__pr_warn( char const *fmt, ... );
+void _E__pr_warn(char const *fmt, ...);
 SPHINXBASE_EXPORT
-void _E__pr_info( char const *fmt, ... );
+void _E__pr_info(char const *fmt, ...);
 SPHINXBASE_EXPORT
-void _E__die_error( char const *fmt, ... );
+void _E__die_error(char const *fmt, ...);
 SPHINXBASE_EXPORT
-void _E__abort_error( char const *fmt, ... );
+void _E__abort_error(char const *fmt, ...);
 SPHINXBASE_EXPORT
-void _E__sys_error( char const *fmt, ... );
+void _E__sys_error(char const *fmt, ...);
 SPHINXBASE_EXPORT
-void _E__fatal_sys_error( char const *fmt, ... );
-
-/* These three all abort */
-
-/* core dump after error message */
-/* this macro is never used in the code, and conflicts with MS Visual C
-   #ifndef E_ABORT
-   #define E_ABORT  _E__pr_header(__FILE__, __LINE__, "ERROR"),_E__abort_error
-   #endif
-*/
+void _E__fatal_sys_error(char const *fmt, ...);
 
 /**
- * exit with non-zero status after error message 
+ * Direct all logging to a given filehandle.
+ *
+ * @param logfp Filehandle to send log messages to, or NULL to disable logging.
+ * @return Previous logging filehandle, if any.
+ */
+SPHINXBASE_EXPORT
+FILE *err_set_logfp(FILE *logfp);
+
+/**
+ * Append all log messages to a given file.
+ *
+ * Previous logging filehandle is closed (unless it was stdout or stderr).
+ *
+ * @param logfp File to send log messages to, or NULL to disable logging.
+ * @return 0 for success, <0 for failure (e.g. if file does not exist)
+ */
+SPHINXBASE_EXPORT
+int err_set_logfile(char const *file);
+
+/**
+ * Exit with non-zero status after error message 
  */
 #define E_FATAL  _E__pr_header(__FILE__, __LINE__, "FATAL_ERROR"),_E__die_error
 
@@ -120,45 +133,41 @@ void _E__fatal_sys_error( char const *fmt, ... );
  */
 #define E_FATAL_SYSTEM	_E__pr_header(__FILE__, __LINE__, "SYSTEM_ERROR"),_E__fatal_sys_error
 
-/** Print error text; Call perror(""); 
- *
+/**
+ * Print error text; Call perror(""); 
  */
 #define E_WARN_SYSTEM	_E__pr_header(__FILE__, __LINE__, "SYSTEM_ERROR"),_E__sys_error
 
-/** Print error text; Call perror(""); 
- *
+/**
+ * Print error text; Call perror(""); 
  */
 #define E_ERROR_SYSTEM	_E__pr_header(__FILE__, __LINE__, "SYSTEM_ERROR"),_E__sys_error
 
-
 /**
- *Print logging information to standard error stream
+ * Print logging information to standard error stream
  */
 #define E_INFO	  _E__pr_info_header(__FILE__, __LINE__, "INFO"),_E__pr_info
 
 /**
- *Print logging information without header, to standard error stream
+ * Print logging information without header, to standard error stream
  */
 
 #define E_INFOCONT	  _E__pr_info
 
 /**
- *
+ * Print logging information without filename.
  */
-
 #define E_INFO_NOFN _E__pr_info_header_wofn("INFO"),_E__pr_info
 
 
 /**
- *Print warning information to standard error stream
+ * Print warning information to standard error stream
  */
-
 #define E_WARN	  _E__pr_header(__FILE__, __LINE__, "WARNING"),_E__pr_warn
 
 /**
- *Print error message to standard error stream
+ * Print error message to standard error stream
  */
-
 #define E_ERROR	  _E__pr_header(__FILE__, __LINE__, "ERROR"),_E__pr_warn
 
 
