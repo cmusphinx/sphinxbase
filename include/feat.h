@@ -103,6 +103,44 @@ extern "C" {
 					   for livemode decoder */
 #define S3_MAX_FRAMES		15000    /* RAH, I believe this is still too large, but better than before */
 
+#define cepstral_to_feature_command_line_macro()                        \
+{ "-feat",                                                                      \
+      ARG_STRING,                                                               \
+      "s2_4x",                                                                  \
+      "Feature stream type, depends on the acoustic model" },                   \
+{ "-ceplen",                                                                    \
+      ARG_INT32,                                                                \
+      "13",                                                                     \
+     "Number of components in the input feature vector" },			\
+{ "-cmn",                                                               \
+      ARG_STRING,                                                       \
+      "current",                                                        \
+      "Cepstral mean normalization scheme ('current', 'prior', or 'none')" }, \
+{ "-cmninit",                                                           \
+      ARG_STRING,                                                       \
+      "8.0",                                                            \
+      "Initial values (comma-separated) for cepstral mean when 'prior' is used" }, \
+{ "-varnorm",                                                           \
+      ARG_BOOLEAN,                                                      \
+      "no",                                                             \
+      "Variance normalize each utterance (only if CMN == current)" },   \
+{ "-agc",                                                               \
+      ARG_STRING,                                                       \
+      "none",                                                           \
+      "Automatic gain control for c0 ('max', 'emax', 'noise', or 'none')" }, \
+{ "-agcthresh",                                                         \
+      ARG_FLOAT32,                                                      \
+      "2.0",                                                            \
+      "Initial threshold for automatic gain control" },                 \
+{ "-lda",                                                               \
+      ARG_STRING,                                                       \
+      NULL,                                                             \
+      "File containing transformation matrix to be applied to features (single-stream features only)" }, \
+{ "-ldadim",                                                            \
+      ARG_INT32,                                                        \
+      "0",                                                              \
+      "Dimensionality of output of feature transformation (0 to use entire matrix)" }
+
 /**
  * \struct feat_t
  * \brief Structure for describing a speech feature type

@@ -84,10 +84,9 @@ jsgf_t *jsgf_parse_file(const char *filename, jsgf_t *parent);
 void jsgf_grammar_free(jsgf_t *jsgf);
 
 /**
- * Iterator over rules in a grammar
+ * Iterator over rules in a grammar.
  */
 typedef hash_iter_t jsgf_rule_iter_t;
-
 
 /**
  * Get an iterator over all rules in a grammar.
