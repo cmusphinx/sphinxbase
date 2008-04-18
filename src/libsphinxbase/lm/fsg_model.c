@@ -351,6 +351,7 @@ fsg_model_add_alt(fsg_model_t * fsg, char const *baseword,
                     ++ntrans;
                 }
             }
+            fsg->trans[i][j] = trans;
         }
     }
 

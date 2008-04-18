@@ -116,7 +116,7 @@ typedef struct fsg_model_s {
 #define fsg_model_trans(f,i,j)		((f)->trans[i][j])
 #define fsg_model_null_trans(f,i,j)	((f)->null_trans[i][j])
 #define fsg_model_n_word(f)		((f)->n_word)
-#define fsg_model_word_str(f,wid)       ((f)->vocab[wid])
+#define fsg_model_word_str(f,wid)       (wid == -1 ? "(NULL)" : (f)->vocab[wid])
 
 /**
  * Have silence transitions been added?
