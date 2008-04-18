@@ -126,6 +126,8 @@ _E__pr_header(char const *f, long ln, char const *msg)
     if (logfp == NULL)
         return;
     fname = strrchr(f,'\\');
+    if (fname == NULL)
+        fname = strrchr(f,'/');
     fflush(logfp);
     fprintf(logfp, "%s: \"%s\", line %ld: ", msg, fname == NULL? f:fname+1, ln);
 }
@@ -140,6 +142,8 @@ _E__pr_info_header(char const *f, long ln, char const *msg)
     if (logfp == NULL)
         return;
     fname = strrchr(f,'\\');
+    if (fname == NULL)
+        fname = strrchr(f,'/');
     fflush(logfp);
     /* make different format so as not to be parsed by emacs compile */
     fprintf(logfp, "%s: %s(%ld): ", msg, fname == NULL? f:fname+1, ln);
