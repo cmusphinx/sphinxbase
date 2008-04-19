@@ -81,10 +81,6 @@ ngram_file_name_to_type(const char *file_name)
         return NGRAM_DMP32;
     if (0 == strncmp_nocase(ext, ".DMP", 4))
         return NGRAM_DMP;
-    if (0 == strncmp_nocase(ext, ".FST", 4))
-        return NGRAM_FST;
-    if (0 == strncmp_nocase(ext, ".SLF", 4))
-        return NGRAM_HTK;
     return NGRAM_ARPA; /* Default file type */
 }
 
@@ -115,9 +111,6 @@ ngram_model_read(cmd_ln_t *config,
     case NGRAM_DMP32:
         model = ngram_model_dmp32_read(config, file_name, lmath);
         break;
-    case NGRAM_FST:
-    case NGRAM_HTK:
-        return NULL; /* Unsupported format for reading. */
     }
 
     /* Now set weights based on config if present. */
@@ -154,10 +147,6 @@ ngram_model_write(ngram_model_t *model, const char *file_name,
         return ngram_model_dmp_write(model, file_name);
     case NGRAM_DMP32:
         return ngram_model_dmp32_write(model, file_name);
-    case NGRAM_FST:
-        return ngram_model_fst_write(model, file_name);
-    case NGRAM_HTK:
-        return ngram_model_htk_write(model, file_name);
     }
 
     return -1; /* In case your compiler is really stupid. */

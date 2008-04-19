@@ -200,16 +200,6 @@ int ngram_model_dmp_write(ngram_model_t *model,
  */
 int ngram_model_dmp32_write(ngram_model_t *model,
 			    const char *file_name);
-/**
- * Write an N-Gram model to an AT&T FSM format file.
- */
-int ngram_model_fst_write(ngram_model_t *model,
-			  const char *file_name);
-/**
- * Write an N-Gram model to an HTK SLF word graph file.
- */
-int ngram_model_htk_write(ngram_model_t *model,
-			  const char *file_name);
 
 /**
  * Read a probdef file.
