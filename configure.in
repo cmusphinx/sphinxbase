@@ -197,6 +197,13 @@ AC_SUBST(CSH)
 
 AM_PROG_LIBTOOL
 
+dnl
+dnl Check for Doxygen, and build dox if present
+dnl
+AC_CHECK_PROG(HAVE_DOXYGEN, doxygen, yes, no)
+AM_CONDITIONAL(BUILD_DOXYGEN, test "x$HAVE_DOXYGEN" = "xyes")
+
+
 AC_OUTPUT([
 sphinxbase.pc
 Makefile
@@ -216,6 +223,7 @@ src/sphinx_amtools/Makefile
 src/sphinx_adtools/Makefile
 src/sphinx_lmtools/Makefile
 doc/Makefile
+doc/doxyfile
 test/Makefile
 test/unit/testfuncs.sh
 test/unit/Makefile
