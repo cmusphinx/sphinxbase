@@ -56,7 +56,7 @@ extern "C" {
 #define FE_WARP_ID_NONE	       0xffffffff
 
 typedef struct {
-    void (*set_parameters)(char *param_str, float sampling_rate);
+    void (*set_parameters)(char const *param_str, float sampling_rate);
     const char * (*doc)(void);
     uint32 (*id)(void);
     uint32 (*n_param)(void);
@@ -75,7 +75,7 @@ const char *
 fe_warp_doc(void);
 
 void
-fe_warp_set_parameters(char *param_str, float sampling_rate);
+fe_warp_set_parameters(char const *param_str, float sampling_rate);
 
 uint32
 fe_warp_n_param(void);

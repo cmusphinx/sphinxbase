@@ -58,7 +58,7 @@ uint32
 fe_warp_affine_n_param(void);
 
 void
-fe_warp_affine_set_parameters(char *param_str, float sampling_rate);
+fe_warp_affine_set_parameters(char const *param_str, float sampling_rate);
 
 float
 fe_warp_affine_warped_to_unwarped(float nonlinear);

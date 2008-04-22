@@ -73,14 +73,9 @@
 #ifndef _LIBUTIL_PRIM_TYPE_H_
 #define _LIBUTIL_PRIM_TYPE_H_
 
-/** \file prim_type.h
- * \brief Type signatures used in Sphinx. 
- * 
- * \warning As many people point out, the following definition will
- * easily confuse developers.  It is possible (though EXTREMELY
- * unlikely) that int32 can actually be 64 bits. The length of a
- * particular data type actually depends on the host machine
- * architecture, type of compiler and how the compiler were compiled.
+/**
+ * @file prim_type.h
+ * @brief Basic type definitions used in Sphinx. 
  */
  
 #ifdef __cplusplus
@@ -98,7 +93,7 @@ extern "C" {
 #  define HAVE_LONG_LONG
 # endif
 # ifndef ssize_t
-	typedef signed int ssize_t;
+typedef signed int ssize_t;
 # endif
 # define SIZEOF_LONG_LONG 8
 # define __BIGSTACKVARIABLE__ static
@@ -106,10 +101,20 @@ extern "C" {
 # define __BIGSTACKVARIABLE__
 #endif
 
-/* Assume P64 or LP64 (quite reasonable, really) */
-/* This type really ought to be int, but it will break binary
- * compatibility if we change it. */
-typedef unsigned char	boolean;
+/**
+ * Union of basic types.
+ */
+typedef union anytype_s {
+    void *ptr;
+    long i;
+    unsigned long ui;
+    double fl;
+} anytype_t;
+
+/*
+ * Assume P64 or LP64.  If you need to port this to a DSP, let us know.
+ */
+typedef int		boolean;
 typedef int		int32;
 typedef short		int16;
 typedef signed char	int8;
@@ -129,19 +134,6 @@ typedef double          int64;
 typedef double          uint64;
 #endif /* !HAVE_LONG_LONG && SIZEOF_LONG_LONG == 8 */
 
-typedef union any4byte_type_s {
-	int32 i_32;
-	uint32 ui_32;
-} any4byte_type_t;
-
-typedef union anytype_s {
-	void *ptr;		/* User defined data types at this ptr */
-	int32 i_32;
-	uint32 ui_32;
-	float32 fl_32;
-	float64 fl_64;
-} anytype_t;
-
 #ifndef TRUE
 #define TRUE 1
 #endif
@@ -153,6 +145,7 @@ typedef union anytype_s {
 #define NULL (void *)0
 #endif
 
+/* These really ought to come from <limits.h>, but not everybody has that. */
 /* Useful constants */
 #define MAX_INT32		((int32) 0x7fffffff)
 #define MAX_INT16		((int16) 0x00007fff)

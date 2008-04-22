@@ -108,7 +108,6 @@ SPHINXBASE_EXPORT
 extern const char *agc_type_str[];
 
 /**
- * \struct agc_t
  * Structure holding data for doing AGC.
  **/
 typedef struct agc_s {

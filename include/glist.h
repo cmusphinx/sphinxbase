@@ -107,10 +107,10 @@ typedef gnode_t *glist_t;	/** Head of a list of gnodes */
 /** Access macros, for convenience 
  */
 #define gnode_ptr(g)		((g)->data.ptr)
-#define gnode_int32(g)		((g)->data.i_32)
-#define gnode_uint32(g)		((g)->data.ui_32)
-#define gnode_float32(g)	((g)->data.fl_32)
-#define gnode_float64(g)	((g)->data.fl_64)
+#define gnode_int32(g)		((g)->data.i)
+#define gnode_uint32(g)		((g)->data.ui)
+#define gnode_float32(g)	((g)->data.fl)
+#define gnode_float64(g)	((g)->data.fl)
 #define gnode_next(g)		((g)->next)
 
 
@@ -194,34 +194,6 @@ gnode_t *glist_insert_float64 (gnode_t *gn, /**< a generic node which a value wi
 	);
 
 /**
- * Delete a list node, with the given user-defined data, after
- * the given generic node gn.  gn cannot be NULL.
- * Return ptr to the newly created gnode_t.
- * It is more a mirror image of glist_add_* family of functions.
- * FIXME: This description makes no sense, and the function itself doesn't actually work.
- */
-
-gnode_t *glist_delete (gnode_t *gn /**< a generic node which ptr will be deleted after it. */
-	);
-
-/**
- * Check the given glist to see if it already contains the given value (of appropriate type).
- * In the case of the ptr, only the pointer values are compared, not the data pointed to by them.
- * Return value: 1 if match found, 0 if not.
- */
-SPHINXBASE_EXPORT
-int32 glist_chkdup_ptr (glist_t g, void *val);	/* List and value to check for */
-SPHINXBASE_EXPORT
-int32 glist_chkdup_int32 (glist_t g, int32 val);
-SPHINXBASE_EXPORT
-int32 glist_chkdup_uint32 (glist_t g, uint32 val);
-SPHINXBASE_EXPORT
-int32 glist_chkdup_float32 (glist_t g, float32 val);
-SPHINXBASE_EXPORT
-int32 glist_chkdup_float64 (glist_t g, float64 val);
-
-
-/**
  * Reverse the order of the given glist.  (glist_add() adds to the head; one might
  * ultimately want the reverse of that.)
  * NOTE: The list is reversed "in place"; i.e., no new memory is allocated.
@@ -239,23 +211,6 @@ glist_t glist_reverse (glist_t g /**< input link list */
 SPHINXBASE_EXPORT
 int32 glist_count (glist_t g /**< input link list */
 	);
-
-
-/**
- * Apply the given function to the user-defined data.ptr for each node in the list.
- * (Again, too bad there's no function overloading in C.)
- */
-SPHINXBASE_EXPORT
-void glist_apply_ptr (glist_t g, void (*func)(void *));
-SPHINXBASE_EXPORT
-void glist_apply_int32 (glist_t g, void (*func)(int32));
-SPHINXBASE_EXPORT
-void glist_apply_uint32 (glist_t g, void (*func)(uint32));
-SPHINXBASE_EXPORT
-void glist_apply_float32 (glist_t g, void (*func)(float32));
-SPHINXBASE_EXPORT
-void glist_apply_float64 (glist_t g, void (*func)(float64));
-
 
 /**
  * Free the given generic list; user-defined data contained within is not

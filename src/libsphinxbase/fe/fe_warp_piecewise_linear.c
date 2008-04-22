@@ -102,7 +102,7 @@ fe_warp_piecewise_linear_n_param()
 }
 
 void
-fe_warp_piecewise_linear_set_parameters(char *param_str,
+fe_warp_piecewise_linear_set_parameters(char const *param_str,
                                         float sampling_rate)
 {
     char *tok;

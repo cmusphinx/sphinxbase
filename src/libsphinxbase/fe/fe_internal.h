@@ -103,8 +103,8 @@ struct param_s {
     int32 logspec;
     int32 doublebw;
     int32 verbose;
-    char *warp_type;
-    char *warp_params;
+    char const *warp_type;
+    char const *warp_params;
     int32 transform;
     int32 lifter_val;
     int32 unit_area;
@@ -130,8 +130,8 @@ struct melfb_s {
     int16 *filt_width;
     /* Luxury mobile home. */
     int32 doublewide;
-    char *warp_type;
-    char *warp_params;
+    char const *warp_type;
+    char const *warp_params;
     /* Precomputed normalization constants for unitary DCT-II/DCT-III */
     mfcc_t sqrt_inv_n, sqrt_inv_2n;
     /* Value and coefficients for HTK-style liftering */

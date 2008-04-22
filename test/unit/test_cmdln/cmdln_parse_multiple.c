@@ -30,6 +30,7 @@ main(int argc, char *argv[])
            cmd_ln_str("-b") ? cmd_ln_str("-b") : "(null)",
            cmd_ln_boolean("-c"),
            cmd_ln_float64("-d"));
+    cmd_ln_free();
            
     return 0;
 }

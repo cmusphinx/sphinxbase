@@ -4,7 +4,7 @@
 echo "CEPVIEW TEST"
 tmpout="test-cepview.out"
 
-run_program sphinx_cepview/sphinx_cepview \
+memcheck_program sphinx_cepview/sphinx_cepview \
 -i 13 \
 -d 13 \
 -f $tests/regression/chan3.mfc \

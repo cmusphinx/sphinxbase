@@ -4,7 +4,7 @@
 tmpout="test-sphinx_fe.out"
 
 echo "WAVE2FEAT TEST"
-run_program sphinx_fe/sphinx_fe \
+memcheck_program sphinx_fe/sphinx_fe \
 -samprate 11025 \
 -frate 105 \
 -wlen 0.024 \

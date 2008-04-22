@@ -822,7 +822,8 @@ feat_copy(feat_t * fcb, mfcc_t ** mfc, mfcc_t ** feat)
 }
 
 feat_t *
-feat_init(char *type, cmn_type_t cmn, int32 varnorm, agc_type_t agc, int32 breport, int32 cepsize)
+feat_init(char const *type, cmn_type_t cmn, int32 varnorm,
+          agc_type_t agc, int32 breport, int32 cepsize)
 {
     feat_t *fcb;
     int32 i, l, k;
@@ -931,6 +932,7 @@ feat_init(char *type, cmn_type_t cmn, int32 varnorm, agc_type_t agc, int32 brepo
         fcb->compute_feat = feat_s3_cep;
     }
     else {
+        char *mtype = ckd_salloc(type);
         /*
          * Generic definition: Format should be %d,%d,%d,...,%d (i.e.,
          * comma separated list of feature stream widths; #items =
@@ -938,16 +940,16 @@ feat_init(char *type, cmn_type_t cmn, int32 varnorm, agc_type_t agc, int32 brepo
          * concatenated) is also allowed, which can be specified with
          * a colon after the list of feature streams.
          */
-        l = strlen(type);
+        l = strlen(mtype);
         k = 0;
         for (i = 1; i < l - 1; i++) {
-            if (type[i] == ',') {
-                type[i] = ' ';
+            if (mtype[i] == ',') {
+                mtype[i] = ' ';
                 k++;
             }
-            else if (type[i] == ':') {
-                type[i] = '\0';
-                fcb->window_size = atoi(type + i + 1);
+            else if (mtype[i] == ':') {
+                mtype[i] = '\0';
+                fcb->window_size = atoi(mtype + i + 1);
                 break;
             }
         }
@@ -956,7 +958,7 @@ feat_init(char *type, cmn_type_t cmn, int32 varnorm, agc_type_t agc, int32 brepo
         fcb->stream_len = (int32 *) ckd_calloc(k, sizeof(int32));
 
         /* Scan individual feature stream lengths */
-        strp = type;
+        strp = mtype;
         i = 0;
         fcb->out_dim = 0;
         fcb->cepsize = 0;
@@ -981,6 +983,7 @@ feat_init(char *type, cmn_type_t cmn, int32 varnorm, agc_type_t agc, int32 brepo
 
         /* Input is already the feature stream */
         fcb->compute_feat = feat_copy;
+        ckd_free(mtype);
     }
 
     if (cmn != CMN_NONE)

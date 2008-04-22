@@ -52,6 +52,9 @@ main(int argc, char *argv[])
         return 1;
     printf("%s\n",
            cmd_ln_str_r(config, "-b") ? cmd_ln_str_r(config, "-b") : "(null)");
+    cmd_ln_set_str_r(config, "-b", "blatz");
+    printf("%s\n",
+           cmd_ln_str_r(config, "-b") ? cmd_ln_str_r(config, "-b") : "(null)");
     cmd_ln_free_r(config);
            
     return 0;

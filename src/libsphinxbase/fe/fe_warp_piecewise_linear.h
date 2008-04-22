@@ -58,7 +58,7 @@ uint32
 fe_warp_piecewise_linear_n_param(void);
 
 void
-fe_warp_piecewise_linear_set_parameters(char *param_str, float sampling_rate);
+fe_warp_piecewise_linear_set_parameters(char const *param_str, float sampling_rate);
 
 float
 fe_warp_piecewise_linear_warped_to_unwarped(float nonlinear);

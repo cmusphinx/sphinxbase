@@ -134,7 +134,7 @@ fe_warp_set(const char *id_name)
 }
 
 void
-fe_warp_set_parameters(char *param_str, float sampling_rate)
+fe_warp_set_parameters(char const *param_str, float sampling_rate)
 {
     if (fid <= FE_WARP_ID_MAX) {
         fe_warp_conf[fid].set_parameters(param_str, sampling_rate);

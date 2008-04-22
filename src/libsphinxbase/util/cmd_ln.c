@@ -81,23 +81,20 @@
 #include "hash_table.h"
 #include "case.h"
 
-/**
- * (opaque) structure containing a parsed command-line
- */
+typedef struct cmd_ln_val_s {
+    anytype_t val;
+    int type;
+} cmd_ln_val_t;
+
 struct cmd_ln_s {
-    /** Hash table holding all arguments and their values */
     hash_table_t *ht;
-    /**
-     * The true memory reservoir for all the string pointer if the
-     * command line is read as a file.
-     */
     char **f_argv;
     uint32 f_argc;
 };
 
 /** Global command-line, for non-reentrant API. */
 cmd_ln_t *global_cmdln;
-static void arg_dump_r(cmd_ln_t *cmdln, FILE * fp, const arg_t * defn, int32 doc);
+static void arg_dump_r(cmd_ln_t *cmdln, FILE * fp, arg_t const *defn, int32 doc);
 
 /*
  * Find max length of name and default fields in the given defn array.
@@ -227,10 +224,11 @@ arg_resolve_env(const char *str)
     return resolved_str;
 }
 
-static anytype_t *
-arg_str2val(argtype_t t, const char *str)
+static cmd_ln_val_t *
+cmd_ln_val_init(int t, const char *str)
 {
-    anytype_t val, *v;
+    cmd_ln_val_t *v;
+    anytype_t val;
     char *e_str;
 
     if (!str) {
@@ -241,31 +239,26 @@ arg_str2val(argtype_t t, const char *str)
         e_str = arg_resolve_env(str);
 
         switch (t) {
-        case ARG_INT32:
-        case REQARG_INT32:
-            if (sscanf(e_str, "%d", &val.i_32) != 1)
+        case ARG_INTEGER:
+        case REQARG_INTEGER:
+            if (sscanf(e_str, "%ld", &val.i) != 1)
                 return NULL;
             break;
-        case ARG_FLOAT32:
-        case REQARG_FLOAT32:
-            if (sscanf(e_str, "%f", &val.fl_32) != 1)
-                return NULL;
-            break;
-        case ARG_FLOAT64:
-        case REQARG_FLOAT64:
-            if (sscanf(e_str, "%lf", &val.fl_64) != 1)
+        case ARG_FLOATING:
+        case REQARG_FLOATING:
+            if (sscanf(e_str, "%lf", &val.fl) != 1)
                 return NULL;
             break;
         case ARG_BOOLEAN:
         case REQARG_BOOLEAN:
             if ((e_str[0] == 'y') || (e_str[0] == 't') ||
                 (e_str[0] == 'Y') || (e_str[0] == 'T') || (e_str[0] == '1')) {
-                val.i_32 = TRUE;
+                val.i = TRUE;
             }
             else if ((e_str[0] == 'n') || (e_str[0] == 'f') ||
                      (e_str[0] == 'N') || (e_str[0] == 'F') |
                      (e_str[0] == '0')) {
-                val.i_32 = FALSE;
+                val.i = FALSE;
             }
             else {
                 E_ERROR("Unparsed boolean value '%s'\n", str);
@@ -276,15 +269,26 @@ arg_str2val(argtype_t t, const char *str)
             val.ptr = ckd_salloc(e_str);
             break;
         default:
-            E_FATAL("Unknown argument type: %d\n", t);
+            E_ERROR("Unknown argument type: %d\n", t);
+            return NULL;
         }
     
         free(e_str);
     }
 
     v = ckd_calloc(1, sizeof(*v));
-    memcpy(v, &val, sizeof(*v));
+    memcpy(v, &val, sizeof(val));
+    v->type = t;
+
     return v;
+}
+
+void
+cmd_ln_val_free(cmd_ln_val_t *val)
+{
+    if (val->type & ARG_STRING)
+        ckd_free(val->val.ptr);
+    ckd_free(val);
 }
 
 cmd_ln_t *
@@ -410,17 +414,13 @@ arg_dump_r(cmd_ln_t *cmdln, FILE * fp, const arg_t * defn, int32 doc)
             vp = cmd_ln_access_r(cmdln, defn[j].name);
             if (vp) {
                 switch (defn[j].type) {
-                case ARG_INT32:
-                case REQARG_INT32:
-                    fprintf(fp, "%d", vp->i_32);
+                case ARG_INTEGER:
+                case REQARG_INTEGER:
+                    fprintf(fp, "%ld", vp->i);
                     break;
-                case ARG_FLOAT32:
-                case REQARG_FLOAT32:
-                    fprintf(fp, "%e", vp->fl_32);
-                    break;
-                case ARG_FLOAT64:
-                case REQARG_FLOAT64:
-                    fprintf(fp, "%e", vp->fl_64);
+                case ARG_FLOATING:
+                case REQARG_FLOATING:
+                    fprintf(fp, "%e", vp->fl);
                     break;
                 case ARG_STRING:
                 case REQARG_STRING:
@@ -429,10 +429,10 @@ arg_dump_r(cmd_ln_t *cmdln, FILE * fp, const arg_t * defn, int32 doc)
                     break;
                 case ARG_BOOLEAN:
                 case REQARG_BOOLEAN:
-                    fprintf(fp, "%s", vp->i_32 ? "yes" : "no");
+                    fprintf(fp, "%s", vp->i ? "yes" : "no");
                     break;
                 default:
-                    E_FATAL("Unknown argument type: %d\n", defn[j].type);
+                    E_ERROR("Unknown argument type: %d\n", defn[j].type);
                 }
             }
         }
@@ -496,7 +496,8 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
     /* Parse command line arguments (name-value pairs); skip argv[0] if argc is odd */
     for (j = argc % 2; j < argc; j += 2) {
         arg_t *argdef;
-        void *v, *vv;
+        cmd_ln_val_t *val;
+        void *v;
 
         if (j + 1 >= argc) {
             cmd_ln_print_help_r(cmdln, stderr, defn);
@@ -517,9 +518,9 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
 
         /* Enter argument value */
         if (argdef == NULL)
-            v = arg_str2val(ARG_STRING, argv[j + 1]);
+            val = cmd_ln_val_init(ARG_STRING, argv[j + 1]);
         else {
-            if ((v = arg_str2val(argdef->type, argv[j + 1])) == NULL) {
+            if ((val = cmd_ln_val_init(argdef->type, argv[j + 1])) == NULL) {
                 cmd_ln_print_help_r(cmdln, stderr, defn);
                 E_ERROR("Bad argument value for %s: %s\n", argv[j],
                         argv[j + 1]);
@@ -527,31 +528,33 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
             }
         }
 
-        if ((vv = hash_table_enter(cmdln->ht, argv[j], v)) != v) {
+        if ((v = hash_table_enter(cmdln->ht, argv[j], (void *)val)) != (void *)val) {
 	    if (strict) {
-		ckd_free(v);
+                cmd_ln_val_free(val);
 		E_ERROR("Duplicate argument name in arguments: %s\n",
 			argdef->name);
 		goto error;
 	    }
 	    else {
-		vv = hash_table_replace(cmdln->ht, argv[j], v);
-		ckd_free(vv);
+		v = hash_table_replace(cmdln->ht, argv[j], (void *)val);
+                cmd_ln_val_free((cmd_ln_val_t *)v);
 	    }
         }
     }
 
     /* Fill in default values, if any, for unspecified arguments */
     for (i = 0; i < n; i++) {
-	void *v;
+        cmd_ln_val_t *val;
+        void *v;
+
         if (hash_table_lookup(cmdln->ht, defn[i].name, &v) < 0) {
-            if ((v = arg_str2val(defn[i].type, defn[i].deflt)) == NULL) {
+            if ((val = cmd_ln_val_init(defn[i].type, defn[i].deflt)) == NULL) {
                 E_ERROR
                     ("Bad default argument value for %s: %s\n",
                      defn[i].name, defn[i].deflt);
                 goto error;
             }
-            hash_table_enter(cmdln->ht, defn[i].name, v);
+            hash_table_enter(cmdln->ht, defn[i].name, (void *)val);
         }
     }
 
@@ -678,6 +681,8 @@ cmd_ln_parse_file_r(cmd_ln_t *inout_cmdln, const arg_t * defn, const char *filen
     char **tmp_argv;
     int argc;
     int argv_size;
+/* FIXME: ARGh!! */
+#define ARG_MAX_LENGTH 512
     __BIGSTACKVARIABLE__ char str[ARG_MAX_LENGTH];
     int len = 0;
     int ch;
@@ -807,18 +812,12 @@ cmd_ln_parse_file(const arg_t * defn, const char *filename, int32 strict)
 }
 
 void
-cmd_ln_print_help_r(cmd_ln_t *cmdln, FILE * fp, const arg_t * defn)
+cmd_ln_print_help_r(cmd_ln_t *cmdln, FILE * fp, arg_t const* defn)
 {
     if (defn == NULL)
         return;
     fprintf(fp, "Arguments list definition:\n");
     arg_dump_r(cmdln, fp, defn, 1);
-}
-
-void
-cmd_ln_print_help(FILE * fp, const arg_t * defn)
-{
-    cmd_ln_print_help_r(global_cmdln, fp, defn);
 }
 
 int
@@ -830,25 +829,82 @@ cmd_ln_exists_r(cmd_ln_t *cmdln, const char *name)
     return (hash_table_lookup(cmdln->ht, name, &val) == 0);
 }
 
-int
-cmd_ln_exists(const char *name)
-{
-    return cmd_ln_exists_r(global_cmdln, name);
-}
-
 anytype_t *
 cmd_ln_access_r(cmd_ln_t *cmdln, const char *name)
 {
     void *val;
-    if (hash_table_lookup(cmdln->ht, name, &val) < 0)
-        E_FATAL("Unknown argument: %s\n", name);
+    if (hash_table_lookup(cmdln->ht, name, &val) < 0) {
+        E_ERROR("Unknown argument: %s\n", name);
+        return NULL;
+    }
     return (anytype_t *)val;
 }
 
-anytype_t *
-cmd_ln_access(const char *name)
+char const *
+cmd_ln_str_r(cmd_ln_t *cmdln, char const *name)
 {
-    return cmd_ln_access_r(global_cmdln, name);
+    anytype_t *val;
+    val = cmd_ln_access_r(cmdln, name);
+    if (val == NULL)
+        return NULL;
+    return (char const *)val->ptr;
+}
+
+long
+cmd_ln_int_r(cmd_ln_t *cmdln, char const *name)
+{
+    anytype_t *val;
+    val = cmd_ln_access_r(cmdln, name);
+    if (val == NULL)
+        return 0L;
+    return val->i;
+}
+
+double
+cmd_ln_float_r(cmd_ln_t *cmdln, char const *name)
+{
+    anytype_t *val;
+    val = cmd_ln_access_r(cmdln, name);
+    if (val == NULL)
+        return 0.0;
+    return val->fl;
+}
+
+void
+cmd_ln_set_str_r(cmd_ln_t *cmdln, char const *name, char const *str)
+{
+    anytype_t *val;
+    val = cmd_ln_access_r(cmdln, name);
+    if (val == NULL) {
+        E_ERROR("Unknown argument: %s\n", name);
+        return;
+    }
+    ckd_free(val->ptr);
+    val->ptr = ckd_salloc(str);
+}
+
+void
+cmd_ln_set_int_r(cmd_ln_t *cmdln, char const *name, long iv)
+{
+    anytype_t *val;
+    val = cmd_ln_access_r(cmdln, name);
+    if (val == NULL) {
+        E_ERROR("Unknown argument: %s\n", name);
+        return;
+    }
+    val->i = iv;
+}
+
+void
+cmd_ln_set_float_r(cmd_ln_t *cmdln, char const *name, double fv)
+{
+    anytype_t *val;
+    val = cmd_ln_access_r(cmdln, name);
+    if (val == NULL) {
+        E_ERROR("Unknown argument: %s\n", name);
+        return;
+    }
+    val->fl = fv;
 }
 
 /* RAH, 4.17.01, free memory allocated above  */
@@ -866,7 +922,7 @@ cmd_ln_free_r(cmd_ln_t *cmdln)
         entries = hash_table_tolist(cmdln->ht, &n);
         for (gn = entries; gn; gn = gnode_next(gn)) {
 	    hash_entry_t *e = gnode_ptr(gn);
-            ckd_free(e->val);
+            cmd_ln_val_free((cmd_ln_val_t *)e->val);
         }
 	glist_free(entries);
         hash_table_free(cmdln->ht);

@@ -106,7 +106,7 @@ extern "C" {
 #define cepstral_to_feature_command_line_macro()                        \
 { "-feat",                                                                      \
       ARG_STRING,                                                               \
-      "s2_4x",                                                                  \
+      "1s_c_d_dd",                                                              \
       "Feature stream type, depends on the acoustic model" },                   \
 { "-ceplen",                                                                    \
       ARG_INT32,                                                                \
@@ -319,7 +319,7 @@ void feat_vector_free(mfcc_t **feat);
  * must not directly modify the contents of the returned value.
  */
 SPHINXBASE_EXPORT
-feat_t *feat_init(char *type,	/**< In: Type of feature stream */
+feat_t *feat_init(char const *type,/**< In: Type of feature stream */
                   cmn_type_t cmn, /**< In: Type of cepstram mean normalization to 
                                      be done before feature computation; can be 
                                      CMN_NONE (for none) */

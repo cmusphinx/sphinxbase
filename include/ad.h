@@ -181,13 +181,12 @@ typedef struct {
 
 #if (defined(WIN32) || defined(AD_BACKEND_WIN32)) && !defined(GNUWINCE)
 
-/** \struct ad_rec_t
- *  \brief Audio recording structure. 
- */
-
 #define DEFAULT_DEVICE (char*)DEV_MAPPER
 
-typedef struct {
+/**
+ * Audio recording structure. 
+ */
+typedef struct ad_rec_s {
     HWAVEIN h_wavein;	/* "HANDLE" to the audio input device */
     ad_wbuf_t *wi_buf;	/* Recording buffers provided to system */
     int32 n_buf;	/* #Recording buffers provided to system */

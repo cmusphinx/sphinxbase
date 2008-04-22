@@ -199,6 +199,7 @@ expand_rhs(jsgf_t *grammar, jsgf_rule_t *rule, jsgf_rhs_t *rhs)
         if (jsgf_atom_is_rule(atom)) {
             jsgf_rule_t *subrule;
             char *fullname;
+            gnode_t *subnode;
             void *val;
 
             /* Special case for <NULL> and <VOID> pseudo-rules */
@@ -224,7 +225,10 @@ expand_rhs(jsgf_t *grammar, jsgf_rule_t *rule, jsgf_rhs_t *rhs)
             ckd_free(fullname);
             subrule = val;
             /* Look for this in the stack of expanded rules */
-            if (glist_chkdup_ptr(grammar->rulestack, subrule)) {
+            for (subnode = grammar->rulestack; subnode; subnode = gnode_next(subnode))
+                if (gnode_ptr(subnode) == (void *)subrule)
+                    break;
+            if (subnode != NULL) {
                 /* Allow right-recursion only. */
                 if (gnode_next(gn) != NULL) {
                     E_ERROR("Only right-recursion is permitted (in %s.%s)\n",

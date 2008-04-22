@@ -65,6 +65,7 @@
 #endif
 
 #include "fe.h"
+#include "strfuncs.h"
 #include "cmd_ln.h"
 #include "err.h"
 #include "ckd_alloc.h"
@@ -77,13 +78,13 @@ struct globals_s {
     cmd_ln_t *config;
     int32 nskip;
     int32 runlen;
-    char *wavfile;
-    char *cepfile;
-    char *ctlfile;
-    char *wavdir;
-    char *cepdir;
-    char *wavext;
-    char *cepext;
+    char const *wavfile;
+    char const *cepfile;
+    char const *ctlfile;
+    char const *wavdir;
+    char const *cepdir;
+    char const *wavext;
+    char const *cepext;
     int32 input_format;
     int32 is_batch;
     int32 is_single;
@@ -103,7 +104,6 @@ globals_t *fe_parse_options(int argc, char **argv);
 int32 fe_convert_files(globals_t * P);
 int32 fe_build_filenames(globals_t * P, char *fileroot, char **infilename,
                          char **outfilename);
-char *fe_copystr(char *dest_str, char *src_str);
 int32 fe_openfiles(globals_t * P, fe_t * FE, char *infile, int32 * fp_in,
                    int32 * nsamps, int32 * nframes, int32 * nblocks,
                    char *outfile, int32 * fp_out);
@@ -144,6 +144,7 @@ main(int32 argc, char **argv)
     if (fe_convert_files(P) != FE_SUCCESS) {
         E_FATAL("error converting files...exiting\n");
     }
+    cmd_ln_free_r(P->config);
     free(P);
     return (0);
 }
@@ -198,6 +199,9 @@ fe_convert_files(globals_t * P)
             if (P->convert) {
                 /* Special case for doing various DCTs */
                 return_value = fe_convert_with_dct(P, FE, infile, outfile);
+                ckd_free(infile);
+                ckd_free(outfile);
+                infile = outfile = NULL;
                 if (return_value != FE_SUCCESS)
                     return return_value;
                 continue;
@@ -206,6 +210,9 @@ fe_convert_files(globals_t * P)
                 fe_openfiles(P, FE, infile, &fp_in,
                              &total_samps, &nframes, &nblocks,
                              outfile, &fp_out);
+            ckd_free(infile);
+            ckd_free(outfile);
+            infile = outfile = NULL;
             if (return_value != FE_SUCCESS) {
                 return (return_value);
             }
@@ -256,16 +263,12 @@ fe_convert_files(globals_t * P)
                     }
                     curr_block++;
                     total_frames += frames_proc;
-                    if (spdata != NULL) {
-                        free(spdata);
-                        spdata = NULL;
-                    }
-                }
-                /* process last (or only) block */
-                if (spdata != NULL) {
                     free(spdata);
                     spdata = NULL;
                 }
+                /* process last (or only) block */
+                free(spdata);
+                spdata = NULL;
                 splen = last_blocksize;
 
                 if ((spdata =
@@ -318,10 +321,8 @@ fe_convert_files(globals_t * P)
                 total_frames += frames_proc;
 
                 fe_closefiles(fp_in, fp_out);
-                if (spdata != NULL) {
-                    free(spdata);
-                    spdata = NULL;
-                }
+                free(spdata);
+                spdata = NULL;
                 if (last_frame_cep != NULL) {
                     ckd_free_2d((void **)
                                 last_frame_cep);
@@ -348,12 +349,22 @@ fe_convert_files(globals_t * P)
             printf("%s\n", infile);
 
         /* Special case for doing various DCTs. */
-        if (P->convert != WAV2FEAT)
-            return fe_convert_with_dct(P, FE, infile, outfile);
+        if (P->convert != WAV2FEAT) {
+            int rv;
+
+            rv = fe_convert_with_dct(P, FE, infile, outfile);
+            ckd_free(infile);
+            ckd_free(outfile);
+            infile = outfile = NULL;
+            return rv;
+        }
 
         return_value =
             fe_openfiles(P, FE, infile, &fp_in, &total_samps,
                          &nframes, &nblocks, outfile, &fp_out);
+        ckd_free(infile);
+        ckd_free(outfile);
+        infile = outfile = NULL;
         if (return_value != FE_SUCCESS) {
             return (return_value);
         }
@@ -420,6 +431,8 @@ fe_convert_files(globals_t * P)
             }
             process_utt_return_value =
                 fe_process_utt(FE, spdata, splen, &cep, &frames_proc);
+            free(spdata);
+            spdata = NULL;
             if (FE_ZERO_ENERGY_ERROR == process_utt_return_value) {
                 warn_zero_energy = 1;
             }
@@ -454,10 +467,6 @@ fe_convert_files(globals_t * P)
             total_frames += frames_proc;
 
             fe_closefiles(fp_in, fp_out);
-            if (cep != NULL) {
-                free(spdata);
-                spdata = NULL;
-            }
             if (last_frame_cep != NULL) {
                 ckd_free_2d((void **) last_frame_cep);
                 last_frame_cep = NULL;
@@ -532,7 +541,7 @@ fe_parse_options(int32 argc, char **argv)
 {
     globals_t *P;
     int32 format;
-    char *endian;
+    char const *endian;
 
     P = ckd_calloc(1, sizeof(*P));
     P->config = cmd_ln_parse_r(NULL, defn, argc, argv, TRUE);
@@ -552,8 +561,8 @@ fe_parse_options(int32 argc, char **argv)
     P->cepfile = cmd_ln_str_r(P->config, "-o");
     P->ctlfile = cmd_ln_str_r(P->config, "-c");
     if (P->ctlfile != NULL) {
-        char *nskip;
-        char *runlen;
+        char const *nskip;
+        char const *runlen;
 
         P->is_batch = 1;
 
@@ -626,51 +635,39 @@ fe_parse_options(int32 argc, char **argv)
 
 }
 
-
 int32
 fe_build_filenames(globals_t * P, char *fileroot, char **infilename,
                    char **outfilename)
 {
-    char cbuf[MAXCHARS];
-    char chanlabel[MAXCHARS];
+    char chanlabel[32];
 
     if (P->nchans > 1)
         sprintf(chanlabel, ".ch%d", P->whichchan);
 
     if (P->is_batch) {
-        sprintf(cbuf, "%s", "");
-        strcat(cbuf, P->wavdir);
-        strcat(cbuf, "/");
-        strcat(cbuf, fileroot);
-        strcat(cbuf, ".");
-        strcat(cbuf, P->wavext);
         if (infilename != NULL) {
-            *infilename = fe_copystr(*infilename, cbuf);
+            *infilename = string_join(P->wavdir, "/",
+                                      fileroot, ".",
+                                      P->wavext, NULL);
         }
 
-        sprintf(cbuf, "%s", "");
-        strcat(cbuf, P->cepdir);
-        strcat(cbuf, "/");
-        strcat(cbuf, fileroot);
-        if (P->nchans > 1)
-            strcat(cbuf, chanlabel);
-        strcat(cbuf, ".");
-        strcat(cbuf, P->cepext);
         if (outfilename != NULL) {
-            *outfilename = fe_copystr(*outfilename, cbuf);
+            if (P->nchans > 1)
+                *outfilename = string_join(P->cepdir, "/",
+                                           fileroot, chanlabel,
+                                           ".", P->cepext, NULL);
+            else
+                *outfilename = string_join(P->cepdir, "/",
+                                           fileroot, ".",
+                                           P->cepext, NULL);
         }
     }
     else if (P->is_single) {
-        sprintf(cbuf, "%s", "");
-        strcat(cbuf, P->wavfile);
         if (infilename != NULL) {
-            *infilename = fe_copystr(*infilename, cbuf);
+            *infilename = ckd_salloc(P->wavfile);
         }
-
-        sprintf(cbuf, "%s", "");
-        strcat(cbuf, P->cepfile);
         if (outfilename != NULL) {
-            *outfilename = fe_copystr(*outfilename, cbuf);
+            *outfilename = ckd_salloc(P->cepfile);
         }
     }
     else {
@@ -678,23 +675,6 @@ fe_build_filenames(globals_t * P, char *fileroot, char **infilename,
     }
 
     return 0;
-}
-
-
-char *
-fe_copystr(char *dest_str, char *src_str)
-{
-    int i, src_len, len;
-    char *s;
-
-    src_len = strlen(src_str);
-    len = src_len;
-    s = (char *) malloc(len + 1);
-    for (i = 0; i < src_len; i++)
-        *(s + i) = *(src_str + i);
-    *(s + src_len) = NULL_CHAR;
-
-    return (s);
 }
 
 int32

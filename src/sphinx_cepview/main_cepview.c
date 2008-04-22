@@ -143,7 +143,7 @@ static arg_t arg[] = {
     {NULL, ARG_INT32, NULL, NULL}
 };
 
-int read_cep(char *file, float ***cep, int *nframes, int numcep);
+int read_cep(char const *file, float ***cep, int *nframes, int numcep);
 
 int
 main(int argc, char *argv[])
@@ -153,7 +153,7 @@ main(int argc, char *argv[])
     int32 frm_begin, frm_end;
     int is_header, is_describe;
     float *z, **cep;
-    char *cepfile;
+    char const *cepfile;
 
     print_appl_info(argv[0]);
     cmd_ln_appl_enter(argc, argv, "default.arg", arg);
@@ -220,13 +220,14 @@ main(int argc, char *argv[])
     }
     fflush(stdout);
     cmd_ln_appl_exit();
+    ckd_free_2d(cep);
 
     return (IO_SUCCESS);
 
 }
 
 int
-read_cep(char *file, float ***cep, int *numframes, int cepsize)
+read_cep(char const *file, float ***cep, int *numframes, int cepsize)
 {
     FILE *fp;
     int n_float;

@@ -88,7 +88,7 @@ glist_add_int32(glist_t g, int32 val)
     gnode_t *gn;
 
     gn = (gnode_t *) ckd_calloc(1, sizeof(gnode_t));
-    gn->data.i_32 = val;
+    gn->data.i = (long)val;
     gn->next = g;
     return ((glist_t) gn);      /* Return the new head of the list */
 }
@@ -100,7 +100,7 @@ glist_add_uint32(glist_t g, uint32 val)
     gnode_t *gn;
 
     gn = (gnode_t *) ckd_calloc(1, sizeof(gnode_t));
-    gn->data.ui_32 = val;
+    gn->data.ui = (unsigned long)val;
     gn->next = g;
     return ((glist_t) gn);      /* Return the new head of the list */
 }
@@ -112,7 +112,7 @@ glist_add_float32(glist_t g, float32 val)
     gnode_t *gn;
 
     gn = (gnode_t *) ckd_calloc(1, sizeof(gnode_t));
-    gn->data.fl_32 = val;
+    gn->data.fl = (double)val;
     gn->next = g;
     return ((glist_t) gn);      /* Return the new head of the list */
 }
@@ -124,126 +124,10 @@ glist_add_float64(glist_t g, float64 val)
     gnode_t *gn;
 
     gn = (gnode_t *) ckd_calloc(1, sizeof(gnode_t));
-    gn->data.fl_64 = val;
+    gn->data.fl = (double)val;
     gn->next = g;
     return ((glist_t) gn);      /* Return the new head of the list */
 }
-
-
-int32
-glist_chkdup_ptr(glist_t g, void *val)
-{
-    gnode_t *gn;
-
-    for (gn = g; gn; gn = gnode_next(gn))
-        if (gnode_ptr(gn) == val)
-            return 1;
-
-    return 0;
-}
-
-
-int32
-glist_chkdup_int32(glist_t g, int32 val)
-{
-    gnode_t *gn;
-
-    for (gn = g; gn; gn = gnode_next(gn))
-        if (gnode_int32(gn) == val)
-            return 1;
-
-    return 0;
-}
-
-
-int32
-glist_chkdup_uint32(glist_t g, uint32 val)
-{
-    gnode_t *gn;
-
-    for (gn = g; gn; gn = gnode_next(gn))
-        if (gnode_uint32(gn) == val)
-            return 1;
-
-    return 0;
-}
-
-
-int32
-glist_chkdup_float32(glist_t g, float32 val)
-{
-    gnode_t *gn;
-
-    for (gn = g; gn; gn = gnode_next(gn))
-        if (gnode_float32(gn) == val)
-            return 1;
-
-    return 0;
-}
-
-
-int32
-glist_chkdup_float64(glist_t g, float64 val)
-{
-    gnode_t *gn;
-
-    for (gn = g; gn; gn = gnode_next(gn))
-        if (gnode_float64(gn) == val)
-            return 1;
-
-    return 0;
-}
-
-
-void
-glist_apply_ptr(glist_t g, void (*func) (void *))
-{
-    gnode_t *gn;
-
-    for (gn = g; gn; gn = gn->next)
-        (*func) (gn->data.ptr);
-}
-
-
-void
-glist_apply_int32(glist_t g, void (*func) (int32))
-{
-    gnode_t *gn;
-
-    for (gn = g; gn; gn = gn->next)
-        (*func) (gn->data.i_32);
-}
-
-
-void
-glist_apply_uint32(glist_t g, void (*func) (uint32))
-{
-    gnode_t *gn;
-
-    for (gn = g; gn; gn = gn->next)
-        (*func) (gn->data.ui_32);
-}
-
-
-void
-glist_apply_float32(glist_t g, void (*func) (float32))
-{
-    gnode_t *gn;
-
-    for (gn = g; gn; gn = gn->next)
-        (*func) (gn->data.fl_32);
-}
-
-
-void
-glist_apply_float64(glist_t g, void (*func) (float64))
-{
-    gnode_t *gn;
-
-    for (gn = g; gn; gn = gn->next)
-        (*func) (gn->data.fl_64);
-}
-
 
 void
 glist_free(glist_t g)
@@ -319,7 +203,7 @@ glist_insert_int32(gnode_t * gn, int32 val)
     gnode_t *newgn;
 
     newgn = (gnode_t *) ckd_calloc(1, sizeof(gnode_t));
-    newgn->data.i_32 = val;
+    newgn->data.i = val;
     newgn->next = gn->next;
     gn->next = newgn;
 
@@ -333,7 +217,7 @@ glist_insert_uint32(gnode_t * gn, uint32 val)
     gnode_t *newgn;
 
     newgn = (gnode_t *) ckd_calloc(1, sizeof(gnode_t));
-    newgn->data.ui_32 = val;
+    newgn->data.ui = val;
     newgn->next = gn->next;
 
     gn->next = newgn;
@@ -348,7 +232,7 @@ glist_insert_float32(gnode_t * gn, float32 val)
     gnode_t *newgn;
 
     newgn = (gnode_t *) ckd_calloc(1, sizeof(gnode_t));
-    newgn->data.fl_32 = val;
+    newgn->data.fl = (double)val;
     newgn->next = gn->next;
     gn->next = newgn;
 
@@ -362,27 +246,12 @@ glist_insert_float64(gnode_t * gn, float64 val)
     gnode_t *newgn;
 
     newgn = (gnode_t *) ckd_calloc(1, sizeof(gnode_t));
-    newgn->data.fl_64 = val;
+    newgn->data.fl = (double)val;
     newgn->next = gn->next;
     gn->next = newgn;
 
     return newgn;
 }
-
-gnode_t *
-glist_delete(gnode_t * gn)
-{
-    gnode_t *newgn;
-    newgn = gn->next;
-    if (newgn) {
-        ckd_free((char *) gn);
-        return newgn;
-    }
-    else {
-        return gn;
-    }
-}
-
 
 gnode_t *
 gnode_free(gnode_t * gn, gnode_t * pred)
