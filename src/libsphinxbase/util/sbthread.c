@@ -50,6 +50,245 @@
  */
 #ifdef _WIN32
 #include <windows.h>
+
+struct sbthread_s {
+    cmd_ln_t *config;
+    sbmsgq_t *msgq;
+    sbthread_main func;
+    void *arg;
+    HANDLE th;
+    DWORD tid;
+};
+
+struct sbmsg_s {
+    size_t len;
+    void *data;
+};
+
+struct sbmsgq_s {
+    sbmsg_t *msgs;
+    size_t depth;
+    size_t out, nmsg;
+    CRITICAL_SECTION mtx;
+    HANDLE evt;
+};
+
+struct sbevent_s {
+    HANDLE evt;
+};
+
+struct sbmtx_s {
+    CRITICAL_SECTION mtx;
+};
+
+DWORD WINAPI
+sbthread_internal_main(LPVOID arg)
+{
+    sbthread_t *th = (sbthread_t *)arg;
+    int rv;
+
+    rv = (*th->func)(th);
+    return (DWORD)rv;
+}
+
+sbthread_t *
+sbthread_start(cmd_ln_t *config, sbthread_main func, void *arg)
+{
+    sbthread_t *th;
+    int rv;
+
+    th = ckd_calloc(1, sizeof(*th));
+    th->config = config;
+    th->func = func;
+    th->arg = arg;
+    th->msgq = sbmsgq_init(256);
+    th->th = CreateThread(NULL, 0, sbthread_internal_main, th, &th->tid);
+    if (th->th == NULL) {
+        sbthread_free(th);
+        return NULL;
+    }
+    return th;
+}
+
+int
+sbthread_wait(sbthread_t *th)
+{
+    DWORD rv, exit;
+
+    /* It has already been joined. */
+    if (th->th == NULL)
+        return -1;
+
+    rv = WaitForSingleObject(th->th, INFINITE);
+    if (rv == WAIT_FAILED) {
+        E_ERROR("Failed to join thread: WAIT_FAILED\n");
+        return -1;
+    }
+    GetExitCodeThread(th->th, &exit);
+    CloseHandle(th->th);
+    th->th = NULL;
+    return (int)exit;
+}
+
+sbmsgq_t *
+sbmsgq_init(size_t depth)
+{
+    sbmsgq_t *msgq;
+
+    msgq = ckd_calloc(1, sizeof(*msgq));
+    msgq->msgs = ckd_calloc(depth, sizeof(*msgq->msgs));
+    msgq->depth = depth;
+    msgq->cond = CreateEvent(NULL, FALSE, FALSE, NULL);
+    if (msgq->cond == NULL) {
+        ckd_free(msgq);
+        ckd_free(msgq->msgs);
+        return NULL;
+    }
+    InitializeCriticalSection(&msgq->mtx);
+    return msgq;
+}
+
+void
+sbmsgq_free(sbmsgq_t *msgq)
+{
+    DeleteCriticalSection(&msgq->mtx);
+    CloseHandle(msgq->cond);
+    ckd_free(msgq->msgs);
+    ckd_free(msgq);
+}
+
+sbmsg_t *
+sbmsgq_send(sbmsgq_t *q, size_t len, void *data)
+{
+    size_t in;
+
+    /* Lock in order to fiddle with pointers. */
+    EnterCriticalSection(&q->mtx);
+    if (q->nmsg == q->depth) {
+        /* Oops, it's full. */
+        LeaveCriticalSection(&q->mtx);
+        return NULL;
+    }
+    in = (q->out + q->nmsg) % q->depth;
+    q->msgs[in].len = len;
+    q->msgs[in].data = data;
+    ++q->nmsg;
+    SetEvent(q->cond);
+    LeaveCriticalSection(&q->mtx);
+
+    return q->msgs + in;
+}
+
+static DWORD
+cond_timed_wait(HANDLE cond, int sec, int nsec)
+{
+    DWORD rv;
+    if (sec == -1) {
+        rv = WaitForSingleObject(cond, INFINITE);
+    }
+    else {
+        DWORD ms;
+
+        ms = sec * 1000 + nsec / (1000*1000);
+        rv = WaitForSingleObject(cond, ms);
+    }
+    return rv;
+}
+
+sbmsg_t *
+sbmsgq_wait(sbmsgq_t *q, int sec, int nsec)
+{
+    size_t out;
+    DWORD rv;
+
+    /* Wait for the queue to become non-empty. */
+    rv = cond_timed_wait(q->cond, sec, nsec);
+
+    /* Do some interlocked fiddling of the pointers in it. */
+    EnterCriticalSection(&q->mtx);
+    out = q->out;
+    ++q->out;
+    --q->nmsg;
+    if (q->out == q->depth)
+        q->out = 0;
+    LeaveCriticalSection(&q->mtx);
+
+    return q->msgs + out;
+}
+
+sbevent_t *
+sbevent_init(void)
+{
+    sbevent_t *evt;
+
+    evt = ckd_calloc(1, sizeof(*evt));
+    evt->evt = CreateEvent(NULL, FALSE, FALSE, NULL);
+    if (evt->evt == NULL) {
+        ckd_free(evt);
+        return NULL;
+    }
+    return evt;
+}
+
+void
+sbevent_free(sbevent_t *evt)
+{
+    CloseHandle(evt->evt);
+    ckd_free(evt);
+}
+
+int
+sbevent_signal(sbevent_t *evt)
+{
+    return SetEvent(evt->evt) ? 0 : -1;
+}
+
+int
+sbevent_wait(sbevent_t *evt, int sec, int nsec)
+{
+    DWORD rv;
+
+    rv = cond_timed_wait(evt->evt, sec, nsec);
+    return rv;
+}
+
+sbmtx_t *
+sbmtx_init(void)
+{
+    sbmtx_t *mtx;
+
+    mtx = ckd_calloc(1, sizeof(*mtx));
+    InitializeCriticalSection(&mtx->mtx);
+    return mtx;
+}
+
+int
+sbmtx_trylock(sbmtx_t *mtx)
+{
+    return TryEnterCriticalSection(&mtx->mtx) ? 0 : -1;
+}
+
+int
+sbmtx_lock(sbmtx_t *mtx)
+{
+    EnterCriticalSection(&mtx->mtx);
+    return 0;
+}
+
+int
+sbmtx_unlock(sbmtx_t *mtx)
+{
+    LeaveCriticalSection(&mtx->mtx);
+    return 0;
+}
+
+void
+sbmtx_free(sbmtx_t *mtx)
+{
+    DeleteCriticalSection(&mtx->mtx);
+    ckd_free(mtx);
+}
+
 #else /* POSIX */
 #include <pthread.h>
 #include <sys/time.h>
@@ -94,24 +333,6 @@ sbthread_internal_main(void *arg)
     return (void *)(long)rv;
 }
 
-cmd_ln_t *
-sbthread_config(sbthread_t *th)
-{
-    return th->config;
-}
-
-void *
-sbthread_arg(sbthread_t *th)
-{
-    return th->arg;
-}
-
-sbmsgq_t *
-sbthread_msgq(sbthread_t *th)
-{
-    return th->msgq;
-}
-
 sbthread_t *
 sbthread_start(cmd_ln_t *config, sbthread_main func, void *arg)
 {
@@ -131,12 +352,6 @@ sbthread_start(cmd_ln_t *config, sbthread_main func, void *arg)
     return th;
 }
 
-sbmsg_t *
-sbthread_send(sbthread_t *th, size_t len, void *data)
-{
-    return sbmsgq_send(th->msgq, len, data);
-}
-
 int
 sbthread_wait(sbthread_t *th)
 {
@@ -154,14 +369,6 @@ sbthread_wait(sbthread_t *th)
     }
     th->th = (pthread_t)-1;
     return (int)(long)exit;
-}
-
-void
-sbthread_free(sbthread_t *th)
-{
-    sbthread_wait(th);
-    sbmsgq_free(th->msgq);
-    ckd_free(th);
 }
 
 sbmsgq_t *
@@ -311,24 +518,8 @@ sbevent_wait(sbevent_t *evt, int sec, int nsec)
     /* Lock the mutex before we check its signalled state. */
     pthread_mutex_lock(&evt->mtx);
     /* If it's not signalled, then wait until it is. */
-    if (!evt->signalled) {
-        if (sec == -1) {
-            rv = pthread_cond_wait(&evt->cond, &evt->mtx);
-        }
-        else {
-            struct timeval now;
-            struct timespec end;
-
-            gettimeofday(&now, NULL);
-            end.tv_sec = now.tv_sec + sec;
-            end.tv_nsec = now.tv_usec * 1000 + nsec;
-            if (end.tv_nsec > (1000*1000*1000)) {
-                sec += end.tv_nsec / (1000*1000*1000);
-                end.tv_nsec = end.tv_nsec % (1000*1000*1000);
-            }
-            rv = pthread_cond_timedwait(&evt->cond, &evt->mtx, &end);
-        }
-    }
+    if (!evt->signalled)
+        rv = cond_timed_wait(&evt->cond, &evt->mtx, sec, nsec);
     /* Set its state to unsignalled if we were successful. */
     if (rv == 0)
         evt->signalled = FALSE;
@@ -375,8 +566,39 @@ sbmtx_free(sbmtx_t *mtx)
     pthread_mutex_destroy(&mtx->mtx);
     ckd_free(mtx);
 }
-
 #endif /* not WIN32 */
+
+cmd_ln_t *
+sbthread_config(sbthread_t *th)
+{
+    return th->config;
+}
+
+void *
+sbthread_arg(sbthread_t *th)
+{
+    return th->arg;
+}
+
+sbmsgq_t *
+sbthread_msgq(sbthread_t *th)
+{
+    return th->msgq;
+}
+
+sbmsg_t *
+sbthread_send(sbthread_t *th, size_t len, void *data)
+{
+    return sbmsgq_send(th->msgq, len, data);
+}
+
+void
+sbthread_free(sbthread_t *th)
+{
+    sbthread_wait(th);
+    sbmsgq_free(th->msgq);
+    ckd_free(th);
+}
 
 void *
 sbmsg_unpack(sbmsg_t *msg, size_t *out_len)
