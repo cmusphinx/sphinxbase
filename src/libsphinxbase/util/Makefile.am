@@ -27,6 +27,7 @@ libsphinxutil_la_SOURCES = \
         pio.c \
 	matrix.c \
         profile.c \
+	sbthread.c \
         strfuncs.c \
 	s3_arraylist.c \
 	unlimit.c \

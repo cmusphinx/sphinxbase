@@ -64,6 +64,7 @@ else
    AC_CHECK_LIB(m, log)
 fi
 AM_CONDITIONAL(LAPACK_LITE, test x$use_internal_lapack = xtrue)
+AM_CONDITIONAL(USE_LAPACK, test x$use_lapack = xtrue)
 
 dnl
 dnl Enable thread-safe versions of some internal functions
@@ -81,6 +82,7 @@ if test x$threadsafe = xtrue; then
    AC_CHECK_LIB(pthread, pthread_mutex_lock)
    AC_DEFINE(ENABLE_THREADS, [], [Enable thread safety])
 fi
+AM_CONDITIONAL(USE_THREADS, test x$threadsafe = xtrue)
 
 dnl
 dnl Allow compilation for fixed or floating-point MFCC and GMM computation
@@ -240,6 +242,7 @@ test/unit/test_logmath/Makefile
 test/unit/test_gmm/Makefile
 test/unit/test_ngram/Makefile
 test/unit/test_fsg/Makefile
+test/unit/test_thread/Makefile
 test/regression/testfuncs.sh
 test/regression/Makefile
 ])

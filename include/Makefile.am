@@ -39,6 +39,7 @@ pkginclude_HEADERS =				\
 	yin.h					\
 	prim_type.h				\
 	profile.h				\
+	sbthread.h				\
 	sphinx_config.h				\
 	sphinx_types.h				\
 	sphinxbase_export.h			\
