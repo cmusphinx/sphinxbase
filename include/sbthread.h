@@ -66,11 +66,6 @@ typedef struct sbthread_s sbthread_t;
 typedef struct sbmsgq_s sbmsgq_t;
 
 /**
- * Asynchronous message object.
- */
-typedef struct sbmsg_s sbmsg_t;
-
-/**
  * Mutex (critical section) object.
  */
 typedef struct sbmtx_s sbmtx_t;
@@ -132,12 +127,9 @@ int sbthread_wait(sbthread_t *th);
  *
  * Each thread gets a message queue by default, so this is just a
  * wrapper around sbmsgq_send().
- *
- * @return The posted message, or NULL on failure.  This function will
- *         fail if the queue is full.  Thread queues have a depth of 256.
  */
 SPHINXBASE_EXPORT
-sbmsg_t *sbthread_send(sbthread_t *th, size_t len, void *data);
+int sbthread_send(sbthread_t *th, size_t len, void const *data);
 
 /**
  * Create a message queue.
@@ -155,38 +147,15 @@ void sbmsgq_free(sbmsgq_t *q);
 
 /**
  * Post a message to a queue.
- *
- * @return The posted message, or NULL on failure.  This function will
- *         fail if the queue is full.
  */
 SPHINXBASE_EXPORT
-sbmsg_t *sbmsgq_send(sbmsgq_t *q, size_t len, void *data);
+int sbmsgq_send(sbmsgq_t *q, size_t len, void const *data);
 
 /**
  * Wait for a message from a queue.
- *
- * @param q Message queue.
- * @return next message on the queue, or NULL if timeout was reached.
- *         This pointer is only valid until the next call to
- *         sbmsgq_wait().
  */
 SPHINXBASE_EXPORT
-sbmsg_t *sbmsgq_wait(sbmsgq_t *q, int sec, int nsec);
-
-/** Convert an integer to a pointer. */
-#define sbmsg_int_to_data(i) ((void *)(long)(i))
-/** Convert a pointer to an integer. */
-#define sbmsg_data_to_int(d) ((long)(void *)(d))
-/** Convert a float to a pointer. */
-#define sbmsg_float_to_data(f) ((void *)(double)(f))
-/** Convert a pointer to a float. */
-#define sbmsg_data_to_float(d) ((double)(void *)(d))
-
-/**
- * Unpack data from a message.
- */
-SPHINXBASE_EXPORT
-void *sbmsg_unpack(sbmsg_t *msg, size_t *out_len);
+void *sbmsgq_wait(sbmsgq_t *q, size_t *out_len, int sec, int nsec);
 
 /**
  * Create a mutex.

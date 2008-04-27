@@ -6,17 +6,14 @@ int
 worker_main(sbthread_t *th)
 {
 	sbmsgq_t *msgq;
-	sbmsg_t *msg;
+	void *data;
+	size_t len;
 
 	msgq = sbthread_msgq(th);
-
-	while ((msg = sbmsgq_wait(msgq, -1, -1)) != NULL) {
-		size_t len;
-		void *data;
-
-		data = sbmsg_unpack(msg, &len);
-		E_INFO("Got message: %ld\n", sbmsg_data_to_int(data));
-		if (data == (void *)512)
+	while ((data = sbmsgq_wait(msgq, &len, -1, -1)) != NULL) {
+		int msg = *(int *)data;
+		E_INFO("Got message: %d\n", msg);
+		if (msg == 512)
 			break;
 	}
 
@@ -31,8 +28,13 @@ main(int argc, char *argv[])
 	
 	worker = sbthread_start(NULL, worker_main, NULL);
 	for (i = 0; i <= 512; ++i) {
+		int ii[128];
 		E_INFO("Sending message: %d\n", i);
-		sbthread_send(worker, 0, sbmsg_int_to_data(i));
+		ii[0] = i;
+		if (sbthread_send(worker, sizeof(ii), &ii) < 0) {
+			E_ERROR("sbthread_send failed\n");
+			return 1;
+		}
 	}
 	sbthread_free(worker);
 
