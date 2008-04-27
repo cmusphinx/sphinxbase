@@ -13,7 +13,7 @@ worker_main(sbthread_t *th)
 	while ((data = sbmsgq_wait(msgq, &len, -1, -1)) != NULL) {
 		int msg = *(int *)data;
 		E_INFO("Got message: %d\n", msg);
-		if (msg == 512)
+		if (msg == 32)
 			break;
 	}
 
@@ -27,7 +27,7 @@ main(int argc, char *argv[])
 	int i;
 	
 	worker = sbthread_start(NULL, worker_main, NULL);
-	for (i = 0; i <= 512; ++i) {
+	for (i = 0; i <= 32; ++i) {
 		int ii[128];
 		E_INFO("Sending message: %d\n", i);
 		ii[0] = i;
