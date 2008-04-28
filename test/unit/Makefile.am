@@ -15,7 +15,6 @@ SUBDIRS=test_alloc				\
 	$(maybe_lapack)				\
 	test_fe					\
 	test_feat				\
-	test_gmm				\
 	test_logmath				\
 	test_ngram				\
 	test_fsg				\

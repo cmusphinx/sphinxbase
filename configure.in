@@ -216,12 +216,10 @@ src/libsphinxbase/Makefile
 src/libsphinxbase/util/Makefile
 src/libsphinxbase/feat/Makefile
 src/libsphinxbase/fe/Makefile
-src/libsphinxbase/am/Makefile
 src/libsphinxbase/lm/Makefile
 src/sphinx_fe/Makefile
 src/sphinx_cepview/Makefile
 src/sphinx_jsgf2fsg/Makefile
-src/sphinx_amtools/Makefile
 src/sphinx_adtools/Makefile
 src/sphinx_lmtools/Makefile
 doc/Makefile
@@ -239,7 +237,6 @@ test/unit/test_matrix/Makefile
 test/unit/test_feat/Makefile
 test/unit/test_fe/Makefile
 test/unit/test_logmath/Makefile
-test/unit/test_gmm/Makefile
 test/unit/test_ngram/Makefile
 test/unit/test_fsg/Makefile
 test/unit/test_thread/Makefile

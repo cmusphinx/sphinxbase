@@ -1,4 +1,4 @@
-SUBDIRS = util fe feat am lm
+SUBDIRS = util fe feat lm
 
 lib_LTLIBRARIES = libsphinxbase.la
 
@@ -9,5 +9,3 @@ libsphinxbase_la_LIBADD = $(LTLIBICONV) \
 	fe/libsphinxfe.la \
 	feat/libsphinxfeat.la \
 	lm/libsphinxlm.la
-
-#	am/libsphinxam.la
