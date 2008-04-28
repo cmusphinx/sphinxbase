@@ -880,7 +880,10 @@ cmd_ln_set_str_r(cmd_ln_t *cmdln, char const *name, char const *str)
         return;
     }
     ckd_free(val->ptr);
-    val->ptr = ckd_salloc(str);
+    if (str == NULL)
+        val->ptr = NULL;
+    else
+        val->ptr = ckd_salloc(str);
 }
 
 void
