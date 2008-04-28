@@ -38,7 +38,7 @@
 #include "gau_cb.h"
 #include "gau_file.h"
 #include "ckd_alloc.h"
-#include "sphinx_types.h"
+#include "prim_type.h"
 #include "err.h"
 
 #include <string.h>

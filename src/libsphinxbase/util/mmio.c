@@ -44,7 +44,7 @@
  * 
  *********************************************************************/
 
-#include "sphinx_types.h"
+#include "prim_type.h"
 #include "err.h"
 #include "mmio.h"
 #include "ckd_alloc.h"

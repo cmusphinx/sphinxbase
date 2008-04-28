@@ -39,7 +39,7 @@
 #include "gau_file.h"
 #include "gau_cb_float64.h"
 #include "ckd_alloc.h"
-#include "sphinx_types.h"
+#include "prim_type.h"
 #include "err.h"
 #include "bio.h"
 #include "mmio.h"

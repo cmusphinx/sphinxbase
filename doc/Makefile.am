@@ -48,7 +48,6 @@ headers =						\
 	$(top_srcdir)/include/profile.h			\
 	$(top_srcdir)/include/s3_arraylist.h		\
 	$(top_srcdir)/include/sphinxbase_export.h	\
-	$(top_srcdir)/include/sphinx_types.h		\
 	$(top_srcdir)/include/strfuncs.h		\
 	$(top_srcdir)/include/unlimit.h			\
 	$(top_srcdir)/include/yin.h

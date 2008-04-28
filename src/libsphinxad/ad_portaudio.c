@@ -45,7 +45,7 @@
 #include <config.h>
 #endif
 
-#include "sphinx_types.h"
+#include "prim_type.h"
 #include "ad.h"
 #include "pablio.h"
 
