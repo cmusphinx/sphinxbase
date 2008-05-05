@@ -84,12 +84,13 @@ listelem_alloc_init(size_t elemsize)
 {
     listelem_alloc_t *list;
 
-    /* FIXME: Round it up... duh */
     if ((elemsize % sizeof(void *)) != 0) {
-        E_ERROR
-            ("List item size (%lu) not multiple of sizeof(void *)\n",
-             (unsigned long)elemsize);
-        return NULL;
+        size_t rounded = (elemsize + sizeof(void *) - 1) & -sizeof(void *);
+        E_WARN
+            ("List item size (%lu) not multiple of sizeof(void *), rounding to %lu\n",
+             (unsigned long)elemsize,
+             (unsigned long)rounded);
+        elemsize = rounded;
     }
     list = ckd_calloc(1, sizeof(*list));
     list->freelist = NULL;
