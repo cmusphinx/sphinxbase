@@ -758,10 +758,10 @@ ngram_model_set_add_ug(ngram_model_t *base,
         /* Only add to active models. */
         if (set->cur == -1 || set->cur == i) {
             /* Did this word already exist? */
-            newwid[i] = ngram_wid(set->lms[i], base->word_str[i]);
+            newwid[i] = ngram_wid(set->lms[i], base->word_str[wid]);
             if (newwid[i] == NGRAM_INVALID_WID) {
                 /* Add it to the submodel. */
-                newwid[i] = ngram_model_add_word(set->lms[i], base->word_str[i],
+                newwid[i] = ngram_model_add_word(set->lms[i], base->word_str[wid],
                                                  logmath_exp(base->lmath, lweight));
                 if (newwid[i] == NGRAM_INVALID_WID) {
                     ckd_free(newwid);
