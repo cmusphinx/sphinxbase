@@ -114,7 +114,8 @@ typedef union anytype_s {
 /*
  * Assume P64 or LP64.  If you need to port this to a DSP, let us know.
  */
-typedef int		boolean;
+/* typedef int		boolean;   /**/
+typedef int intbool;
 typedef int		int32;
 typedef short		int16;
 typedef signed char	int8;
