@@ -353,6 +353,7 @@ int32 hash_table_lookup_bkey_int32(hash_table_t *h,/**< In: Handle of hash table
 /**
  * Start iterating over key-value pairs in a hash table.
  */
+SPHINXBASE_EXPORT
 hash_iter_t *hash_table_iter(hash_table_t *h);
 
 /**
@@ -363,11 +364,13 @@ hash_iter_t *hash_table_iter(hash_table_t *h);
  *
  * @return the next entry in the hash table, or NULL if done.
  */
+SPHINXBASE_EXPORT
 hash_iter_t *hash_table_iter_next(hash_iter_t *itor);
 
 /**
  * Delete an unfinished iterator.
  */
+SPHINXBASE_EXPORT
 void hash_table_iter_free(hash_iter_t *itor);
 
 /**

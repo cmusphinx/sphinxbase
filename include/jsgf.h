@@ -45,6 +45,8 @@
  * into Sphinx finite-state grammars.
  **/
 
+/* Win32/WinCE DLL gunk */
+#include <sphinxbase_export.h>
 #include <hash_table.h>
 #include <glist.h>
 #include <stdio.h>
@@ -68,6 +70,7 @@ typedef struct jsgf_rule_s jsgf_rule_t;
  * @param parent optional parent grammar for this one (NULL, usually).
  * @return new JSGF grammar object, or NULL on failure.
  */
+SPHINXBASE_EXPORT
 jsgf_t *jsgf_grammar_new(jsgf_t *parent);
 
 /**
@@ -76,11 +79,13 @@ jsgf_t *jsgf_grammar_new(jsgf_t *parent);
  * @param parent optional parent grammar for this one (NULL, usually).
  * @return new JSGF grammar object, or NULL on failure.
  */
+SPHINXBASE_EXPORT
 jsgf_t *jsgf_parse_file(const char *filename, jsgf_t *parent);
 
 /**
  * Free a JSGF grammar.
  */
+SPHINXBASE_EXPORT
 void jsgf_grammar_free(jsgf_t *jsgf);
 
 /**
@@ -91,6 +96,7 @@ typedef hash_iter_t jsgf_rule_iter_t;
 /**
  * Get an iterator over all rules in a grammar.
  */
+SPHINXBASE_EXPORT
 jsgf_rule_iter_t *jsgf_rule_iter(jsgf_t *grammar);
 
 /**
@@ -111,21 +117,25 @@ jsgf_rule_iter_t *jsgf_rule_iter(jsgf_t *grammar);
 /**
  * Get a rule by name from a grammar.
  */
+SPHINXBASE_EXPORT
 jsgf_rule_t *jsgf_get_rule(jsgf_t *grammar, char const *name);
 
 /**
  * Get the rule name from a rule.
  */
+SPHINXBASE_EXPORT
 char const *jsgf_rule_name(jsgf_rule_t *rule);
 
 /**
  * Test if a rule is public or not.
  */
+SPHINXBASE_EXPORT
 int jsgf_rule_public(jsgf_rule_t *rule);
 
 /**
  * Build a Sphinx FSG object from a JSGF rule.
  */
+SPHINXBASE_EXPORT
 fsg_model_t *jsgf_build_fsg(jsgf_t *grammar, jsgf_rule_t *rule,
                             logmath_t *lmath, float32 lw);
 
@@ -135,6 +145,7 @@ fsg_model_t *jsgf_build_fsg(jsgf_t *grammar, jsgf_rule_t *rule,
  * This does a direct conversion without doing transitive closure on
  * null transitions and so forth.
  */
+SPHINXBASE_EXPORT
 int jsgf_write_fsg(jsgf_t *grammar, jsgf_rule_t *rule, FILE *outfh);
 
 #ifdef __cplusplus
