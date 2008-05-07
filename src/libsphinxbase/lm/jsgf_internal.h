@@ -42,6 +42,7 @@
  * @file jsgf_internal.h Internal definitions for JSGF grammar compiler
  */
 
+#define YY_NO_UNISTD_H 1
 #include <hash_table.h>
 #include <glist.h>
 #include <stdio.h>

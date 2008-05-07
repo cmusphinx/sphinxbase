@@ -81,7 +81,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
     ngram_model_t *base;
     ngram_model_dmp_t *model;
     FILE *fp;
-    int do_mmap, do_swap, fd = -1;
+    int do_mmap, do_swap;
     int32 is_pipe;
     int32 i, j, k, vn, n, ts;
     int32 n_unigram;
@@ -142,7 +142,6 @@ ngram_model_dmp_read(cmd_ln_t *config,
 #ifdef __ADSPBLACKFIN__ /* This is true for both VisualDSP++ and uClinux. */
             E_FATAL("memory mapping is not supported at the moment.");
 #else
-            fd = fileno(fp);
 #endif
         }
     }

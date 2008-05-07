@@ -51,6 +51,7 @@
  * Platform-specific parts: threads, mutexes, and signals.
  */
 #ifdef _WIN32
+#define _WIN32_WINNT 0x0400
 #include <windows.h>
 
 struct sbthread_s {
@@ -60,6 +61,20 @@ struct sbthread_s {
     void *arg;
     HANDLE th;
     DWORD tid;
+};
+
+struct sbmsgq_s {
+    /* Ringbuffer for passing messages. */
+    char *data;
+    size_t depth;
+    size_t out;
+    size_t nbytes;
+
+    /* Current message is stored here. */
+    char *msg;
+    size_t msglen;
+    CRITICAL_SECTION mtx;
+    HANDLE evt;
 };
 
 struct sbevent_s {
@@ -84,14 +99,13 @@ sbthread_t *
 sbthread_start(cmd_ln_t *config, sbthread_main func, void *arg)
 {
     sbthread_t *th;
-    int rv;
 
     th = ckd_calloc(1, sizeof(*th));
     th->config = config;
     th->func = func;
     th->arg = arg;
     th->msgq = sbmsgq_init(256);
-    th->th = CreateThread(NULL, 0, sbthread_internal_main, th, &th->tid);
+    th->th = CreateThread(NULL, 0, sbthread_internal_main, th, 0, &th->tid);
     if (th->th == NULL) {
         sbthread_free(th);
         return NULL;
@@ -206,6 +220,139 @@ sbmtx_free(sbmtx_t *mtx)
 {
     DeleteCriticalSection(&mtx->mtx);
     ckd_free(mtx);
+}
+
+sbmsgq_t *
+sbmsgq_init(size_t depth)
+{
+    sbmsgq_t *msgq;
+
+    msgq = ckd_calloc(1, sizeof(*msgq));
+    msgq->depth = depth;
+    msgq->evt = CreateEvent(NULL, FALSE, FALSE, NULL);
+    if (msgq->evt == NULL) {
+        ckd_free(msgq);
+        return NULL;
+    }
+    InitializeCriticalSection(&msgq->mtx);
+    msgq->data = ckd_calloc(depth, 1);
+    msgq->msg = ckd_calloc(depth, 1);
+    return msgq;
+}
+
+void
+sbmsgq_free(sbmsgq_t *msgq)
+{
+    CloseHandle(msgq->evt);
+    ckd_free(msgq->data);
+    ckd_free(msgq->msg);
+    ckd_free(msgq);
+}
+
+int
+sbmsgq_send(sbmsgq_t *q, size_t len, void const *data)
+{
+    char const *cdata = (char const *)data;
+    size_t in;
+
+    /* Don't allow things bigger than depth to be sent! */
+    if (len + sizeof(len) > q->depth)
+        return -1;
+
+    if (q->nbytes + len + sizeof(len) > q->depth)
+        WaitForSingleObject(q->evt, INFINITE);
+
+    /* Lock things while we manipulate the buffer (FIXME: this
+       actually should have been atomic with the wait above ...) */
+    EnterCriticalSection(&q->mtx);
+    in = (q->out + q->nbytes) % q->depth;
+    /* First write the size of the message. */
+    if (in + sizeof(len) > q->depth) {
+        /* Handle the annoying case where the size field gets wrapped around. */
+        size_t len1 = q->depth - in;
+        memcpy(q->data + in, &len, len1);
+        memcpy(q->data, ((char *)&len) + len1, sizeof(len) - len1);
+        q->nbytes += sizeof(len);
+        in = sizeof(len) - len1;
+    }
+    else {
+        memcpy(q->data + in, &len, sizeof(len));
+        q->nbytes += sizeof(len);
+        in += sizeof(len);
+    }
+
+    /* Now write the message body. */
+    if (in + len > q->depth) {
+        /* Handle wraparound. */
+        size_t len1 = q->depth - in;
+        memcpy(q->data + in, cdata, len1);
+        q->nbytes += len1;
+        cdata += len1;
+        len -= len1;
+        in = 0;
+    }
+    memcpy(q->data + in, cdata, len);
+    q->nbytes += len;
+
+    /* Signal the condition variable. */
+    SetEvent(q->evt);
+    /* Unlock. */
+    LeaveCriticalSection(&q->mtx);
+
+    return 0;
+}
+
+void *
+sbmsgq_wait(sbmsgq_t *q, size_t *out_len, int sec, int nsec)
+{
+    char *outptr;
+    size_t len;
+
+    /* Wait for data to be available. */
+    if (q->nbytes == 0) {
+        if (cond_timed_wait(q->evt, sec, nsec) == WAIT_FAILED)
+            /* Timed out or something... */
+            return NULL;
+    }
+    /* Lock to manipulate the queue (FIXME) */
+    EnterCriticalSection(&q->mtx);
+    /* Get the message size. */
+    if (q->out + sizeof(q->msglen) > q->depth) {
+        /* Handle annoying wraparound case. */
+        size_t len1 = q->depth - q->out;
+        memcpy(&q->msglen, q->data + q->out, len1);
+        memcpy(((char *)&q->msglen) + len1, q->data,
+               sizeof(q->msglen) - len1);
+        q->out = sizeof(q->msglen) - len1;
+    }
+    else {
+        memcpy(&q->msglen, q->data + q->out, sizeof(q->msglen));
+        q->out += sizeof(q->msglen);
+    }
+    q->nbytes -= sizeof(q->msglen);
+    /* Get the message body. */
+    outptr = q->msg;
+    len = q->msglen;
+    if (q->out + q->msglen > q->depth) {
+        /* Handle wraparound. */
+        size_t len1 = q->depth - q->out;
+        memcpy(outptr, q->data + q->out, len1);
+        outptr += len1;
+        len -= len1;
+        q->nbytes -= len1;
+        q->out = 0;
+    }
+    memcpy(outptr, q->data + q->out, len);
+    q->nbytes -= len;
+    q->out += len;
+
+    /* Signal the condition variable. */
+    SetEvent(q->evt);
+    /* Unlock. */
+    LeaveCriticalSection(&q->mtx);
+    if (out_len)
+        *out_len = q->msglen;
+    return q->msg;
 }
 
 #else /* POSIX */

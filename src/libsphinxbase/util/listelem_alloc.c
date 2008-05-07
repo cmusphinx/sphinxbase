@@ -85,7 +85,7 @@ listelem_alloc_init(size_t elemsize)
     listelem_alloc_t *list;
 
     if ((elemsize % sizeof(void *)) != 0) {
-        size_t rounded = (elemsize + sizeof(void *) - 1) & -sizeof(void *);
+        size_t rounded = (elemsize + sizeof(void *) - 1) & ~(sizeof(void *)-1);
         E_WARN
             ("List item size (%lu) not multiple of sizeof(void *), rounding to %lu\n",
              (unsigned long)elemsize,

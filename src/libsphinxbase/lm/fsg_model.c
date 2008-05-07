@@ -170,7 +170,7 @@ glist_t
 fsg_model_null_trans_closure(fsg_model_t * fsg, glist_t nulls)
 {
     gnode_t *gn1, *gn2;
-    boolean updated;
+    int updated;
     fsg_link_t *tl1, *tl2;
     int32 k, n;
 

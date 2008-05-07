@@ -214,9 +214,9 @@ ReadUnigrams(FILE * fp, ngram_model_arpa_t * model)
             continue;
         }
         else {
-            p1 = atof(wptr[0]);
+            p1 = (float)atof(wptr[0]);
             name = wptr[1];
-            bo_wt = atof(wptr[2]);
+            bo_wt = (float)atof(wptr[2]);
         }
 
         if (wcnt >= base->n_counts[0]) {
@@ -274,11 +274,11 @@ ReadBigrams(FILE * fp, ngram_model_arpa_t * model)
             continue;
         }
         else {
-            p = atof(wptr[0]);
+            p = (float32)atof(wptr[0]);
             word1 = wptr[1];
             word2 = wptr[2];
             if (wptr[3])
-                bo_wt = atof(wptr[3]);
+                bo_wt = (float32)atof(wptr[3]);
         }
 
         if ((w1 = ngram_wid(base, word1)) == NGRAM_INVALID_WID) {
@@ -373,7 +373,7 @@ ReadTrigrams(FILE * fp, ngram_model_arpa_t * model)
             continue;
         }
         else {
-            p = atof(wptr[0]);
+            p = (float32)atof(wptr[0]);
             word1 = wptr[1];
             word2 = wptr[2];
             word3 = wptr[3];

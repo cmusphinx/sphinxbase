@@ -109,7 +109,7 @@ typedef gnode_t *glist_t;	/** Head of a list of gnodes */
 #define gnode_ptr(g)		((g)->data.ptr)
 #define gnode_int32(g)		((g)->data.i)
 #define gnode_uint32(g)		((g)->data.ui)
-#define gnode_float32(g)	((g)->data.fl)
+#define gnode_float32(g)	((float32)(g)->data.fl)
 #define gnode_float64(g)	((g)->data.fl)
 #define gnode_next(g)		((g)->next)
 

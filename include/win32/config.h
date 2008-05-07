@@ -57,3 +57,5 @@
 /* We have sys/stat.h */
 #define HAVE_SYS_STAT_H 1
 
+/* We do not have unistd.h. */
+#define YY_NO_UNISTD_H 1

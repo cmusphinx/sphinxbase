@@ -676,6 +676,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\src\libsphinxbase\lm\fsg_model.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\libsphinxbase\util\genrand.c"
 				>
 				<FileConfiguration
@@ -784,6 +788,18 @@
 						PreprocessorDefinitions=""
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\src\libsphinxbase\lm\jsgf.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libsphinxbase\lm\jsgf_parser.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libsphinxbase\lm\jsgf_scanner.c"
+				>
 			</File>
 			<File
 				RelativePath="..\..\src\libsphinxbase\feat\lda.c"
@@ -982,6 +998,10 @@
 						PreprocessorDefinitions=""
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\src\libsphinxbase\util\sbthread.c"
+				>
 			</File>
 			<File
 				RelativePath="..\..\src\libsphinxbase\util\slamch.c"
@@ -1210,6 +1230,18 @@
 			</File>
 			<File
 				RelativePath="..\..\include\info.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libsphinxbase\lm\jsgf_internal.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libsphinxbase\lm\jsgf_parser.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\libsphinxbase\lm\jsgf_scanner.h"
 				>
 			</File>
 			<File
