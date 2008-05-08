@@ -1193,6 +1193,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\include\fsg_model.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\include\gau_cb.h"
 				>
 			</File>
