@@ -22,6 +22,12 @@ case $host in
 	# uClinux needs special "flat" binaries
 	LDFLAGS="$LDFLAGS -Wl,-elf2flt"
 	;;
+     *cygwin*|*mingw*)
+        # Need to get the proper symbol defined for DLL (can't just
+	# use DLL_EXPORT from libtool because other DLLs include our header
+	# files...)
+	CFLAGS="$CFLAGS -DSPHINXBASE_DLL"
+        ;;
      *)
      ;;
 esac     
@@ -167,7 +173,7 @@ if test "x$ad_files" = "x"; then
                         ad_backend="AD_BACKEND_SUNOS"
 			AC_DEFINE(AD_BACKEND_SUNOS, [], [Use SunOS interface for sound I/O])
                         ;;
-                *-*-*cygwin*)
+                *-*-*cygwin*|*-*-*mingw*)
                         ad_files="play_win32.lo rec_win32.lo"
                         ad_libs="-lwinmm"
                         ad_backend="AD_BACKEND_WIN32"

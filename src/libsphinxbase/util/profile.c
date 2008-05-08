@@ -66,15 +66,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(HAVE_UNISTD_H) /* I know this, this is Unix... */
-# include <unistd.h>
-# include <sys/time.h>
-# include <sys/resource.h>
-#elif defined(_WIN32)
+#if defined(_WIN32)
 # include <windows.h>
 # ifndef _WIN32_WCE
 #  include <time.h>
 # endif
+#elif defined(HAVE_UNISTD_H) /* I know this, this is Unix... */
+# include <unistd.h>
+# include <sys/time.h>
+# include <sys/resource.h>
 #endif
 
 #ifdef _MSC_VER

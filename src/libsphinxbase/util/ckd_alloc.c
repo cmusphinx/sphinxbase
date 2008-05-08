@@ -90,7 +90,7 @@
 #include <assert.h>
 #include <stdarg.h>
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 #pragma warning (disable: 4996)
 #endif
 

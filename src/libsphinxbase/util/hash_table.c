@@ -89,7 +89,7 @@
 #include <string.h>
 #include <assert.h>
 
-#ifdef _WIN32
+#ifdef _MSC_VER
 #pragma warning (disable: 4018)
 #endif
 

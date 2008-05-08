@@ -2,8 +2,10 @@
 #define __SPHINXBASE_EXPORT_H__
 
 /* Win32/WinCE DLL gunk */
-#if (defined(_WIN32) || defined(_WIN32_WCE)) && !defined(CYGWIN)
-#ifdef SPHINXBASE_EXPORTS
+#if (defined(_WIN32) || defined(_WIN32_WCE))
+#if defined(SPHINXBASE_EXPORTS) /* Visual Studio */
+#define SPHINXBASE_EXPORT __declspec(dllexport)
+#elif defined(SPHINXBASE_DLL) && defined(DLL_EXPORT) /* libtool */
 #define SPHINXBASE_EXPORT __declspec(dllexport)
 #else
 #define SPHINXBASE_EXPORT __declspec(dllimport)
