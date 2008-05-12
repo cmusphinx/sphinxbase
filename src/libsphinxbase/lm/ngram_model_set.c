@@ -500,7 +500,7 @@ ngram_model_set_add(ngram_model_t *base,
     if (model->n > base->n) {
         base->n = model->n;
         set->maphist = ckd_realloc(set->maphist,
-                                   model->n - 1 * sizeof(*set->maphist));
+                                   (model->n - 1) * sizeof(*set->maphist));
     }
 
     /* Renormalize the interpolation weights. */
