@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <locale.h>
+#include <stdlib.h>
 
 #include "strfuncs.h"
 
@@ -8,6 +10,13 @@ int
 main(int argc, char *argv[])
 {
 	double foo;
+
+	/* Ensure that it's really locale-independent. */
+	if (setlocale(LC_ALL, "fr_CA.UTF-8") == NULL)
+		fprintf(stderr, "Note: setlocale(LC_ALL, fr_CA.UTF-8) failed\n");
+	
+	foo = atof("1.5324523524523423");
+	printf("atof(): 1.5324523524523423 %f\n", foo);
 
 	foo = atof_c("1.5324523524523423");
 	printf("1.5324523524523423 %f\n", foo);
