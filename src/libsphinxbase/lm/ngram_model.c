@@ -545,6 +545,14 @@ ngram_zero(ngram_model_t *model)
 }
 
 int32
+ngram_model_get_size(ngram_model_t *model)
+{
+  if (model != NULL)
+    return model->n;
+  return 0;
+}
+
+int32
 ngram_wid(ngram_model_t *model, const char *word)
 {
     int32 val;

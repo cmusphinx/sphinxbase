@@ -285,6 +285,12 @@ SPHINXBASE_EXPORT
 int32 ngram_zero(ngram_model_t *model);
 
 /**
+ * Get the order of the N-gram model (i.e. the "N" in "N-gram")
+ */
+SPHINXBASE_EXPORT
+int32 ngram_model_get_size(ngram_model_t *model);
+
+/**
  * Add a word (unigram) to the language model.
  *
  * @note The semantics of this are not particularly well-defined for
