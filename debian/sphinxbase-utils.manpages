@@ -3,3 +3,5 @@ debian/sphinx_pitch.1
 debian/sphinx_cepview.1
 debian/sphinx_cont_adseg.1
 debian/sphinx_cont_fileseg.1
+debian/sphinx_jsgf2fsg.1
+debian/sphinx_lm_eval.1
