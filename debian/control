@@ -8,7 +8,7 @@ Section: libs
 Package: libsphinxbase-dev
 Section: libdevel
 Architecture: any
-Depends: libsphinxbase1 (= ${Source-Version})
+Depends: ${shlibs:Depends}, libsphinxbase1 (= ${Source-Version})
 Description: Sphinx base libraries - development files
  This package contains development files (headers and static
  libraries) for the audio processing and utility libraries used by
@@ -25,7 +25,7 @@ Description: Sphinx base libraries
 Package: sphinxbase-utils
 Section: sound
 Architecture: any
-Depends: libsphinxbase1 (= ${Source-Version})
+Depends: ${shlibs:Depends}, libsphinxbase1 (= ${Source-Version})
 Description: Sphinx base libraries - utilities
  This package contains the 'sphinx_fe' and 'sphinx_cepview' utilities
  used for all Sphinx speech recognition engines.
