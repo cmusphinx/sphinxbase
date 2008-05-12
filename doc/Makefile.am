@@ -1,6 +1,8 @@
 EXTRA_DIST = args2man.pl \
 	sphinx_cepview.1.in \
-	sphinx_fe.1.in
+	sphinx_fe.1.in \
+	sphinx_pitch.1.in \
+	sphinx_cont_adseg.1
 
 if BUILD_DOXYGEN
 all-local: html/index.html
