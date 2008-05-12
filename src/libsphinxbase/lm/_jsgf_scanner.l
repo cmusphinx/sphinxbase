@@ -70,7 +70,7 @@ qstring  \"(\\.|[^"]+)*\"
 <INITIAL>{tag}      { yylval->name = strdup(yytext); return TAG; }
 <INITIAL>{token}    { yylval->name = strdup(yytext); return TOKEN; }
 <INITIAL>{qstring}  { yylval->name = strdup(yytext); return TOKEN; }
-<INITIAL>{weight}   { yylval->weight = atof(yytext+1); return WEIGHT; }
+<INITIAL>{weight}   { yylval->weight = atof_c(yytext+1); return WEIGHT; }
 
 <INITIAL>. return yytext[0];        /* Single-character tokens */
 

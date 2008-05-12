@@ -56,6 +56,7 @@
 #pragma warning (disable: 4996)
 #endif
 
+#include "strfuncs.h"
 #include "err.h"
 #include "fe_warp.h"
 #include "fe_warp_affine.h"
@@ -113,9 +114,10 @@ fe_warp_affine_set_parameters(char const *param_str, float sampling_rate)
     strcpy(temp_param_str, param_str);
     memset(params, 0, N_PARAM * sizeof(float));
     strcpy(p_str, param_str);
+    /* FIXME: strtok() is not re-entrant... */
     tok = strtok(temp_param_str, seps);
     while (tok != NULL) {
-        params[param_index++] = (float) atof(tok);
+        params[param_index++] = (float) atof_c(tok);
         tok = strtok(NULL, seps);
         if (param_index >= N_PARAM) {
             break;

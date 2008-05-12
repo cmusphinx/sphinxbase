@@ -13,6 +13,7 @@ libsphinxutil_la_SOURCES = \
 	bio.c \
         case.c \
         ckd_alloc.c \
+	dtoa.c \
 	listelem_alloc.c \
         cmd_ln.c \
         err.c \

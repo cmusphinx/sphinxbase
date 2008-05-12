@@ -922,7 +922,7 @@ read_classdef_file(hash_table_t *classes, const char *file_name)
                 float32 fprob;
 
                 if (n_words == 2)
-                    fprob = (float32)atof(wptr[1]);
+                    fprob = (float32)atof_c(wptr[1]);
                 else
                     fprob = 1.0f;
                 /* Add it to the list of words for this class. */

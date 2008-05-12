@@ -40,6 +40,7 @@
 #include "ckd_alloc.h"
 #include "mmio.h"
 #include "bio.h"
+#include "strfuncs.h"
 
 #include <math.h>
 #include <string.h>
@@ -202,7 +203,7 @@ logmath_read(const char *file_name)
             lmath->t.shift = atoi(argval[i]);
         }
         else if (strcmp(argname[i], "logbase") == 0) {
-            lmath->base = atof(argval[i]);
+            lmath->base = atof_c(argval[i]);
         }
     }
     bio_hdrarg_free(argname, argval);

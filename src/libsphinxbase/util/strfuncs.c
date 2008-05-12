@@ -49,6 +49,15 @@
 #include "ckd_alloc.h"
 #include "strfuncs.h"
 
+/* Defined in dtoa.c */
+double sb_strtod(const char *s00, char **se);
+
+double
+atof_c(char const *str)
+{
+    return sb_strtod(str, NULL);
+}
+
 char *
 string_join(const char *base, ...)
 {

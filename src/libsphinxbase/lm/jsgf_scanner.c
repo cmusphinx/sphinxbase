@@ -1,5 +1,6 @@
+#line 2 "jsgf_scanner.c"
 
-#line 3 "jsgf_scanner.c"
+#line 4 "jsgf_scanner.c"
 
 #define  YY_INT_ALIGNED short int
 
@@ -8,7 +9,7 @@
 #define FLEX_SCANNER
 #define YY_FLEX_MAJOR_VERSION 2
 #define YY_FLEX_MINOR_VERSION 5
-#define YY_FLEX_SUBMINOR_VERSION 33
+#define YY_FLEX_SUBMINOR_VERSION 34
 #if YY_FLEX_SUBMINOR_VERSION > 0
 #define FLEX_BETA
 #endif
@@ -30,7 +31,7 @@
 
 /* C99 systems have <inttypes.h>. Non-C99 systems may or may not. */
 
-#if __STDC_VERSION__ >= 199901L
+#if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 
 /* C99 says to define __STDC_LIMIT_MACROS before including stdint.h,
  * if you want the limit (max/min) macros for int types. 
@@ -93,11 +94,12 @@ typedef unsigned int flex_uint32_t;
 
 #else	/* ! __cplusplus */
 
-#if __STDC__
+/* C99 requires __STDC__ to be defined as 1. */
+#if defined (__STDC__)
 
 #define YY_USE_CONST
 
-#endif	/* __STDC__ */
+#endif	/* defined (__STDC__) */
 #endif	/* ! __cplusplus */
 
 #ifdef YY_USE_CONST
@@ -132,8 +134,6 @@ typedef void* yyscan_t;
 #define yylineno (YY_CURRENT_BUFFER_LVALUE->yy_bs_lineno)
 #define yycolumn (YY_CURRENT_BUFFER_LVALUE->yy_bs_column)
 #define yy_flex_debug yyg->yy_flex_debug_r
-
-int yylex_init (yyscan_t* scanner);
 
 /* Enter a start condition.  This macro really ought to take a parameter,
  * but we do it the disgusting crufty way forced on us by the ()-less
@@ -195,11 +195,13 @@ typedef struct yy_buffer_state *YY_BUFFER_STATE;
 /* The following is because we cannot portably get our hands on size_t
  * (without autoconf's help, which isn't available because we want
  * flex-generated scanners to compile on their own).
+ * Given that the standard has decreed that size_t exists since 1989,
+ * I guess we can afford to depend on it. Manoj.
  */
 
 #ifndef YY_TYPEDEF_YY_SIZE_T
 #define YY_TYPEDEF_YY_SIZE_T
-typedef unsigned int yy_size_t;
+typedef size_t yy_size_t;
 #endif
 
 #ifndef YY_STRUCT_YY_BUFFER_STATE
@@ -504,7 +506,7 @@ static yyconst flex_int16_t yy_chk[218] =
 #define yymore() yymore_used_but_not_detected
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
-#line 1 "jsgf_scanner.l"
+#line 1 "_jsgf_scanner.l"
 /* -*- mode: text -*- */
 /* ====================================================================
  * Copyright (c) 2007 Carnegie Mellon University.  All rights
@@ -542,13 +544,13 @@ static yyconst flex_int16_t yy_chk[218] =
  *
  */
 /* YOU MUST USE FLEX 2.5.33 OR NEWER TO PROCESS THIS FILE!!! */
-#line 39 "jsgf_scanner.l"
+#line 39 "_jsgf_scanner.l"
 
 #include "jsgf_internal.h"
 #include "jsgf_parser.h"
 
 
-#line 552 "jsgf_scanner.c"
+#line 554 "jsgf_scanner.c"
 
 #define INITIAL 0
 #define COMMENT 1
@@ -607,6 +609,10 @@ static int yy_init_globals (yyscan_t yyscanner );
      * from bison output in section 1.*/
     #    define yylval yyg->yylval_r
     
+int yylex_init (yyscan_t* scanner);
+
+int yylex_init_extra (YY_EXTRA_TYPE user_defined,yyscan_t* scanner);
+
 /* Accessor methods to globals.
    These are made visible to non-reentrant scanners for convenience. */
 
@@ -682,7 +688,7 @@ static int input (yyscan_t yyscanner );
 /* This used to be an fputs(), but since the string might contain NUL's,
  * we now use fwrite().
  */
-#define ECHO (void) fwrite( yytext, yyleng, 1, yyout )
+#define ECHO fwrite( yytext, yyleng, 1, yyout )
 #endif
 
 /* Gets input and stuffs it into "buf".  number of characters read, or YY_NULL,
@@ -693,7 +699,7 @@ static int input (yyscan_t yyscanner );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		size_t n; \
+		int n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( yyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -778,10 +784,10 @@ YY_DECL
 	register int yy_act;
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
 
-#line 56 "jsgf_scanner.l"
+#line 56 "_jsgf_scanner.l"
 
 
-#line 785 "jsgf_scanner.c"
+#line 791 "jsgf_scanner.c"
 
     yylval = yylval_param;
 
@@ -869,89 +875,89 @@ do_action:	/* This label is used only to access EOF actions. */
 case 1:
 /* rule 1 can match eol */
 YY_RULE_SETUP
-#line 58 "jsgf_scanner.l"
+#line 58 "_jsgf_scanner.l"
 ;                     /* ignore whitespace */
 	YY_BREAK
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 59 "jsgf_scanner.l"
+#line 59 "_jsgf_scanner.l"
 ;        /* single-line comments */
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 60 "jsgf_scanner.l"
+#line 60 "_jsgf_scanner.l"
 { BEGIN(COMMENT); } /* C-style comments */
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 61 "jsgf_scanner.l"
+#line 61 "_jsgf_scanner.l"
 { BEGIN(INITIAL); }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 62 "jsgf_scanner.l"
+#line 62 "_jsgf_scanner.l"
 ;               /* Ignore stuff in comment mode */
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 64 "jsgf_scanner.l"
+#line 64 "_jsgf_scanner.l"
 return HEADER;
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 65 "jsgf_scanner.l"
+#line 65 "_jsgf_scanner.l"
 return GRAMMAR;
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 66 "jsgf_scanner.l"
+#line 66 "_jsgf_scanner.l"
 return IMPORT;
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 67 "jsgf_scanner.l"
+#line 67 "_jsgf_scanner.l"
 return PUBLIC;
 	YY_BREAK
 case 10:
 /* rule 10 can match eol */
 YY_RULE_SETUP
-#line 69 "jsgf_scanner.l"
+#line 69 "_jsgf_scanner.l"
 { yylval->name = strdup(yytext); return RULENAME; }
 	YY_BREAK
 case 11:
 /* rule 11 can match eol */
 YY_RULE_SETUP
-#line 70 "jsgf_scanner.l"
+#line 70 "_jsgf_scanner.l"
 { yylval->name = strdup(yytext); return TAG; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 71 "jsgf_scanner.l"
+#line 71 "_jsgf_scanner.l"
 { yylval->name = strdup(yytext); return TOKEN; }
 	YY_BREAK
 case 13:
 /* rule 13 can match eol */
 YY_RULE_SETUP
-#line 72 "jsgf_scanner.l"
+#line 72 "_jsgf_scanner.l"
 { yylval->name = strdup(yytext); return TOKEN; }
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 73 "jsgf_scanner.l"
-{ yylval->weight = atof(yytext+1); return WEIGHT; }
+#line 73 "_jsgf_scanner.l"
+{ yylval->weight = atof_c(yytext+1); return WEIGHT; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 75 "jsgf_scanner.l"
+#line 75 "_jsgf_scanner.l"
 return yytext[0];        /* Single-character tokens */
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 77 "jsgf_scanner.l"
+#line 77 "_jsgf_scanner.l"
 ECHO;
 	YY_BREAK
-#line 955 "jsgf_scanner.c"
+#line 961 "jsgf_scanner.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(COMMENT):
 	yyterminate();
@@ -1207,6 +1213,14 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 	else
 		ret_val = EOB_ACT_CONTINUE_SCAN;
+
+	if ((yy_size_t) (yyg->yy_n_chars + number_to_move) > YY_CURRENT_BUFFER_LVALUE->yy_buf_size) {
+		/* Extend the array by 50%, plus the number we really need. */
+		yy_size_t new_size = yyg->yy_n_chars + number_to_move + (yyg->yy_n_chars >> 1);
+		YY_CURRENT_BUFFER_LVALUE->yy_ch_buf = (char *) yyrealloc((void *) YY_CURRENT_BUFFER_LVALUE->yy_ch_buf,new_size ,yyscanner );
+		if ( ! YY_CURRENT_BUFFER_LVALUE->yy_ch_buf )
+			YY_FATAL_ERROR( "out of dynamic memory in yy_get_next_buffer()" );
+	}
 
 	yyg->yy_n_chars += number_to_move;
 	YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[yyg->yy_n_chars] = YY_END_OF_BUFFER_CHAR;
@@ -1636,7 +1650,9 @@ static void yyensure_buffer_stack (yyscan_t yyscanner)
 		yyg->yy_buffer_stack = (struct yy_buffer_state**)yyalloc
 								(num_to_alloc * sizeof(struct yy_buffer_state*)
 								, yyscanner);
-		
+		if ( ! yyg->yy_buffer_stack )
+			YY_FATAL_ERROR( "out of dynamic memory in yyensure_buffer_stack()" );
+								  
 		memset(yyg->yy_buffer_stack, 0, num_to_alloc * sizeof(struct yy_buffer_state*));
 				
 		yyg->yy_buffer_stack_max = num_to_alloc;
@@ -1654,6 +1670,8 @@ static void yyensure_buffer_stack (yyscan_t yyscanner)
 								(yyg->yy_buffer_stack,
 								num_to_alloc * sizeof(struct yy_buffer_state*)
 								, yyscanner);
+		if ( ! yyg->yy_buffer_stack )
+			YY_FATAL_ERROR( "out of dynamic memory in yyensure_buffer_stack()" );
 
 		/* zero only the new slots.*/
 		memset(yyg->yy_buffer_stack + yyg->yy_buffer_stack_max, 0, grow_size * sizeof(struct yy_buffer_state*));
@@ -1960,6 +1978,42 @@ int yylex_init(yyscan_t* ptr_yy_globals)
     return yy_init_globals ( *ptr_yy_globals );
 }
 
+/* yylex_init_extra has the same functionality as yylex_init, but follows the
+ * convention of taking the scanner as the last argument. Note however, that
+ * this is a *pointer* to a scanner, as it will be allocated by this call (and
+ * is the reason, too, why this function also must handle its own declaration).
+ * The user defined value in the first argument will be available to yyalloc in
+ * the yyextra field.
+ */
+
+int yylex_init_extra(YY_EXTRA_TYPE yy_user_defined,yyscan_t* ptr_yy_globals )
+
+{
+    struct yyguts_t dummy_yyguts;
+
+    yyset_extra (yy_user_defined, &dummy_yyguts);
+
+    if (ptr_yy_globals == NULL){
+        errno = EINVAL;
+        return 1;
+    }
+	
+    *ptr_yy_globals = (yyscan_t) yyalloc ( sizeof( struct yyguts_t ), &dummy_yyguts );
+	
+    if (*ptr_yy_globals == NULL){
+        errno = ENOMEM;
+        return 1;
+    }
+    
+    /* By setting to 0xAA, we expose bugs in
+    yy_init_globals. Leave at 0x00 for releases. */
+    memset(*ptr_yy_globals,0x00,sizeof(struct yyguts_t));
+    
+    yyset_extra (yy_user_defined, *ptr_yy_globals);
+    
+    return yy_init_globals ( *ptr_yy_globals );
+}
+
 static int yy_init_globals (yyscan_t yyscanner)
 {
     struct yyguts_t * yyg = (struct yyguts_t*)yyscanner;
@@ -2071,7 +2125,7 @@ void yyfree (void * ptr , yyscan_t yyscanner)
 
 #define YYTABLES_NAME "yytables"
 
-#line 77 "jsgf_scanner.l"
+#line 77 "_jsgf_scanner.l"
 
 
 

@@ -48,6 +48,7 @@
 #include <stdio.h>
 #include <fsg_model.h>
 #include <logmath.h>
+#include <strfuncs.h>
 #include <jsgf.h>
 
 #ifdef __cplusplus

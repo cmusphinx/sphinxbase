@@ -61,14 +61,13 @@
  */
 
 
-/** \file case.h
- * \brief Implementation of case swapping operation. 
+/**
+ * @file case.h
+ * @brief Locale-independent implementation of case swapping operation. 
  *
- * \warning Implementation of strcmp_nocase seems not yet conformed to strcmp
- *
- * case.h implements case switching related operations. strcmp_nocase, 
- * a case-insensitive equivalent of strcmp is also implemented here. 
- *
+ * This function implements ASCII-only case switching and comparison
+ * related operations, which do not depend on the locale and are
+ * guaranteed to exist on all versions of Windows.
  */
 
 #ifndef _LIBUTIL_CASE_H_

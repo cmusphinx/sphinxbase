@@ -1,4 +1,4 @@
-check_PROGRAMS = strtest
+check_PROGRAMS = strtest test_atof
 
 INCLUDES = \
 	-I$(top_srcdir)/include \
@@ -8,6 +8,6 @@ INCLUDES = \
 LDADD = ${top_builddir}/src/libsphinxbase/libsphinxbase.la
 
 
-TESTS = $(srcdir)/_*.test
+TESTS = $(srcdir)/_*.test test_atof
 
 EXTRA_DIST = $(TESTS) _fread_line.txt

@@ -82,6 +82,16 @@ enum string_edge_e {
 SPHINXBASE_EXPORT
 char *string_trim(char *string, enum string_edge_e which);
 
+/**
+ * Locale independent version of atof().
+ *
+ * This function behaves like atof() in the "C" locale.  Switching
+ * locale in a threaded program is extremely uncool, therefore we need
+ * this since we pass floats as strings in 1000 different places.
+ */
+SPHINXBASE_EXPORT
+double atof_c(char const *str);
+
 /* FIXME: Both of these string splitting functions basically suck.  I
  have attempted to fix them as best I can.  (dhuggins@cs, 20070808) */
 
