@@ -33,6 +33,9 @@
 /* Enable thread safety */
 #define ENABLE_THREADS 
 
+/* The Thread Local Storage class */
+#define SPHINXBASE_TLS
+
 /* Use Q15 fixed-point computation */
 /* #undef FIXED16 */
 

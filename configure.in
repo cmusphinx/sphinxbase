@@ -32,6 +32,19 @@ case $host in
      ;;
 esac     
 
+AC_DEFINE(SPHINXBASE_TLS, [], [The Thread Local Storage class])
+
+AC_DEFUN([AC_C_THREADS],[
+AC_MSG_CHECKING([for __thread storage class])
+AC_TRY_COMPILE([
+__thread int thread_local_variable;
+],[],
+AC_MSG_RESULT(yes)
+AC_DEFINE(SPHINXBASE_TLS, [__thread], []),
+AC_MSG_RESULT(no)
+)
+])
+
 AC_ISC_POSIX
 AC_PROG_CC
 AM_PROG_CC_STDC
@@ -75,20 +88,29 @@ AM_CONDITIONAL(USE_LAPACK, test x$use_lapack = xtrue)
 dnl
 dnl Enable thread-safe versions of some internal functions
 dnl
-threadsafe=true
+threadsafe=auto
 AC_ARG_ENABLE(threads,
 	AC_HELP_STRING([--disable-threads],
-		       [Disable thread-safe versions of memory allocation functions]),[
-if test x$enableval = xno; then
-   threadsafe=false
+		       [Disable thread-safe versions of memory allocation functions (default: check)]),[
+if test x$enableval != x; then
+   threadsafe=$enableval
 fi
 ])
-if test x$threadsafe = xtrue; then
-   AC_CHECK_HEADERS([pthread.h])
-   AC_CHECK_LIB(pthread, pthread_mutex_lock)
-   AC_DEFINE(ENABLE_THREADS, [], [Enable thread safety])
+if test x$threadsafe != xno; then
+   pthread=true
+   AC_CHECK_HEADERS([pthread.h], [], [pthread=false])
+   AC_CHECK_LIB(pthread, pthread_mutex_lock, [], [pthread=false])
+   if test x$pthread = xtrue; then
+     AC_DEFINE(ENABLE_THREADS, [], [Enable thread safety])
+     AC_C_THREADS()
+     threadsafe=yes
+   elif test x$threadsafe = xyes; then
+     AC_MSG_ERROR(--enable-threads was given but test for pthread failed!)
+   else
+     threadsafe=no
+   fi
 fi
-AM_CONDITIONAL(USE_THREADS, test x$threadsafe = xtrue)
+AM_CONDITIONAL(USE_THREADS, test x$threadsafe = xyes)
 
 dnl
 dnl Allow compilation for fixed or floating-point MFCC and GMM computation
