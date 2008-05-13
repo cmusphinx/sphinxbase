@@ -33,15 +33,14 @@ case $host in
 esac     
 
 AC_DEFINE(SPHINXBASE_TLS, [], [The Thread Local Storage class])
-
-AC_DEFUN([AC_C_THREADS],[
+AC_DEFUN([AC_C_THREAD_TLS],[
 AC_MSG_CHECKING([for __thread storage class])
 AC_TRY_COMPILE([
 __thread int thread_local_variable;
 ],[],
 AC_MSG_RESULT(yes)
 AC_DEFINE(SPHINXBASE_TLS, [__thread], []),
-AC_MSG_RESULT(no)
+  AC_MSG_RESULT(no)
 )
 ])
 
@@ -97,15 +96,27 @@ if test x$enableval != x; then
 fi
 ])
 if test x$threadsafe != xno; then
-   pthread=true
-   AC_CHECK_HEADERS([pthread.h], [], [pthread=false])
-   AC_CHECK_LIB(pthread, pthread_mutex_lock, [], [pthread=false])
-   if test x$pthread = xtrue; then
+   threads=false
+   dnl
+   dnl Can't seem to check for Windows API functions, but that's okay
+   dnl because we know they will be there...
+   dnl
+   case $host in
+     *cygwin*|*mingw*|*wince*)
+	AC_DEFINE(SPHINXBASE_TLS, [__declspec(thread)], [])
+	threads=true
+     ;;
+     *)
+        AC_CHECK_HEADERS([pthread.h], [threads=true])
+	AC_CHECK_LIB(pthread, pthread_create, [threads=true])
+	AC_C_THREAD_TLS()
+     ;;
+   esac
+   if test x$threads = xtrue; then
      AC_DEFINE(ENABLE_THREADS, [], [Enable thread safety])
-     AC_C_THREADS()
      threadsafe=yes
    elif test x$threadsafe = xyes; then
-     AC_MSG_ERROR(--enable-threads was given but test for pthread failed!)
+     AC_MSG_ERROR(--enable-threads was given but test for thread functions failed!)
    else
      threadsafe=no
    fi
