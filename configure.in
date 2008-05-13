@@ -27,6 +27,8 @@ case $host in
 	# use DLL_EXPORT from libtool because other DLLs include our header
 	# files...)
 	CFLAGS="$CFLAGS -DSPHINXBASE_DLL"
+	# Also, we do not build statically on Windows
+	AM_DISABLE_STATIC
         ;;
      *)
      ;;
@@ -103,17 +105,17 @@ if test x$threadsafe != xno; then
    dnl
    case $host in
      *cygwin*|*mingw*|*wince*)
-	AC_DEFINE(SPHINXBASE_TLS, [__declspec(thread)], [])
+	# GCC always uses __thread, even on Windows, so check for it below
 	threads=true
      ;;
      *)
         AC_CHECK_HEADERS([pthread.h], [threads=true])
 	AC_CHECK_LIB(pthread, pthread_create, [threads=true])
-	AC_C_THREAD_TLS()
      ;;
    esac
    if test x$threads = xtrue; then
      AC_DEFINE(ENABLE_THREADS, [], [Enable thread safety])
+     AC_C_THREAD_TLS()
      threadsafe=yes
    elif test x$threadsafe = xyes; then
      AC_MSG_ERROR(--enable-threads was given but test for thread functions failed!)
@@ -236,6 +238,7 @@ AC_SUBST(ad_backend)
 AC_SUBST(PERL)
 AC_SUBST(CSH)
 
+AC_LIBTOOL_WIN32_DLL
 AM_PROG_LIBTOOL
 
 dnl
