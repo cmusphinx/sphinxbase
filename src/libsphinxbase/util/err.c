@@ -70,13 +70,12 @@
 #include <errno.h>
 
 #include "err.h"
+#include "config.h"
 
 /*
- * FIXME: This needs to go in TLS.
- *
  * We use -1 to start since stderr isn't a constant.  Bleah.
  */
-static FILE *logfp = (FILE *)-1;
+SPHINXBASE_TLS FILE *logfp = (FILE *)-1;
 
 FILE *
 err_set_logfp(FILE *newfp)
@@ -84,8 +83,9 @@ err_set_logfp(FILE *newfp)
     FILE *oldfp;
 
     if (logfp == (FILE *)-1)
-        logfp = stderr;
-    oldfp = logfp;
+        oldfp = stderr;
+    else
+        oldfp = logfp;
     logfp = newfp;
     return oldfp;
 }
@@ -111,9 +111,9 @@ _E__pr_info_header_wofn(char const *msg)
         logfp = stderr;
     if (logfp == NULL)
         return;
-    fflush(logfp);
     /* make different format so as not to be parsed by emacs compile */
     fprintf(logfp, "%s:\t", msg);
+    fflush(logfp);
 }
 
 void
@@ -128,8 +128,8 @@ _E__pr_header(char const *f, long ln, char const *msg)
     fname = strrchr(f,'\\');
     if (fname == NULL)
         fname = strrchr(f,'/');
+    fprintf(logfp, "%s: \"%s\", line %ld: ", msg, fname == NULL ? f : fname + 1, ln);
     fflush(logfp);
-    fprintf(logfp, "%s: \"%s\", line %ld: ", msg, fname == NULL? f:fname+1, ln);
 }
 
 void
@@ -144,9 +144,9 @@ _E__pr_info_header(char const *f, long ln, char const *msg)
     fname = strrchr(f,'\\');
     if (fname == NULL)
         fname = strrchr(f,'/');
-    fflush(logfp);
     /* make different format so as not to be parsed by emacs compile */
-    fprintf(logfp, "%s: %s(%ld): ", msg, fname == NULL? f:fname+1, ln);
+    fprintf(logfp, "%s: %s(%ld): ", msg, fname == NULL ? f : fname + 1, ln);
+    fflush(logfp);
 }
 
 void
@@ -191,8 +191,8 @@ _E__die_error(char const *fmt, ...)
     if (logfp) {
         va_start(pvar, fmt);
         vfprintf(logfp, fmt, pvar);
-        fflush(logfp);
         va_end(pvar);
+        fflush(logfp);
     }
 
 #if defined(__ADSPBLACKFIN__) && !defined(__linux__)
