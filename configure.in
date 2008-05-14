@@ -110,7 +110,7 @@ if test x$threadsafe != xno; then
      ;;
      *)
         AC_CHECK_HEADERS([pthread.h], [threads=true])
-	AC_CHECK_LIB(pthread, pthread_create, [threads=true])
+	AC_CHECK_LIB(pthread, pthread_create)
      ;;
    esac
    if test x$threads = xtrue; then
