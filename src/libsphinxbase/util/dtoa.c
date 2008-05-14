@@ -70,7 +70,7 @@
 
 /* Added by dhuggins@cs.cmu.edu to use autoconf results. */
 /* We do not care about the VAX. */
-#include <config.h>
+#include "config.h"
 #ifdef WORDS_BIGENDIAN
 #define IEEE_MC68k
 #else
@@ -80,8 +80,13 @@
 #define NO_LONG_LONG
 #endif
 #define Omit_Private_Memory
-#include <ckd_alloc.h>
+#include "ckd_alloc.h"
 #undef USE_LOCALE
+
+/* Correct totally bogus typedefs in this code. */
+#include "prim_type.h"
+#define Long int32   /* ZOMG */
+#define ULong uint32 /* WTF */
 
 /*
  * #define IEEE_8087 for IEEE-arithmetic machines where the least
