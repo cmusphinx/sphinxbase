@@ -27,23 +27,25 @@ case $host in
 	# use DLL_EXPORT from libtool because other DLLs include our header
 	# files...)
 	CFLAGS="$CFLAGS -DSPHINXBASE_DLL"
-	# Also, we do not build statically on Windows
-	AM_DISABLE_STATIC
         ;;
      *)
      ;;
 esac     
 
-AC_DEFINE(SPHINXBASE_TLS, [], [The Thread Local Storage class])
 AC_DEFUN([AC_C_THREAD_TLS],[
+use_tls=false
 AC_MSG_CHECKING([for __thread storage class])
 AC_TRY_COMPILE([
 __thread int thread_local_variable;
-],[],
-AC_MSG_RESULT(yes)
-AC_DEFINE(SPHINXBASE_TLS, [__thread], []),
+],[],[
+  use_tls=true
+  AC_MSG_RESULT(yes)
+  AC_DEFINE(SPHINXBASE_TLS, [__thread], [Thread Local Storage attribute])
+],[
+  use_tls=true
+  AC_DEFINE(SPHINXBASE_TLS, [], [Thread Local Storage attribute])
   AC_MSG_RESULT(no)
-)
+])
 ])
 
 AC_ISC_POSIX
@@ -124,6 +126,7 @@ if test x$threadsafe != xno; then
    fi
 fi
 AM_CONDITIONAL(USE_THREADS, test x$threadsafe = xyes)
+AM_CONDITIONAL(USE_TLS, test x$use_tls = xtrue)
 
 dnl
 dnl Allow compilation for fixed or floating-point MFCC and GMM computation

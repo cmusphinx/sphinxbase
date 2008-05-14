@@ -1,6 +1,12 @@
+if USE_TLS
+tls_tests = test_tls_log
+else
+tls_tests = 
+endif
+
 check_PROGRAMS = \
 	test_thread \
-	test_tls_log \
+	$(tls_tests) \
 	test_event \
 	test_msgq
 
@@ -15,4 +21,4 @@ LDADD = ${top_builddir}/src/libsphinxbase/libsphinxbase.la
 
 noinst_HEADERS = test_macros.h
 
-CLEAN = *.log
+CLEANFILES = *.log

@@ -72,6 +72,11 @@
 #include "err.h"
 #include "config.h"
 
+/* Defensively define this in case configure didn't work. */
+#ifndef SPHINXBASE_TLS
+#define SPHINXBASE_TLS
+#endif
+
 /*
  * We use -1 to start since stderr isn't a constant.  Bleah.
  */
