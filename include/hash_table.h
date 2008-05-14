@@ -181,7 +181,11 @@ typedef struct hash_iter_s {
 
 /**
  * Allocate a new hash table for a given expected size.
- * Return value: READ-ONLY handle to allocated hash table.
+ *
+ * @note Case sensitivity of hash keys applies to 7-bit ASCII
+ * characters only, and is not locale-dependent.
+ *
+ * @return handle to allocated hash table.
  */
 SPHINXBASE_EXPORT
 hash_table_t * hash_table_new(int32 size,	/**< In: Expected number of entries in the table */
