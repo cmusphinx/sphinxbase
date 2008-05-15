@@ -1,5 +1,4 @@
-from distutils.core import setup
-from Pyrex.Distutils.extension import Extension
+from distutils.core import setup, Extension
 from Pyrex.Distutils import build_ext
 
 import distutils.command.install

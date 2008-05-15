@@ -1,6 +1,4 @@
-EXTRA_DIST = \
-	sphinxbase.pxd \
-	sphinxbase.pyx
+EXTRA_DIST = sphinxbase.pyx
 
 CLEANFILES = sphinxbase.c
 
