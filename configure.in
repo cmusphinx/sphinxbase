@@ -250,11 +250,19 @@ dnl
 AC_CHECK_PROG(HAVE_DOXYGEN, doxygen, yes, no)
 AM_CONDITIONAL(BUILD_DOXYGEN, test "x$HAVE_DOXYGEN" = "xyes")
 
+dnl
+dnl Check for Pyrex, and build python module if present
+dnl
+AC_CHECK_PROG(HAVE_PYREX, pyrexc, yes, no)
+AM_CONDITIONAL(BUILD_PYREX, test "x$HAVE_PYREX" = "xyes")
+
 
 AC_OUTPUT([
 sphinxbase.pc
 Makefile
 include/Makefile
+python/Makefile
+python/setup.py
 src/Makefile
 src/libsphinxad/Makefile
 src/libsphinxbase/Makefile

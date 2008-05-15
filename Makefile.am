@@ -1,7 +1,8 @@
 SUBDIRS = src \
 	doc \
 	include \
-	test
+	test \
+	python
 
 EXTRA_DIST = autogen.sh					\
 	sphinxbase.pc.in				\

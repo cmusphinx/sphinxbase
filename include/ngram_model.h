@@ -110,6 +110,10 @@ ngram_model_t *ngram_model_read(cmd_ln_t *config,
 
 /**
  * Write an N-Gram model to disk.
+ *
+ * @note This is not yet implemented.
+ *
+ * @return 0 for success, <0 on error
  */
 SPHINXBASE_EXPORT
 int ngram_model_write(ngram_model_t *model, const char *file_name,
