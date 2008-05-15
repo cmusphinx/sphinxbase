@@ -1,6 +1,8 @@
 EXTRA_DIST = sphinxbase.c \
 	sphinxbase.pyx
 
+pkginclude_HEADERS = sphinxbase.pxd
+
 if BUILD_PYTHON
 all-local: pymod-build-stamp
 
