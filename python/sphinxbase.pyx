@@ -10,7 +10,7 @@
 cdef extern from "logmath.h":
     ctypedef double float64
     ctypedef struct logmath_t
-    logmath_t *logmath_init(float64 base, int shift, int use_table) except NULL
+    logmath_t *logmath_init(float64 base, int shift, int use_table)
     void logmath_free(logmath_t *lmath)
 
     int logmath_log(logmath_t *lmath, float64 p)
@@ -46,14 +46,14 @@ cdef extern from "ngram_model.h":
     ngram_model_t *ngram_model_read(cmd_ln_t *config,
                                     char *file_name,
                                     ngram_file_type_t file_type,
-                                    logmath_t *lmath) except NULL
+                                    logmath_t *lmath)
     void ngram_model_free(ngram_model_t *model)
 
     int ngram_model_apply_weights(ngram_model_t *model,
-                                  float32 lw, float32 wip, float32 uw) except -1
+                                  float32 lw, float32 wip, float32 uw)
 
     int32 ngram_wid(ngram_model_t *model, char *word)
-    char *ngram_word(ngram_model_t *model, int32 wid) except NULL
+    char *ngram_word(ngram_model_t *model, int32 wid)
 
     int32 ngram_ng_score(ngram_model_t *model, int32 wid,
                          int32 *history, int32 n_hist, int32 *n_used)
