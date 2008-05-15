@@ -212,8 +212,14 @@ void cmd_ln_free_r (cmd_ln_t *cmdln);
  * routine also prints the prevailing argument values (to stderr)
  * after parsing.
  *
+ * @note It is currently assumed that the strings in argv are
+ *       allocated statically, or at least that they will be valid as
+ *       long as the cmd_ln_t returned from this function.
+ *       Unpredictable behaviour will result if they are freed or
+ *       otherwise become invalidated.
+ *
  * @return A cmd_ln_t containing the results of command line parsing,
- * or NULL on failure.
+ *         or NULL on failure.
  **/
 SPHINXBASE_EXPORT
 cmd_ln_t *cmd_ln_parse_r(cmd_ln_t *inout_cmdln, /**< In/Out: Previous command-line to update,
