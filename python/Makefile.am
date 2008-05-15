@@ -12,9 +12,13 @@ uninstall-local:
 
 clean-local:
 	python setup.py clean --all
+# This is dumb, but distutils is completely incapable of VPATH building
+	test "x$(srcdir)" != "x$(builddir)" && $(RM) sphinxbase.c
 	$(RM) pymod-build-stamp
 
 pymod-build-stamp: sphinxbase.c
+# This is dumb, but distutils is completely incapable of VPATH building
+	test "x$(srcdir)" != "x$(builddir)" && cp "$(srcdir)/sphinxbase.c" sphinxbase.c
 	python setup.py build
 	touch $@
 endif
