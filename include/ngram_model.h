@@ -72,17 +72,12 @@ typedef struct ngram_class_s ngram_class_t;
 /**
  * File types for N-Gram files
  */
-typedef enum ngram_file_type_e ngram_file_type_t;
-
-/**
- * File types for N-Gram files
- */
-enum ngram_file_type_e {
+typedef enum ngram_file_type_e {
     NGRAM_AUTO,  /**< Determine file type automatically */
     NGRAM_ARPA,  /**< ARPABO text format (the standard) */
     NGRAM_DMP,   /**< Sphinx .DMP format */
     NGRAM_DMP32  /**< Sphinx .DMP32 format */
-};
+} ngram_file_type_t;
 
 #define NGRAM_INVALID_WID -1 /**< Impossible word ID */
 
