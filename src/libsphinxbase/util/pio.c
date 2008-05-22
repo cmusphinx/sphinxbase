@@ -34,46 +34,6 @@
  * ====================================================================
  *
  */
-/*
- * pio.c -- Packaged I/O routines.
- *
- * **********************************************
- * CMU ARPA Speech Project
- *
- * Copyright (c) 1999 Carnegie Mellon University.
- * ALL RIGHTS RESERVED.
- * **********************************************
- * 
- * HISTORY
- * $Log: pio.c,v $
- * Revision 1.2  2005/06/22 03:09:52  arthchan2003
- * 1, Fixed doxygen documentation, 2, Added  keyword.
- *
- * Revision 1.3  2005/06/16 00:14:08  archan
- * Added const keyword to file argument for file_open
- *
- * Revision 1.2  2005/06/15 06:23:21  archan
- * change headers from io.h to pio.h
- *
- * Revision 1.1  2005/06/15 06:11:03  archan
- * sphinx3 to s3.generic: change io.[ch] to pio.[ch]
- *
- * Revision 1.4  2005/04/20 03:49:32  archan
- * Add const to string argument of myfopen.
- *
- * Revision 1.3  2005/03/30 01:22:48  archan
- * Fixed mistakes in last updates. Add
- *
- * 
- * 08-Dec-1999	M K Ravishankar (rkm@cs.cmu.edu) at Carnegie Mellon University
- * 		Added stat_mtime().
- * 
- * 11-Mar-1999	M K Ravishankar (rkm@cs.cmu.edu) at Carnegie Mellon University
- * 		Added _myfopen().
- * 
- * 05-Sep-97	M K Ravishankar (rkm@cs.cmu.edu) at Carnegie Mellon University
- * 		Started.
- */
 
 #include <config.h>
 
@@ -435,28 +395,3 @@ stat_mtime(char *file)
     return ((int32) statbuf.st_mtime);
 }
 #endif /* !_WIN32_WCE */
-
-FILE *
-_myfopen(const char *file, char *mode, char *pgm, int32 line)
-{
-    FILE *fp;
-
-    if ((fp = fopen(file, mode)) == NULL) {
-        fflush(stdout);
-        fprintf(stderr,
-                "FATAL_ERROR: \"%s\", line %d: fopen(%s,%s) failed; ",
-                pgm, line, file, mode);
-#ifdef HAVE_ERRNO_H
-        perror("");
-#endif
-        fflush(stderr);
-
-#ifdef HAVE_ERRNO_H
-        exit(errno);
-#else
-        exit(-1);
-#endif
-    }
-
-    return fp;
-}
