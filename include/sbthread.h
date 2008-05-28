@@ -196,16 +196,19 @@ sbevent_t *sbevent_init(void);
 /**
  * Free an event.
  */
+SPHINXBASE_EXPORT
 void sbevent_free(sbevent_t *evt);
 
 /**
  * Signal an event.
  */
+SPHINXBASE_EXPORT
 int sbevent_signal(sbevent_t *evt);
 
 /**
  * Wait for an event to be signalled.
  */
+SPHINXBASE_EXPORT
 int sbevent_wait(sbevent_t *evt, int sec, int nsec);
 
 
