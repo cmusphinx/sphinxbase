@@ -87,11 +87,10 @@ err_set_logfp(FILE *newfp)
 {
     FILE *oldfp;
 
-    if (logfp == (FILE *)-1)
-        oldfp = stderr;
-    else
-        oldfp = logfp;
+    oldfp = logfp;
     logfp = newfp;
+    if (oldfp == (void *)-1)
+        oldfp = stderr;
     return oldfp;
 }
 
