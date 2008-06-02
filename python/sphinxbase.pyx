@@ -54,6 +54,9 @@ cdef class NGramModel:
         @param uw: Weight to give unigrams when interpolating with uniform distribution.
         @type uw: float
         """
+        self.lw = lw
+        self.wip = wip
+        self.uw = uw
         ngram_model_apply_weights(self.lm, lw, wip, uw)
 
     def wid(self, word):
