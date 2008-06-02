@@ -73,4 +73,5 @@ cdef extern from "ngram_model.h":
 cdef class NGramModel:
     cdef ngram_model_t *lm
     cdef logmath_t *lmath
+    cdef readonly float lw, wip, uw
 

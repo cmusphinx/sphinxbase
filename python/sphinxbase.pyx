@@ -31,6 +31,9 @@ cdef class NGramModel:
         """
         self.lmath = logmath_init(1.0001, 0, 0)
         self.lm = ngram_model_read(NULL, file, NGRAM_AUTO, self.lmath)
+        self.lw = lw
+        self.wip = wip
+        self.uw = uw
         ngram_model_apply_weights(self.lm, lw, wip, uw)
 
     def __dealloc__(self):
