@@ -1,4 +1,7 @@
-from distutils.core import setup, Extension
+try:
+    from setuptools import setup, Extension
+except:
+    from distutils.core import setup, Extension
 
 import distutils.command.install
 import os
@@ -38,6 +41,12 @@ class bogus_uninstall(distutils.command.install.install):
                 d = os.path.dirname(d)
 
 setup(name = 'SphinxBase',
+      version = '@VERSION@',
+      author = 'David Huggins-Daines',
+      author_email = 'dhuggins@cs.cmu.edu',
+      description = 'Python interface to CMU Sphinx base libraries',
+      license = 'BSD',
+      url = 'http://cmusphinx.org',
       ext_modules = [
         Extension('sphinxbase',
                    sources=['sphinxbase.c'],
