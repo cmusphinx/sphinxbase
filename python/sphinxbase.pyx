@@ -108,8 +108,7 @@ cdef class NGramModel:
         For a closed-vocabulary model, unknown words are impossible
         and thus have zero probability.  Therefore, if C{word} is
         unknown, this function will return a "zero" log-probability,
-        i.e. a large negative number.  To obtain this number for
-        comparison, call L{the C{zero} method<zero>}.
+        i.e. a large negative number.
         """
         cdef int32 wid
         cdef int32 *hist
@@ -124,7 +123,7 @@ cdef class NGramModel:
             hist[i] = ngram_wid(self.lm, spam)
         score = ngram_ng_score(self.lm, wid, hist, n_hist, &n_used)
         ckd_free(hist)
-        return logmath_exp(self.lmath, score), n_used
+        return logmath_log_to_ln(self.lmath, score), n_used
 
     def prob(self, word, *args):
         """
@@ -148,4 +147,4 @@ cdef class NGramModel:
             hist[i] = ngram_wid(self.lm, spam)
         score = ngram_ng_prob(self.lm, wid, hist, n_hist, &n_used)
         ckd_free(hist)
-        return logmath_exp(self.lmath, score), n_used
+        return logmath_log_to_ln(self.lmath, score), n_used
