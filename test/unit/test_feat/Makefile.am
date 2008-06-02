@@ -1,4 +1,4 @@
-check_PROGRAMS = test_feat test_feat_live test_feat_fe
+check_PROGRAMS = test_feat test_feat_live test_feat_fe test_subvq
 noinst_HEADERS = test_macros.h
 
 INCLUDES = \
@@ -9,6 +9,6 @@ INCLUDES = \
 
 LDADD = ${top_builddir}/src/libsphinxbase/libsphinxbase.la
 
-TESTS = $(srcdir)/_*.test test_feat_live test_feat_fe
+TESTS = $(srcdir)/_*.test test_feat_live test_feat_fe test_subvq
 EXTRA_DIST = $(srcdir)/_*.test $(srcdir)/_*.res
 CLEANFILES = *.out

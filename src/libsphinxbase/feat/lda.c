@@ -66,9 +66,9 @@ feat_read_lda(feat_t *feat, const char *ldafile, int32 dim)
     char **argname, **argval;
 
     assert(feat);
-    if (feat_n_stream(feat) != 1) {
+    if (feat->n_stream != 1) {
         E_ERROR("LDA incompatible with multi-stream features (n_stream = %d)\n",
-                feat_n_stream(feat));
+                feat->n_stream);
         return -1;
     }
 
@@ -125,7 +125,7 @@ feat_read_lda(feat_t *feat, const char *ldafile, int32 dim)
 #endif
 
     /* Note that SphinxTrain stores the eigenvectors as row vectors. */
-    assert(n == feat_stream_len(feat, 0));
+    assert(n == feat->stream_len[0]);
     /* Override dim from file if it is 0 or greater than m. */
     if (dim > m || dim <= 0) {
         dim = m;
@@ -141,18 +141,18 @@ feat_lda_transform(feat_t *fcb, mfcc_t ***inout_feat, uint32 nfr)
     mfcc_t *tmp;
     uint32 i, j, k;
 
-    tmp = ckd_calloc(feat_stream_len(fcb,0), sizeof(mfcc_t));
+    tmp = ckd_calloc(fcb->stream_len[0], sizeof(mfcc_t));
     for (i = 0; i < nfr; ++i) {
         /* Do the matrix multiplication inline here since fcb->lda
          * is transposed (eigenvectors in rows not columns). */
         /* FIXME: In the future we ought to use the BLAS. */
-        memset(tmp, 0, sizeof(mfcc_t)*feat_stream_len(fcb,0));
+        memset(tmp, 0, sizeof(mfcc_t) * fcb->stream_len[0]);
         for (j = 0; j < feat_dimension(fcb); ++j) {
-            for (k = 0; k < feat_stream_len(fcb,0); ++k) {
+            for (k = 0; k < fcb->stream_len[0]; ++k) {
                 tmp[j] += MFCCMUL(inout_feat[i][0][k], fcb->lda[0][j][k]);
             }
         }
-        memcpy(inout_feat[i][0], tmp, feat_stream_len(fcb,0) * sizeof(mfcc_t));
+        memcpy(inout_feat[i][0], tmp, fcb->stream_len[0] * sizeof(mfcc_t));
     }
     ckd_free(tmp);
 }
