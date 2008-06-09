@@ -115,7 +115,7 @@ extern "C" {
  */
 SPHINXBASE_EXPORT
 FILE *fopen_comp (const char *file,		/**< In: File to be opened */
-		  char *mode,		/**< In: "r" or "w", as with normal fopen */
+		  const char *mode,		/**< In: "r" or "w", as with normal fopen */
 		  int32 *ispipe	/**< Out: On return *ispipe is TRUE iff file
 				   was opened via a pipe */
 	);
@@ -134,7 +134,7 @@ void fclose_comp (FILE *fp,		/**< In: File pointer to be closed */
  * file is uncompressed, and vice versa).
  */
 SPHINXBASE_EXPORT
-FILE *fopen_compchk (char *file,	/**< In: File to be opened */
+FILE *fopen_compchk (const char *file,	/**< In: File to be opened */
 		     int32 *ispipe	/**< Out: On return *ispipe is TRUE iff file
 					   was opened via a pipe */
 	);
@@ -143,8 +143,8 @@ FILE *fopen_compchk (char *file,	/**< In: File to be opened */
  * Wrapper around fopen to check for failure and E_FATAL if failed.
  */
 SPHINXBASE_EXPORT
-FILE *_myfopen(const char *file, char *mode,
-	       char *pgm, int32 line);	/* In: __FILE__, __LINE__ from where called */
+FILE *_myfopen(const char *file, const char *mode,
+	       const char *pgm, int32 line);	/* In: __FILE__, __LINE__ from where called */
 #define myfopen(file,mode)	_myfopen((file),(mode),__FILE__,__LINE__)
 
 
@@ -191,14 +191,14 @@ struct stat {
  * Return value: 0 if successful, -1 if stat failed several attempts.
  */
 SPHINXBASE_EXPORT
-int32 stat_retry (char *file, struct stat *statbuf);
+int32 stat_retry (const char *file, struct stat *statbuf);
 
 /**
  * Return time of last modification for the given file, or -1 if stat fails.
  */
 
 SPHINXBASE_EXPORT
-int32 stat_mtime (char *file);
+int32 stat_mtime (const char *file);
 
 #ifdef __cplusplus
 }

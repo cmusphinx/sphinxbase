@@ -50,7 +50,7 @@
 #include "ckd_alloc.h"
 
 FILE *
-fopen_comp(const char *file, char *mode, int32 * ispipe)
+fopen_comp(const char *file, const char *mode, int32 * ispipe)
 {
     FILE *fp;
 
@@ -163,7 +163,7 @@ fclose_comp(FILE * fp, int32 ispipe)
 
 
 FILE *
-fopen_compchk(char *file, int32 * ispipe)
+fopen_compchk(const char *file, int32 * ispipe)
 {
 #ifndef HAVE_POPEN
     *ispipe = 0; /* No popen() on WinCE */
@@ -308,7 +308,7 @@ fread_retry(void *pointer, int32 size, int32 num_items, FILE * stream)
 
 #ifdef _WIN32_WCE /* No stat() on WinCE */
 int32
-stat_retry(char *file, struct stat * statbuf)
+stat_retry(const char *file, struct stat * statbuf)
 {
     WIN32_FIND_DATA file_data;
     HANDLE *h;
@@ -333,7 +333,7 @@ stat_retry(char *file, struct stat * statbuf)
 
 
 int32
-stat_mtime(char *file)
+stat_mtime(const char *file)
 {
     struct stat statbuf;
 
@@ -345,7 +345,7 @@ stat_mtime(char *file)
 #else
 #define STAT_RETRY_COUNT	10
 int32
-stat_retry(char *file, struct stat * statbuf)
+stat_retry(const char *file, struct stat * statbuf)
 {
     int32 i;
 
@@ -380,7 +380,7 @@ stat_retry(char *file, struct stat * statbuf)
 }
 
 int32
-stat_mtime(char *file)
+stat_mtime(const char *file)
 {
     struct stat statbuf;
 
