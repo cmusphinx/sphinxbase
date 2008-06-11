@@ -363,6 +363,43 @@ ngram_model_set_count(ngram_model_t *base)
     return set->n_models;
 }
 
+ngram_model_set_iter_t *
+ngram_model_set_iter(ngram_model_t *base)
+{
+    ngram_model_set_t *set = (ngram_model_set_t *)base;
+    ngram_model_set_iter_t *itor;
+
+    if (set == NULL || set->n_models == 0)
+        return NULL;
+    itor = ckd_calloc(1, sizeof(*itor));
+    itor->set = set;
+    return itor;
+}
+
+ngram_model_set_iter_t *
+ngram_model_set_iter_next(ngram_model_set_iter_t *itor)
+{
+    if (++itor->cur == itor->set->n_models) {
+        ngram_model_set_iter_free(itor);
+        return NULL;
+    }
+    return itor;
+}
+
+void
+ngram_model_set_iter_free(ngram_model_set_iter_t *itor)
+{
+    ckd_free(itor);
+}
+
+ngram_model_t *
+ngram_model_set_iter_model(ngram_model_set_iter_t *itor,
+                           char const **lmname)
+{
+    if (lmname) *lmname = itor->set->names[itor->cur];
+    return itor->set->lms[itor->cur];
+}
+
 ngram_model_t *
 ngram_model_set_lookup(ngram_model_t *base,
                        const char *name)

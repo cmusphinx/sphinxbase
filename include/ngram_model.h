@@ -424,6 +424,42 @@ SPHINXBASE_EXPORT
 int32 ngram_model_set_count(ngram_model_t *set);
 
 /**
+ * Iterator over language models in a set.
+ */
+typedef struct ngram_model_set_iter_s ngram_model_set_iter_t;
+
+/**
+ * Begin iterating over language models in a set.
+ *
+ * @return iterator pointing to the first language model, or NULL if no models remain.
+ */
+SPHINXBASE_EXPORT
+ngram_model_set_iter_t *ngram_model_set_iter(ngram_model_t *set);
+
+/**
+ * Move to the next language model in a set.
+ *
+ * @return iterator pointing to the next language model, or NULL if no models remain.
+ */
+SPHINXBASE_EXPORT
+ngram_model_set_iter_t *ngram_model_set_iter_next(ngram_model_set_iter_t *itor);
+
+/**
+ * Finish iteration over a langauge model set.
+ */
+void ngram_model_set_iter_free(ngram_model_set_iter_t *itor);
+
+/**
+ * Get language model and associated name from an iterator.
+ *
+ * @param lmname Output: string name associated with this language model.
+ * @return Language model pointed to by this iterator.
+ */
+SPHINXBASE_EXPORT
+ngram_model_t *ngram_model_set_iter_model(ngram_model_set_iter_t *itor,
+                                          char const **lmname);
+
+/**
  * Select a single language model from a set for scoring.
  *
  * @return the newly selected language model, or NULL if no language
