@@ -552,6 +552,14 @@ ngram_model_get_size(ngram_model_t *model)
   return 0;
 }
 
+int32 const *
+ngram_model_get_counts(ngram_model_t *model)
+{
+  if (model != NULL)
+    return model->n_counts;
+  return NULL;
+}
+
 int32
 ngram_wid(ngram_model_t *model, const char *word)
 {

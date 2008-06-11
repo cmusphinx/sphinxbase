@@ -290,6 +290,13 @@ SPHINXBASE_EXPORT
 int32 ngram_model_get_size(ngram_model_t *model);
 
 /**
+ * Get the counts of the various N-grams in the model
+ */
+SPHINXBASE_EXPORT
+int32 const *ngram_model_get_counts(ngram_model_t *model);
+
+
+/**
  * Add a word (unigram) to the language model.
  *
  * @note The semantics of this are not particularly well-defined for
