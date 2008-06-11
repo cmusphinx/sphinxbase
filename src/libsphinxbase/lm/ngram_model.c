@@ -163,7 +163,6 @@ ngram_model_init(ngram_model_t *base,
     /* If this was previously initialized... */
     if (base->n_counts == NULL)
         base->n_counts = ckd_calloc(3, sizeof(*base->n_counts));
-    base->n_1g_alloc = base->n_words = n_unigram;
     /* Don't reset weights if logmath object hasn't changed. */
     if (base->lmath != lmath) {
         /* Set default values for weights. */
@@ -180,7 +179,7 @@ ngram_model_init(ngram_model_t *base,
         /* Free all previous word strings if they were allocated. */
         if (base->writable) {
             int32 i;
-            for (i = 0; i < base->n_1g_alloc; ++i) {
+            for (i = 0; i < base->n_words; ++i) {
                 ckd_free(base->word_str[i]);
                 base->word_str[i] = NULL;
             }
@@ -195,7 +194,8 @@ ngram_model_init(ngram_model_t *base,
         hash_table_empty(base->wid);
     else
         base->wid = hash_table_new(n_unigram, FALSE);
-    
+    base->n_1g_alloc = base->n_words = n_unigram;
+
     return 0;
 }
 
