@@ -144,7 +144,6 @@ main(int32 argc, char **argv)
     if (fe_convert_files(P) != FE_SUCCESS) {
         E_FATAL("error converting files...exiting\n");
     }
-    cmd_ln_free_r(P->config);
     free(P);
     return (0);
 }
@@ -177,6 +176,7 @@ fe_convert_files(globals_t * P)
 
         if ((ctlfile = fopen(P->ctlfile, "r")) == NULL) {
             E_ERROR("Unable to open control file %s\n", P->ctlfile);
+            fe_free(FE);
             return (FE_CONTROL_FILE_ERROR);
         }
         while (fscanf(ctlfile, "%s", fileroot) != EOF) {
@@ -202,8 +202,10 @@ fe_convert_files(globals_t * P)
                 ckd_free(infile);
                 ckd_free(outfile);
                 infile = outfile = NULL;
-                if (return_value != FE_SUCCESS)
+                if (return_value != FE_SUCCESS) {
+                    fe_free(FE);
                     return return_value;
+                }
                 continue;
             }
             return_value =
@@ -214,6 +216,7 @@ fe_convert_files(globals_t * P)
             ckd_free(outfile);
             infile = outfile = NULL;
             if (return_value != FE_SUCCESS) {
+                fe_free(FE);
                 return (return_value);
             }
 
@@ -235,11 +238,13 @@ fe_convert_files(globals_t * P)
                         E_ERROR
                             ("Unable to allocate memory block of %d shorts for input speech\n",
                              splen);
+                        fe_free(FE);
                         return (FE_MEM_ALLOC_ERROR);
                     }
                     if (fe_readblock_spch
                         (P, fp_in, splen, spdata) != splen) {
                         E_ERROR("error reading speech data\n");
+                        fe_free(FE);
                         return (FE_INPUT_FILE_READ_ERROR);
                     }
                     process_utt_return_value =
@@ -251,6 +256,7 @@ fe_convert_files(globals_t * P)
                             warn_zero_energy = 1;
                         }
                         else {
+                            fe_free(FE);
                             return (process_utt_return_value);
                         }
                     }
@@ -276,11 +282,13 @@ fe_convert_files(globals_t * P)
                     E_ERROR
                         ("Unable to allocate memory block of %d shorts for input speech\n",
                          splen);
+                    fe_free(FE);
                     return (FE_MEM_ALLOC_ERROR);
                 }
 
                 if (fe_readblock_spch(P, fp_in, splen, spdata) != splen) {
                     E_ERROR("error reading speech data\n");
+                    fe_free(FE);
                     return (FE_INPUT_FILE_READ_ERROR);
                 }
 
@@ -291,6 +299,7 @@ fe_convert_files(globals_t * P)
                         warn_zero_energy = 1;
                     }
                     else {
+                        fe_free(FE);
                         return (process_utt_return_value);
                     }
                 }
@@ -339,9 +348,7 @@ fe_convert_files(globals_t * P)
                 return (FE_START_ERROR);
             }
         }
-        fe_close(FE);
     }
-
     else if (P->is_single) {
 
         fe_build_filenames(P, fileroot, &infile, &outfile);
@@ -366,6 +373,7 @@ fe_convert_files(globals_t * P)
         ckd_free(outfile);
         infile = outfile = NULL;
         if (return_value != FE_SUCCESS) {
+            fe_free(FE);
             return (return_value);
         }
 
@@ -386,10 +394,12 @@ fe_convert_files(globals_t * P)
                     E_ERROR
                         ("Unable to allocate memory block of %d shorts for input speech\n",
                          splen);
+                    fe_free(FE);
                     return (FE_MEM_ALLOC_ERROR);
                 }
                 if (fe_readblock_spch(P, fp_in, splen, spdata) != splen) {
                     E_ERROR("Error reading speech data\n");
+                    fe_free(FE);
                     return (FE_INPUT_FILE_READ_ERROR);
                 }
                 process_utt_return_value =
@@ -423,10 +433,12 @@ fe_convert_files(globals_t * P)
                 E_ERROR
                     ("Unable to allocate memory block of %d shorts for input speech\n",
                      splen);
+                fe_free(FE);
                 return (FE_MEM_ALLOC_ERROR);
             }
             if (fe_readblock_spch(P, fp_in, splen, spdata) != splen) {
                 E_ERROR("Error reading speech data\n");
+                fe_free(FE);
                 return (FE_INPUT_FILE_READ_ERROR);
             }
             process_utt_return_value =
@@ -474,10 +486,10 @@ fe_convert_files(globals_t * P)
         }
         else {
             E_ERROR("fe_start_utt() failed\n");
+            fe_free(FE);
             return (FE_START_ERROR);
         }
 
-        fe_close(FE);
         if (warn_zero_energy) {
             E_WARN
                 ("File %s has some frames with zero energy. Consider using dither\n",
@@ -486,12 +498,12 @@ fe_convert_files(globals_t * P)
     }
     else {
         E_ERROR("Unknown mode - single or batch?\n");
+        fe_free(FE);
         return (FE_UNKNOWN_SINGLE_OR_BATCH);
-
     }
 
+    fe_free(FE);
     return (FE_SUCCESS);
-
 }
 
 void

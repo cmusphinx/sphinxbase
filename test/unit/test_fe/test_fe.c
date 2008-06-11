@@ -199,8 +199,7 @@ main(int argc, char *argv[])
 	ckd_free_2d(cepbuf1);
 	ckd_free_2d(cepbuf2);
 	fclose(raw);
-	fe_close(fe);
-	cmd_ln_free_r(config);
+	fe_free(fe);
 
 	return 0;
 }

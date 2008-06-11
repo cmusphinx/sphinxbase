@@ -19,7 +19,13 @@ main(int argc, char *argv[])
 	TEST_ASSERT(fsg_model_add_alt(fsg, "FORWARD", "FORWARD(2)"));
 
 	fsg_model_write(fsg, stdout);
-	fsg_model_free(fsg);
+
+	/* Test reference counting. */
+	TEST_ASSERT(fsg = fsg_model_retain(fsg));
+	TEST_EQUAL(1, fsg_model_free(fsg));
+	fsg_model_write(fsg, stdout);
+
+	TEST_EQUAL(0, fsg_model_free(fsg));
 	logmath_free(lmath);
 
 	return 0;

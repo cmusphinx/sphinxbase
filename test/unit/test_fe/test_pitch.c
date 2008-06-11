@@ -49,6 +49,7 @@ main(int argc, char *argv[])
 	}
 	printf("\n");
 	yin_free(pe);
+	ckd_free(buf);
 
 	return 0;
 }

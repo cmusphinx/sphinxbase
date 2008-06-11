@@ -142,11 +142,10 @@ main(int argc, char *argv[])
 	printf("\n");
 
 	fclose(raw);
-	fe_close(fe);
+	fe_free(fe);
 	feat_array_free(featbuf1);
 	feat_array_free(featbuf2);
 	ckd_free_2d(cepbuf);
-	cmd_ln_free_r(config);
 
 	return 0;
 }

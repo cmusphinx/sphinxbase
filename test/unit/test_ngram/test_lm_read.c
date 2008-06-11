@@ -38,7 +38,7 @@ main(int argc, char *argv[])
 	/* Test trigrams. */
 	TEST_EQUAL_LOG(ngram_score(model, "daines", "huggins", "david", NULL), -9450);
 
-	ngram_model_free(model);
+	TEST_EQUAL(0, ngram_model_free(model));
 
 	/* Read a language model */
 	model = ngram_model_read(NULL, LMDIR "/100.arpa.DMP", NGRAM_DMP, lmath);
@@ -61,7 +61,11 @@ main(int argc, char *argv[])
 	/* Test trigrams. */
 	TEST_EQUAL(ngram_score(model, "daines", "huggins", "david", NULL), -9452);
 
-	ngram_model_free(model);
+	/* Test refcounting. */
+	model = ngram_model_retain(model);
+	TEST_EQUAL(1, ngram_model_free(model));
+	TEST_EQUAL(ngram_score(model, "daines", "huggins", "david", NULL), -9452);
+	TEST_EQUAL(0, ngram_model_free(model));
 	logmath_free(lmath);
 
 	return 0;

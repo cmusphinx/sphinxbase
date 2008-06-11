@@ -44,7 +44,7 @@ process(sbthread_t *th)
 	fe_free_2d(cepbuf);
 	ckd_free(buf);
 	fclose(raw);
-	fe_close(fe);
+	fe_free(fe);
 	fclose(logfh);
 
 	return 0;
@@ -61,6 +61,7 @@ main(int argc, char *argv[])
 	if ((config = cmd_ln_parse_r(NULL, fe_args, 0, NULL, FALSE)) == NULL)
 		return -1;
 	for (i = 0; i < 10; ++i) {
+		config = cmd_ln_retain(config);
 		threads[i] = sbthread_start(config, process, (void *)(long)i);
 	}
 	for (i = 0; i < 10; ++i) {
