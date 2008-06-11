@@ -287,10 +287,23 @@ SPHINXBASE_EXPORT
 fe_t* fe_init_auto(void);
 
 /**
+ * Get the default set of arguments for fe_init_auto_r().
+ *
+ * @return Pointer to an argument structure which can be passed to
+ * cmd_ln_init() in friends to create argument structures for
+ * fe_init_auto_r().
+ */
+SPHINXBASE_EXPORT
+arg_t const *fe_get_args(void);
+
+/**
  * Initialize a front-end object from a command-line parse.
  *
  * @param config Command-line object, as returned by cmd_ln_parse_r()
- *               or cmd_ln_parse_file().
+ *               or cmd_ln_parse_file().  Ownership of this object is
+ *               claimed by the fe_t, so you must not attempt to free
+ *               it manually.  Use cmd_ln_retain() if you wish to
+ *               reuse it.
  * @return Newly created front-end object.
  */
 SPHINXBASE_EXPORT
@@ -298,6 +311,10 @@ fe_t *fe_init_auto_r(cmd_ln_t *config);
 
 /**
  * Retrieve the command-line object used to initialize this front-end.
+ *
+ * @return command-line object for this front-end.  This pointer is
+ *         retained by the fe_t, so you should not attempt to free it
+ *         manually.
  */
 SPHINXBASE_EXPORT
 cmd_ln_t *fe_get_config(fe_t *fe);
@@ -358,13 +375,22 @@ SPHINXBASE_EXPORT
 int fe_end_utt(fe_t *fe, mfcc_t *out_cepvector, int32 *out_nframes);
 
 /**
- * Close the front end. 
+ * Retain ownership of a front end object.
  *
- * Releases all resource associated with the front-end object.
- * @return 0 for success, <0 for error (see enum fe_error_e)
+ * @return pointer to the retained front end.
  */
 SPHINXBASE_EXPORT
-int fe_close(fe_t *fe);
+fe_t *fe_retain(fe_t *fe);
+
+/**
+ * Free the front end. 
+ *
+ * Releases resources associated with the front-end object.
+ *
+ * @return new reference count (0 if freed completely)
+ */
+SPHINXBASE_EXPORT
+int fe_free(fe_t *fe);
 
 /**
  * Process one frame of samples.

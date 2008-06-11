@@ -57,85 +57,220 @@
 #include "err.h"
 #include "cmd_ln.h"
 #include "ckd_alloc.h"
+#include "fe_warp.h"
+
+static const arg_t fe_args[] = {
+    waveform_to_cepstral_command_line_macro()
+};
+
+int
+fe_parse_general_params(cmd_ln_t *config, fe_t * fe)
+{
+    int j;
+
+    fe->config = config;
+    fe->sampling_rate = cmd_ln_float32_r(config, "-samprate");
+    fe->frame_rate = cmd_ln_int32_r(config, "-frate");
+    if (cmd_ln_boolean_r(config, "-dither")) {
+        fe->dither = 1;
+        fe->seed = cmd_ln_int32_r(config, "-seed");
+    }
+#ifdef WORDS_BIGENDIAN
+    fe->swap = strcmp("big", cmd_ln_str_r(config, "-input_endian")) == 0 ? 0 : 1;
+#else        
+    fe->swap = strcmp("little", cmd_ln_str_r(config, "-input_endian")) == 0 ? 0 : 1;
+#endif
+    fe->window_length = cmd_ln_float32_r(config, "-wlen");
+    fe->pre_emphasis_alpha = cmd_ln_float32_r(config, "-alpha");
+
+    fe->num_cepstra = cmd_ln_int32_r(config, "-ncep");
+    fe->fft_size = cmd_ln_int32_r(config, "-nfft");
+
+    /* Check FFT size, compute FFT order (log_2(n)) */
+    for (j = fe->fft_size, fe->fft_order = 0; j > 1; j >>= 1, fe->fft_order++) {
+        if (((j % 2) != 0) || (fe->fft_size <= 0)) {
+            E_ERROR("fft: number of points must be a power of 2 (is %d)\n",
+                    fe->fft_size);
+            return -1;
+        }
+    }
+    /* Verify that FFT size is greater or equal to window length. */
+    if (fe->fft_size < (int)(fe->window_length * fe->sampling_rate)) {
+        E_ERROR("FFT: Number of points must be greater or equal to frame size (%d samples)\n",
+                (int)(fe->window_length * fe->sampling_rate));
+        return -1;
+    }
+
+    fe->remove_dc = cmd_ln_boolean_r(config, "-remove_dc");
+
+    if (0 == strcmp(cmd_ln_str_r(config, "-transform"), "dct"))
+        fe->transform = DCT_II;
+    else if (0 == strcmp(cmd_ln_str_r(config, "-transform"), "legacy"))
+        fe->transform = LEGACY_DCT;
+    else if (0 == strcmp(cmd_ln_str_r(config, "-transform"), "htk"))
+        fe->transform = DCT_HTK;
+    else {
+        E_ERROR("Invalid transform type (values are 'dct', 'legacy', 'htk')\n");
+        return -1;
+    }
+
+    if (cmd_ln_boolean_r(config, "-logspec"))
+        fe->log_spec = RAW_LOG_SPEC;
+    if (cmd_ln_boolean_r(config, "-smoothspec"))
+        fe->log_spec = SMOOTH_LOG_SPEC;
+
+    return 0;
+}
+
+static int
+fe_parse_melfb_params(cmd_ln_t *config, fe_t *fe, melfb_t * mel)
+{
+    mel->sampling_rate = fe->sampling_rate;
+    mel->fft_size = fe->fft_size;
+    mel->num_cepstra = fe->num_cepstra;
+    mel->num_filters = cmd_ln_int32_r(config, "-nfilt");
+
+    if (fe->log_spec)
+        fe->feature_dimension = mel->num_filters;
+    else
+        fe->feature_dimension = fe->num_cepstra;
+
+    mel->upper_filt_freq = cmd_ln_float32_r(config, "-upperf");
+    mel->lower_filt_freq = cmd_ln_float32_r(config, "-lowerf");
+
+    mel->doublewide = cmd_ln_boolean_r(config, "-doublebw");
+
+    mel->warp_type = cmd_ln_str_r(config, "-warp_type");
+    mel->warp_params = cmd_ln_str_r(config, "-warp_params");
+    mel->lifter_val = cmd_ln_int32_r(config, "-lifter");
+
+    mel->unit_area = cmd_ln_boolean_r(config, "-unit_area");
+    mel->round_filters = cmd_ln_boolean_r(config, "-round_filters");
+
+    if (fe_warp_set(mel, mel->warp_type) != FE_SUCCESS) {
+        E_ERROR("Failed to initialize the warping function.\n");
+        return -1;
+    }
+    fe_warp_set_parameters(mel, mel->warp_params, mel->sampling_rate);
+    return 0;
+}
 
 void
-fe_init_params(param_t * P)
+fe_print_current(fe_t const *fe)
 {
-/* This should take care of all variables that default to zero */
-    memset(P, 0, sizeof(param_t));
-/* Now take care of variables that do not default to zero */
-    P->seed = SEED;
-    P->round_filters = 1;
-    P->unit_area = 1;
+    E_INFO("Current FE Parameters:\n");
+    E_INFO("\tSampling Rate:             %f\n", fe->sampling_rate);
+    E_INFO("\tFrame Size:                %d\n", fe->frame_size);
+    E_INFO("\tFrame Shift:               %d\n", fe->frame_shift);
+    E_INFO("\tFFT Size:                  %d\n", fe->fft_size);
+    E_INFO("\tLower Frequency:           %g\n",
+           fe->mel_fb->lower_filt_freq);
+    E_INFO("\tUpper Frequency:           %g\n",
+           fe->mel_fb->upper_filt_freq);
+    E_INFO("\tNumber of filters:         %d\n", fe->mel_fb->num_filters);
+    E_INFO("\tNumber of Overflow Samps:  %d\n", fe->num_overflow_samps);
+    E_INFO("\tStart Utt Status:          %d\n", fe->start_flag);
+    E_INFO("Will %sremove DC offset at frame level\n",
+           fe->remove_dc ? "" : "not ");
+    if (fe->dither) {
+        E_INFO("Will add dither to audio\n");
+        E_INFO("Dither seeded with %d\n", fe->seed);
+    }
+    else {
+        E_INFO("Will not add dither to audio\n");
+    }
+    if (fe->mel_fb->lifter_val) {
+        E_INFO("Will apply sine-curve liftering, period %d\n",
+               fe->mel_fb->lifter_val);
+    }
+    E_INFO("Will %snormalize filters to unit area\n",
+           fe->mel_fb->unit_area ? "" : "not ");
+    E_INFO("Will %sround filter frequencies to DFT points\n",
+           fe->mel_fb->round_filters ? "" : "not ");
+    E_INFO("Will %suse double bandwidth in mel filter\n",
+           fe->mel_fb->doublewide ? "" : "not ");
 }
 
 fe_t *
 fe_init_auto()
 {
-    return fe_init_auto_r(cmd_ln_get());
+    return fe_init_auto_r(cmd_ln_retain(cmd_ln_get()));
 }
 
 fe_t *
 fe_init_auto_r(cmd_ln_t *config)
 {
-    param_t p;
     fe_t *fe;
 
-    /* FIXME: Do away with param_t soon. */
-    fe_init_params(&p);
+    fe = ckd_calloc(1, sizeof(*fe));
+    fe->refcount = 1;
 
-    p.sampling_rate = cmd_ln_float32_r(config, "-samprate");
-    p.frame_rate = cmd_ln_int32_r(config, "-frate");
-    p.window_length = cmd_ln_float32_r(config, "-wlen");
-    p.num_cepstra = cmd_ln_int32_r(config, "-ncep");
-    p.num_filters = cmd_ln_int32_r(config, "-nfilt");
-    p.fft_size = cmd_ln_int32_r(config, "-nfft");
-
-    p.upper_filt_freq = cmd_ln_float32_r(config, "-upperf");
-    p.lower_filt_freq = cmd_ln_float32_r(config, "-lowerf");
-    p.pre_emphasis_alpha = cmd_ln_float32_r(config, "-alpha");
-    if (cmd_ln_boolean_r(config, "-dither")) {
-        p.dither = 1;
-        p.seed = cmd_ln_int32_r(config, "-seed");
-    }
-    else
-        p.dither = 0;
-
-#ifdef WORDS_BIGENDIAN
-    p.swap = strcmp("big", cmd_ln_str_r(config, "-input_endian")) == 0 ? 0 : 1;
-#else        
-    p.swap = strcmp("little", cmd_ln_str_r(config, "-input_endian")) == 0 ? 0 : 1;
-#endif
-
-    if (cmd_ln_boolean_r(config, "-logspec"))
-        p.logspec = RAW_LOG_SPEC;
-    if (cmd_ln_boolean_r(config, "-smoothspec"))
-        p.logspec = SMOOTH_LOG_SPEC;
-    p.doublebw = cmd_ln_boolean_r(config, "-doublebw");
-    p.unit_area = cmd_ln_boolean_r(config, "-unit_area");
-    p.round_filters = cmd_ln_boolean_r(config, "-round_filters");
-    p.remove_dc = cmd_ln_boolean_r(config, "-remove_dc");
-    p.verbose = cmd_ln_boolean_r(config, "-verbose");
-
-    if (0 == strcmp(cmd_ln_str_r(config, "-transform"), "dct"))
-        p.transform = DCT_II;
-    else if (0 == strcmp(cmd_ln_str_r(config, "-transform"), "legacy"))
-        p.transform = LEGACY_DCT;
-    else if (0 == strcmp(cmd_ln_str_r(config, "-transform"), "htk"))
-        p.transform = DCT_HTK;
-    else {
-        E_WARN("Invalid transform type (values are 'dct', 'legacy', 'htk')\n");
+    /* transfer params to front end */
+    if (fe_parse_general_params(config, fe) < 0) {
+        fe_free(fe);
         return NULL;
     }
 
-    p.warp_type = cmd_ln_str_r(config, "-warp_type");
-    p.warp_params = cmd_ln_str_r(config, "-warp_params");
+    /* compute remaining fe parameters */
+    /* We add 0.5 so approximate the float with the closest
+     * integer. E.g., 2.3 is truncate to 2, whereas 3.7 becomes 4
+     */
+    fe->frame_shift = (int32) (fe->sampling_rate / fe->frame_rate + 0.5);
+    fe->frame_size = (int32) (fe->window_length * fe->sampling_rate + 0.5);
+    fe->prior = 0;
+    fe->frame_counter = 0;
 
-    p.lifter_val = cmd_ln_int32_r(config, "-lifter");
+    if (fe->frame_size > (fe->fft_size)) {
+        E_WARN
+            ("Number of FFT points has to be a power of 2 higher than %d\n",
+             (fe->frame_size));
+        return (NULL);
+    }
 
-    fe = fe_init(&p);
-    fe->config = config;
+    if (fe->dither)
+        fe_init_dither(fe->seed);
+
+    /* establish buffers for overflow samps and hamming window */
+    fe->overflow_samps = ckd_calloc(fe->frame_size, sizeof(int16));
+    fe->hamming_window = ckd_calloc(fe->frame_size/2, sizeof(window_t));
+
+    /* create hamming window */
+    fe_create_hamming(fe->hamming_window, fe->frame_size);
+
+    /* init and fill appropriate filter structure */
+    fe->mel_fb = ckd_calloc(1, sizeof(*fe->mel_fb));
+
+    /* transfer params to mel fb */
+    fe_parse_melfb_params(config, fe, fe->mel_fb);
+    fe_build_melfilters(fe->mel_fb);
+    fe_compute_melcosine(fe->mel_fb);
+
+    /* Create temporary FFT, spectrum and mel-spectrum buffers. */
+    /* FIXME: Gosh there are a lot of these. */
+    fe->spch = ckd_calloc(fe->frame_size, sizeof(*fe->spch));
+    fe->frame = ckd_calloc(fe->fft_size, sizeof(*fe->frame));
+    fe->spec = ckd_calloc(fe->fft_size, sizeof(*fe->spec));
+    fe->mfspec = ckd_calloc(fe->mel_fb->num_filters, sizeof(*fe->mfspec));
+
+    /* create twiddle factors */
+    fe->ccc = ckd_calloc(fe->fft_size / 4, sizeof(*fe->ccc));
+    fe->sss = ckd_calloc(fe->fft_size / 4, sizeof(*fe->sss));
+    fe_create_twiddle(fe);
+
+    if (cmd_ln_boolean_r(config, "-verbose")) {
+        fe_print_current(fe);
+    }
+
+    /*** Z.A.B. ***/
+    /*** Initialize the overflow buffers ***/
+    fe_start_utt(fe);
     return fe;
+}
+
+arg_t const *
+fe_get_args(void)
+{
+    return fe_args;
 }
 
 cmd_ln_t *
@@ -160,73 +295,6 @@ fe_init_dither(int32 seed)
         s3_rand_seed(seed);
     }
 }
-
-fe_t *
-fe_init(param_t const *P)
-{
-    fe_t *fe = ckd_calloc(1, sizeof(*fe));
-
-    /* transfer params to front end */
-    fe_parse_general_params(P, fe);
-
-    /* compute remaining fe parameters */
-    /* We add 0.5 so approximate the float with the closest
-     * integer. E.g., 2.3 is truncate to 2, whereas 3.7 becomes 4
-     */
-    fe->frame_shift = (int32) (fe->sampling_rate / fe->frame_rate + 0.5);
-    fe->frame_size = (int32) (fe->window_length * fe->sampling_rate + 0.5);
-    fe->prior = 0;
-    fe->frame_counter = 0;
-
-    if (fe->frame_size > (fe->fft_size)) {
-        E_WARN
-            ("Number of FFT points has to be a power of 2 higher than %d\n",
-             (fe->frame_size));
-        return (NULL);
-    }
-
-    if (fe->dither) {
-        fe_init_dither(fe->seed);
-    }
-
-    /* establish buffers for overflow samps and hamming window */
-    fe->overflow_samps = ckd_calloc(fe->frame_size, sizeof(int16));
-    fe->hamming_window = ckd_calloc(fe->frame_size/2, sizeof(window_t));
-
-    /* create hamming window */
-    fe_create_hamming(fe->hamming_window, fe->frame_size);
-
-    /* init and fill appropriate filter structure */
-    fe->mel_fb = ckd_calloc(1, sizeof(*fe->mel_fb));
-
-    /* transfer params to mel fb */
-    fe_parse_melfb_params(P, fe->mel_fb);
-    fe_build_melfilters(fe->mel_fb);
-    fe_compute_melcosine(fe->mel_fb);
-
-    /* Create temporary FFT, spectrum and mel-spectrum buffers. */
-    /* FIXME: Gosh there are a lot of these. */
-    fe->spch = ckd_calloc(fe->frame_size, sizeof(*fe->spch));
-    fe->frame = ckd_calloc(fe->fft_size, sizeof(*fe->frame));
-    fe->spec = ckd_calloc(fe->fft_size, sizeof(*fe->spec));
-    fe->mfspec = ckd_calloc(fe->mel_fb->num_filters, sizeof(*fe->mfspec));
-
-    /* create twiddle factors */
-    fe->ccc = ckd_calloc(fe->fft_size / 4, sizeof(*fe->ccc));
-    fe->sss = ckd_calloc(fe->fft_size / 4, sizeof(*fe->sss));
-    fe_create_twiddle(fe);
-
-    if (P->verbose) {
-        fe_print_current(fe);
-    }
-
-    /*** Z.A.B. ***/
-    /*** Initialize the overflow buffers ***/
-    fe_start_utt(fe);
-
-    return (fe);
-}
-
 
 int32
 fe_start_utt(fe_t * fe)
@@ -449,9 +517,21 @@ fe_end_utt(fe_t * fe, mfcc_t * cepvector, int32 * nframes)
     return 0;
 }
 
-int32
-fe_close(fe_t * fe)
+fe_t *
+fe_retain(fe_t *fe)
 {
+    ++fe->refcount;
+    return fe;
+}
+
+int
+fe_free(fe_t * fe)
+{
+    if (fe == NULL)
+        return 0;
+    if (--fe->refcount > 0)
+        return fe->refcount;
+
     /* kill FE instance - free everything... */
     fe_free_2d((void *) fe->mel_fb->mel_cosine);
     if (fe->mel_fb->lifter)
@@ -460,17 +540,19 @@ fe_close(fe_t * fe)
     ckd_free(fe->mel_fb->filt_start);
     ckd_free(fe->mel_fb->filt_width);
     ckd_free(fe->mel_fb->filt_coeffs);
-    free(fe->mel_fb);
-    free(fe->spch);
-    free(fe->frame);
-    free(fe->ccc);
-    free(fe->sss);
-    free(fe->spec);
-    free(fe->mfspec);
-    free(fe->overflow_samps);
-    free(fe->hamming_window);
-    free(fe);
-    return (0);
+    ckd_free(fe->mel_fb);
+    ckd_free(fe->spch);
+    ckd_free(fe->frame);
+    ckd_free(fe->ccc);
+    ckd_free(fe->sss);
+    ckd_free(fe->spec);
+    ckd_free(fe->mfspec);
+    ckd_free(fe->overflow_samps);
+    ckd_free(fe->hamming_window);
+    printf("refcount: %d\n",cmd_ln_free_r(fe->config));
+    ckd_free(fe);
+
+    return 0;
 }
 
 /**
@@ -524,7 +606,7 @@ fe_logspec_to_mfcc(fe_t * fe, const mfcc_t * fr_spec, mfcc_t * fr_cep)
     for (i = 0; i < fe->mel_fb->num_filters; ++i)
         powspec[i] = (powspec_t) fr_spec[i];
     fe_spec2cep(fe, powspec, fr_cep);
-    free(powspec);
+    ckd_free(powspec);
 #endif                          /* ! FIXED_POINT */
     return 0;
 }
@@ -542,7 +624,7 @@ fe_logspec_dct2(fe_t * fe, const mfcc_t * fr_spec, mfcc_t * fr_cep)
     for (i = 0; i < fe->mel_fb->num_filters; ++i)
         powspec[i] = (powspec_t) fr_spec[i];
     fe_dct2(fe, powspec, fr_cep, 0);
-    free(powspec);
+    ckd_free(powspec);
 #endif                          /* ! FIXED_POINT */
     return 0;
 }
@@ -560,7 +642,7 @@ fe_mfcc_dct3(fe_t * fe, const mfcc_t * fr_cep, mfcc_t * fr_spec)
     fe_dct3(fe, fr_cep, powspec);
     for (i = 0; i < fe->mel_fb->num_filters; ++i)
         fr_spec[i] = (mfcc_t) powspec[i];
-    free(powspec);
+    ckd_free(powspec);
 #endif                          /* ! FIXED_POINT */
     return 0;
 }

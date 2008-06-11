@@ -37,8 +37,7 @@
 #ifndef FE_WARP_H
 #define FE_WARP_H
 
-#include "fe.h"
-
+#include "fe_internal.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,29 +64,21 @@ typedef struct {
     void (*print)(const char *label);
 } fe_warp_conf_t;
 
-int
-fe_warp_set(const char *id_name);
+int fe_warp_set(melfb_t *mel, const char *id_name);
 
-uint32
-fe_warp_id(void);
+uint32 fe_warp_id(melfb_t *mel);
 
-const char *
-fe_warp_doc(void);
+const char * fe_warp_doc(melfb_t *mel);
 
-void
-fe_warp_set_parameters(char const *param_str, float sampling_rate);
+void fe_warp_set_parameters(melfb_t *mel, char const *param_str, float sampling_rate);
 
-uint32
-fe_warp_n_param(void);
+uint32 fe_warp_n_param(melfb_t *mel);
 
-float
-fe_warp_warped_to_unwarped(float nonlinear);
+float fe_warp_warped_to_unwarped(melfb_t *mel, float nonlinear);
 
-float
-fe_warp_unwarped_to_warped(float linear);
+float fe_warp_unwarped_to_warped(melfb_t *mel, float linear);
 
-void
-fe_warp_print(const char *label);
+void fe_warp_print(melfb_t *mel, const char *label);
 
 #define FE_WARP_NO_SIZE	0xffffffff
 

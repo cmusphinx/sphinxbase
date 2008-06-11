@@ -56,8 +56,6 @@
 #include <assert.h>
 #include <stdlib.h>
 
-static uint32 fid = FE_WARP_ID_NONE;
-
 /* This is for aliases for each of the entries below. Currently not
    used.
 */
@@ -100,13 +98,13 @@ static fe_warp_conf_t fe_warp_conf[FE_WARP_ID_MAX + 1] = {
 };
 
 int
-fe_warp_set(const char *id_name)
+fe_warp_set(melfb_t *mel, const char *id_name)
 {
     uint32 i;
 
     for (i = 0; name2id[i]; i++) {
         if (strcmp(id_name, name2id[i]) == 0) {
-            fid = i;
+            mel->warp_id = i;
             break;
         }
     }
@@ -114,7 +112,7 @@ fe_warp_set(const char *id_name)
     if (name2id[i] == NULL) {
         for (i = 0; __name2id[i]; i++) {
             if (strcmp(id_name, __name2id[i]) == 0) {
-                fid = i;
+                mel->warp_id = i;
                 break;
             }
         }
@@ -124,7 +122,7 @@ fe_warp_set(const char *id_name)
             for (i = 0; name2id[i]; i++) {
                 fprintf(stderr, "\t%s\n", name2id[i]);
             }
-            fid = FE_WARP_ID_NONE;
+            mel->warp_id = FE_WARP_ID_NONE;
 
             return FE_START_ERROR;
         }
@@ -134,122 +132,122 @@ fe_warp_set(const char *id_name)
 }
 
 void
-fe_warp_set_parameters(char const *param_str, float sampling_rate)
+fe_warp_set_parameters(melfb_t *mel, char const *param_str, float sampling_rate)
 {
-    if (fid <= FE_WARP_ID_MAX) {
-        fe_warp_conf[fid].set_parameters(param_str, sampling_rate);
+    if (mel->warp_id <= FE_WARP_ID_MAX) {
+        fe_warp_conf[mel->warp_id].set_parameters(param_str, sampling_rate);
     }
-    else if (fid == FE_WARP_ID_NONE) {
+    else if (mel->warp_id == FE_WARP_ID_NONE) {
         E_FATAL("feat module must be configured w/ a valid ID\n");
     }
     else {
         E_FATAL
             ("fe_warp module misconfigured with invalid fe_warp_id %u\n",
-             fid);
+             mel->warp_id);
     }
 }
 
 const char *
-fe_warp_doc()
+fe_warp_doc(melfb_t *mel)
 {
-    if (fid <= FE_WARP_ID_MAX) {
-        return fe_warp_conf[fid].doc();
+    if (mel->warp_id <= FE_WARP_ID_MAX) {
+        return fe_warp_conf[mel->warp_id].doc();
     }
-    else if (fid == FE_WARP_ID_NONE) {
+    else if (mel->warp_id == FE_WARP_ID_NONE) {
         E_FATAL("fe_warp module must be configured w/ a valid ID\n");
     }
     else {
         E_FATAL
             ("fe_warp module misconfigured with invalid fe_warp_id %u\n",
-             fid);
+             mel->warp_id);
     }
 
     return NULL;
 }
 
 uint32
-fe_warp_id()
+fe_warp_id(melfb_t *mel)
 {
-    if (fid <= FE_WARP_ID_MAX) {
-        assert(fid == fe_warp_conf[fid].id());
-        return fid;
+    if (mel->warp_id <= FE_WARP_ID_MAX) {
+        assert(mel->warp_id == fe_warp_conf[mel->warp_id].id());
+        return mel->warp_id;
     }
-    else if (fid != FE_WARP_ID_NONE) {
+    else if (mel->warp_id != FE_WARP_ID_NONE) {
         E_FATAL
             ("fe_warp module misconfigured with invalid fe_warp_id %u\n",
-             fid);
+             mel->warp_id);
     }
 
     return FE_WARP_ID_NONE;
 }
 
 uint32
-fe_warp_n_param()
+fe_warp_n_param(melfb_t *mel)
 {
-    if (fid <= FE_WARP_ID_MAX) {
-        return fe_warp_conf[fid].n_param();
+    if (mel->warp_id <= FE_WARP_ID_MAX) {
+        return fe_warp_conf[mel->warp_id].n_param();
     }
-    else if (fid == FE_WARP_ID_NONE) {
+    else if (mel->warp_id == FE_WARP_ID_NONE) {
         E_FATAL("fe_warp module must be configured w/ a valid ID\n");
     }
     else {
         E_FATAL
             ("fe_warp module misconfigured with invalid fe_warp_id %u\n",
-             fid);
+             mel->warp_id);
     }
 
     return 0;
 }
 
 float
-fe_warp_warped_to_unwarped(float nonlinear)
+fe_warp_warped_to_unwarped(melfb_t *mel, float nonlinear)
 {
-    if (fid <= FE_WARP_ID_MAX) {
-        return fe_warp_conf[fid].warped_to_unwarped(nonlinear);
+    if (mel->warp_id <= FE_WARP_ID_MAX) {
+        return fe_warp_conf[mel->warp_id].warped_to_unwarped(nonlinear);
     }
-    else if (fid == FE_WARP_ID_NONE) {
+    else if (mel->warp_id == FE_WARP_ID_NONE) {
         E_FATAL("fe_warp module must be configured w/ a valid ID\n");
     }
     else {
         E_FATAL
             ("fe_warp module misconfigured with invalid fe_warp_id %u\n",
-             fid);
+             mel->warp_id);
     }
 
     return 0;
 }
 
 float
-fe_warp_unwarped_to_warped(float linear)
+fe_warp_unwarped_to_warped(melfb_t *mel,float linear)
 {
-    if (fid <= FE_WARP_ID_MAX) {
-        return fe_warp_conf[fid].unwarped_to_warped(linear);
+    if (mel->warp_id <= FE_WARP_ID_MAX) {
+        return fe_warp_conf[mel->warp_id].unwarped_to_warped(linear);
     }
-    else if (fid == FE_WARP_ID_NONE) {
+    else if (mel->warp_id == FE_WARP_ID_NONE) {
         E_FATAL("fe_warp module must be configured w/ a valid ID\n");
     }
     else {
         E_FATAL
             ("fe_warp module misconfigured with invalid fe_warp_id %u\n",
-             fid);
+             mel->warp_id);
     }
 
     return 0;
 }
 
 void
-fe_warp_print(const char *label)
+fe_warp_print(melfb_t *mel, const char *label)
 {
-    if (fid <= FE_WARP_ID_MAX) {
-        fe_warp_conf[fid].print(label);
+    if (mel->warp_id <= FE_WARP_ID_MAX) {
+        fe_warp_conf[mel->warp_id].print(label);
     }
-    else if (fid == FE_WARP_ID_NONE) {
+    else if (mel->warp_id == FE_WARP_ID_NONE) {
         E_FATAL("fe_warp module must be configured w/ a valid ID\n");
     }
     else {
         E_FATAL
             ("fe_warp module misconfigured with invalid fe_warp_id %u\n",
-             fid);
+             mel->warp_id);
     }
 }
 

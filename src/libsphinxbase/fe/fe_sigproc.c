@@ -284,18 +284,18 @@ fe_log(float32 x)
 #endif
 
 static float32
-fe_mel(float32 x)
+fe_mel(melfb_t *mel, float32 x)
 {
-    float32 warped = fe_warp_unwarped_to_warped(x);
+    float32 warped = fe_warp_unwarped_to_warped(mel, x);
 
     return (float32) (2595.0 * log10(1.0 + warped / 700.0));
 }
 
 static float32
-fe_melinv(float32 x)
+fe_melinv(melfb_t *mel, float32 x)
 {
     float32 warped = (float32) (700.0 * (pow(10.0, x / 2595.0) - 1.0));
-    return fe_warp_warped_to_unwarped(warped);
+    return fe_warp_warped_to_unwarped(mel, warped);
 }
 
 int32
@@ -311,22 +311,22 @@ fe_build_melfilters(melfb_t *mel_fb)
 
     /* First calculate the widths of each filter. */
     /* Minimum and maximum frequencies in mel scale. */
-    melmin = fe_mel(mel_fb->lower_filt_freq);
-    melmax = fe_mel(mel_fb->upper_filt_freq);
+    melmin = fe_mel(mel_fb, mel_fb->lower_filt_freq);
+    melmax = fe_mel(mel_fb, mel_fb->upper_filt_freq);
 
     /* Width of filters in mel scale */
     melbw = (melmax - melmin) / (mel_fb->num_filters + 1);
     if (mel_fb->doublewide) {
         melmin -= melbw;
         melmax += melbw;
-        if ((fe_melinv(melmin) < 0) ||
-            (fe_melinv(melmax) > mel_fb->sampling_rate / 2)) {
+        if ((fe_melinv(mel_fb, melmin) < 0) ||
+            (fe_melinv(mel_fb, melmax) > mel_fb->sampling_rate / 2)) {
             E_WARN
                 ("Out of Range: low  filter edge = %f (%f)\n",
-                 fe_melinv(melmin), 0.0);
+                 fe_melinv(mel_fb, melmin), 0.0);
             E_WARN
                 ("              high filter edge = %f (%f)\n",
-                 fe_melinv(melmax), mel_fb->sampling_rate / 2);
+                 fe_melinv(mel_fb, melmax), mel_fb->sampling_rate / 2);
             return FE_INVALID_PARAM_ERROR;
         }
     }
@@ -342,9 +342,9 @@ fe_build_melfilters(melfb_t *mel_fb)
         /* Left, center, right frequencies in Hertz */
         for (j = 0; j < 3; ++j) {
             if (mel_fb->doublewide)
-                freqs[j] = fe_melinv((i + j * 2) * melbw + melmin);
+                freqs[j] = fe_melinv(mel_fb, (i + j * 2) * melbw + melmin);
             else
-                freqs[j] = fe_melinv((i + j) * melbw + melmin);
+                freqs[j] = fe_melinv(mel_fb, (i + j) * melbw + melmin);
             /* Round them to DFT points if requested */
             if (mel_fb->round_filters)
                 freqs[j] = ((int)(freqs[j] / fftfreq + 0.5)) * fftfreq;
@@ -381,9 +381,9 @@ fe_build_melfilters(melfb_t *mel_fb)
         /* Left, center, right frequencies in Hertz */
         for (j = 0; j < 3; ++j) {
             if (mel_fb->doublewide)
-                freqs[j] = fe_melinv((i + j * 2) * melbw + melmin);
+                freqs[j] = fe_melinv(mel_fb, (i + j * 2) * melbw + melmin);
             else
-                freqs[j] = fe_melinv((i + j) * melbw + melmin);
+                freqs[j] = fe_melinv(mel_fb, (i + j) * melbw + melmin);
             /* Round them to DFT points if requested */
             if (mel_fb->round_filters)
                 freqs[j] = ((int)(freqs[j] / fftfreq + 0.5)) * fftfreq;
@@ -1113,189 +1113,4 @@ void
 fe_free_2d(void *arr)
 {
     ckd_free_2d((void **)arr);
-}
-
-void
-fe_parse_general_params(param_t const *p, fe_t * fe)
-{
-    int j;
-
-    if (p->sampling_rate != 0)
-        fe->sampling_rate = p->sampling_rate;
-    else
-        fe->sampling_rate = DEFAULT_SAMPLING_RATE;
-
-    if (p->frame_rate != 0)
-        fe->frame_rate = p->frame_rate;
-    else
-        fe->frame_rate = DEFAULT_FRAME_RATE;
-
-    if (p->window_length != 0)
-        fe->window_length = p->window_length;
-    else
-        fe->window_length = (float32) DEFAULT_WINDOW_LENGTH;
-
-    fe->dither = p->dither;
-    fe->seed = p->seed;
-    fe->swap = p->swap;
-
-    if (p->pre_emphasis_alpha != 0)
-        fe->pre_emphasis_alpha = p->pre_emphasis_alpha;
-    else
-        fe->pre_emphasis_alpha = (float32) DEFAULT_PRE_EMPHASIS_ALPHA;
-
-    if (p->num_cepstra != 0)
-        fe->num_cepstra = p->num_cepstra;
-    else
-        fe->num_cepstra = DEFAULT_NUM_CEPSTRA;
-
-    if (p->fft_size != 0)
-        fe->fft_size = p->fft_size;
-    else
-        fe->fft_size = DEFAULT_FFT_SIZE;
-
-    /* Check fft size, compute fft order (log_2(n)) */
-    for (j = fe->fft_size, fe->fft_order = 0; j > 1; j >>= 1, fe->fft_order++) {
-        if (((j % 2) != 0) || (fe->fft_size <= 0)) {
-            E_FATAL("fft: number of points must be a power of 2 (is %d)\n",
-                    fe->fft_size);
-        }
-    }
-
-    fe->log_spec = p->logspec;
-    fe->transform = p->transform;
-    fe->remove_dc = p->remove_dc;
-    if (!fe->log_spec)
-        fe->feature_dimension = fe->num_cepstra;
-    else {
-        if (p->num_filters != 0)
-            fe->feature_dimension = p->num_filters;
-        else {
-            if (fe->sampling_rate == BB_SAMPLING_RATE)
-                fe->feature_dimension = DEFAULT_BB_NUM_FILTERS;
-            else if (fe->sampling_rate == NB_SAMPLING_RATE)
-                fe->feature_dimension = DEFAULT_NB_NUM_FILTERS;
-            else {
-                E_FATAL("Please define the number of MEL filters needed\n");
-            }
-        }
-    }
-}
-
-void
-fe_parse_melfb_params(param_t const *p, melfb_t * mel)
-{
-    if (p->sampling_rate != 0)
-        mel->sampling_rate = p->sampling_rate;
-    else
-        mel->sampling_rate = DEFAULT_SAMPLING_RATE;
-
-    if (p->fft_size != 0)
-        mel->fft_size = p->fft_size;
-    else {
-        if (mel->sampling_rate == BB_SAMPLING_RATE)
-            mel->fft_size = DEFAULT_BB_FFT_SIZE;
-        if (mel->sampling_rate == NB_SAMPLING_RATE)
-            mel->fft_size = DEFAULT_NB_FFT_SIZE;
-        else
-            mel->fft_size = DEFAULT_FFT_SIZE;
-    }
-
-    if (p->num_cepstra != 0)
-        mel->num_cepstra = p->num_cepstra;
-    else
-        mel->num_cepstra = DEFAULT_NUM_CEPSTRA;
-
-    if (p->num_filters != 0)
-        mel->num_filters = p->num_filters;
-    else {
-        if (mel->sampling_rate == BB_SAMPLING_RATE)
-            mel->num_filters = DEFAULT_BB_NUM_FILTERS;
-        else if (mel->sampling_rate == NB_SAMPLING_RATE)
-            mel->num_filters = DEFAULT_NB_NUM_FILTERS;
-        else {
-            E_WARN("Please define the number of MEL filters needed\n");
-            E_FATAL("Modify include/fe.h and fe_sigproc.c\n");
-        }
-    }
-
-    if (p->upper_filt_freq != 0)
-        mel->upper_filt_freq = p->upper_filt_freq;
-    else {
-        if (mel->sampling_rate == BB_SAMPLING_RATE)
-            mel->upper_filt_freq = (float32) DEFAULT_BB_UPPER_FILT_FREQ;
-        else if (mel->sampling_rate == NB_SAMPLING_RATE)
-            mel->upper_filt_freq = (float32) DEFAULT_NB_UPPER_FILT_FREQ;
-        else {
-            E_WARN("Please define the upper filt frequency needed\n");
-            E_FATAL("Modify include/fe.h and fe_sigproc.c\n");
-        }
-    }
-
-    if (p->lower_filt_freq != 0)
-        mel->lower_filt_freq = p->lower_filt_freq;
-    else {
-        if (mel->sampling_rate == BB_SAMPLING_RATE)
-            mel->lower_filt_freq = (float32) DEFAULT_BB_LOWER_FILT_FREQ;
-        else if (mel->sampling_rate == NB_SAMPLING_RATE)
-            mel->lower_filt_freq = (float32) DEFAULT_NB_LOWER_FILT_FREQ;
-        else {
-            E_WARN("Please define the lower filt frequency needed\n");
-            E_FATAL("Modify include/fe.h and fe_sigproc.c\n");
-        }
-    }
-
-    mel->doublewide = p->doublebw;
-
-    if (p->warp_type == NULL) {
-        mel->warp_type = DEFAULT_WARP_TYPE;
-    }
-    else {
-        mel->warp_type = p->warp_type;
-    }
-    mel->warp_params = p->warp_params;
-    mel->lifter_val = p->lifter_val;
-    mel->unit_area = p->unit_area;
-    mel->round_filters = p->round_filters;
-
-    if (fe_warp_set(mel->warp_type) != FE_SUCCESS) {
-        E_FATAL("Failed to initialize the warping function.\n");
-    }
-    fe_warp_set_parameters(mel->warp_params, mel->sampling_rate);
-}
-
-void
-fe_print_current(fe_t const *fe)
-{
-    E_INFO("Current FE Parameters:\n");
-    E_INFO("\tSampling Rate:             %f\n", fe->sampling_rate);
-    E_INFO("\tFrame Size:                %d\n", fe->frame_size);
-    E_INFO("\tFrame Shift:               %d\n", fe->frame_shift);
-    E_INFO("\tFFT Size:                  %d\n", fe->fft_size);
-    E_INFO("\tLower Frequency:           %g\n",
-           fe->mel_fb->lower_filt_freq);
-    E_INFO("\tUpper Frequency:           %g\n",
-           fe->mel_fb->upper_filt_freq);
-    E_INFO("\tNumber of filters:         %d\n", fe->mel_fb->num_filters);
-    E_INFO("\tNumber of Overflow Samps:  %d\n", fe->num_overflow_samps);
-    E_INFO("\tStart Utt Status:          %d\n", fe->start_flag);
-    E_INFO("Will %sremove DC offset at frame level\n",
-           fe->remove_dc ? "" : "not ");
-    if (fe->dither) {
-        E_INFO("Will add dither to audio\n");
-        E_INFO("Dither seeded with %d\n", fe->seed);
-    }
-    else {
-        E_INFO("Will not add dither to audio\n");
-    }
-    if (fe->mel_fb->lifter_val) {
-        E_INFO("Will apply sine-curve liftering, period %d\n",
-               fe->mel_fb->lifter_val);
-    }
-    E_INFO("Will %snormalize filters to unit area\n",
-           fe->mel_fb->unit_area ? "" : "not ");
-    E_INFO("Will %sround filter frequencies to DFT points\n",
-           fe->mel_fb->round_filters ? "" : "not ");
-    E_INFO("Will %suse double bandwidth in mel filter\n",
-           fe->mel_fb->doublewide ? "" : "not ");
 }

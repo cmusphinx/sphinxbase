@@ -1,3 +1,4 @@
+/* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* ====================================================================
  * Copyright (c) 1996-2004 Carnegie Mellon University.  All rights
  * reserved.
@@ -33,6 +34,9 @@
  * ====================================================================
  *
  */
+
+#ifndef __FE_INTERNAL_H__
+#define __FE_INTERNAL_H__
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -84,34 +88,6 @@ enum {
         DCT_HTK = 2
 };
 
-/** Structure holding front-end parameters. */
-/* This will go away soon-ish. */
-typedef struct param_s param_t;
-struct param_s {
-    float32 sampling_rate;
-    int32 frame_rate;
-    float32 window_length;
-    int32 num_cepstra;
-    int32 num_filters;
-    int32 fft_size;
-    float32 lower_filt_freq;
-    float32 upper_filt_freq;
-    float32 pre_emphasis_alpha;
-    int32 swap;
-    int32 dither;
-    int32 seed;
-    int32 logspec;
-    int32 doublebw;
-    int32 verbose;
-    char const *warp_type;
-    char const *warp_params;
-    int32 transform;
-    int32 lifter_val;
-    int32 unit_area;
-    int32 round_filters;
-    int32 remove_dc;
-};
-
 /** Base Struct to hold all structure for MFCC computation. */
 typedef struct melfb_s melfb_t;
 struct melfb_s {
@@ -132,6 +108,7 @@ struct melfb_s {
     int32 doublewide;
     char const *warp_type;
     char const *warp_params;
+    uint32 warp_id;
     /* Precomputed normalization constants for unitary DCT-II/DCT-III */
     mfcc_t sqrt_inv_n, sqrt_inv_2n;
     /* Value and coefficients for HTK-style liftering */
@@ -150,6 +127,7 @@ struct melfb_s {
 /** Structure for the front-end computation. */
 struct fe_s {
     cmd_ln_t *config;
+    int refcount;
 
     float32 sampling_rate;
     int16 frame_rate;
@@ -206,9 +184,7 @@ struct fe_s {
 #define DEFAULT_NB_LOWER_FILT_FREQ 200
 #define DEFAULT_NB_UPPER_FILT_FREQ 3500
 
-/* Internal initialization functions that we don't show the world anymore. */
-void fe_init_params(param_t * P);
-fe_t *fe_init(param_t const *P);
+void fe_init_dither(int32 seed);
 
 /* Apply 1/2 bit noise to a buffer of audio. */
 int32 fe_dither(int16 *buffer, int32 nsamps);
@@ -232,11 +208,9 @@ void fe_create_twiddle(fe_t *fe);
 void fe_spec2cep(fe_t * fe, const powspec_t * mflogspec, mfcc_t * mfcep);
 void fe_dct2(fe_t *fe, const powspec_t *mflogspec, mfcc_t *mfcep, int htk);
 void fe_dct3(fe_t *fe, const mfcc_t *mfcep, powspec_t *mflogspec);
-void fe_parse_general_params(param_t const *P, fe_t *fe);
-void fe_parse_melfb_params(param_t const *P, melfb_t *MEL);
-void fe_print_current(fe_t const *fe);
 
 #ifdef __cplusplus
 }
 #endif
 
+#endif /* __FE_INTERNAL_H__ */
