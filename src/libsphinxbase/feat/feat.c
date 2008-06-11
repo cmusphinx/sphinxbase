@@ -788,7 +788,7 @@ feat_init(char const *type, cmn_type_t cmn, int32 varnorm,
              type, cepsize, cmn_type_str[cmn], varnorm ? "yes" : "no", agc_type_str[agc]);
 
     fcb = (feat_t *) ckd_calloc(1, sizeof(feat_t));
-
+    fcb->refcount = 1;
     fcb->name = (char *) ckd_salloc(type);
     if (strcmp(type, "s2_4x") == 0) {
         /* Sphinx-II format 4-stream feature (Hack!! hardwired constants below) */
@@ -1252,31 +1252,40 @@ feat_s2mfc2feat_live(feat_t * fcb, mfcc_t ** uttcep, int32 *inout_ncep,
     return nfeatvec;
 }
 
-void
+feat_t *
+feat_retain(feat_t *f)
+{
+    ++f->refcount;
+    return f;
+}
+
+int
 feat_free(feat_t * f)
 {
-    if (f) {
-        if (f->cepbuf)
-            ckd_free_2d((void **) f->cepbuf);
-        ckd_free(f->tmpcepbuf);
+    if (f == NULL)
+        return 0;
+    if (--f->refcount > 0)
+        return f->refcount;
 
-        if (f->name) {
-            ckd_free((void *) f->name);
-        }
+    if (f->cepbuf)
+        ckd_free_2d((void **) f->cepbuf);
+    ckd_free(f->tmpcepbuf);
 
-        if (f->lda)
-            ckd_free_3d((void ***) f->lda);
-
-        ckd_free(f->stream_len);
-        ckd_free(f->sv_len);
-        subvecs_free(f->subvecs);
-
-        cmn_free(f->cmn_struct);
-        agc_free(f->agc_struct);
-
-        ckd_free((void *) f);
+    if (f->name) {
+        ckd_free((void *) f->name);
     }
+    if (f->lda)
+        ckd_free_3d((void ***) f->lda);
 
+    ckd_free(f->stream_len);
+    ckd_free(f->sv_len);
+    subvecs_free(f->subvecs);
+
+    cmn_free(f->cmn_struct);
+    agc_free(f->agc_struct);
+
+    ckd_free(f);
+    return 0;
 }
 
 

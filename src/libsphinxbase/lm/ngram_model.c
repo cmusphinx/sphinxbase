@@ -158,6 +158,7 @@ ngram_model_init(ngram_model_t *base,
                  logmath_t *lmath,
                  int32 n, int32 n_unigram)
 {
+    base->refcount = 1;
     base->funcs = funcs;
     base->n = n;
     /* If this was previously initialized... */
@@ -199,13 +200,22 @@ ngram_model_init(ngram_model_t *base,
     return 0;
 }
 
-void
+ngram_model_t *
+ngram_model_retain(ngram_model_t *model)
+{
+    ++model->refcount;
+    return model;
+}
+
+int
 ngram_model_free(ngram_model_t *model)
 {
     int i;
 
     if (model == NULL)
-        return;
+        return 0;
+    if (--model->refcount > 0)
+        return model->refcount;
     if (model->funcs && model->funcs->free)
         (*model->funcs->free)(model);
     if (model->writable) {
@@ -239,6 +249,7 @@ ngram_model_free(ngram_model_t *model)
     ckd_free(model->word_str);
     ckd_free(model->n_counts);
     ckd_free(model);
+    return 0;
 }
 
 

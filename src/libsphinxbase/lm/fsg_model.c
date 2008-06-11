@@ -367,6 +367,7 @@ fsg_model_init(char const *name, logmath_t *lmath, float32 lw, int32 n_state)
 
     /* Allocate basic stuff. */
     fsg = ckd_calloc(1, sizeof(*fsg));
+    fsg->refcount = 1;
     fsg->link_alloc = listelem_alloc_init(sizeof(fsg_link_t));
     fsg->lmath = lmath;
     fsg->name = name ? ckd_salloc(name) : NULL;
@@ -580,14 +581,23 @@ fsg_model_readfile(const char *file, logmath_t *lmath, float32 lw)
     return fsg;
 }
 
+fsg_model_t *
+fsg_model_retain(fsg_model_t *fsg)
+{
+    ++fsg->refcount;
+    return fsg;
+}
 
-void
+int
 fsg_model_free(fsg_model_t * fsg)
 {
     int i, j;
 
     if (fsg == NULL)
-        return;
+        return 0;
+
+    if (--fsg->refcount > 0)
+        return fsg->refcount;
 
     for (i = 0; i < fsg->n_word; ++i)
         ckd_free(fsg->vocab[i]);
@@ -602,6 +612,7 @@ fsg_model_free(fsg_model_t * fsg)
     ckd_free_2d(fsg->null_trans);
     ckd_free(fsg->name);
     ckd_free(fsg);
+    return 0;
 }
 
 

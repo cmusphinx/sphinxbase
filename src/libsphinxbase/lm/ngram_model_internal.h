@@ -53,6 +53,7 @@
  * vary somewhat depending on the file format in use.
  */
 struct ngram_model_s {
+    int refcount;       /**< Reference count */
     int32 *n_counts;    /**< Counts for 1, 2, 3, ... grams */
     int32 n_1g_alloc;   /**< Number of allocated word strings (for new word addition) */
     int32 n_words;      /**< Number of actual word strings (NOT the same as the

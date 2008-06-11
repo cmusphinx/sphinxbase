@@ -197,10 +197,20 @@ SPHINXBASE_EXPORT
 cmd_ln_t *cmd_ln_init(cmd_ln_t *inout_cmdln, arg_t const *defn, int32 strict, ...);
 
 /**
- * Free a command-line argument and all associated strings.
+ * Retain ownership of a command-line argument set.
+ *
+ * @return pointer to retained command-line argument set.
  */
 SPHINXBASE_EXPORT
-void cmd_ln_free_r (cmd_ln_t *cmdln);
+cmd_ln_t *cmd_ln_retain(cmd_ln_t *cmdln);
+
+/**
+ * Release a command-line argument set and all associated strings.
+ *
+ * @return new reference count (0 if freed completely)
+ */
+SPHINXBASE_EXPORT
+int cmd_ln_free_r(cmd_ln_t *cmdln);
 
 /**
  * Parse a list of strings into argumetns.

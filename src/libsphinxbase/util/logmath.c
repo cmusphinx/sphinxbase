@@ -48,6 +48,7 @@
 
 struct logmath_s {
     logadd_t t;
+    int refcount;
     mmio_file_t *filemap;
     float64 base;
     float64 log_of_base;
@@ -73,6 +74,7 @@ logmath_init(float64 base, int shift, int use_table)
     
     /* Set up various necessary constants. */
     lmath = ckd_calloc(1, sizeof(*lmath));
+    lmath->refcount = 1;
     lmath->base = base;
     lmath->log_of_base = log(base);
     lmath->log10_of_base = log10(base);
@@ -327,16 +329,26 @@ error_out:
     return -1;
 }
 
-void
+logmath_t *
+logmath_retain(logmath_t *lmath)
+{
+    ++lmath->refcount;
+    return lmath;
+}
+
+int
 logmath_free(logmath_t *lmath)
 {
     if (lmath == NULL)
-        return;
+        return 0;
+    if (--lmath->refcount > 0)
+        return lmath->refcount;
     if (lmath->filemap)
         mmio_file_unmap(lmath->filemap);
     else
         ckd_free(lmath->t.table);
     ckd_free(lmath);
+    return 0;
 }
 
 int32

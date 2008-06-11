@@ -87,6 +87,7 @@ typedef struct cmd_ln_val_s {
 } cmd_ln_val_t;
 
 struct cmd_ln_s {
+    int refcount;
     hash_table_t *ht;
     char **f_argv;
     uint32 f_argc;
@@ -466,8 +467,10 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
 #endif
 
     /* Construct command-line object */
-    if (inout_cmdln == NULL)
+    if (inout_cmdln == NULL) {
         cmdln = ckd_calloc(1, sizeof(*cmdln));
+        cmdln->refcount = 1;
+    }
     else
         cmdln = inout_cmdln;
 
@@ -910,12 +913,20 @@ cmd_ln_set_float_r(cmd_ln_t *cmdln, char const *name, double fv)
     val->fl = fv;
 }
 
-/* RAH, 4.17.01, free memory allocated above  */
-void
+cmd_ln_t *
+cmd_ln_retain(cmd_ln_t *cmdln)
+{
+    ++cmdln->refcount;
+    return cmdln;
+}
+
+int
 cmd_ln_free_r(cmd_ln_t *cmdln)
 {
     if (cmdln == NULL)
-        return;
+        return 0;
+    if (--cmdln->refcount > 0)
+        return cmdln->refcount;
 
     if (cmdln->ht) {
         glist_t entries;
@@ -942,6 +953,7 @@ cmd_ln_free_r(cmd_ln_t *cmdln)
         cmdln->f_argc = 0;
     }
     ckd_free(cmdln);
+    return 0;
 }
 
 void

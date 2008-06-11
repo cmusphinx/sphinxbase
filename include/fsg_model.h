@@ -85,6 +85,7 @@ typedef struct fsg_link_s {
  * word.
  */
 typedef struct fsg_model_s {
+    int refcount;       /**< Reference count. */
     char *name;		/**< A unique string identifier for this FSG */
     int32 n_word;       /**< Number of unique words in this FSG */
     int32 n_word_alloc; /**< Number of words allocated in vocab */
@@ -190,10 +191,20 @@ SPHINXBASE_EXPORT
 fsg_model_t *fsg_model_read(FILE *fp, logmath_t *lmath, float32 lw);
 
 /**
- * Free the given word FSG.
+ * Retain ownership of an FSG.
+ *
+ * @return Pointer to retained FSG.
  */
 SPHINXBASE_EXPORT
-void fsg_model_free(fsg_model_t *);
+fsg_model_t *fsg_model_retain(fsg_model_t *fsg);
+
+/**
+ * Free the given word FSG.
+ *
+ * @return new reference count (0 if freed completely)
+ */
+SPHINXBASE_EXPORT
+int fsg_model_free(fsg_model_t *fsg);
 
 /**
  * Add a word to the FSG vocabulary.

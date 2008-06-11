@@ -166,10 +166,20 @@ SPHINXBASE_EXPORT
 int logmath_get_shift(logmath_t *lmath);
 
 /**
- * Free a log table.
+ * Retain ownership of a log table.
+ *
+ * @return pointer to retained log table.
  */
 SPHINXBASE_EXPORT
-void logmath_free(logmath_t *lmath);
+logmath_t *logmath_retain(logmath_t *lmath);
+
+/**
+ * Free a log table.
+ *
+ * @return new reference count (0 if freed completely)
+ */
+SPHINXBASE_EXPORT
+int logmath_free(logmath_t *lmath);
 
 /**
  * Add two values in log space exactly and slowly (without using add table).

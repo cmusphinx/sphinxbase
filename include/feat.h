@@ -153,6 +153,7 @@ extern "C" {
  * MFC cepstra) into this type of feature vectors.
  */
 typedef struct feat_s {
+    int refcount;       /**< Reference count. */
     char *name;		/**< Printable name for this feature type */
     int32 cepsize;	/**< Size of input speech vector (typically, a cepstrum vector) */
     int32 n_stream;	/**< Number of feature streams; e.g., 4 in Sphinx-II */
@@ -473,16 +474,21 @@ int32 feat_s2mfc2feat_live(feat_t  *fcb,     /**< In: Descriptor from feat_init(
     );
 
 
-
-/*
- * RAH, remove memory allocated by feat_init
+/**
+ * Retain ownership of feat_t.
+ *
+ * @return pointer to retained feat_t.
  */
+SPHINXBASE_EXPORT
+feat_t *feat_retain(feat_t *f);
 
 /**
-   deallocate feat_t
-*/
+ * Release resource associated with feat_t
+ *
+ * @return new reference count (0 if freed)
+ */
 SPHINXBASE_EXPORT
-void feat_free(feat_t *f /**< In: feat_t */
+int feat_free(feat_t *f /**< In: feat_t */
     );
 
 /**

@@ -94,7 +94,11 @@ typedef enum ngram_file_type_e {
  *
  * @param file_name path to the file to read.
  * @param file_type type of the file, or NGRAM_AUTO to determine automatically.
- * @param lmath Log-math parameters to use for probability calculations.
+ * @param lmath Log-math parameters to use for probability
+ *              calculations.  Ownership of this object is assumed by
+ *              the newly created ngram_model_t, and you should not
+ *              attempt to free it manually.  If you wish to reuse it
+ *              elsewhere, you must retain it with logmath_retain().
  * @return newly created ngram_model_t.
  */
 SPHINXBASE_EXPORT
@@ -115,10 +119,20 @@ int ngram_model_write(ngram_model_t *model, const char *file_name,
 		      ngram_file_type_t format);
 
 /**
- * Release memory associated with an N-Gram model.
+ * Retain ownership of an N-Gram model.
+ *
+ * @return Pointer to retained model.
  */
 SPHINXBASE_EXPORT
-void ngram_model_free(ngram_model_t *model);
+ngram_model_t *ngram_model_retain(ngram_model_t *model);
+
+/**
+ * Release memory associated with an N-Gram model.
+ *
+ * @return new reference count (0 if freed completely)
+ */
+SPHINXBASE_EXPORT
+int ngram_model_free(ngram_model_t *model);
 
 /**
  * Re-encode word strings in an N-Gram model.
@@ -411,6 +425,15 @@ ngram_model_t *ngram_model_set_init(cmd_ln_t *config,
  * in and referred to by the trigram LMs.
  * 
  * No "comments" allowed in this file.
+ *
+ * @param config Configuration parameters.
+ * @param lmctlfile Path to the language model control file.
+ * @param lmath Log-math parameters to use for probability
+ *              calculations.  Ownership of this object is assumed by
+ *              the newly created ngram_model_t, and you should not
+ *              attempt to free it manually.  If you wish to reuse it
+ *              elsewhere, you must retain it with logmath_retain().
+ * @return newly created language model set.
  */
 SPHINXBASE_EXPORT
 ngram_model_t *ngram_model_set_read(cmd_ln_t *config,
