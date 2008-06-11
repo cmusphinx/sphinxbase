@@ -1423,17 +1423,17 @@ yyreduce:
 
   case 13:
 #line 97 "jsgf_parser.y"
-    { jsgf_import_rule(jsgf, (yyvsp[(2) - (3)].name)); }
+    { jsgf_import_rule(jsgf, (yyvsp[(2) - (3)].name)); ckd_free((yyvsp[(2) - (3)].name)); }
     break;
 
   case 16:
 #line 104 "jsgf_parser.y"
-    { jsgf_define_rule(jsgf, (yyvsp[(1) - (4)].name), (yyvsp[(3) - (4)].rhs), 0); }
+    { jsgf_define_rule(jsgf, (yyvsp[(1) - (4)].name), (yyvsp[(3) - (4)].rhs), 0); ckd_free((yyvsp[(1) - (4)].name)); }
     break;
 
   case 17:
 #line 105 "jsgf_parser.y"
-    { jsgf_define_rule(jsgf, (yyvsp[(2) - (5)].name), (yyvsp[(4) - (5)].rhs), 1); }
+    { jsgf_define_rule(jsgf, (yyvsp[(2) - (5)].name), (yyvsp[(4) - (5)].rhs), 1); ckd_free((yyvsp[(2) - (5)].name)); }
     break;
 
   case 18:
@@ -1483,12 +1483,12 @@ yyreduce:
 
   case 28:
 #line 135 "jsgf_parser.y"
-    { (yyval.atom) = jsgf_atom_new((yyvsp[(1) - (1)].name), 1.0); }
+    { (yyval.atom) = jsgf_atom_new((yyvsp[(1) - (1)].name), 1.0); ckd_free((yyvsp[(1) - (1)].name)); }
     break;
 
   case 29:
 #line 136 "jsgf_parser.y"
-    { (yyval.atom) = jsgf_atom_new((yyvsp[(1) - (1)].name), 1.0); }
+    { (yyval.atom) = jsgf_atom_new((yyvsp[(1) - (1)].name), 1.0); ckd_free((yyvsp[(1) - (1)].name)); }
     break;
 
   case 30:

@@ -62,9 +62,18 @@ jsgf_atom_new(char *name, float weight)
     jsgf_atom_t *atom;
 
     atom = ckd_calloc(1, sizeof(*atom));
-    atom->name = name;
+    atom->name = ckd_salloc(name);
     atom->weight = weight;
     return atom;
+}
+
+void
+jsgf_atom_free(jsgf_atom_t *atom)
+{
+    if (atom == NULL)
+        return;
+    ckd_free(atom->name);
+    ckd_free(atom);
 }
 
 jsgf_t *
@@ -112,13 +121,48 @@ jsgf_grammar_new(jsgf_t *parent)
 void
 jsgf_grammar_free(jsgf_t *jsgf)
 {
-    glist_t rules;
-    int32 nrules;
+    /* FIXME: Probably should just use refcounting instead. */
+    if (jsgf->parent == NULL) {
+        hash_iter_t *itor;
+        gnode_t *gn;
 
-    rules = hash_table_tolist(jsgf->rules, &nrules);
-    /* FIXME: free search path, rules, symbols and stuff */
-    hash_table_free(jsgf->rules);
+        for (itor = hash_table_iter(jsgf->rules); itor;
+             itor = hash_table_iter_next(itor)) {
+            ckd_free((char *)itor->ent->key);
+            jsgf_rule_free((jsgf_rule_t *)itor->ent->val);
+        }
+        hash_table_free(jsgf->rules);
+        for (itor = hash_table_iter(jsgf->imports); itor;
+             itor = hash_table_iter_next(itor))
+            ckd_free((char *)itor->ent->key);
+        hash_table_free(jsgf->imports);
+        for (gn = jsgf->searchpath; gn; gn = gnode_next(gn))
+            ckd_free(gnode_ptr(gn));
+        glist_free(jsgf->searchpath);
+        for (gn = jsgf->links; gn; gn = gnode_next(gn))
+            ckd_free(gnode_ptr(gn));
+        glist_free(jsgf->links);
+    }
+    ckd_free(jsgf->name);
+    ckd_free(jsgf->version);
+    ckd_free(jsgf->charset);
+    ckd_free(jsgf->locale);
     ckd_free(jsgf);
+}
+
+static void
+jsgf_rhs_free(jsgf_rhs_t *rhs)
+{
+    gnode_t *gn;
+
+    if (rhs == NULL)
+        return;
+
+    jsgf_rhs_free(rhs->alt);
+    for (gn = rhs->atoms; gn; gn = gnode_next(gn))
+        jsgf_atom_free(gnode_ptr(gn));
+    glist_free(rhs->atoms);
+    ckd_free(rhs);
 }
 
 jsgf_atom_t *
@@ -132,7 +176,7 @@ jsgf_kleene_new(jsgf_t *jsgf, jsgf_atom_t *atom, int plus)
     /* Or if plus is true, (<name> | <name> <g0006>) */
     rhs = ckd_calloc(1, sizeof(*rhs));
     if (plus)
-        rhs->atoms = glist_add_ptr(NULL, jsgf_atom_new(ckd_salloc(atom->name), 1.0));
+        rhs->atoms = glist_add_ptr(NULL, jsgf_atom_new(atom->name, 1.0));
     else
         rhs->atoms = glist_add_ptr(NULL, jsgf_atom_new("<NULL>", 1.0));
     rule = jsgf_define_rule(jsgf, NULL, rhs, 0);
@@ -335,7 +379,7 @@ fsg_model_t *
 jsgf_build_fsg(jsgf_t *grammar, jsgf_rule_t *rule, logmath_t *lmath, float32 lw)
 {
     fsg_model_t *fsg;
-
+    glist_t nulls;
     gnode_t *gn;
 
     /* Clear previous links */
@@ -370,7 +414,8 @@ jsgf_build_fsg(jsgf_t *grammar, jsgf_rule_t *rule, logmath_t *lmath, float32 lw)
             fsg_model_null_trans_add(fsg, link->from, link->to, 0);
         }            
     }
-    fsg_model_null_trans_closure(fsg, NULL);
+    nulls = fsg_model_null_trans_closure(fsg, NULL);
+    glist_free(nulls);
 
     return fsg;
 }
@@ -437,13 +482,11 @@ jsgf_define_rule(jsgf_t *jsgf, char *name, jsgf_rhs_t *rhs, int public)
         char *newname;
 
         newname = jsgf_fullname(jsgf, name);
-        /* We are supposed to retain ownership of name, so free the original one */
-        ckd_free(name);
         name = newname;
     }
 
     rule = ckd_calloc(1, sizeof(*rule));
-    rule->name = name;
+    rule->name = ckd_salloc(name);
     rule->rhs = rhs;
     rule->public = public;
 
@@ -456,6 +499,15 @@ jsgf_define_rule(jsgf_t *jsgf, char *name, jsgf_rhs_t *rhs, int public)
     }
     return rule;
 }
+
+void
+jsgf_rule_free(jsgf_rule_t *rule)
+{
+    jsgf_rhs_free(rule->rhs);
+    ckd_free(rule->name);
+    ckd_free(rule);
+}
+
 
 /* FIXME: This should go in libsphinxutil */
 static char *

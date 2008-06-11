@@ -94,15 +94,15 @@ import_header: import_statement
 	| import_header import_statement
 	;
 
-import_statement: IMPORT RULENAME ';' { jsgf_import_rule(jsgf, $2); }
+import_statement: IMPORT RULENAME ';' { jsgf_import_rule(jsgf, $2); ckd_free($2); }
 	;
 
 rule_list: rule
 	| rule_list rule
 	;
 
-rule: RULENAME '=' alternate_list ';' { jsgf_define_rule(jsgf, $1, $3, 0); }
-	| PUBLIC RULENAME '=' alternate_list ';'  { jsgf_define_rule(jsgf, $2, $4, 1); }
+rule: RULENAME '=' alternate_list ';' { jsgf_define_rule(jsgf, $1, $3, 0); ckd_free($1); }
+| PUBLIC RULENAME '=' alternate_list ';'  { jsgf_define_rule(jsgf, $2, $4, 1); ckd_free($2); }
 	;
 
 alternate_list: rule_expansion { $$ = $1; $$->atoms = glist_reverse($$->atoms); }
@@ -132,8 +132,8 @@ rule_group: '(' alternate_list ')' { $$ = jsgf_define_rule(jsgf, NULL, $2, 0); }
 rule_optional: '[' alternate_list ']' { $$ = jsgf_optional_new(jsgf, $2); }
 	;
 
-rule_atom: TOKEN { $$ = jsgf_atom_new($1, 1.0); }
-	| RULENAME { $$ = jsgf_atom_new($1, 1.0); }
+rule_atom: TOKEN { $$ = jsgf_atom_new($1, 1.0); ckd_free($1); }
+	| RULENAME { $$ = jsgf_atom_new($1, 1.0); ckd_free($1); }
 	| rule_group { $$ = jsgf_atom_new($1->name, 1.0); }
 	| rule_optional { $$ = jsgf_atom_new($1->name, 1.0); }
 	| rule_atom '*' { $$ = jsgf_kleene_new(jsgf, $1, 0); }

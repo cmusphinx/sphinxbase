@@ -115,6 +115,9 @@ jsgf_rule_t *jsgf_optional_new(jsgf_t *jsgf, jsgf_rhs_t *exp);
 jsgf_rule_t *jsgf_define_rule(jsgf_t *jsgf, char *name, jsgf_rhs_t *rhs, int public);
 jsgf_rule_t *jsgf_import_rule(jsgf_t *jsgf, char *name);
 
+void jsgf_atom_free(jsgf_atom_t *atom);
+void jsgf_rule_free(jsgf_rule_t *rule);
+
 #ifdef __cplusplus
 }
 #endif
