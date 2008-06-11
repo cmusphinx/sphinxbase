@@ -48,7 +48,6 @@ headers =						\
 	$(top_srcdir)/include/pio.h			\
 	$(top_srcdir)/include/prim_type.h		\
 	$(top_srcdir)/include/profile.h			\
-	$(top_srcdir)/include/s3_arraylist.h		\
 	$(top_srcdir)/include/sphinxbase_export.h	\
 	$(top_srcdir)/include/strfuncs.h		\
 	$(top_srcdir)/include/unlimit.h			\

@@ -43,7 +43,6 @@ pkginclude_HEADERS =				\
 	sphinx_config.h				\
 	sphinxbase_export.h			\
 	strfuncs.h				\
-	s3_arraylist.h				\
 	unlimit.h
 
 EXTRA_DIST = \
