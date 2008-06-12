@@ -549,6 +549,7 @@ fe_free(fe_t * fe)
     ckd_free(fe->mfspec);
     ckd_free(fe->overflow_samps);
     ckd_free(fe->hamming_window);
+    cmd_ln_free_r(fe->config);
     ckd_free(fe);
 
     return 0;
