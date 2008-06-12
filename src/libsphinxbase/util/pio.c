@@ -231,6 +231,61 @@ fopen_compchk(const char *file, int32 * ispipe)
 #endif /* HAVE_POPEN */
 }
 
+lineiter_t *
+lineiter_start(FILE *fh)
+{
+    lineiter_t *li;
+
+    li = ckd_calloc(1, sizeof(*li));
+    li->buf = ckd_malloc(128);
+    li->buf[0] = '\0';
+    li->bsiz = 128;
+    li->len = 0;
+    li->fh = fh;
+
+    return lineiter_next(li);
+}
+
+lineiter_t *
+lineiter_next(lineiter_t *li)
+{
+    /* Read a line and check for EOF. */
+    if (fgets(li->buf, li->bsiz, li->fh) == NULL) {
+        lineiter_free(li);
+        return NULL;
+    }
+    /* If we managed to read the whole thing, then we are done
+     * (this will be by far the most common result). */
+    li->len = strlen(li->buf);
+    if (li->len < li->bsiz - 1 || li->buf[li->len - 1] == '\n')
+        return li;
+
+    /* Otherwise we have to reallocate and keep going. */
+    while (1) {
+        li->bsiz *= 2;
+        li->buf = ckd_realloc(li->buf, li->bsiz);
+        /* If we get an EOF, we are obviously done. */
+        if (fgets(li->buf + li->len, li->bsiz - li->len, li->fh) == NULL) {
+            li->len += strlen(li->buf + li->len);
+            return li;
+        }
+        li->len += strlen(li->buf + li->len);
+        /* If we managed to read the whole thing, then we are done. */
+        if (li->len < li->bsiz - 1 || li->buf[li->len - 1] == '\n')
+            return li;
+    }
+
+    /* Shouldn't get here. */
+    return li;
+}
+
+void
+lineiter_free(lineiter_t *li)
+{
+    ckd_free(li->buf);
+    ckd_free(li);
+}
+
 char *
 fread_line(FILE *stream, size_t *out_len)
 {

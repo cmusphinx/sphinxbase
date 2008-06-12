@@ -162,12 +162,43 @@ int32 fread_retry(void *pointer, int32 size, int32 num_items, FILE *stream);
  * Read a line of arbitrary length from a file and return it as a
  * newly allocated string.
  *
+ * @deprecated Use line iterators instead.
+ *
  * @param stream The file handle to read from.
  * @param out_len Output: if not NULL, length of the string read.
  * @return allocated string containing the line, or NULL on error or EOF.
  */
 SPHINXBASE_EXPORT
 char *fread_line(FILE *stream, size_t *out_len);
+
+/**
+ * Line iterator for files.
+ */
+typedef struct lineiter_t {
+	char *buf;
+	size_t bsiz;
+	size_t len;
+	FILE *fh;
+} lineiter_t;
+
+/**
+ * Start reading lines from a file.
+ */
+SPHINXBASE_EXPORT
+lineiter_t *lineiter_start(FILE *fh);
+
+/**
+ * Move to the next line in the file.
+ */
+SPHINXBASE_EXPORT
+lineiter_t *lineiter_next(lineiter_t *li);
+
+/**
+ * Stop reading lines from a file.
+ */
+SPHINXBASE_EXPORT
+void lineiter_free(lineiter_t *li);
+
 
 #ifdef _WIN32_WCE
 /* Fake this for WinCE which has no stat() */
