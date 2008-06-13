@@ -16,9 +16,9 @@ cdef class NGramModel:
     Methods are provided for scoring N-Grams based on the model,
     looking up words in the model, and adding words to the model.
     """
-    def __cinit__(self, file, lw=1.0, wip=1.0, uw=1.0):
+    def __cinit__(self, file=None, lw=1.0, wip=1.0, uw=1.0):
         """
-        Initialize and load an N-Gram model.
+        Initialize an N-Gram model.
 
         @param file: Path to an N-Gram model file.
         @type file: string
@@ -30,11 +30,24 @@ cdef class NGramModel:
         @type uw: float
         """
         self.lmath = logmath_init(1.0001, 0, 0)
-        self.lm = ngram_model_read(NULL, file, NGRAM_AUTO, self.lmath)
+        if file:
+            self.lm = ngram_model_read(NULL, file, NGRAM_AUTO, self.lmath)
+            ngram_model_apply_weights(self.lm, lw, wip, uw)
+        else:
+            self.lm = NULL
         self.lw = lw
         self.wip = wip
         self.uw = uw
-        ngram_model_apply_weights(self.lm, lw, wip, uw)
+
+    cdef set_lm(NGramModel self, ngram_model_t *lm):
+        ngram_model_retain(lm)
+        ngram_model_free(self.lm)
+        self.lm = lm
+
+    cdef set_lmath(NGramModel self, logmath_t *lmath):
+        logmath_retain(lmath)
+        logmath_free(self.lmath)
+        self.lmath = lmath
 
     def __dealloc__(self):
         """

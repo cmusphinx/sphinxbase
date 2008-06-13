@@ -18,7 +18,7 @@ clean-local:
 	test -z "$(VPATH)" || $(RM) sphinxbase.c
 	$(RM) pymod-build-stamp
 
-pymod-build-stamp: sphinxbase.c
+pymod-build-stamp: $(srcdir)/sphinxbase.c
 # This is dumb, but distutils is completely incapable of VPATH building
 	test -z "$(VPATH)" || cp "$(srcdir)/sphinxbase.c" sphinxbase.c
 	$(PYTHON) setup.py build
@@ -26,6 +26,6 @@ pymod-build-stamp: sphinxbase.c
 endif
 
 if BUILD_PYREX
-$(srcdir)/sphinxbase.c: sphinxbase.pyx
+$(srcdir)/sphinxbase.c: $(srcdir)/sphinxbase.pyx $(srcdir)/sphinxbase.pxd
 	pyrexc -o $@ $<
 endif
