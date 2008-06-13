@@ -169,6 +169,18 @@ int ngram_model_apply_weights(ngram_model_t *model,
                               float32 lw, float32 wip, float32 uw);
 
 /**
+ * Get the current weights from a language model.
+ *
+ * @param model The model in question.
+ * @param out_wip Output: (optional) logarithm of word insertion penalty.
+ * @param out_uw Output: (optional) logarithm of unigram weight.
+ * @return language weight.
+ */
+SPHINXBASE_EXPORT
+float32 ngram_model_get_weights(ngram_model_t *model, int32 *out_log_wip,
+                                int32 *out_log_uw);
+
+/**
  * Get the score (scaled, interpolated log-probability) for a general
  * N-Gram.
  *

@@ -386,6 +386,16 @@ ngram_model_apply_weights(ngram_model_t *model,
     return (*model->funcs->apply_weights)(model, lw, wip, uw);
 }
 
+float32
+ngram_model_get_weights(ngram_model_t *model, int32 *out_log_wip,
+                        int32 *out_log_uw)
+{
+    if (out_log_wip) *out_log_wip = model->log_wip;
+    if (out_log_uw) *out_log_uw = model->log_uw;
+    return model->lw;
+}
+
+
 int32
 ngram_ng_score(ngram_model_t *model, int32 wid, int32 *history,
                int32 n_hist, int32 *n_used)

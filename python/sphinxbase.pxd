@@ -8,8 +8,11 @@
 # Author: David Huggins-Daines <dhuggins@cs.cmu.edu>
 
 # C declarations
+ctypedef float float32
+ctypedef int int32
+ctypedef double float64
+
 cdef extern from "logmath.h":
-    ctypedef double float64
     ctypedef struct logmath_t
     logmath_t *logmath_init(float64 base, int shift, int use_table)
     logmath_t *logmath_retain(logmath_t *lmath)
@@ -34,6 +37,10 @@ cdef extern from "cmd_ln.h":
     cmd_ln_t *cmd_ln_parse_r(cmd_ln_t *inout_cmdln, arg_t * defn,
                              int argc, char **argv, int strict)
     void cmd_ln_free_r(cmd_ln_t *cmdln)
+    float32 cmd_ln_float32_r(cmd_ln_t *cmdln, char *key)
+    int32 cmd_ln_int32_r(cmd_ln_t *cmdln, char *key)
+    int cmd_ln_boolean_r(cmd_ln_t *cmdln, char *key)
+    char *cmd_ln_str_r(cmd_ln_t *cmdln, char *key)
 
 cdef extern from "ckd_alloc.h":
     void *ckd_calloc(int n, int size)
@@ -50,9 +57,6 @@ cdef extern from "ngram_model.h":
         NGRAM_DMP
         NGRAM_DMP32
     ctypedef struct ngram_model_t
-    ctypedef float float32
-    ctypedef int int32
-
     ngram_model_t *ngram_model_read(cmd_ln_t *config,
                                     char *file_name,
                                     ngram_file_type_t file_type,
@@ -62,6 +66,8 @@ cdef extern from "ngram_model.h":
 
     int ngram_model_apply_weights(ngram_model_t *model,
                                   float32 lw, float32 wip, float32 uw)
+    float32 ngram_model_get_weights(ngram_model_t *model, int32 *out_log_wip,
+                                    int32 *out_log_uw)
 
     int32 ngram_wid(ngram_model_t *model, char *word)
     char *ngram_word(ngram_model_t *model, int32 wid)
@@ -70,6 +76,9 @@ cdef extern from "ngram_model.h":
                          int32 *history, int32 n_hist, int32 *n_used)
     int32 ngram_ng_prob(ngram_model_t *model, int32 wid,
                         int32 *history, int32 n_hist, int32 *n_used)
+
+    int32 ngram_model_get_size(ngram_model_t *model)
+    int32 *ngram_model_get_counts(ngram_model_t *model)
 
 # Extension classes
 cdef class NGramModel:
