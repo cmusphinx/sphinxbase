@@ -199,7 +199,7 @@ ReadUnigrams(FILE * fp, ngram_model_arpa_t * model)
     ngram_model_t *base = &model->base;
     char string[256];
     int32 wcnt;
-    float p1, bo_wt;
+    float p1;
 
     E_INFO("Reading unigrams\n");
 
@@ -207,16 +207,19 @@ ReadUnigrams(FILE * fp, ngram_model_arpa_t * model)
     while ((fgets(string, sizeof(string), fp) != NULL) &&
            (strcmp(string, "\\2-grams:\n") != 0)) {
         char *wptr[3], *name;
+        float32 bo_wt = 0.0f;
+        int n;
 
-        if (str2words(string, wptr, 3) != 3) {
+        if ((n = str2words(string, wptr, 3)) < 2) {
             if (string[0] != '\n')
-                E_WARN("Format error; unigram ignored:%s", string);
+                E_WARN("Format error; unigram ignored: %s\n", string);
             continue;
         }
         else {
             p1 = (float)atof_c(wptr[0]);
             name = wptr[1];
-            bo_wt = (float)atof_c(wptr[2]);
+            if (n == 3)
+                bo_wt = (float)atof_c(wptr[2]);
         }
 
         if (wcnt >= base->n_counts[0]) {
@@ -253,22 +256,21 @@ ReadBigrams(FILE * fp, ngram_model_arpa_t * model)
     char string[1024];
     int32 w1, w2, prev_w1, bgcount;
     bigram_t *bgptr;
-    int32 n_fld;
 
     E_INFO("Reading bigrams\n");
 
     bgcount = 0;
     bgptr = model->lm3g.bigrams;
     prev_w1 = -1;
-    n_fld = (base->n_counts[2] > 0) ? 4 : 3;
 
     while (fgets(string, sizeof(string), fp) != NULL) {
         float32 p, bo_wt = 0.0f;
         int32 p2, bo_wt2;
         char *wptr[4], *word1, *word2;
+        int n;
 
         wptr[3] = NULL;
-        if (str2words(string, wptr, 4) < n_fld) {
+        if ((n = str2words(string, wptr, 4)) < 3) {
             if (string[0] != '\n')
                 break;
             continue;
