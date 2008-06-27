@@ -364,7 +364,7 @@ ad_stop_rec(ad_rec_t * handle)
 int32
 ad_read(ad_rec_t * handle, int16 * buf, int32 max)
 {
-    int32 length, err, i;
+    int32 length, err;
 
     if (!handle->recording)
 	return AD_EOF;

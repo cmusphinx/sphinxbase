@@ -144,41 +144,21 @@ dnl
 ad_files=""
 ad_libs=""
 
-dnl Added from suggestion by 
-dnl Jasper van Veghel <jvveghel@vanboxtelsoftware.nl>, 02/03/2003:
-AC_ARG_WITH(alsa,
-           AC_HELP_STRING([--with-alsa], [Use ALSA library for sound I/O]),
-           [ad_files="ad_alsa.lo"
-            ad_backend="AD_BACKEND_ALSA"
-            ad_libs="-lasound"
-	    AC_DEFINE(AD_BACKEND_ALSA, [], [Use ALSA library for sound I/O])
-            AC_CHECK_HEADER(alsa/asoundlib.h,,
-                    AC_ERROR(ALSA header file <alsa/asoundlib.h> not found!))]
-)
-
 if test "x$ad_files" = "x"; then
         case $host in
                 *-*-linux*|*-*-uclinux*)
-                        ad_files="ad_oss.lo"
-                        ad_backend="AD_BACKEND_OSS"
-			AC_DEFINE(AD_BACKEND_OSS, [], [Use OSS interface for sound I/O])
+                        ad_files="ad_alsa.lo"
+                        ad_backend="AD_BACKEND_ALSA"
+			AC_CHECK_LIB(asound, snd_pcm_open)
+			AC_CHECK_HEADER(alsa/asoundlib.h,,
+				AC_ERROR(ALSA header file <alsa/asoundlib.h> not found!))
+			AC_DEFINE(AD_BACKEND_ALSA, [], [Use ALSA library for sound I/O])
                         ;;
                 # FIXME: isn't this the same OSS as on Linux?
                 *-*-freebsd*|*-*-netbsd*|*-*-openbsd*)
                         ad_files="ad_oss_bsd.lo"
                         ad_backend="AD_BACKEND_OSS_BSD"
 			AC_DEFINE(AD_BACKEND_OSS_BSD, [], [Use OSS interface for sound I/O])
-                        ;;
-                *-*-osf*)
-                        ad_files="ad_osf.lo"
-                        ad_backend="AD_BACKEND_OSF"
-			AC_DEFINE(AD_BACKEND_OSF, [], [Use OSF interface for sound I/O])
-                        ;;
-                *-*-irix*)
-                        ad_files="ad_irix.lo"
-                        ad_libs="-laudio"
-                        ad_backend="AD_BACKEND_IRIX"
-			AC_DEFINE(AD_BACKEND_IRIX, [], [Use IRIX interface for sound I/O])
                         ;;
                 *-*-sunos4*)
                         ad_files="ad_sunos.lo audio_utils_sunos.lo"
@@ -197,13 +177,6 @@ if test "x$ad_files" = "x"; then
                         ad_libs="-lwinmm"
                         ad_backend="AD_BACKEND_WIN32"
 			AC_DEFINE(AD_BACKEND_WIN32, [], [Use WinMM interface for sound I/O])
-                        ;;
-                *-*apple*-*)
-                        ad_files="ad_portaudio.lo pa_convert.lo pa_lib.lo \
-			          pa_mac_core.lo pa_trace.lo pablio.lo ringbuffer.lo"
-                        ad_backend="AD_BACKEND_PORTAUDIO"
-			ad_libs="-framework CoreAudio -framework AudioToolbox"
-			AC_DEFINE(AD_BACKEND_PORTAUDIO, [], [Use PortAudio interface for sound I/O])
                         ;;
                 *)
                         ad_files="ad_base.lo"
