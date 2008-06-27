@@ -1,12 +1,6 @@
-if USE_TLS
-tls_tests = test_tls_log
-else
-tls_tests = 
-endif
-
 check_PROGRAMS = \
 	test_thread \
-	$(tls_tests) \
+	test_tls_log \
 	test_event \
 	test_msgq
 

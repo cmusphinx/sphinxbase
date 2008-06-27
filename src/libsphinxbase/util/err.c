@@ -34,35 +34,10 @@
  * ====================================================================
  *
  */
-/*
- * err.c -- Package for checking and catching common errors, printing out
- *		errors nicely, etc.
- *
- * **********************************************
- * CMU ARPA Speech Project
- *
- * Copyright (c) 1999 Carnegie Mellon University.
- * ALL RIGHTS RESERVED.
- * **********************************************
- *
- * 6/01/95  Paul Placeway  CMU speech group
- *
- * 6/02/95  Eric Thayer
- *	- Removed non-ANSI expresssions.  I don't know of any non-ANSI
- *		holdouts left anymore. (DEC using -std1, HP using -Aa,
- *		Sun using gcc or acc.)
- *      - Removed the automatic newline at the end of the error message
- *	  as that all S3 error messages have one in them now.
- *	- Added an error message option that does a perror() call.
- * $Log: err.c,v $
- * Revision 1.6  2005/06/22 03:00:23  arthchan2003
- * 1, Add a E_INFO that produce no file names. 2, Add  keyword.
- *
- * Revision 1.3  2005/06/15 04:21:46  archan
- * 1, Fixed doxygen-documentation, 2, Add  keyword such that changes will be logged into a file.
- *
+/**
+ * @file err.c
+ * @brief Somewhat antiquated logging and error interface.
  */
-
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -72,38 +47,111 @@
 #include "err.h"
 #include "config.h"
 
-/* Defensively define this in case configure didn't work. */
-#ifndef SPHINXBASE_TLS
-#define SPHINXBASE_TLS
+#if defined(HAVE_PTHREAD_H)
+#include <pthread.h>
+static pthread_key_t logfp_index;
+static pthread_once_t logfp_index_once = PTHREAD_ONCE_INIT;
+
+void
+logfp_index_alloc(void)
+{
+    pthread_key_create(&logfp_index, NULL);
+    pthread_setspecific(logfp_index, (void *)-1);
+}
+
+FILE *
+err_get_logfp(void)
+{
+    FILE *logfp;
+
+    pthread_once(&logfp_index_once, logfp_index_alloc);
+    logfp = (FILE *)pthread_getspecific(logfp_index);
+    if (logfp == (FILE *)-1)
+        return stderr;
+    else
+        return logfp;
+}
+
+static void
+internal_set_logfp(FILE *fh)
+{
+    pthread_setspecific(logfp_index, (void *)fh);
+}
+
+#elif defined(WIN32)
+#include <windows.h>
+static DWORD logfp_index; /** TLS index for log file */
+static LONG logfp_index_once = 0; /** True if we have initialized TLS */
+
+void
+logfp_index_alloc(void)
+{
+    logfp_index = TlsAlloc();
+    TlsSetValue(logfp_index, (void *)-1);
+}
+
+FILE *
+err_get_logfp(void)
+{
+    FILE *logfp;
+
+    if (InterlockedExchange(&logfp_index_once, 1) == 0)
+        logfp_index_alloc();
+    logfp = (FILE *)TlsGetValue(logfp_index);
+    if (logfp == (FILE *)-1)
+        return stderr;
+    else
+        return logfp;
+}
+
+static void
+internal_set_logfp(FILE *fh)
+{
+    TlsSetValue(logfp_index, (void *)fh);
+}
+
+#else
+FILE *logfp = (FILE *)-1;
+
+FILE *
+err_get_logfp(void)
+{
+    if (logfp == (FILE *)-1)
+        return stderr;
+    else
+        return logfp;
+}
+
+static void
+internal_set_logfp(FILE *fh)
+{
+    logfp = fh;
+}
+
 #endif
-
-/*
- * We use -1 to start since stderr isn't a constant.  Bleah.
- */
-SPHINXBASE_TLS FILE *logfp = (FILE *)-1;
-
+ 
 FILE *
 err_set_logfp(FILE *newfp)
 {
     FILE *oldfp;
 
-    oldfp = logfp;
-    logfp = newfp;
-    if (oldfp == (FILE *)-1)
-        oldfp = stderr;
+    oldfp = err_get_logfp();
+    internal_set_logfp(newfp);
+
     return oldfp;
 }
 
 int
 err_set_logfile(char const *file)
 {
-    FILE *newfp;
+    FILE *newfp, *oldfp;
 
     if ((newfp = fopen(file, "a")) == NULL)
         return -1;
-    if (logfp != (FILE *)-1 && logfp != stdout && logfp != stderr)
-        fclose(logfp);
-    logfp = newfp;
+    oldfp = err_get_logfp();
+    internal_set_logfp(newfp);
+    if (oldfp != NULL && oldfp != stdout && oldfp != stderr)
+        fclose(oldfp);
     return 0;
 }
 
@@ -111,8 +159,9 @@ err_set_logfile(char const *file)
 void
 _E__pr_info_header_wofn(char const *msg)
 {
-    if (logfp == (FILE *)-1)
-        logfp = stderr;
+    FILE *logfp;
+
+    logfp = err_get_logfp();
     if (logfp == NULL)
         return;
     /* make different format so as not to be parsed by emacs compile */
@@ -124,9 +173,9 @@ void
 _E__pr_header(char const *f, long ln, char const *msg)
 {
     char const *fname;
+    FILE *logfp;
 
-    if (logfp == (FILE *)-1)
-        logfp = stderr;
+    logfp = err_get_logfp();
     if (logfp == NULL)
         return;
     fname = strrchr(f,'\\');
@@ -140,9 +189,9 @@ void
 _E__pr_info_header(char const *f, long ln, char const *msg)
 {
     char const *fname;
+    FILE *logfp;
 
-    if (logfp == (FILE *)-1)
-        logfp = stderr;
+    logfp = err_get_logfp();
     if (logfp == NULL)
         return;
     fname = strrchr(f,'\\');
@@ -157,9 +206,9 @@ void
 _E__pr_warn(char const *fmt, ...)
 {
     va_list pvar;
+    FILE *logfp;
 
-    if (logfp == (FILE *)-1)
-        logfp = stderr;
+    logfp = err_get_logfp();
     if (logfp == NULL)
         return;
     va_start(pvar, fmt);
@@ -173,9 +222,9 @@ void
 _E__pr_info(char const *fmt, ...)
 {
     va_list pvar;
+    FILE *logfp;
 
-    if (logfp == (FILE *)-1)
-        logfp = stderr;
+    logfp = err_get_logfp();
     if (logfp == NULL)
         return;
     va_start(pvar, fmt);
@@ -189,9 +238,9 @@ void
 _E__die_error(char const *fmt, ...)
 {
     va_list pvar;
+    FILE *logfp;
 
-    if (logfp == (FILE *)-1)
-        logfp = stderr;
+    logfp = err_get_logfp();
     if (logfp) {
         va_start(pvar, fmt);
         vfprintf(logfp, fmt, pvar);
@@ -210,9 +259,9 @@ void
 _E__fatal_sys_error(char const *fmt, ...)
 {
     va_list pvar;
+    FILE *logfp;
 
-    if (logfp == (FILE *)-1)
-        logfp = stderr;
+    logfp = err_get_logfp();
     if (logfp) {
         va_start(pvar, fmt);
         vfprintf(logfp, fmt, pvar);
@@ -238,9 +287,9 @@ void
 _E__sys_error(char const *fmt, ...)
 {
     va_list pvar;
+    FILE *logfp;
 
-    if (logfp == (FILE *)-1)
-        logfp = stderr;
+    logfp = err_get_logfp();
     if (logfp == NULL)
         return;
 
@@ -260,9 +309,9 @@ void
 _E__abort_error(char const *fmt, ...)
 {
     va_list pvar;
+    FILE *logfp;
 
-    if (logfp == (FILE *)-1)
-        logfp = stderr;
+    logfp = err_get_logfp();
     if (logfp) {
         va_start(pvar, fmt);
         vfprintf(logfp, fmt, pvar);
@@ -277,29 +326,3 @@ _E__abort_error(char const *fmt, ...)
 #endif
 
 }
-
-#ifdef TEST
-main()
-{
-    char const *two = "two";
-    char const *three = "three";
-    FILE *fp;
-
-    E_WARN("this is a simple test\n");
-
-    E_WARN("this is a test with \"%s\" \"%s\".\n", "two", "arguments");
-
-    E_WARN("foo %d is bar\n", 5);
-
-    E_WARN("bar is foo\n");
-
-    E_WARN("one\n", two, three);
-
-    E_INFO("Just some information you might find interesting\n");
-
-    fp = fopen("gondwanaland", "r");
-    if (fp == NULL) {
-        E_SYSTEM("Can't open gondwanaland for reading");
-    }
-}
-#endif                          /* TEST */
