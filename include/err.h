@@ -113,6 +113,14 @@ SPHINXBASE_EXPORT
 FILE *err_set_logfp(FILE *logfp);
 
 /**
+ * Get the current logging filehandle.
+ * @return Current logging filehandle, NULL if disabled.
+ */
+SPHINXBASE_EXPORT
+FILE * err_get_logfp(void);
+
+
+/**
  * Append all log messages to a given file.
  *
  * Previous logging filehandle is closed (unless it was stdout or stderr).
