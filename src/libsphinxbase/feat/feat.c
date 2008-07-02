@@ -1002,7 +1002,7 @@ feat_print(feat_t * fcb, mfcc_t *** feat, int32 nfr, FILE * fp)
     int32 i, j, k;
 
     for (i = 0; i < nfr; i++) {
-        fprintf(fp, "%8d:", i);
+        fprintf(fp, "%8d:\n", i);
 
         for (j = 0; j < feat_dimension1(fcb); j++) {
             fprintf(fp, "\t%2d:", j);
