@@ -517,7 +517,7 @@ mfcc_t ***
 feat_array_alloc(feat_t * fcb, int32 nfr)
 {
     int32 i, j, k;
-    mfcc_t *data, ***feat;
+    mfcc_t *data, *d, ***feat;
 
     assert(fcb);
     assert(nfr > 0);
@@ -530,9 +530,10 @@ feat_array_alloc(feat_t * fcb, int32 nfr)
     data = (mfcc_t *) ckd_calloc(nfr * k, sizeof(mfcc_t));
 
     for (i = 0; i < nfr; i++) {
+        d = data + i * k;
         for (j = 0; j < feat_dimension1(fcb); j++) {
-            feat[i][j] = data;
-            data += feat_dimension2(fcb, j);
+            feat[i][j] = d;
+            d += feat_dimension2(fcb, j);
         }
     }
 
@@ -713,7 +714,7 @@ feat_1s_c_d_dd_cep2feat(feat_t * fcb, mfcc_t ** mfc, mfcc_t ** feat)
     assert(fcb);
     assert(feat_n_stream(fcb) == 1);
     assert(feat_stream_len(fcb, 0) == feat_cepsize(fcb) * 3);
-    assert(feat_window_size(fcb) == FEAT_DCEP_WIN + 1);
+    assert(feat_window_size(fcb) == FEAT_DCEP_WIN);
 
     /* CEP */
     memcpy(feat[0], mfc[0], feat_cepsize(fcb) * sizeof(mfcc_t));
@@ -759,7 +760,7 @@ feat_1s_c_d_ld_dd_cep2feat(feat_t * fcb, mfcc_t ** mfc, mfcc_t ** feat)
     assert(fcb);
     assert(feat_n_stream(fcb) == 1);
     assert(feat_stream_len(fcb, 0) == feat_cepsize(fcb) * 4);
-    assert(feat_window_size(fcb) == FEAT_DCEP_WIN * 2 + 1);
+    assert(feat_window_size(fcb) == FEAT_DCEP_WIN * 2);
 
     /* CEP */
     memcpy(feat[0], mfc[0], feat_cepsize(fcb) * sizeof(mfcc_t));
@@ -777,7 +778,7 @@ feat_1s_c_d_ld_dd_cep2feat(feat_t * fcb, mfcc_t ** mfc, mfcc_t ** feat)
     /*
      * LDCEP: mfc[w] - mfc[-w], where w = FEAT_DCEP_WIN * 2;
      */
-    f = feat[0] + feat_cepsize(fcb);
+    f += feat_cepsize(fcb);
     w = mfc[FEAT_DCEP_WIN * 2];
     _w = mfc[-FEAT_DCEP_WIN * 2];
 
@@ -885,7 +886,7 @@ feat_init(char const *type, cmn_type_t cmn, int32 varnorm,
         fcb->stream_len = (int32 *) ckd_calloc(1, sizeof(int32));
         fcb->stream_len[0] = cepsize * 3;
         fcb->out_dim = cepsize * 3;
-        fcb->window_size = FEAT_DCEP_WIN + 1;
+        fcb->window_size = FEAT_DCEP_WIN;
         fcb->compute_feat = feat_1s_c_d_dd_cep2feat;
     }
     else if (strncmp(type, "1s_c_d_ld_dd", 12) == 0) {
@@ -894,7 +895,7 @@ feat_init(char const *type, cmn_type_t cmn, int32 varnorm,
         fcb->stream_len = (int32 *) ckd_calloc(1, sizeof(int32));
         fcb->stream_len[0] = cepsize * 4;
         fcb->out_dim = cepsize * 4;
-        fcb->window_size = FEAT_DCEP_WIN * 2 + 1;
+        fcb->window_size = FEAT_DCEP_WIN * 2;
         fcb->compute_feat = feat_1s_c_d_ld_dd_cep2feat;
     }
     else if (strncmp(type, "cep_dcep", 8) == 0 || strncmp(type, "1s_c_d", 6) == 0) {
