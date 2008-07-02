@@ -523,8 +523,14 @@ feat_array_alloc(feat_t * fcb, int32 nfr)
     assert(nfr > 0);
     assert(feat_dimension(fcb) > 0);
 
-    /* Allocate feature data array so that data is in one block from feat[0][0][0] */
-    k = feat_dimension(fcb);
+    /* Make sure to use the dimensionality of the features *before*
+       LDA and subvector projection. */
+    k = 0;
+    for (i = 0; i < fcb->n_stream; ++i)
+        k += fcb->stream_len[i];
+    assert(k >= feat_dimension(fcb));
+    assert(k >= fcb->sv_dim);
+
     feat =
         (mfcc_t ***) ckd_calloc_2d(nfr, feat_dimension1(fcb), sizeof(mfcc_t *));
     data = (mfcc_t *) ckd_calloc(nfr * k, sizeof(mfcc_t));
@@ -714,7 +720,7 @@ feat_1s_c_d_dd_cep2feat(feat_t * fcb, mfcc_t ** mfc, mfcc_t ** feat)
     assert(fcb);
     assert(feat_n_stream(fcb) == 1);
     assert(feat_stream_len(fcb, 0) == feat_cepsize(fcb) * 3);
-    assert(feat_window_size(fcb) == FEAT_DCEP_WIN);
+    assert(feat_window_size(fcb) == FEAT_DCEP_WIN + 1);
 
     /* CEP */
     memcpy(feat[0], mfc[0], feat_cepsize(fcb) * sizeof(mfcc_t));
@@ -886,7 +892,7 @@ feat_init(char const *type, cmn_type_t cmn, int32 varnorm,
         fcb->stream_len = (int32 *) ckd_calloc(1, sizeof(int32));
         fcb->stream_len[0] = cepsize * 3;
         fcb->out_dim = cepsize * 3;
-        fcb->window_size = FEAT_DCEP_WIN;
+        fcb->window_size = FEAT_DCEP_WIN + 1; /* ddcep needs the extra 1 */
         fcb->compute_feat = feat_1s_c_d_dd_cep2feat;
     }
     else if (strncmp(type, "1s_c_d_ld_dd", 12) == 0) {
