@@ -145,6 +145,7 @@ main(int argc, char *argv[])
 	fe_free(fe);
 	feat_array_free(featbuf1);
 	feat_array_free(featbuf2);
+	feat_free(fcb);
 	ckd_free_2d(cepbuf);
 
 	return 0;

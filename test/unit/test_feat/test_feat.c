@@ -44,7 +44,7 @@ main(int argc, char *argv[])
 	int32 i, j, ncep;
 
 	/* Test "raw" features without concatenation */
-	fcb = feat_init(strdup("13"), CMN_NONE, 0, AGC_NONE, 1, 13);
+	fcb = feat_init("13", CMN_NONE, 0, AGC_NONE, 1, 13);
 
 	in_feats = (mfcc_t **)ckd_alloc_2d_ptr(6, 13, data, sizeof(mfcc_t));
 	out_feats = (mfcc_t ***)ckd_calloc_3d(6, 1, 13, sizeof(mfcc_t));
@@ -58,9 +58,11 @@ main(int argc, char *argv[])
 		printf("\n");
 	}
 	feat_free(fcb);
+	ckd_free(in_feats);
+	ckd_free_3d(out_feats);
 
 	/* Test "raw" features with concatenation */
-	fcb = feat_init(strdup("13:1"), CMN_NONE, 0, AGC_NONE, 1, 13);
+	fcb = feat_init("13:1", CMN_NONE, 0, AGC_NONE, 1, 13);
 
 	in_feats = (mfcc_t **)ckd_alloc_2d_ptr(6, 13, data, sizeof(mfcc_t));
 	out_feats = (mfcc_t ***)ckd_calloc_3d(8, 1, 39, sizeof(mfcc_t));
@@ -76,7 +78,7 @@ main(int argc, char *argv[])
 	feat_free(fcb);
 
 	/* Test 1s_c_d_dd features */
-	fcb = feat_init(strdup("1s_c_d_dd"), CMN_NONE, 0, AGC_NONE, 1, 13);
+	fcb = feat_init("1s_c_d_dd", CMN_NONE, 0, AGC_NONE, 1, 13);
 	ncep = 6;
 	feat_s2mfc2feat_live(fcb, in_feats, &ncep, 1, 1, out_feats);
 
@@ -99,6 +101,8 @@ main(int argc, char *argv[])
 		}
 	}
 	feat_free(fcb);
+	ckd_free(in_feats);
+	ckd_free_3d(out_feats);
 
 	return 0;
 }

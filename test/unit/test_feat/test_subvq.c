@@ -62,7 +62,7 @@ main(int argc, char *argv[])
 	}
 
 	/* Create a 1s_c_d_dd feature stream and split it into subvectors. */
-	fcb = feat_init(strdup("1s_c_d_dd"), CMN_NONE, 0, AGC_NONE, 1, 13);
+	fcb = feat_init("1s_c_d_dd", CMN_NONE, 0, AGC_NONE, 1, 13);
 	TEST_ASSERT(fcb);
 	feat_set_subvecs(fcb, subvecs);
 
@@ -85,6 +85,7 @@ main(int argc, char *argv[])
 
 	feat_array_free(out_feats);
 	ckd_free(in_feats);
+	feat_free(fcb);
 
 	return 0;
 }

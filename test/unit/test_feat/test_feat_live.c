@@ -47,7 +47,7 @@ main(int argc, char *argv[])
 	in_feats = (mfcc_t **)ckd_alloc_2d_ptr(6, 13, data, sizeof(mfcc_t));
 	out_feats = (mfcc_t ***)ckd_calloc_3d(8, 1, 39, sizeof(mfcc_t));
 	/* Test 1s_c_d_dd features */
-	fcb = feat_init(strdup("1s_c_d_dd"), CMN_NONE, 0, AGC_NONE, 1, 13);
+	fcb = feat_init("1s_c_d_dd", CMN_NONE, 0, AGC_NONE, 1, 13);
 	ncep = 6;
 	nfr1 = feat_s2mfc2feat_live(fcb, in_feats, &ncep, 1, 1, out_feats);
 	printf("Processed %d input %d output frames\n", ncep, nfr1);
@@ -61,7 +61,7 @@ main(int argc, char *argv[])
 	feat_free(fcb);
 
 	/* Test in "live" mode. */
-	fcb = feat_init(strdup("1s_c_d_dd"), CMN_NONE, 0, AGC_NONE, 1, 13);
+	fcb = feat_init("1s_c_d_dd", CMN_NONE, 0, AGC_NONE, 1, 13);
 	optr = out_feats2 = (mfcc_t ***)ckd_calloc_3d(8, 1, 39, sizeof(mfcc_t));
 	nfr2 = 0;
 	ncep = 2;
@@ -110,6 +110,9 @@ main(int argc, char *argv[])
 			TEST_EQUAL(out_feats[i][0][j], out_feats2[i][0][j]);
 		}
 	}
+	ckd_free_3d(out_feats2);
+	ckd_free_3d(out_feats);
+	ckd_free(in_feats);
 
 	return 0;
 }
