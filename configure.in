@@ -147,12 +147,18 @@ ad_libs=""
 if test "x$ad_files" = "x"; then
         case $host in
                 *-*-linux*|*-*-uclinux*)
-                        ad_files="ad_alsa.lo"
-                        ad_backend="AD_BACKEND_ALSA"
-			AC_CHECK_LIB(asound, snd_pcm_open)
-			AC_CHECK_HEADER(alsa/asoundlib.h,,
-				AC_ERROR(ALSA header file <alsa/asoundlib.h> not found!))
-			AC_DEFINE(AD_BACKEND_ALSA, [], [Use ALSA library for sound I/O])
+			# Check for ALSA, fall back to OSS
+			AC_CHECK_HEADER(alsa/asoundlib.h,[
+				AC_DEFINE(AD_BACKEND_ALSA, [],
+					 [Use ALSA library for sound I/O])
+                                ad_files="ad_alsa.lo"
+                                ad_backend="AD_BACKEND_ALSA"
+			        AC_CHECK_LIB(asound, snd_pcm_open)],[
+				AC_DEFINE(AD_BACKEND_OSS, [],
+					 [Use OSS for sound I/O])
+                                ad_files="ad_oss.lo"
+                                ad_backend="AD_BACKEND_OSS"
+				])
                         ;;
                 # FIXME: isn't this the same OSS as on Linux?
                 *-*-freebsd*|*-*-netbsd*|*-*-openbsd*)
