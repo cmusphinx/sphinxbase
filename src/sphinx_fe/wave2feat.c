@@ -363,6 +363,7 @@ fe_convert_files(globals_t * P)
             ckd_free(infile);
             ckd_free(outfile);
             infile = outfile = NULL;
+            fe_free(FE);
             return rv;
         }
 
@@ -1140,17 +1141,18 @@ fe_convert_with_dct(globals_t * P, fe_t * FE, char *infile, char *outfile)
         if (fwrite(logspec, 4, output_ncoeffs, ofh) < output_ncoeffs) {
             E_ERROR_SYSTEM("Failed to write %d coeffs to %s",
                            output_ncoeffs, outfile);
-            free(logspec);
+            ckd_free(logspec);
             return (FE_OUTPUT_FILE_WRITE_ERROR);
         }
     }
     if (!feof(ifh)) {
         E_ERROR("Short read in input file %s\n", infile);
-        free(logspec);
+        ckd_free(logspec);
         return (FE_INPUT_FILE_READ_ERROR);
     }
     fclose(ifh);
     fclose(ofh);
+    ckd_free(logspec);
 
     return FE_SUCCESS;
 }
