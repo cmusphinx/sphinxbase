@@ -46,7 +46,6 @@ static int
 write_fsg(jsgf_t *grammar, const char *name)
 {
     jsgf_rule_iter_t *itor;
-    logmath_t *lmath = logmath_init(1.0001, 0, FALSE);
 
     for (itor = jsgf_rule_iter(grammar); itor;
          itor = jsgf_rule_iter_next(itor)) {
@@ -61,7 +60,6 @@ write_fsg(jsgf_t *grammar, const char *name)
         }
     }
 
-    logmath_free(lmath);
     return 0;
 }
 
