@@ -61,16 +61,20 @@ if test x$withval = xno; then
 fi
 ])
 if test x$use_lapack = xtrue; then
-   AC_CHECK_LIB(m, log)
-   AC_CHECK_LIB(g2c, r_log)
-   AC_CHECK_LIB(blas, sgemm_)
    AC_CHECK_LIB(lapack, sgesv_,,use_internal_lapack=true)
+   if test x$use_internal_lapack != xtrue; then
+      AC_CHECK_LIB(blas, sgemm_,,use_internal_lapack=true)
+   fi
    AC_DEFINE(WITH_LAPACK, [], [Enable matrix algebra with LAPACK])
 else
-   AC_CHECK_LIB(m, log)
 fi
 AM_CONDITIONAL(LAPACK_LITE, test x$use_internal_lapack = xtrue)
 AM_CONDITIONAL(USE_LAPACK, test x$use_lapack = xtrue)
+
+dnl
+dnl Just make sure we have this...
+dnl
+AC_CHECK_LIB(m, log)
 
 dnl
 dnl Enable thread-safe versions of some internal functions
