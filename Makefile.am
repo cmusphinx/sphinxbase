@@ -5,6 +5,7 @@ SUBDIRS = src \
 	python
 
 EXTRA_DIST = autogen.sh					\
+	sphinxbase.sln					\
 	sphinxbase.pc.in				\
 	win32/sphinx_fe/sphinx_fe.vcproj		\
 	win32/sphinxbase/sphinxbase.vcproj		\
