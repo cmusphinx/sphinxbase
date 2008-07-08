@@ -25,7 +25,7 @@ Description: Sphinx base libraries
 Package: sphinxbase-utils
 Section: sound
 Architecture: any
-Depends: ${shlibs:Depends}, libsphinxbase1 (= ${Source-Version})
+Depends: ${shlibs:Depends}, libsphinxbase1 (= ${Source-Version}), perl
 Description: Sphinx base libraries - utilities
- This package contains the 'sphinx_fe' and 'sphinx_cepview' utilities
- used for all Sphinx speech recognition engines.
+ This package contains various utilities useful for all Sphinx speech
+ recognition engines.
