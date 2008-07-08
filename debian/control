@@ -1,7 +1,7 @@
 Source: sphinxbase
 Priority: optional
 Maintainer: David Huggins-Daines <dhuggins@cs.cmu.edu>
-Build-Depends: debhelper (>= 4), autotools-dev, libasound2-dev, gettext
+Build-Depends: debhelper (>= 4), autotools-dev, libasound2-dev, gettext, python-all-dev, python-all-dbg, python-support (>= 0.3)
 Standards-Version: 3.7.2
 Section: libs
 
@@ -29,3 +29,26 @@ Depends: ${shlibs:Depends}, libsphinxbase1 (= ${Source-Version}), perl
 Description: Sphinx base libraries - utilities
  This package contains various utilities useful for all Sphinx speech
  recognition engines.
+
+Package: python-sphinxbase
+Section: python
+Architecture: any
+Depends: ${python:Depends}, ${shlibs:Depends}
+Provides: ${python:Provides}
+XB-Python-Version: ${python:Versions}
+Description: Sphinx base libraries - Python module
+ This package contains a Python module which provides access to Sphinx
+ base functionality, which currently is limited to language models.
+
+Package: python-sphinxbase-dbg
+Section: python
+Architecture: any
+Priority: extra
+Depends: ${python:Depends}, ${shlibs:Depends}, python-sphinxbase
+Provides: ${python:Provides}
+XB-Python-Version: ${python:Versions}
+Description: Sphinx base libraries - Python module (debug version)
+ This package contains a Python module which provides access to Sphinx
+ base functionality, which currently is limited to language models.
+ .
+ This package contains the extension built for the Python debug interpreter.

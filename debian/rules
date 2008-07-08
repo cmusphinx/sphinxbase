@@ -21,14 +21,7 @@ else
 	CFLAGS += -O2
 endif
 
-# shared library versions, option 1
-version=0.0.0
-major=0
-# option 2, assuming the library is created as src/.libs/libfoo.so.2.0.5 or so
-#version=`ls src/.libs/lib*.so.* | \
-# awk '{if (match($$0,/[0-9]+\.[0-9]+\.[0-9]+$$/)) print substr($$0,RSTART)}'`
-#major=`ls src/.libs/lib*.so.* | \
-# awk '{if (match($$0,/\.so\.[0-9]+$$/)) print substr($$0,RSTART+4)}'`
+PYVERS=$(shell pyversions -r)
 
 config.status: configure
 	dh_testdir
@@ -42,7 +35,15 @@ build-stamp:  config.status
 
 	# Add here commands to compile the package.
 	$(MAKE)
-
+	-$(MAKE) -C python clean
+	set -e; \
+	for PYTHON in $(PYVERS); do \
+		(cd python && $$PYTHON setup.py build); \
+	done
+	set -e; \
+	for PYTHON in $(PYVERS); do \
+		(cd python && $$PYTHON-dbg setup.py build); \
+	done
 	touch $@
 
 clean:
@@ -58,9 +59,8 @@ endif
 ifneq "$(wildcard /usr/share/misc/config.guess)" ""
 	cp -f /usr/share/misc/config.guess config.guess
 endif
-
-
 	dh_clean 
+	$(RM) -r debian/python-sphinxbase debian/python-sphinxbase-dbg
 
 install: build
 	dh_testdir
@@ -71,6 +71,18 @@ install: build
 	# Add here commands to install the package into debian/tmp
 	$(MAKE) DESTDIR=$(CURDIR)/debian/tmp install
 
+	set -e; \
+	for PYTHON in $(PYVERS); do \
+	    (cd python && $$PYTHON setup.py install --root=$(CURDIR)/debian/python-sphinxbase) ; \
+	done
+	set -e; \
+	for PYTHON in $(PYVERS); do \
+	    (cd python && $$PYTHON-dbg setup.py install --root=$(CURDIR)/debian/python-sphinxbase-dbg) ; \
+	done
+	find debian/python-*-dbg ! -type d ! -name '*.so' | xargs rm -f
+	find debian/python-*-dbg -depth -empty -exec rmdir {} \;
+
+	-find debian -name '*.py[co]' | xargs rm -f
 
 # Build architecture-independent files here.
 binary-indep: build install
@@ -87,8 +99,11 @@ binary-arch: build install
 	dh_installman
 	dh_link
 	dh_strip
-	dh_compress
+	rm -rf debian/python-sphinxbase-dbg/usr/share/doc/python-sphinxbase-dbg
+	ln -s python-sphinxbase debian/python-sphinxbase-dbg/usr/share/doc/python-sphinxbase-dbg
+	dh_compress -X.py
 	dh_fixperms
+	dh_pysupport
 	dh_makeshlibs
 	dh_installdeb
 	dh_shlibdeps
