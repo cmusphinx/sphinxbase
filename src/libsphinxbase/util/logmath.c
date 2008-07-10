@@ -217,7 +217,8 @@ logmath_read(const char *file_name)
     lmath->log10_of_base = log10(lmath->base);
     lmath->inv_log_of_base = 1.0/lmath->log_of_base;
     lmath->inv_log10_of_base = 1.0/lmath->log10_of_base;
-
+    /* Shift this sufficiently that overflows can be avoided. */
+    lmath->zero = MAX_NEG_INT32 >> (lmath->t.shift + 2);
 
     /* #Values to follow */
     if (bio_fread(&lmath->t.table_size, sizeof(int32), 1, fp, byteswap, &chksum) != 1) {
