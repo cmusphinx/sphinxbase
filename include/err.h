@@ -125,7 +125,7 @@ FILE * err_get_logfp(void);
  *
  * Previous logging filehandle is closed (unless it was stdout or stderr).
  *
- * @param logfp File to send log messages to, or NULL to disable logging.
+ * @param file File to send log messages to, or NULL to disable logging.
  * @return 0 for success, <0 for failure (e.g. if file does not exist)
  */
 SPHINXBASE_EXPORT

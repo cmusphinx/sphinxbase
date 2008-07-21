@@ -287,6 +287,7 @@ extern "C" {
 Exactly one of IEEE_8087, IEEE_MC68k, VAX, or IBM should be defined.
 #endif
 
+/** Union to extract the bytes of a double */
 typedef union { double d; ULong L[2]; } U;
 
 #ifdef YES_ALIAS

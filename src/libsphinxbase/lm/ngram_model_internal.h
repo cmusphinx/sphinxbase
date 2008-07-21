@@ -105,6 +105,7 @@ struct ngram_class_s {
 
 #define UG_ALLOC_STEP 10
 
+/** Implementation-specific functions for operating on ngram_model_t objects */
 typedef struct ngram_funcs_s {
     /**
      * Implementation-specific function for freeing an ngram_model_t.

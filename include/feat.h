@@ -240,17 +240,19 @@ typedef struct feat_s {
  * Parse subvector specification string.
  *
  * Format of specification:
- *   - '/' separated list of subvectors
- *   - each subvector is a ',' separated list of subranges
- *   - each subrange is a single <number> or <number>-<number> (inclusive).
- *     (where, <number> is a feature vector dimension specifier).
+ *   \li '/' separated list of subvectors
+ *   \li each subvector is a ',' separated list of subranges
+ *   \li each subrange is a single \verbatim <number> \endverbatim or
+ *       \verbatim <number>-<number> \endverbatim (inclusive), where
+ *       \verbatim <number> \endverbatim is a feature vector dimension
+ *       specifier.
  *
  * E.g., "24,0-11/25,12-23/26,27-38" has:
- *   - 3 subvectors
- *   - the 1st subvector has feature dims: 24, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, and 11.
- *   - etc.
+ *   \li 3 subvectors
+ *   \li the 1st subvector has feature dims: 24, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, and 11.
+ *   \li etc.
  *
- * @param spec subvector specification string.
+ * @param str subvector specification string.
  * @return allocated 2-D array of subvector specs (free with
  * subvecs_free()).  If there are N subvectors specified, subvec[N] =
  * NULL; and each subvec[0]..subvec[N-1] is -1 terminated vector of

@@ -68,7 +68,7 @@ enum {
 #define COUNT_WHOLE 0
 #define HEADER_BYTES 1024
 
-/* The MS Wav file is a RIFF file, and has the following 44 byte header */
+/** RIFF 44-byte header structure for MS wav files */
 typedef struct RIFFHeader{
         char rifftag[4];      /* "RIFF" string */
         int32 TotalLength;      /* Total length */

@@ -76,6 +76,7 @@ jsgf_t *jsgf_grammar_new(jsgf_t *parent);
 /**
  * Parse a JSGF grammar from a file.
  *
+ * @param filename the name of the file to parse.
  * @param parent optional parent grammar for this one (NULL, usually).
  * @return new JSGF grammar object, or NULL on failure.
  */

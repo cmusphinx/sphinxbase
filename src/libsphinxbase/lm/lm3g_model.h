@@ -100,7 +100,7 @@ typedef struct trigram_s trigram_t;
 typedef struct tginfo_s {
     int32 w1;			/**< lw1 component of bigram lw1,lw2.  All bigrams with
 				   same lw2 linked together (see lm_t.tginfo). */
-    int32 n_tg;			/**< #tg for parent bigram lw1,lw2 */
+    int32 n_tg;			/**< number tg for parent bigram lw1,lw2 */
     int32 bowt;                 /**< tg bowt for lw1,lw2 */
     int32 used;			/**< whether used since last lm_reset */
     trigram_t *tg;		/**< Trigrams for lw1,lw2 */

@@ -60,10 +60,10 @@ extern "C" {
 }
 #endif
 
+typedef struct gau_den_int32_s gau_den_int32_t;
 /**
  * Type representing a single density for computation.
  */
-typedef struct gau_den_int32_s gau_den_int32_t;
 struct gau_den_int32_s {
     int32 idx; /**< Index of Gaussian to compute. */
     int32 val; /**< Density for this Gaussian. */

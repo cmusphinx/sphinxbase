@@ -172,8 +172,8 @@ int ngram_model_apply_weights(ngram_model_t *model,
  * Get the current weights from a language model.
  *
  * @param model The model in question.
- * @param out_wip Output: (optional) logarithm of word insertion penalty.
- * @param out_uw Output: (optional) logarithm of unigram weight.
+ * @param out_log_wip Output: (optional) logarithm of word insertion penalty.
+ * @param out_log_uw Output: (optional) logarithm of unigram weight.
  * @return language weight.
  */
 SPHINXBASE_EXPORT
@@ -487,6 +487,7 @@ void ngram_model_set_iter_free(ngram_model_set_iter_t *itor);
 /**
  * Get language model and associated name from an iterator.
  *
+ * @param itor the iterator
  * @param lmname Output: string name associated with this language model.
  * @return Language model pointed to by this iterator.
  */

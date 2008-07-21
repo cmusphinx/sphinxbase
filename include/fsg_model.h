@@ -77,7 +77,7 @@ typedef struct fsg_link_s {
 #define fsg_link_logs2prob(l)	((l)->logs2prob)
 
 
-/*
+/**
  * Word level FSG definition.
  * States are simply integers 0..n_state-1.
  * A transition emits a word and has a given probability of being taken.
@@ -93,7 +93,7 @@ typedef struct fsg_model_s {
     bitvec_t *silwords; /**< Indicates which words are silence/fillers. */
     bitvec_t *altwords; /**< Indicates which words are pronunciation alternates. */
     logmath_t *lmath;	/**< Pointer to log math computation object. */
-    int32 n_state;	/**< #states in FSG */
+    int32 n_state;	/**< number of states in FSG */
     int32 start_state;	/**< Must be in the range [0..n_state-1] */
     int32 final_state;	/**< Must be in the range [0..n_state-1] */
     float32 lw;		/**< Language weight that's been applied to transition

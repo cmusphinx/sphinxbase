@@ -88,8 +88,8 @@ enum {
         DCT_HTK = 2
 };
 
-/** Base Struct to hold all structure for MFCC computation. */
 typedef struct melfb_s melfb_t;
+/** Base Struct to hold all structure for MFCC computation. */
 struct melfb_s {
     float32 sampling_rate;
     int32 num_cepstra;

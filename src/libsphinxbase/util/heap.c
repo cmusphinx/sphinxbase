@@ -71,6 +71,7 @@
 #include "ckd_alloc.h"
 
 
+/** One node on the heap */
 typedef struct heap_s {
     void *data;                 /* Application data at this node */
     int32 val;                  /* Associated with above application data; according to which
