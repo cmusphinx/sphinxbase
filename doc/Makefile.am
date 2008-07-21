@@ -27,11 +27,6 @@ headers =						\
 	$(top_srcdir)/include/filename.h		\
 	$(top_srcdir)/include/fixpoint.h		\
 	$(top_srcdir)/include/fsg_model.h		\
-	$(top_srcdir)/include/gau_cb_float64.h		\
-	$(top_srcdir)/include/gau_cb.h			\
-	$(top_srcdir)/include/gau_cb_int32.h		\
-	$(top_srcdir)/include/gau_file.h		\
-	$(top_srcdir)/include/gau_mix.h			\
 	$(top_srcdir)/include/genrand.h			\
 	$(top_srcdir)/include/glist.h			\
 	$(top_srcdir)/include/hash_table.h		\
