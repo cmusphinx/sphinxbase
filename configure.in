@@ -22,12 +22,6 @@ case $host in
 	# uClinux needs special "flat" binaries
 	LDFLAGS="$LDFLAGS -Wl,-elf2flt"
 	;;
-     *cygwin*|*mingw*)
-        # Need to get the proper symbol defined for DLL (can't just
-	# use DLL_EXPORT from libtool because other DLLs include our header
-	# files...)
-	CFLAGS="$CFLAGS -DSPHINXBASE_DLL"
-        ;;
      *)
      ;;
 esac     
@@ -200,7 +194,6 @@ AC_SUBST(ad_files)
 AC_SUBST(ad_libs)
 AC_SUBST(ad_backend)
 
-AC_LIBTOOL_WIN32_DLL
 AM_PROG_LIBTOOL
 
 dnl

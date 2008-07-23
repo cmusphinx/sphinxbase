@@ -5,8 +5,8 @@
 #if (defined(_WIN32) || defined(_WIN32_WCE))
 #if defined(SPHINXBASE_EXPORTS) /* Visual Studio */
 #define SPHINXBASE_EXPORT __declspec(dllexport)
-#elif defined(SPHINXBASE_DLL) && defined(DLL_EXPORT) /* libtool */
-#define SPHINXBASE_EXPORT __declspec(dllexport)
+#elif defined(__CYGWIN__) /* Disable this on Cygwin, it doesn't work */
+#define SPHINXBASE_EXPORT
 #else
 #define SPHINXBASE_EXPORT __declspec(dllimport)
 #endif
