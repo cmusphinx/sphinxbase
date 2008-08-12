@@ -262,6 +262,7 @@ cont_ad_frame_pow(int16 * buf, int32 * prev, int32 spf)
     sumsq = 0.0;
     p = *prev;
     for (i = 0; i < spf; i++) {
+        /* Note: pre-emphasis done to remove low-frequency noise. */
         v = (double) (buf[i] - p);
         sumsq += v * v;
         p = buf[i];
@@ -420,6 +421,111 @@ find_thresh(cont_ad_t * r)
 
 
 /*
+ * Silence to speech transition
+ */
+static void
+sil2speech_transition(cont_ad_t *r, int frm)
+{
+    spseg_t *seg;
+
+    /* Speech detected; create speech segment description */
+    seg = malloc(sizeof(*seg));
+
+    seg->startfrm = r->win_startfrm - r->leader;
+    if (seg->startfrm < 0)
+        seg->startfrm += CONT_AD_ADFRMSIZE;
+    seg->nfrm = r->leader + r->winsize;
+    seg->next = NULL;
+
+    if (!r->spseg_head)
+        r->spseg_head = seg;
+    else
+        r->spseg_tail->next = seg;
+    r->spseg_tail = seg;
+
+    r->tail_state = CONT_AD_STATE_SPEECH;
+
+    if (r->logfp) {
+        int32 n;
+
+        /* Where (in absolute time) this speech segment starts */
+        n = frm - seg->startfrm;
+        if (n < 0)
+            n += CONT_AD_ADFRMSIZE;
+        n = r->tot_frm - n - 1;
+
+        fprintf(r->logfp,
+                "%7.2fs %8d[%3d]f: Sil -> Sp detect; seg start: %7.2fs %8d\n",
+                (double) (r->tot_frm *
+                          r->spf) /
+                (double) (r->sps),
+                r->tot_frm, frm,
+                (double) (n * r->spf) / (double) (r->sps), n);
+    }
+
+    /* Now in SPEECH state; want to look for silence from end of this window */
+    r->win_validfrm = 1;
+    r->win_startfrm = frm;
+
+    /* Count #sil frames remaining in reduced window (of 1 frame) */
+    r->n_other = (r->frm_pow[frm] <= r->thresh_sil) ? 1 : 0;
+}
+
+/*
+ * Speech to silence transition
+ */
+static void
+speech2sil_transition(cont_ad_t *r, int frm)
+{
+    int f;
+
+    /* End of speech detected; speech->sil transition */
+    r->spseg_tail->nfrm += r->trailer;
+
+    r->tail_state = CONT_AD_STATE_SIL;
+
+    if (r->logfp) {
+        int32 n;
+
+        /* Where (in absolute time) this speech segment ends */
+        n = r->spseg_tail->startfrm + r->spseg_tail->nfrm - 1;
+        if (n >= CONT_AD_ADFRMSIZE)
+            n -= CONT_AD_ADFRMSIZE;
+        n = frm - n;
+        if (n < 0)
+            n += CONT_AD_ADFRMSIZE;
+        n = r->tot_frm - n;
+
+        fprintf(r->logfp,
+                "%7.2fs %8d[%3d]f: Sp -> Sil detect; seg end: %7.2fs %8d\n",
+                (double) (r->tot_frm * r->spf) /
+                (double) (r->sps), r->tot_frm, frm,
+                (double) (n * r->spf) / (double) (r->sps), n);
+    }
+
+    /* Now in SILENCE state; start looking for speech trailer+leader frames later */
+    r->win_validfrm -= (r->trailer + r->leader - 1);
+    r->win_startfrm += (r->trailer + r->leader - 1);
+    if (r->win_startfrm >= CONT_AD_ADFRMSIZE)
+        r->win_startfrm -= CONT_AD_ADFRMSIZE;
+
+    /* Count #speech frames remaining in reduced window */
+    r->n_other = 0;
+    for (f = r->win_startfrm;;) {
+        if (r->frm_pow[f] >= r->thresh_speech)
+            r->n_other++;
+
+        if (f == frm)
+            break;
+
+        f++;
+        if (f >= CONT_AD_ADFRMSIZE)
+            f = 0;
+    }
+}
+
+
+/*
  * Main silence/speech region detection routine.  If currently in
  * SILENCE state, switch to SPEECH state if a window (r->winsize)
  * of frames is mostly non-silence.  If in SPEECH state, switch to
@@ -428,9 +534,6 @@ find_thresh(cont_ad_t * r)
 static void
 boundary_detect(cont_ad_t * r, int32 frm)
 {
-    spseg_t *seg;
-    int32 f;
-
     assert(r->n_other >= 0);
 
     r->win_validfrm++;
@@ -457,97 +560,14 @@ boundary_detect(cont_ad_t * r, int32 frm)
     assert(r->win_validfrm == r->winsize);
 
     if (r->tail_state == CONT_AD_STATE_SIL) {   /* Currently in SILENCE state */
-        if (r->n_frm >= r->winsize + r->leader) {
-            if (r->n_other >= r->speech_onset) {
-                /* Speech detected; create speech segment description */
-                seg = malloc(sizeof(*seg));
-
-                seg->startfrm = r->win_startfrm - r->leader;
-                if (seg->startfrm < 0)
-                    seg->startfrm += CONT_AD_ADFRMSIZE;
-                seg->nfrm = r->leader + r->winsize;
-                seg->next = NULL;
-
-                if (!r->spseg_head)
-                    r->spseg_head = seg;
-                else
-                    r->spseg_tail->next = seg;
-                r->spseg_tail = seg;
-
-                r->tail_state = CONT_AD_STATE_SPEECH;
-
-                if (r->logfp) {
-                    int32 n;
-
-                    /* Where (in absolute time) this speech segment starts */
-                    n = frm - seg->startfrm;
-                    if (n < 0)
-                        n += CONT_AD_ADFRMSIZE;
-                    n = r->tot_frm - n - 1;
-
-                    fprintf(r->logfp,
-                            "%7.2fs %8d[%3d]f: Sil -> Sp detect; seg start: %7.2fs %8d\n",
-                            (double) (r->tot_frm *
-                                      r->spf) /
-                            (double) (r->sps),
-                            r->tot_frm, frm,
-                            (double) (n * r->spf) / (double) (r->sps), n);
-                }
-
-                /* Now in SPEECH state; want to look for silence from end of this window */
-                r->win_validfrm = 1;
-                r->win_startfrm = frm;
-
-                /* Count #sil frames remaining in reduced window (of 1 frame) */
-                r->n_other = (r->frm_pow[frm] <= r->thresh_sil) ? 1 : 0;
-            }
+        if (r->n_frm >= r->winsize + r->leader
+            && r->n_other >= r->speech_onset) {
+            sil2speech_transition(r, frm);
         }
     }
     else {
         if (r->n_other >= r->sil_onset) {
-            /* End of speech detected; speech->sil transition */
-            r->spseg_tail->nfrm += r->trailer;
-
-            r->tail_state = CONT_AD_STATE_SIL;
-
-            if (r->logfp) {
-                int32 n;
-
-                /* Where (in absolute time) this speech segment ends */
-                n = r->spseg_tail->startfrm + r->spseg_tail->nfrm - 1;
-                if (n >= CONT_AD_ADFRMSIZE)
-                    n -= CONT_AD_ADFRMSIZE;
-                n = frm - n;
-                if (n < 0)
-                    n += CONT_AD_ADFRMSIZE;
-                n = r->tot_frm - n;
-
-                fprintf(r->logfp,
-                        "%7.2fs %8d[%3d]f: Sp -> Sil detect; seg end: %7.2fs %8d\n",
-                        (double) (r->tot_frm * r->spf) /
-                        (double) (r->sps), r->tot_frm, frm,
-                        (double) (n * r->spf) / (double) (r->sps), n);
-            }
-
-            /* Now in SILENCE state; start looking for speech trailer+leader frames later */
-            r->win_validfrm -= (r->trailer + r->leader - 1);
-            r->win_startfrm += (r->trailer + r->leader - 1);
-            if (r->win_startfrm >= CONT_AD_ADFRMSIZE)
-                r->win_startfrm -= CONT_AD_ADFRMSIZE;
-
-            /* Count #speech frames remaining in reduced window */
-            r->n_other = 0;
-            for (f = r->win_startfrm;;) {
-                if (r->frm_pow[f] >= r->thresh_speech)
-                    r->n_other++;
-
-                if (f == frm)
-                    break;
-
-                f++;
-                if (f >= CONT_AD_ADFRMSIZE)
-                    f = 0;
-            }
+            speech2sil_transition(r, frm);
         }
         else {
             /* In speech state, and staying there; add this frame to segment */
