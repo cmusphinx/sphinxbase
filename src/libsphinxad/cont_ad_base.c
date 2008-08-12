@@ -373,17 +373,6 @@ find_thresh(cont_ad_t * r)
     old_noise_level = r->noise_level;
     old_thresh_sil = r->thresh_sil;
     old_thresh_speech = r->thresh_speech;
-#if 0
-    if (_ABS(r->noise_level - th) >= 10) {
-        if (th > r->noise_level)
-            r->noise_level += ((th - r->noise_level) / 2);
-        else
-            r->noise_level -= ((r->noise_level - th) / 2);
-    }
-    else {
-        r->noise_level = th;
-    }
-#else
     /*
      * RKM: The above is odd; if (diff >= 10) += diff/2; else += diff??
      * This is discontinuous.  Instead, adapt based on the adapt_rate parameter.
@@ -392,7 +381,6 @@ find_thresh(cont_ad_t * r)
     r->noise_level =
         (int32) (r->noise_level +
                  r->adapt_rate * (th - r->noise_level) + 0.5);
-#endif
 
     /* update thresholds */
     r->thresh_sil = r->noise_level + r->delta_sil;
@@ -717,34 +705,13 @@ buf_copy(cont_ad_t * r, int32 sf, int32 nf, int16 * buf)
         return (sf + nf);
 }
 
-
 /*
- * Main function called by the application to filter out silence regions.
- * Maintains a linked list of speech segments pointing into r->adbuf and feeds
- * data to application from them.
+ * Read as much data as possible from r->adfunc into r->adbuf.
  */
-int32
-cont_ad_read(cont_ad_t * r, int16 * buf, int32 max)
+static int32
+cont_ad_read_internal(cont_ad_t *r, int16 *buf, int32 max)
 {
-    int32 head, tail, tailfrm, flen, len, retval, newstate;
-    int32 i, f, l;
-    spseg_t *seg;
-    int num_to_copy = 0, num_left = max;
-
-    if ((r == NULL) || (buf == NULL))
-        return -1;
-
-    if (max < r->spf) {
-        E_ERROR
-            ("cont_ad_read requires buffer of at least %d samples\n",
-             r->spf);
-        return -1;
-    }
-
-    if (r->logfp) {
-        fprintf(r->logfp, "cont_ad_read(,, %d)\n", max);
-        fflush(r->logfp);
-    }
+    int32 head, tail, len, l;
 
     /*
      * First read as much of raw A/D as possible and available.  adbuf is not
@@ -757,7 +724,7 @@ cont_ad_read(cont_ad_t * r, int16 * buf, int32 max)
     assert((len >= 0) && (len < r->spf));
 
     if ((tail < r->adbufsize) && (!r->eof)) {
-        if (r->adfunc != NULL) {
+        if (r->adfunc) {
             if ((l =
                  (*(r->adfunc)) (r->ad, r->adbuf + tail,
                                  r->adbufsize - tail)) < 0) {
@@ -766,25 +733,17 @@ cont_ad_read(cont_ad_t * r, int16 * buf, int32 max)
             }
         }
         else {
-            /*
-             * RKM(2005/02/01): Why would r->adfunc == NULL?  Where would this object
-             * get its raw data from if r->adfunc == NULL?  Why is data getting copied
-             * into r->adbuf from buf?  Where is this behavior documented?
-             * If max >> num_to_copy, the 2nd memcpy below can have overlapping src and
-             * dst regions, which isn't allowed by memcpy.
-             * This block of code doesn't make sense.
-             */
-            num_to_copy = r->adbufsize - tail;
-            num_left -= num_to_copy;
-            if (num_to_copy > max) {
-                num_to_copy = max;
-                num_left = 0;
+            l = r->adbufsize - tail;
+            if (l > max) {
+                l = max;
+                max = 0;
             }
-            memcpy(r->adbuf + tail, buf, num_to_copy * sizeof(int16));
-            memcpy(buf, buf + num_to_copy, num_left * sizeof(int16));
-            l = num_to_copy;
+            else {
+                max -= l;
+            }
+            memcpy(r->adbuf + tail, buf, l * sizeof(int16));
+            buf += l;
         }
-
         if ((l > 0) && r->rawfp) {
             fwrite(r->adbuf + tail, sizeof(int16), l, r->rawfp);
             fflush(r->rawfp);
@@ -797,7 +756,7 @@ cont_ad_read(cont_ad_t * r, int16 * buf, int32 max)
     if ((tail >= r->adbufsize) && (!r->eof)) {
         tail -= r->adbufsize;
         if (tail < head) {
-            if (r->adfunc != NULL) {
+            if (r->adfunc) {
                 if ((l =
                      (*(r->adfunc)) (r->ad,
                                      r->adbuf + tail, head - tail)) < 0) {
@@ -806,14 +765,11 @@ cont_ad_read(cont_ad_t * r, int16 * buf, int32 max)
                 }
             }
             else {
-                /* RKM(2005/02/01): See comment above */
-                num_to_copy = head - tail;
-                if (num_to_copy > num_left)
-                    num_to_copy = num_left;
-                memcpy(r->adbuf + tail, buf, num_to_copy * sizeof(int16));
-                l = num_to_copy;
+                l = head - tail;
+                if (l > max)
+                    l = max;
+                memcpy(r->adbuf + tail, buf, l * sizeof(int16));
             }
-
             if ((l > 0) && r->rawfp) {
                 fwrite(r->adbuf + tail, sizeof(int16), l, r->rawfp);
                 fflush(r->rawfp);
@@ -825,10 +781,21 @@ cont_ad_read(cont_ad_t * r, int16 * buf, int32 max)
         }
     }
 
-    /* Compute frame power for unprocessed+new data and find speech/silence boundaries */
+    return len;
+}
+
+/*
+ * Classify incoming frames as silence or speech.
+ */
+int32
+cont_ad_classify(cont_ad_t *r, int32 len)
+{
+    int32 tailfrm;
+
     tailfrm = (r->headfrm + r->n_frm);  /* Next free frame slot to be filled */
     if (tailfrm >= CONT_AD_ADFRMSIZE)
         tailfrm -= CONT_AD_ADFRMSIZE;
+
     for (; len >= r->spf; len -= r->spf) {
         compute_frame_pow(r, tailfrm);
         r->n_frm++;
@@ -843,9 +810,9 @@ cont_ad_read(cont_ad_t * r, int16 * buf, int32 max)
         if (++tailfrm >= CONT_AD_ADFRMSIZE)
             tailfrm = 0;
 
-        /* RKM: 2004-06-23: Moved this block from outside the enclosing loop */
         /* Update thresholds if time to do so */
         if (r->thresh_update <= 0) {
+            int32 i, f;
             find_thresh(r);
             decay_hist(r);
             r->thresh_update = CONT_AD_THRESH_UPDATE;
@@ -879,6 +846,40 @@ cont_ad_read(cont_ad_t * r, int16 * buf, int32 max)
 #endif
         }
     }
+}
+
+/*
+ * Main function called by the application to filter out silence regions.
+ * Maintains a linked list of speech segments pointing into r->adbuf and feeds
+ * data to application from them.
+ */
+int32
+cont_ad_read(cont_ad_t * r, int16 * buf, int32 max)
+{
+    int32 flen, len, retval, newstate;
+    int32 i, f;
+    spseg_t *seg;
+
+    if ((r == NULL) || (buf == NULL))
+        return -1;
+
+    if (max < r->spf) {
+        E_ERROR
+            ("cont_ad_read requires buffer of at least %d samples\n",
+             r->spf);
+        return -1;
+    }
+
+    if (r->logfp) {
+        fprintf(r->logfp, "cont_ad_read(,, %d)\n", max);
+        fflush(r->logfp);
+    }
+
+    /* Read data from adfunc or from buf. */
+    len = cont_ad_read_internal(r, buf, max);
+
+    /* Compute frame power for unprocessed+new data and find speech/silence boundaries */
+    cont_ad_classify(r, len);
 
     /*
      * If eof on input data source, cleanup the final segment.
