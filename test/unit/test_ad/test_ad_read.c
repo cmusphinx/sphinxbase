@@ -1,3 +1,4 @@
+/* -*- c-basic-offset: 4 -*- */
 #include "config.h"
 #include "ad.h"
 #include "cont_ad.h"
@@ -44,9 +45,9 @@ main(int argc, char *argv[])
     printf("Calibrating ...");
     fflush(stdout);
     if (cont_ad_calib(cont) < 0)
-	printf(" failed; file too short?\n");
+	    printf(" failed; file too short?\n");
     else
-	printf(" done after %ld samples\n", ftell(infp));
+	    printf(" done after %ld samples\n", ftell(infp) / 2);
     rewind(infp);
 
     listening = FALSE;
@@ -78,6 +79,7 @@ main(int argc, char *argv[])
 	}
     }
 
+    cont_ad_close(cont);
     fclose(infp);
     return 0;
 }

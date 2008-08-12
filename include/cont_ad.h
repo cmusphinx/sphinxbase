@@ -231,14 +231,23 @@ typedef struct {
 			   progress to the file.  Controlled by user application
 			   via cont_ad_set_logfp().  NULL when cont_ad object is
 			   initially created. */
+
+    int32 n_calib_frame; /**< Number of frames of calibration data seen so far. */
 } cont_ad_t;
 
 
 /**
  * Initialize a continuous listening/silence filtering object.
  *
- * One time initialization of a continuous listening/silence filtering object/module.
+ * One time initialization of a continuous listening/silence filtering
+ * object/module.  This can work in either "stream mode", where it
+ * reads data from an audio device represented by
+ * <code>ad_rec_t</code>, or in "block mode", where it filters out
+ * silence regions from blocks of data passed into it.
  *
+ * @param ad An audio device to read from, or NULL to operate in block mode.
+ * @param adfunc The function used to read audio from <code>ad</code>,
+ * or NULL to operate in block mode.  This is usually ad_read().
  * @return A pointer to a READ-ONLY structure used in other calls to
  * the object.  If any error occurs, the return value is NULL.
  */
@@ -266,6 +275,15 @@ cont_ad_t *cont_ad_init_rawmode (ad_rec_t *ad,
  *
  * The main read routine for reading speech/silence segmented audio data.  Audio
  * data is copied into the caller provided buffer, much like a file read routine.
+ *
+ * In "block mode", i.e. if NULL was passed as a read function to
+ * <code>cont_ad_init</code>, the data in <code>buf</code> is taken as
+ * input, and any non-silence data is written back to <code>buf</code>
+ * on exit.  In this case, you must take care that <code>max</code>
+ * does not overflow the internal buffer of the silence filter.  The
+ * available number of samples can be obtained by calling
+ * cont_ad_buffer_space().  Any excess data will be discarded.
+ *
  * In normal mode, only speech segments are copied; silence segments are dropped.
  * In rawmode (cont_ad module initialized using cont_ad_init_rawmode()), all data
  * are passed through to the caller.  But, in either case, any single call to
@@ -282,7 +300,8 @@ cont_ad_t *cont_ad_init_rawmode (ad_rec_t *ad,
  */
 SPHINXBASE_EXPORT
 int32 cont_ad_read (cont_ad_t *r,	/**< In: Object pointer returned by cont_ad_init */
-		    int16 *buf,		/**< Out: On return, buf contains A/D data returned
+		    int16 *buf,		/**< In/Out: In block mode, contains input data.
+                                           On return, buf contains A/D data returned
 					   by this function, if any. */
 		    int32 max		/**< In: Maximum number of samples to be filled into buf.
 					   NOTE: max must be at least 256; otherwise
@@ -290,7 +309,13 @@ int32 cont_ad_read (cont_ad_t *r,	/**< In: Object pointer returned by cont_ad_in
 	);
 
 /**
- * Calibrate the silence filte.r
+ * Get the maximum number of samples which can be passed into cont_ad_read().
+ */
+SPHINXBASE_EXPORT
+int32 cont_ad_buffer_space(cont_ad_t *r);
+
+/**
+ * Calibrate the silence filter.
  *
  * Calibration to determine an initial silence threshold.  This function can be called
  * any number of times.  It should be called at least once immediately after cont_ad_init.
@@ -319,7 +344,19 @@ int32 cont_ad_calib (cont_ad_t *cont	/**< In: object pointer returned by cont_ad
 SPHINXBASE_EXPORT
 int32 cont_ad_calib_loop (cont_ad_t *r, int16 *buf, int32 max); 
 
-
+/**
+ * Get the number of samples required to calibrate the silence filter.
+ *
+ * Since, as mentioned above, the calibration data is assumed to be
+ * fully consumed, it may be desirable to "hold onto" this data in
+ * case it contains useful speech.  This function returns the number
+ * of samples required to calibrate the silence filter, which is
+ * useful in allocating a buffer to store this data.
+ *
+ * @return Number of samples required for successful calibration.
+ */
+SPHINXBASE_EXPORT
+int32 cont_ad_calib_size(cont_ad_t *r);
 
 /**
  * Set silence and speech threshold parameters.

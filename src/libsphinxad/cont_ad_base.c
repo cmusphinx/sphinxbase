@@ -183,6 +183,8 @@
 #define CONT_AD_POWHISTSIZE	98      /* #Powhist bins: ~ FRMPOW(65536^2*CONT_AD_SPF) */
 /* Maximum level is 96.3 dB full-scale; 97 for safety, plus 1 for zero-based */
 
+#define CONT_AD_CALIB_FRAMES	(CONT_AD_POWHISTSIZE * 2)
+
 #define CONT_AD_THRESH_UPDATE	100     /* Update thresholds approx every so many frames */
         /* PWP: update was 200 frames, or 3.2 seconds.  Now about every 1.6 sec. */
 
@@ -373,10 +375,6 @@ find_thresh(cont_ad_t * r)
     old_noise_level = r->noise_level;
     old_thresh_sil = r->thresh_sil;
     old_thresh_speech = r->thresh_speech;
-    /*
-     * RKM: The above is odd; if (diff >= 10) += diff/2; else += diff??
-     * This is discontinuous.  Instead, adapt based on the adapt_rate parameter.
-     */
     /* r->noise_level = (int32) (th * r->adapt_rate + r->noise_level * (1.0 - r->adapt_rate)); */
     r->noise_level =
         (int32) (r->noise_level +
@@ -705,6 +703,12 @@ buf_copy(cont_ad_t * r, int32 sf, int32 nf, int16 * buf)
         return (sf + nf);
 }
 
+int32
+cont_ad_buffer_space(cont_ad_t *r)
+{
+    return r->adbufsize - r->n_sample;
+}
+
 /*
  * Read as much data as possible from r->adfunc into r->adbuf.
  */
@@ -846,6 +850,8 @@ cont_ad_classify(cont_ad_t *r, int32 len)
 #endif
         }
     }
+
+    return r->tail_state;
 }
 
 /*
@@ -857,7 +863,6 @@ int32
 cont_ad_read(cont_ad_t * r, int16 * buf, int32 max)
 {
     int32 flen, len, retval, newstate;
-    int32 i, f;
     spseg_t *seg;
 
     if ((r == NULL) || (buf == NULL))
@@ -937,7 +942,7 @@ cont_ad_read(cont_ad_t * r, int16 * buf, int32 max)
 
         if (r->rawmode) {
             /* Restrict silence segment to user buffer size, integral #frames */
-            f = max / r->spf;
+            int32 f = max / r->spf;
             if (flen > f)
                 flen = f;
         }
@@ -1015,7 +1020,7 @@ cont_ad_read(cont_ad_t * r, int16 * buf, int32 max)
 int32
 cont_ad_calib(cont_ad_t * r)
 {
-    int32 i, f, s, k, len, tailfrm;
+    int32 i, s, k, len, tailfrm;
 
     if (r == NULL)
         return -1;
@@ -1028,7 +1033,9 @@ cont_ad_calib(cont_ad_t * r)
         tailfrm -= CONT_AD_ADFRMSIZE;
     s = (tailfrm * r->spf);
 
-    for (f = 0; f < (CONT_AD_POWHISTSIZE << 1); f++) {
+    for (r->n_calib_frame = 0;
+         r->n_calib_frame < CONT_AD_CALIB_FRAMES;
+         ++r->n_calib_frame) {
         len = r->spf;
         while (len > 0) {
             /*Trouble */
@@ -1043,26 +1050,27 @@ cont_ad_calib(cont_ad_t * r)
     }
 
     r->thresh_update = CONT_AD_THRESH_UPDATE;
-
-    return (find_thresh(r));
+    return find_thresh(r);
 }
 
+int32
+cont_ad_calib_size(cont_ad_t *r)
+{
+    return r->spf * CONT_AD_CALIB_FRAMES;
+}
 
 int32
 cont_ad_calib_loop(cont_ad_t * r, int16 * buf, int32 max)
 {
     int32 i, s, len, tailfrm;
-    static int32 finished = 1;
-    static int32 f = 0;
 
-    if (finished) {
-        finished = 0;
-        f = 0;
-
+    if (r->n_calib_frame == CONT_AD_CALIB_FRAMES) {
+        /* If calibration previously succeeded, then this is a
+         * recalibration, so start again. */
+        r->n_calib_frame = 0;
         /* clear histogram */
         for (i = 0; i < CONT_AD_POWHISTSIZE; i++)
             r->pow_hist[i] = 0;
-
     }
 
     tailfrm = r->headfrm + r->n_frm;
@@ -1071,18 +1079,18 @@ cont_ad_calib_loop(cont_ad_t * r, int16 * buf, int32 max)
     s = (tailfrm * r->spf);
 
     len = r->spf;
-    for (; f < (CONT_AD_POWHISTSIZE << 1); f++) {
+    for (; r->n_calib_frame < CONT_AD_CALIB_FRAMES;
+         ++r->n_calib_frame) {
         if (max < len)
             return 1;
         memcpy(r->adbuf + s, buf, len * sizeof(int16));
         max -= len;
-        memcpy(buf, buf + len, max * sizeof(int16));
-
+        buf += len;
         compute_frame_pow(r, tailfrm);
     }
 
-    finished = 1;
-    return (find_thresh(r));
+    r->thresh_update = CONT_AD_THRESH_UPDATE;
+    return find_thresh(r);
 }
 
 
@@ -1437,6 +1445,8 @@ cont_ad_init(ad_rec_t * a, int32(*func) (ad_rec_t *, int16 *, int32))
 
     r->rawfp = NULL;
     r->logfp = NULL;
+
+    r->n_calib_frame = 0;
 
     cont_ad_reset(r);
 

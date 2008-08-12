@@ -1,6 +1,8 @@
+/* -*- c-basic-offset: 4 -*- */
 #include "config.h"
 #include "ad.h"
 #include "cont_ad.h"
+#include "ckd_alloc.h"
 #include "byteorder.h"
 #include "test_macros.h"
 
@@ -17,30 +19,40 @@ main(int argc, char *argv[])
     FILE *infp;
     int16 buf[512];
     int listening;
-    int k;
+    int k, n_calib_samp;
+    int16 *calib, *cptr;
 
     TEST_ASSERT(infp = fopen(DATADIR "/chan3.raw", "rb"));
     TEST_ASSERT(cont = cont_ad_init(NULL, NULL));
 
-    printf("Calibrating ...");
-    fflush(stdout);
-    while ((k = fread(buf, 2, 512, infp)) > 0) {
-	int rv = cont_ad_calib_loop(cont, buf, k);
-	if (rv < 0)
-	    printf(" failed; file too short?\n");
-	else if (rv == 0) {
-	    printf(" done after %ld samples\n", ftell(infp));
-	    break;
-	}
-    }
-    rewind(infp);
+    n_calib_samp = cont_ad_calib_size(cont);
+    calib = ckd_malloc(n_calib_samp * 2);
+    printf("Reading %d calibration samples\n", n_calib_samp);
+    TEST_ASSERT(fread(calib, 2, n_calib_samp, infp) == n_calib_samp);
+    printf("Calibrating...\n");
+    TEST_EQUAL(0, cont_ad_calib_loop(cont, calib, n_calib_samp));
+    printf("Calibrated!\n");
 
     listening = FALSE;
+    cptr = calib;
     while (1) {
-	k = fread(buf, 2, 512, infp);
+	/* Use up the calibration samples first. */
+	if (n_calib_samp) {
+	    k = n_calib_samp;
+	    if (k > 512)
+		k = 512;
+	    memcpy(buf, cptr, 512 * 2);
+	    cptr += k;
+	    n_calib_samp -= k;
+	    if (k < 512)
+		k = fread(buf + k, 2, 512-k, infp);
+	}
+	else {
+	    k = fread(buf, 2, 512, infp);
+	}
 
 	/* End of file. */
-	if (k < 256) {
+	if (k < 256) { /* FIXME: It should do something useful with fewer samples. */
 	    if (listening) {
 		printf("End of file at %.3f seconds\n",
 		       (double)(cont->read_ts - k) / 16000);
@@ -67,6 +79,8 @@ main(int argc, char *argv[])
 	}
     }
 
+    ckd_free(calib);
+    cont_ad_close(cont);
     fclose(infp);
     return 0;
 }
