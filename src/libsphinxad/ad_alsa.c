@@ -219,12 +219,14 @@ setlevels(const char *dev)
         fprintf(stderr, "Warning: Could not find Mic element\n");
     }
     else {
-        if ((err = snd_mixer_selem_set_capture_switch_all(elem, 1)) < 0) {
-            fprintf(stderr,
-                    "Failed to enable microphone capture: %s\n",
-                    snd_strerror(err));
-            snd_mixer_close(handle);
-            return -1;
+	if (snd_mixer_selem_has_capture_switch(elem)) {
+            if ((err = snd_mixer_selem_set_capture_switch_all(elem, 1)) < 0) { 
+                fprintf(stderr,
+                	"Failed to enable microphone capture: %s\n",
+            	        snd_strerror(err));
+        	snd_mixer_close(handle); 
+        	return -1;
+    	    }
         }
     }
     snd_mixer_selem_id_set_name(sid, "Capture");
@@ -232,12 +234,14 @@ setlevels(const char *dev)
         fprintf(stderr, "Warning: Could not find Capture element\n");
     }
     else {
-        if ((err = snd_mixer_selem_set_capture_switch_all(elem, 1)) < 0) {
-            fprintf(stderr,
-                    "Failed to enable microphone capture: %s\n",
-                    snd_strerror(err));
-            snd_mixer_close(handle);
-            return -1;
+	if (snd_mixer_selem_has_capture_switch(elem)) {
+	    if ((err = snd_mixer_selem_set_capture_switch_all(elem, 1)) < 0) {
+        	fprintf(stderr,
+                	"Failed to enable microphone capture: %s\n",
+                	snd_strerror(err));
+        	snd_mixer_close(handle);
+        	return -1;
+    	    }
         }
     }
 
