@@ -203,12 +203,12 @@ extern "C" {
     ARG_STRING, \
     DEFAULT_WARP_TYPE, \
     "Warping function type (or shape)" }, \
- \
+   \
   { "-warp_params", \
     ARG_STRING, \
     NULL, \
     "Parameters defining the warping function" }, \
- \
+   \
   { "-dither", \
     ARG_BOOLEAN, \
     "no", \
@@ -218,7 +218,7 @@ extern "C" {
     ARG_INT32, \
     ARG_STRINGIFY(SEED), \
     "Seed for random number generator; if less than zero, pick our own" }, \
- \
+   \
   { "-remove_dc", \
     ARG_BOOLEAN, \
     "no", \
@@ -529,8 +529,8 @@ int fe_float_to_mfcc(fe_t *fe,
  **/
 SPHINXBASE_EXPORT
 int fe_logspec_to_mfcc(fe_t *fe,  /**< A fe structure */
-			 const mfcc_t *fr_spec, /**< One frame of spectrum */
-			 mfcc_t *fr_cep /**< One frame of cepstrum */
+                       const mfcc_t *fr_spec, /**< One frame of spectrum */
+                       mfcc_t *fr_cep /**< One frame of cepstrum */
         );
 
 /**
@@ -543,8 +543,8 @@ int fe_logspec_to_mfcc(fe_t *fe,  /**< A fe structure */
  **/
 SPHINXBASE_EXPORT
 int fe_logspec_dct2(fe_t *fe,  /**< A fe structure */
-		      const mfcc_t *fr_spec, /**< One frame of spectrum */
-		      mfcc_t *fr_cep /**< One frame of cepstrum */
+                    const mfcc_t *fr_spec, /**< One frame of spectrum */
+                    mfcc_t *fr_cep /**< One frame of cepstrum */
         );
 
 /**

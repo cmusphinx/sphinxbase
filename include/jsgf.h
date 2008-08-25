@@ -45,11 +45,11 @@
  * into Sphinx finite-state grammars.
  **/
 
+#include <stdio.h>
+
 /* Win32/WinCE DLL gunk */
 #include <sphinxbase_export.h>
 #include <hash_table.h>
-#include <glist.h>
-#include <stdio.h>
 #include <fsg_model.h>
 #include <logmath.h>
 

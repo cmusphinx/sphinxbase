@@ -55,7 +55,6 @@
 #include <prim_type.h>
 #include <glist.h>
 #include <logmath.h>
-#include <hash_table.h>
 #include <bitvec.h>
 #include <listelem_alloc.h>
 #include <sphinxbase_export.h>

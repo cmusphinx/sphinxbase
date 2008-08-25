@@ -82,6 +82,7 @@
 /* Win32/WinCE DLL gunk */
 #include <sphinxbase_export.h>
 #include <prim_type.h>
+#include <ad.h>
 
 /**
  * \file cont_ad.h

@@ -135,6 +135,7 @@
 #include "err.h"
 #include "ckd_alloc.h"
 #include "prim_type.h"
+#include "glist.h"
 
 #define FEAT_VERSION	"1.0"
 #define FEAT_DCEP_WIN		2
