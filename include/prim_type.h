@@ -144,6 +144,10 @@ typedef double          uint64;
 #define NULL (void *)0
 #endif
 
+#ifndef M_PI
+#define M_PI (3.14159265358979323846)
+#endif
+
 /* These really ought to come from <limits.h>, but not everybody has that. */
 /* Useful constants */
 #define MAX_INT32		((int32) 0x7fffffff)

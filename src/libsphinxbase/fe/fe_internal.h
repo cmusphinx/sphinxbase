@@ -71,10 +71,6 @@ typedef float64 window_t;
 typedef struct { float64 r, i; } complex;
 #endif /* FIXED_POINT */
 
-#ifndef	M_PI
-#define M_PI	(3.14159265358979323846)
-#endif	/* M_PI */
-
 /* Values for the 'logspec' field. */
 enum {
 	RAW_LOG_SPEC = 1,
