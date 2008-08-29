@@ -6,7 +6,8 @@ if USE_THREADS
 maybe_threads = test_thread
 endif
 
-SUBDIRS=test_alloc				\
+SUBDIRS=test_ad					\
+	test_alloc				\
 	test_bitvec				\
 	test_case				\
 	test_string				\
