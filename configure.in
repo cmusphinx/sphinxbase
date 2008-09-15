@@ -38,7 +38,7 @@ AC_TYPE_SIGNAL
 AC_CHECK_TYPES(long long)
 AC_CHECK_SIZEOF(long long)
 AC_CHECK_SIZEOF(long)
-AC_CHECK_FUNCS([popen perror])
+AC_CHECK_FUNCS([popen perror snprintf])
 AC_CHECK_HEADER(errno.h)
 AM_ICONV
 
