@@ -485,6 +485,7 @@ feat_s2mfc_read(char *file, int32 win,
 #endif
         if (fread_retry(float_feat, sizeof(float32), n_float32, fp) != n_float32) {
             E_ERROR("%s: fread(%dx%d) (MFC data) failed\n", file, n, cepsize);
+            ckd_free_2d(mfc);
             fclose(fp);
             return -1;
         }
@@ -993,13 +994,17 @@ feat_init(char const *type, cmn_type_t cmn, int32 varnorm,
         agc_emax_set(fcb->agc_struct, (cmn != CMN_NONE) ? 5.0 : 10.0);
     }
     fcb->agc = agc;
-    fcb->cepbuf = (mfcc_t **) ckd_calloc_2d(LIVEBUFBLOCKSIZE,
+    /*
+     * Make sure this buffer is large enough to be used in feat_s2mfc2feat_block_utt()
+     */
+    fcb->cepbuf = (mfcc_t **) ckd_calloc_2d((LIVEBUFBLOCKSIZE < feat_window_size(fcb) * 2) ? feat_window_size(fcb) * 2 : LIVEBUFBLOCKSIZE,
                                             feat_cepsize(fcb),
                                             sizeof(mfcc_t));
     /* This one is actually just an array of pointers to "flatten out"
      * wraparounds. */
     fcb->tmpcepbuf = ckd_calloc(2 * feat_window_size(fcb) + 1,
                                 sizeof(*fcb->tmpcepbuf));
+
     return fcb;
 }
 
@@ -1193,19 +1198,13 @@ feat_s2mfc2feat_block_utt(feat_t * fcb, mfcc_t ** uttcep,
     cepbuf = ckd_calloc(nfr + win * 2, sizeof(mfcc_t *));
     memcpy(cepbuf + win, uttcep, nfr * sizeof(mfcc_t *));
     for (i = 0; i < win; ++i) {
-        cepbuf[i] = ckd_calloc(cepsize, sizeof(mfcc_t));
+        cepbuf[i] = fcb->cepbuf[i];
         memcpy(cepbuf[i], uttcep[0], cepsize * sizeof(mfcc_t));
-        cepbuf[nfr + win + i] = ckd_calloc(cepsize, sizeof(mfcc_t));
+        cepbuf[nfr + win + i] = fcb->cepbuf[win + i];
         memcpy(cepbuf[nfr + win + i], uttcep[nfr - 1], cepsize * sizeof(mfcc_t));
     }
     /* Compute as usual. */
     feat_compute_utt(fcb, cepbuf, nfr + win * 2, win, ofeat);
-    /* Free arrays of pointers. */
-    for (i = 0; i < win; ++i) {
-        ckd_free(cepbuf[i]);
-        ckd_free(cepbuf[nfr + win + i]);
-    }
-    ckd_free(cepbuf);
     return nfr;
 }
 
