@@ -989,6 +989,7 @@ cont_ad_read(cont_ad_t * r, int16 * buf, int32 max)
 
     if (newstate == CONT_AD_STATE_SPEECH) {
         seg->startfrm = r->headfrm;
+        assert(seg->startfrm >= 0);
         seg->nfrm -= flen;
 
         /* Free seg if empty and not recording into it */
