@@ -74,6 +74,7 @@ main(int argc, char *argv[])
         return 1;
     }
     write_fsg(jsgf, argc > 2 ? argv[2] : NULL);
+    jsgf_grammar_free(jsgf);
 
     return 0;
 }

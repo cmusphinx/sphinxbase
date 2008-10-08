@@ -186,7 +186,7 @@ jsgf_kleene_new(jsgf_t *jsgf, jsgf_atom_t *atom, int plus)
     rhs->atoms = glist_add_ptr(rhs->atoms, atom);
     rule->rhs->alt = rhs;
 
-    return rule_atom;
+    return jsgf_atom_new(rule->name, 1.0);
 }
 
 jsgf_rule_t *
