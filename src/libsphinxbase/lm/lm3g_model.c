@@ -58,6 +58,8 @@ lm3g_tginfo_free(ngram_model_t *base, lm3g_model_t *lm3g)
 void
 lm3g_tginfo_reset(ngram_model_t *base, lm3g_model_t *lm3g)
 {
+    if (lm3g->tginfo == NULL)
+        return;
     listelem_alloc_free(lm3g->le);
     memset(lm3g->tginfo, 0, base->n_1g_alloc * sizeof(tginfo_t *));
     lm3g->le = listelem_alloc_init(sizeof(tginfo_t));
