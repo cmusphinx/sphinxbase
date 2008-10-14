@@ -1234,6 +1234,7 @@ feat_s2mfc2feat_block_utt(feat_t * fcb, mfcc_t ** uttcep,
     }
     /* Compute as usual. */
     feat_compute_utt(fcb, cepbuf, nfr + win * 2, win, ofeat);
+    ckd_free(cepbuf);
     return nfr;
 }
 
