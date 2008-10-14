@@ -596,6 +596,16 @@ int32 ngram_model_set_current_wid(ngram_model_t *set,
 SPHINXBASE_EXPORT
 int32 ngram_model_set_known_wid(ngram_model_t *set, int32 set_wid);
 
+/**
+ * Flush any cached N-Gram information 
+ *
+ * Some types of models cache trigram or other N-Gram information to
+ * speed repeated access to N-Grams with shared histories.  This
+ * function flushes the cache so as to avoid dynamic memory leaks.
+ */
+SPHINXBASE_EXPORT
+void ngram_model_flush(ngram_model_t *lm);
+
 #ifdef __cplusplus
 }
 #endif

@@ -207,6 +207,14 @@ ngram_model_retain(ngram_model_t *model)
     return model;
 }
 
+
+void
+ngram_model_flush(ngram_model_t *model)
+{
+    if (model->funcs && model->funcs->flush)
+        (*model->funcs->flush)(model);
+}
+
 int
 ngram_model_free(ngram_model_t *model)
 {

@@ -49,43 +49,18 @@
 void
 lm3g_tginfo_free(ngram_model_t *base, lm3g_model_t *lm3g)
 {
-        int32 u;
 	if (lm3g->tginfo == NULL)
 		return;
-        for (u = 0; u < base->n_counts[0]; u++) {
-		tginfo_t *t, *next_t;
-		for (t = lm3g->tginfo[u]; t; t = next_t) {
-			next_t = t->next;
-			listelem_free(lm3g->le, t);
-		}
-        }
+        listelem_alloc_free(lm3g->le);
         ckd_free(lm3g->tginfo);
 }
 
 void
 lm3g_tginfo_reset(ngram_model_t *base, lm3g_model_t *lm3g)
 {
-    int32 i;
-    tginfo_t *t, *next_t, *prev_t;
-
-    for (i = 0; i < base->n_counts[0]; i++) {
-        prev_t = NULL;
-        for (t = lm3g->tginfo[i]; t; t = next_t) {
-            next_t = t->next;
-
-            if (!t->used) {
-                listelem_free(lm3g->le, (void *) t);
-                if (prev_t)
-                    prev_t->next = next_t;
-                else
-                    lm3g->tginfo[i] = next_t;
-            }
-            else {
-                t->used = 0;
-                prev_t = t;
-            }
-        }
-    }
+    listelem_alloc_free(lm3g->le);
+    memset(lm3g->tginfo, 0, base->n_1g_alloc * sizeof(tginfo_t *));
+    lm3g->le = listelem_alloc_init(sizeof(tginfo_t));
 }
 
 void

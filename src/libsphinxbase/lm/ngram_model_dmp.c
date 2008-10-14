@@ -735,7 +735,13 @@ ngram_model_dmp_free(ngram_model_t *base)
     }
 
     lm3g_tginfo_free(base, &model->lm3g);
-    listelem_alloc_free(model->lm3g.le);
+}
+
+static void
+ngram_model_dmp_flush(ngram_model_t *base)
+{
+    ngram_model_dmp_t *model = (ngram_model_dmp_t *)base;
+    lm3g_tginfo_reset(base, &model->lm3g);
 }
 
 static ngram_funcs_t ngram_model_dmp_funcs = {
@@ -743,5 +749,6 @@ static ngram_funcs_t ngram_model_dmp_funcs = {
     ngram_model_dmp_apply_weights, /* apply_weights */
     ngram_model_dmp_score,         /* score */
     ngram_model_dmp_raw_score,     /* raw_score */
-    ngram_model_dmp_add_ug         /* add_ug */
+    ngram_model_dmp_add_ug,        /* add_ug */
+    ngram_model_dmp_flush          /* flush */
 };

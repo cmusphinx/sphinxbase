@@ -849,10 +849,21 @@ ngram_model_set_free(ngram_model_t *base)
     ckd_free_2d((void **)set->widmap);
 }
 
+static void
+ngram_model_set_flush(ngram_model_t *base)
+{
+    ngram_model_set_t *set = (ngram_model_set_t *)base;
+    int32 i;
+
+    for (i = 0; i < set->n_models; ++i)
+        ngram_model_flush(set->lms[i]);
+}
+
 static ngram_funcs_t ngram_model_set_funcs = {
     ngram_model_set_free,          /* free */
     ngram_model_set_apply_weights, /* apply_weights */
     ngram_model_set_score,         /* score */
     ngram_model_set_raw_score,     /* raw_score */
-    ngram_model_set_add_ug         /* add_ug */
+    ngram_model_set_add_ug,        /* add_ug */
+    ngram_model_set_flush          /* flush */
 };
