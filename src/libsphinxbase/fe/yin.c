@@ -113,6 +113,8 @@ cmn_diff(int16 const *signal, int32 *out_diff, int ndiff)
             cum >>= 1;
             ++cshift;
         }
+        /* Avoid divide-by-zero! */
+        if (cum == 0) cum = 1;
         /* Calculate the normalizer in high precision. */
         norm = (t << tscale) / cum;
         /* Do a long multiply and shift down to Q15. */
