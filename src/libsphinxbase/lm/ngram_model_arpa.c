@@ -880,7 +880,6 @@ ngram_model_arpa_free(ngram_model_t *base)
     ckd_free(model->lm3g.bo_wt2);
     ckd_free(model->lm3g.prob3);
     lm3g_tginfo_free(base, &model->lm3g);
-    listelem_alloc_free(model->lm3g.le);
     ckd_free(model->lm3g.tseg_base);
 }
 
