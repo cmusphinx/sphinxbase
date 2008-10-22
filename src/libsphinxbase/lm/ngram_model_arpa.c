@@ -618,8 +618,7 @@ ngram_model_arpa_read(cmd_ln_t *config,
         free_sorted_list(&model->sorted_prob3);
 
         /* Initialize tginfo */
-        model->lm3g.tginfo =
-            ckd_calloc(base->n_1g_alloc, sizeof(tginfo_t *));
+        model->lm3g.tginfo = ckd_calloc(n_unigram, sizeof(tginfo_t *));
         model->lm3g.le = listelem_alloc_init(sizeof(tginfo_t));
     }
 

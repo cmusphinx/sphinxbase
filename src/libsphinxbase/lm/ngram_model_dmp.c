@@ -312,8 +312,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
         }
         E_INFO("%8d = LM.trigrams read\n", n_trigram);
         /* Initialize tginfo */
-        model->lm3g.tginfo =
-            ckd_calloc(base->n_1g_alloc, sizeof(tginfo_t *));
+        model->lm3g.tginfo = ckd_calloc(n_unigram, sizeof(tginfo_t *));
         model->lm3g.le = listelem_alloc_init(sizeof(tginfo_t));
     }
 

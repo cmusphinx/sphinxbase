@@ -45,6 +45,7 @@
 #include "ckd_alloc.h"
 
 #include <string.h>
+#include <assert.h>
 
 void
 lm3g_tginfo_free(ngram_model_t *base, lm3g_model_t *lm3g)
@@ -61,7 +62,7 @@ lm3g_tginfo_reset(ngram_model_t *base, lm3g_model_t *lm3g)
     if (lm3g->tginfo == NULL)
         return;
     listelem_alloc_free(lm3g->le);
-    memset(lm3g->tginfo, 0, base->n_1g_alloc * sizeof(tginfo_t *));
+    memset(lm3g->tginfo, 0, base->n_counts[0] * sizeof(tginfo_t *));
     lm3g->le = listelem_alloc_init(sizeof(tginfo_t));
 }
 
@@ -133,14 +134,19 @@ lm3g_add_ug(ngram_model_t *base,
 {
     int32 score;
 
-    /* Reallocate unigrams. */
+    /* This would be very bad if this happened! */
+    assert(!NGRAM_IS_CLASSWID(wid));
+
+    /* Reallocate unigram array. */
     lm3g->unigrams = ckd_realloc(lm3g->unigrams,
                                  sizeof(*lm3g->unigrams) * base->n_1g_alloc);
-    memset(lm3g->unigrams + wid, 0, (base->n_1g_alloc - wid) * sizeof(*lm3g->unigrams));
-    /* Reallocate tginfo. */
+    memset(lm3g->unigrams + base->n_counts[0], 0,
+           (base->n_1g_alloc - base->n_counts[0]) * sizeof(*lm3g->unigrams));
+    /* Reallocate tginfo array. */
     lm3g->tginfo = ckd_realloc(lm3g->tginfo,
                                sizeof(*lm3g->tginfo) * base->n_1g_alloc);
-    memset(lm3g->tginfo + wid, 0, (base->n_1g_alloc - wid) * sizeof(*lm3g->tginfo));
+    memset(lm3g->tginfo + base->n_counts[0], 0,
+           (base->n_1g_alloc - base->n_counts[0]) * sizeof(*lm3g->tginfo));
     /* FIXME: we really ought to update base->log_uniform *and*
      * renormalize all the other unigrams.  This is really slow, so I
      * will probably just provide a function to renormalize after
@@ -156,5 +162,12 @@ lm3g_add_ug(ngram_model_t *base,
     lm3g->unigrams[wid].bigrams = 0;
     /* Finally, increase the unigram count */
     ++base->n_counts[0];
+    /* FIXME: Note that this can actually be quite bogus due to the
+     * presence of class words.  If wid falls outside the unigram
+     * count, increase it to compensate, at the cost of no longer
+     * really knowing how many unigrams we have :( */
+    if (wid >= base->n_counts[0])
+        base->n_counts[0] = wid + 1;
+
     return score;
 }
