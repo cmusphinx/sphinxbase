@@ -60,7 +60,8 @@
 #include "fe_warp.h"
 
 static const arg_t fe_args[] = {
-    waveform_to_cepstral_command_line_macro()
+    waveform_to_cepstral_command_line_macro(),
+    { NULL, 0, NULL, NULL }
 };
 
 int
