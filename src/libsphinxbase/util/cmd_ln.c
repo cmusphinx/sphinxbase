@@ -335,10 +335,9 @@ cmd_ln_appl_enter(int argc, char *argv[],
         /* Build command line argument list from file */
         E_INFO("Parsing command lines from file %s\n", str);
         if (cmd_ln_parse_file(defn, str, TRUE)) {
-            fprintf(stderr, "Usage:\n");
-            fprintf(stderr, "\t%s argument-list, or\n", argv[0]);
-            fprintf(stderr,
-                    "\t%s [argument-file] (default file: . %s)\n\n",
+            E_INFOCONT("Usage:\n");
+            E_INFOCONT("\t%s argument-list, or\n", argv[0]);
+            E_INFOCONT("\t%s [argument-file] (default file: . %s)\n\n",
                     argv[0], default_argfn);
             cmd_ln_print_help(stderr, defn);
             exit(1);
@@ -365,6 +364,8 @@ arg_dump_r(cmd_ln_t *cmdln, FILE * fp, const arg_t * defn, int32 doc)
 
     /* No definitions, do nothing. */
     if (defn == NULL)
+        return;
+    if (fp == NULL)
         return;
 
     /* Find max lengths of name and default value fields, and #entries in defn */
@@ -459,10 +460,10 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
     E_INFO("Parsing command line:\n");
     for (i = 0; i < argc; i++) {
         if (argv[i][0] == '-')
-            fprintf(stderr, "\\\n\t");
-        fprintf(stderr, "%s ", argv[i]);
+            E_INFOCONT("\\\n\t");
+        E_INFOCONT("%s ", argv[i]);
     }
-    fprintf(stderr, "\n\n");
+    E_INFOCONT("\n\n");
     fflush(stderr);
 #endif
 
@@ -583,8 +584,8 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
 
 #ifndef _WIN32_WCE
     /* Print configuration */
-    fprintf(stderr, "Current configuration:\n");
-    arg_dump_r(cmdln, stderr, defn, 0);
+    E_INFOCONT("Current configuration:\n");
+    arg_dump_r(cmdln, err_get_logfp(), defn, 0);
 #endif
     hash_table_free(defidx);
     return cmdln;
