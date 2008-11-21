@@ -125,29 +125,24 @@ arg_strlen(const arg_t * defn, int32 * namelen, int32 * deflen)
 }
 
 
-/* For sorting argument definition list by name */
-static const arg_t *tmp_defn;
-
 static int32
 cmp_name(const void *a, const void *b)
 {
     return (strcmp_nocase
-            (tmp_defn[*((int32 *) a)].name,
-             tmp_defn[*((int32 *) b)].name));
+            ((* (arg_t**) a)->name,
+             (* (arg_t**) b)->name));
 }
 
-static int32 *
+static const arg_t **
 arg_sort(const arg_t * defn, int32 n)
 {
-    int32 *pos;
+    const arg_t ** pos;
     int32 i;
 
-    pos = (int32 *) ckd_calloc(n, sizeof(int32));
-    for (i = 0; i < n; i++)
-        pos[i] = i;
-    tmp_defn = defn;
-    qsort(pos, n, sizeof(int32), cmp_name);
-    tmp_defn = NULL;
+    pos = (const arg_t **) ckd_calloc(n, sizeof(arg_t *));
+    for (i = 0; i < n; ++i)
+        pos[i] = &defn[i];
+    qsort(pos, n, sizeof(arg_t *), cmp_name);
 
     return pos;
 }
@@ -158,21 +153,25 @@ strnappend(char **dest, size_t *dest_allocation,
 {
     size_t source_len, required_allocation;
     
-    if(dest == NULL || dest_allocation == NULL) return -1;
-    if(*dest == NULL && *dest_allocation != 0) return -1;
-    if(source == NULL) return *dest_allocation;
+    if (dest == NULL || dest_allocation == NULL)
+        return -1;
+    if (*dest == NULL && *dest_allocation != 0)
+        return -1;
+    if (source == NULL)
+        return *dest_allocation;
 
     source_len = strlen(source);
-    if(n && n<source_len) source_len = n;
+    if (n && n < source_len)
+        source_len = n;
 
-    required_allocation = (*dest? strlen(*dest): 0) + source_len + 1;
-    if(*dest_allocation < required_allocation) {
-    if(*dest_allocation == 0) {
-        *dest = ckd_calloc(required_allocation * 2, 1);
-    } else {
-        *dest = ckd_realloc(*dest, required_allocation * 2);
-    }
-    *dest_allocation = required_allocation*2;
+    required_allocation = (*dest ? strlen(*dest) : 0) + source_len + 1;
+    if (*dest_allocation < required_allocation) {
+        if (*dest_allocation == 0) {
+            *dest = ckd_calloc(required_allocation * 2, 1);
+        } else {
+            *dest = ckd_realloc(*dest, required_allocation * 2);
+        }
+        *dest_allocation = required_allocation * 2;
     } 
     
     strncat(*dest, source, source_len);
@@ -223,6 +222,97 @@ arg_resolve_env(const char *str)
     } while(j != NULL);
 
     return resolved_str;
+}
+
+static void
+arg_dump_r(cmd_ln_t *cmdln, FILE * fp, const arg_t * defn, int32 doc)
+{
+    const arg_t **pos;
+    int32 i, l, n;
+    int32 namelen, deflen;
+    anytype_t *vp;
+
+    /* No definitions, do nothing. */
+    if (defn == NULL)
+        return;
+    if (fp == NULL)
+        return;
+
+    /* Find max lengths of name and default value fields, and #entries in defn */
+    n = arg_strlen(defn, &namelen, &deflen);
+    /*    E_INFO("String length %d. Name length %d, Default Length %d\n",n, namelen, deflen); */
+    namelen = namelen & 0xfffffff8;     /* Previous tab position */
+    deflen = deflen & 0xfffffff8;       /* Previous tab position */
+
+    fprintf(fp, "[NAME]");
+    for (l = strlen("[NAME]"); l < namelen; l += 8)
+        fprintf(fp, "\t");
+    fprintf(fp, "\t[DEFLT]");
+    for (l = strlen("[DEFLT]"); l < deflen; l += 8)
+        fprintf(fp, "\t");
+
+    if (doc) {
+        fprintf(fp, "\t[DESCR]\n");
+    }
+    else {
+        fprintf(fp, "\t[VALUE]\n");
+    }
+
+    /* Print current configuration, sorted by name */
+    pos = arg_sort(defn, n);
+    for (i = 0; i < n; i++) {
+        fprintf(fp, "%s", pos[i]->name);
+        for (l = strlen(pos[i]->name); l < namelen; l += 8)
+            fprintf(fp, "\t");
+
+        fprintf(fp, "\t");
+        if (pos[i]->deflt) {
+            fprintf(fp, "%s", pos[i]->deflt);
+            l = strlen(pos[i]->deflt);
+        }
+        else
+            l = 0;
+        for (; l < deflen; l += 8)
+            fprintf(fp, "\t");
+
+        fprintf(fp, "\t");
+        if (doc) {
+            if (pos[i]->doc)
+                fprintf(fp, "%s", pos[i]->doc);
+        }
+        else {
+            vp = cmd_ln_access_r(cmdln, pos[i]->name);
+            if (vp) {
+                switch (pos[i]->type) {
+                case ARG_INTEGER:
+                case REQARG_INTEGER:
+                    fprintf(fp, "%ld", vp->i);
+                    break;
+                case ARG_FLOATING:
+                case REQARG_FLOATING:
+                    fprintf(fp, "%e", vp->fl);
+                    break;
+                case ARG_STRING:
+                case REQARG_STRING:
+		    if (vp->ptr)
+			fprintf(fp, "%s", (char *)vp->ptr);
+                    break;
+                case ARG_BOOLEAN:
+                case REQARG_BOOLEAN:
+                    fprintf(fp, "%s", vp->i ? "yes" : "no");
+                    break;
+                default:
+                    E_ERROR("Unknown argument type: %d\n", pos[i]->type);
+                }
+            }
+        }
+
+        fprintf(fp, "\n");
+    }
+    ckd_free(pos);
+
+    fprintf(fp, "\n");
+    fflush(fp);
 }
 
 static cmd_ln_val_t *
@@ -352,99 +442,6 @@ void
 cmd_ln_appl_exit()
 {
     cmd_ln_free();
-}
-
-static void
-arg_dump_r(cmd_ln_t *cmdln, FILE * fp, const arg_t * defn, int32 doc)
-{
-    int32 *pos;
-    int32 i, j, l, n;
-    int32 namelen, deflen;
-    anytype_t *vp;
-
-    /* No definitions, do nothing. */
-    if (defn == NULL)
-        return;
-    if (fp == NULL)
-        return;
-
-    /* Find max lengths of name and default value fields, and #entries in defn */
-    n = arg_strlen(defn, &namelen, &deflen);
-    /*    E_INFO("String length %d. Name length %d, Default Length %d\n",n, namelen, deflen); */
-    namelen = namelen & 0xfffffff8;     /* Previous tab position */
-    deflen = deflen & 0xfffffff8;       /* Previous tab position */
-
-    fprintf(fp, "[NAME]");
-    for (l = strlen("[NAME]"); l < namelen; l += 8)
-        fprintf(fp, "\t");
-    fprintf(fp, "\t[DEFLT]");
-    for (l = strlen("[DEFLT]"); l < deflen; l += 8)
-        fprintf(fp, "\t");
-
-    if (doc) {
-        fprintf(fp, "\t[DESCR]\n");
-    }
-    else {
-        fprintf(fp, "\t[VALUE]\n");
-    }
-
-    /* Print current configuration, sorted by name */
-    pos = arg_sort(defn, n);
-    for (i = 0; i < n; i++) {
-        j = pos[i];
-
-        fprintf(fp, "%s", defn[j].name);
-        for (l = strlen(defn[j].name); l < namelen; l += 8)
-            fprintf(fp, "\t");
-
-        fprintf(fp, "\t");
-        if (defn[j].deflt) {
-            fprintf(fp, "%s", defn[j].deflt);
-            l = strlen(defn[j].deflt);
-        }
-        else
-            l = 0;
-        for (; l < deflen; l += 8)
-            fprintf(fp, "\t");
-
-        fprintf(fp, "\t");
-        if (doc) {
-            if (defn[j].doc)
-                fprintf(fp, "%s", defn[j].doc);
-        }
-        else {
-            vp = cmd_ln_access_r(cmdln, defn[j].name);
-            if (vp) {
-                switch (defn[j].type) {
-                case ARG_INTEGER:
-                case REQARG_INTEGER:
-                    fprintf(fp, "%ld", vp->i);
-                    break;
-                case ARG_FLOATING:
-                case REQARG_FLOATING:
-                    fprintf(fp, "%e", vp->fl);
-                    break;
-                case ARG_STRING:
-                case REQARG_STRING:
-		    if (vp->ptr)
-			fprintf(fp, "%s", (char *)vp->ptr);
-                    break;
-                case ARG_BOOLEAN:
-                case REQARG_BOOLEAN:
-                    fprintf(fp, "%s", vp->i ? "yes" : "no");
-                    break;
-                default:
-                    E_ERROR("Unknown argument type: %d\n", defn[j].type);
-                }
-            }
-        }
-
-        fprintf(fp, "\n");
-    }
-    ckd_free(pos);
-
-    fprintf(fp, "\n");
-    fflush(fp);
 }
 
 
