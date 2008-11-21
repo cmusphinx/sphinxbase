@@ -152,7 +152,7 @@ strnappend(char **dest, size_t *dest_allocation,
        const char *source, size_t n)
 {
     size_t source_len, required_allocation;
-    
+
     if (dest == NULL || dest_allocation == NULL)
         return -1;
     if (*dest == NULL && *dest_allocation != 0)
@@ -173,9 +173,9 @@ strnappend(char **dest, size_t *dest_allocation,
         }
         *dest_allocation = required_allocation * 2;
     } 
-    
+
     strncat(*dest, source, source_len);
-    
+
     return *dest_allocation;
 }
 
@@ -189,32 +189,35 @@ strappend(char **dest, size_t *dest_allocation,
 static char*
 arg_resolve_env(const char *str)
 {
-    char *resolved_str=NULL;
+    char *resolved_str = NULL;
     char env_name[100];
     const char *env_val;
-    size_t alloced=0;
-    const char *i=str, *j;
+    size_t alloced = 0;
+    const char *i = str, *j;
 
     /* calculate required resolved_str size */
     do {
         j = strstr(i, "$(");
-        if(j != NULL) {
+        if (j != NULL) {
             if (j != i) {
-                strnappend(&resolved_str, &alloced, i, j-i); i = j;
+                strnappend(&resolved_str, &alloced, i, j - i);
+                i = j;
             }
-            j = strchr(i+2, ')');
-            if(j != NULL) {
-                if(j-(i+2) < 100) {
-                    strncpy(env_name, i+2, j-(i+2));
-                    env_name[j-(i+2)] = '\0';
+            j = strchr(i + 2, ')');
+            if (j != NULL) {
+                if (j - (i + 2) < 100) {
+                    strncpy(env_name, i + 2, j - (i + 2));
+                    env_name[j - (i + 2)] = '\0';
                     env_val = getenv(env_name);
-                    if(env_val) strappend(&resolved_str, &alloced, env_val);
+                    if (env_val)
+                        strappend(&resolved_str, &alloced, env_val);
                 }
-                i = j+1;
+                i = j + 1;
             } else {
                 /* unclosed, copy and skip */
-                j = i+2;
-                strnappend(&resolved_str, &alloced, i, j-i); i = j;
+                j = i + 2;
+                strnappend(&resolved_str, &alloced, i, j - i);
+                i = j;
             }
         } else {
             strappend(&resolved_str, &alloced, i);
@@ -323,22 +326,23 @@ cmd_ln_val_init(int t, const char *str)
     char *e_str;
 
     if (!str) {
-	/* For lack of a better default value. */
-	memset(&val, 0, sizeof(val));
+        /* For lack of a better default value. */
+        memset(&val, 0, sizeof(val));
     }
     else {
+        int valid = 1;
         e_str = arg_resolve_env(str);
 
         switch (t) {
         case ARG_INTEGER:
         case REQARG_INTEGER:
             if (sscanf(e_str, "%ld", &val.i) != 1)
-                return NULL;
+                valid = 0;
             break;
         case ARG_FLOATING:
         case REQARG_FLOATING:
             if (sscanf(e_str, "%lf", &val.fl) != 1)
-                return NULL;
+                valid = 0;
             break;
         case ARG_BOOLEAN:
         case REQARG_BOOLEAN:
@@ -353,6 +357,7 @@ cmd_ln_val_init(int t, const char *str)
             }
             else {
                 E_ERROR("Unparsed boolean value '%s'\n", str);
+                valid = 0;
             }
             break;
         case ARG_STRING:
@@ -361,10 +366,12 @@ cmd_ln_val_init(int t, const char *str)
             break;
         default:
             E_ERROR("Unknown argument type: %d\n", t);
-            return NULL;
+            valid = 0;
         }
-    
-        free(e_str);
+
+        ckd_free(e_str);
+        if (valid == 0)
+            return NULL;
     }
 
     v = ckd_calloc(1, sizeof(*v));
