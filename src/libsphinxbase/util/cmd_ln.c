@@ -96,6 +96,7 @@ struct cmd_ln_s {
 /** Global command-line, for non-reentrant API. */
 cmd_ln_t *global_cmdln;
 static void arg_dump_r(cmd_ln_t *cmdln, FILE * fp, arg_t const *defn, int32 doc);
+static cmd_ln_t * parse_options(cmd_ln_t *cmdln, const arg_t *defn, int32 argc, char* argv[], int32 strict);
 
 /*
  * Find max length of name and default fields in the given defn array.
@@ -114,11 +115,11 @@ arg_strlen(const arg_t * defn, int32 * namelen, int32 * deflen)
 
         if (defn[i].deflt)
             l = strlen(defn[i].deflt);
-	else
-	    l = strlen("(null)");
-	/*      E_INFO("string default, %s , name %s, length %d\n",defn[i].deflt,defn[i].name,l); */
-	if (*deflen < l)
-	    *deflen = l;
+        else
+            l = strlen("(null)");
+        /*      E_INFO("string default, %s , name %s, length %d\n",defn[i].deflt,defn[i].name,l); */
+        if (*deflen < l)
+            *deflen = l;
     }
 
     return i;
@@ -297,8 +298,8 @@ arg_dump_r(cmd_ln_t *cmdln, FILE * fp, const arg_t * defn, int32 doc)
                     break;
                 case ARG_STRING:
                 case REQARG_STRING:
-		    if (vp->ptr)
-			fprintf(fp, "%s", (char *)vp->ptr);
+                    if (vp->ptr)
+                        fprintf(fp, "%s", (char *)vp->ptr);
                     break;
                 case ARG_BOOLEAN:
                 case REQARG_BOOLEAN:
@@ -379,6 +380,47 @@ cmd_ln_val_init(int t, const char *str)
     v->type = t;
 
     return v;
+}
+
+/*
+ * Handles option parsing for cmd_ln_parse_file_r() and cmd_ln_init()
+ * also takes care of storing argv.
+ * DO NOT call it from cmd_ln_parse_r()
+ */
+static cmd_ln_t *
+parse_options(cmd_ln_t *cmdln, const arg_t *defn, int32 argc, char* argv[], int32 strict)
+{
+    cmd_ln_t *new_cmdln;
+
+    new_cmdln = cmd_ln_parse_r(cmdln, defn, argc, argv, strict);
+    /* If this failed then clean up and return NULL. */
+    if (new_cmdln == NULL) {
+        int32 i;
+        for (i = 0; i < argc; ++i)
+            ckd_free(argv[i]);
+        ckd_free(argv);
+        return NULL;
+    }
+
+    /* Otherwise, we need to add the contents of f_argv to the new object. */
+    if (new_cmdln == cmdln) {
+        /* If we are adding to a previously passed-in cmdln, then
+         * store our allocated strings in its f_argv. */
+        new_cmdln->f_argv = ckd_realloc(new_cmdln->f_argv,
+                                        (new_cmdln->f_argc + argc)
+                                        * sizeof(*new_cmdln->f_argv));
+        memcpy(new_cmdln->f_argv + new_cmdln->f_argc, argv,
+               argc * sizeof(*argv));
+        ckd_free(argv);
+        new_cmdln->f_argc += argc;
+    }
+    else {
+        /* Otherwise, store f_argc and f_argv. */
+        new_cmdln->f_argc = argc;
+        new_cmdln->f_argv = argv;
+    }
+
+    return new_cmdln;
 }
 
 void
@@ -522,7 +564,7 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
             else
                 continue;
         }
-	argdef = v;
+        argdef = v;
 
         /* Enter argument value */
         if (argdef == NULL)
@@ -537,16 +579,16 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
         }
 
         if ((v = hash_table_enter(cmdln->ht, argv[j], (void *)val)) != (void *)val) {
-	    if (strict) {
+            if (strict) {
                 cmd_ln_val_free(val);
-		E_ERROR("Duplicate argument name in arguments: %s\n",
-			argdef->name);
-		goto error;
-	    }
-	    else {
-		v = hash_table_replace(cmdln->ht, argv[j], (void *)val);
+                E_ERROR("Duplicate argument name in arguments: %s\n",
+                        argdef->name);
+                goto error;
+            }
+            else {
+                v = hash_table_replace(cmdln->ht, argv[j], (void *)val);
                 cmd_ln_val_free((cmd_ln_val_t *)v);
-	    }
+            }
         }
     }
 
@@ -581,7 +623,7 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
     }
 
     if (strict && argc == 1) {
-	E_ERROR("No arguments given, exiting\n");
+        E_ERROR("No arguments given, exiting\n");
         cmd_ln_print_help_r(cmdln, stderr, defn);
         goto error;
     }
@@ -596,7 +638,7 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
 
   error:
     if (defidx)
-	hash_table_free(defidx);
+        hash_table_free(defidx);
     if (inout_cmdln == NULL)
         cmd_ln_free_r(cmdln);
     E_ERROR("cmd_ln_parse_r failed\n");
@@ -610,7 +652,6 @@ cmd_ln_init(cmd_ln_t *inout_cmdln, const arg_t *defn, int32 strict, ...)
     const char *arg, *val;
     char **f_argv;
     int32 f_argc;
-    cmd_ln_t *new_cmdln;
 
     va_start(args, strict);
     f_argc = 0;
@@ -638,30 +679,7 @@ cmd_ln_init(cmd_ln_t *inout_cmdln, const arg_t *defn, int32 strict, ...)
     }
     va_end(args);
 
-    new_cmdln = cmd_ln_parse_r(inout_cmdln, defn, f_argc, f_argv, strict);
-    /* If this failed then clean up and return NULL. */
-    if (new_cmdln == NULL) {
-        int32 i;
-        for (i = 0; i < f_argc; ++i)
-            ckd_free(f_argv[i]);
-        ckd_free(f_argv);
-        return NULL;
-    }
-    /* Otherwise, we need to add the contents of f_argv to the new object. */
-    if (new_cmdln == inout_cmdln) {
-        new_cmdln->f_argv = ckd_realloc(new_cmdln->f_argv,
-                                        (new_cmdln->f_argc + f_argc)
-                                        * sizeof(*new_cmdln->f_argv));
-        memcpy(new_cmdln->f_argv + new_cmdln->f_argc, f_argv,
-               f_argc * sizeof(*f_argv));
-        ckd_free(f_argv);
-        new_cmdln->f_argc = new_cmdln->f_argc + f_argc;
-    }
-    else {
-        new_cmdln->f_argc = f_argc;
-        new_cmdln->f_argv = f_argv;
-    }
-    return new_cmdln;
+    return parse_options(inout_cmdln, defn, f_argc, f_argv, strict);
 }
 
 int
@@ -686,121 +704,125 @@ cmd_ln_t *
 cmd_ln_parse_file_r(cmd_ln_t *inout_cmdln, const arg_t * defn, const char *filename, int32 strict)
 {
     FILE *file;
-    char **tmp_argv;
     int argc;
     int argv_size;
-/* FIXME: ARGh!! */
-#define ARG_MAX_LENGTH 512
-    __BIGSTACKVARIABLE__ char str[ARG_MAX_LENGTH];
+    char *str;
+    int arg_max_length = 512;
     int len = 0;
-    int ch;
-    int quoting;
-    cmd_ln_t *cmdln;
+    int quoting, ch;
     char **f_argv;
     int rv = 0;
+    const char separator[] = " \t\r\n";
 
     if ((file = fopen(filename, "r")) == NULL) {
-        E_INFO("Cannot open configuration file %s for reading\n",
-               filename);
+        E_ERROR("Cannot open configuration file %s for reading\n",
+                filename);
+        return NULL;
+    }
+
+    ch = fgetc(file);
+    /* Skip to the next interesting character */
+    for (; ch != EOF && strchr(separator, ch); ch = fgetc(file)) ;
+
+    if (ch == EOF) {
+        fclose(file);
         return NULL;
     }
 
     /*
-     * initialize default argv, argc, and argv_size.  note that argv[0] is set to
-     * a null-string.  basically we don't care about argv[0].  typically, that is
-     * set as invoked program name.
+     * Initialize default argv, argc, and argv_size.
      */
     argv_size = 10;
-    argc = 1;
+    argc = 0;
     f_argv = ckd_calloc(argv_size, sizeof(char *));
-    f_argv[0] = ckd_calloc(1, sizeof(char *));
-    f_argv[0][0] = '\0';
+    /* Silently make room for \0 */
+    str = ckd_calloc(arg_max_length + 1, sizeof(char));
     quoting = 0;
 
     do {
-        ch = fgetc(file);
+        /* Handle arguments that are commented out */
+        if (len == 0 && ch == '#' && argc % 2 == 0) {
+            /* Skip everything until newline */
+            for (ch = fgetc(file); ch != EOF && ch != '\n'; ch = fgetc(file)) ;
+            /* Skip to the next interesting character */
+            for (ch = fgetc(file); ch != EOF && strchr(separator, ch); ch = fgetc(file)) ;
+            if (ch == EOF)
+                break;
+        }
+
         /* Handle quoted arguments */
         if (ch == '"' || ch == '\'') {
             if (quoting == ch) /* End a quoted section with the same type */
                 quoting = 0;
+            else if (quoting) {
+                E_ERROR("Nesting quotations is not supported!\n");
+                rv = 1;
+                break;
+            }
             else
                 quoting = ch; /* Start a quoted section */
         }
-        else if (ch == EOF || (!quoting && strchr(" \t\r\n", ch))) {
-            /* reallocate argv so it is big enough to contain all the arguments */
+        else if (ch == EOF || (!quoting && strchr(separator, ch))) {
+            /* Reallocate argv so it is big enough to contain all the arguments */
             if (argc >= argv_size) {
-                if (!
-                    (tmp_argv =
-                     ckd_calloc(argv_size * 2, sizeof(char *)))) {
+                char **tmp_argv;
+                if (!(tmp_argv =
+                       ckd_realloc(f_argv, argv_size * 2 * sizeof(char *)))) {
                     rv = 1;
                     break;
                 }
-                memcpy(tmp_argv, f_argv, argv_size * sizeof(char *));
-                ckd_free(f_argv);
                 f_argv = tmp_argv;
                 argv_size *= 2;
             }
-            /* add the string to the list of arguments */
-            f_argv[argc] = ckd_calloc(len + 1, sizeof(char));
-            strncpy(f_argv[argc], str, len);
-            f_argv[argc][len] = '\0';
+            /* Add the string to the list of arguments */
+            f_argv[argc] = ckd_salloc(str);
             len = 0;
             argc++;
 
-            for (; ch != EOF && strchr(" \t\r\n", ch); ch = fgetc(file));
-            /* Handle quoted arguments (FIXME: duplicated code... */
-            if (ch == '"' || ch == '\'') {
-                if (quoting == ch) /* End a quoted section with the same type */
-                    quoting = 0;
-                else
-                    quoting = ch; /* Start a quoted section */
-            }
-            else if (ch != EOF) {
-                str[len++] = ch;
-            }
-        }
-        else if (len < ARG_MAX_LENGTH) {
-            /* add the char to the argument string */
-            str[len++] = ch;
+            if (quoting)
+                E_WARN("Unclosed quotation, having EOF close it...\n");
+
+            /* Skip to the next interesting character */
+            for (; ch != EOF && strchr(separator, ch); ch = fgetc(file)) ;
+
+            if (ch == EOF)
+                break;
+
+            /* We already have the next character */
+            continue;
         }
         else {
-            /* hmmm, we've had an argument that exceeded ARG_MAX_LENGTH */
-            rv = 1;
-            break;
+            if (len >= arg_max_length) {
+                /* Make room for more chars (including the \0 !) */
+                char *tmp_str = str;
+                if ((tmp_str = ckd_realloc(str, (1 + arg_max_length * 2) * sizeof(char))) == NULL) {
+                    rv = 1;
+                    break;
+                }
+                str = tmp_str;
+                arg_max_length *= 2;
+            }
+            /* Add the char to the argument string */
+            str[len++] = ch;
+            /* Always null terminate */
+            str[len] = '\0';
         }
-    } while (ch != EOF);
+
+        ch = fgetc(file);
+    } while (1);
+
     fclose(file);
 
-    cmdln = cmd_ln_parse_r(inout_cmdln, defn, argc, f_argv, strict);
-    if (cmdln == NULL) {
-        int i;
+    ckd_free(str);
 
-        /* Clean up allocated strings. */
-        if (argc > 1) {
-            for (i = 1; i < argc; i++) {
-                ckd_free(f_argv[i]);
-            }
-        }
-        ckd_free(f_argv[0]);
+    if (rv) {
+        for (ch = 0; ch < argc; ++ch)
+            ckd_free(f_argv[ch]);
         ckd_free(f_argv);
-        /* And ... exit (the old, bogus behaviour) */
-        exit(-1);
-    }
-    else if (cmdln == inout_cmdln) {
-        /* If we are adding to a previously passed-in cmdln, then
-         * store our allocated strings in its f_argv. */
-        cmdln->f_argv = ckd_realloc(cmdln->f_argv, (cmdln->f_argc + argc) * sizeof(*cmdln->f_argv));
-        memcpy(cmdln->f_argv + cmdln->f_argc, f_argv, argc * sizeof(*f_argv));
-        ckd_free(f_argv);
-        cmdln->f_argc = cmdln->f_argc + argc;
-    }
-    else {
-        /* Otherwise, store f_argc and f_argv. */
-        cmdln->f_argc = argc;
-        cmdln->f_argv = f_argv;
+        return NULL;
     }
 
-    return cmdln;
+    return parse_options(inout_cmdln, defn, argc, f_argv, strict);
 }
 
 int
@@ -826,6 +848,7 @@ cmd_ln_print_help_r(cmd_ln_t *cmdln, FILE * fp, arg_t const* defn)
         return;
     fprintf(fp, "Arguments list definition:\n");
     arg_dump_r(cmdln, fp, defn, 1);
+    fflush(fp);
 }
 
 int
@@ -940,10 +963,10 @@ cmd_ln_free_r(cmd_ln_t *cmdln)
 
         entries = hash_table_tolist(cmdln->ht, &n);
         for (gn = entries; gn; gn = gnode_next(gn)) {
-	    hash_entry_t *e = gnode_ptr(gn);
+            hash_entry_t *e = gnode_ptr(gn);
             cmd_ln_val_free((cmd_ln_val_t *)e->val);
         }
-	glist_free(entries);
+        glist_free(entries);
         hash_table_free(cmdln->ht);
         cmdln->ht = NULL;
     }
