@@ -675,3 +675,103 @@ fsg_model_writefile(fsg_model_t *fsg, char const *file)
 
     fclose(fp);
 }
+
+static void
+fsg_model_write_fsm_trans(fsg_model_t *fsg, int i, FILE *fp)
+{
+    int j;
+
+    for (j = 0; j < fsg->n_state; j++) {
+        gnode_t *gn;
+        fsg_link_t *tl;
+
+        /* Print non-null transitions */
+        for (gn = fsg->trans[i][j]; gn; gn = gnode_next(gn)) {
+            tl = (fsg_link_t *) gnode_ptr(gn);
+
+            fprintf(fp, "%d %d %s %f\n",
+                    tl->from_state, tl->to_state,
+                    (tl->wid < 0) ? "<eps>" : fsg_model_word_str(fsg, tl->wid),
+                    -logmath_log_to_ln(fsg->lmath, tl->logs2prob / fsg->lw));
+        }
+
+        /* Print null transitions */
+        tl = fsg->null_trans[i][j];
+        if (tl) {
+            fprintf(fp, "%d %d <eps> %f\n",
+                    tl->from_state, tl->to_state,
+                    -logmath_log_to_ln(fsg->lmath, tl->logs2prob / fsg->lw));
+        }
+    }
+}
+
+void
+fsg_model_write_fsm(fsg_model_t * fsg, FILE * fp)
+{
+    int i;
+
+    /* Write transitions from initial state first. */
+    fsg_model_write_fsm_trans(fsg, fsg_model_start_state(fsg), fp);
+
+    /* Other states. */
+    for (i = 0; i < fsg->n_state; i++) {
+        if (i == fsg_model_start_state(fsg))
+            continue;
+        fsg_model_write_fsm_trans(fsg, i, fp);
+    }
+
+    /* Final state. */
+    fprintf(fp, "%d 0\n", fsg_model_final_state(fsg));
+
+    fflush(fp);
+}
+
+void
+fsg_model_writefile_fsm(fsg_model_t *fsg, char const *file)
+{
+    FILE *fp;
+
+    assert(fsg);
+
+    E_INFO("Writing FSM file '%s'\n", file);
+
+    if ((fp = fopen(file, "w")) == NULL) {
+        E_ERROR("fopen(%s,r) failed\n", file);
+        return;
+    }
+
+    fsg_model_write_fsm(fsg, fp);
+
+    fclose(fp);
+}
+
+void
+fsg_model_write_symtab(fsg_model_t *fsg, FILE *file)
+{
+    int i;
+
+    fprintf(file, "<eps> 0\n");
+    for (i = 0; i < fsg_model_n_word(fsg); ++i) {
+        fprintf(file, "%s %d\n", fsg_model_word_str(fsg, i), i + 1);
+    }
+    fflush(file);
+}
+
+void
+fsg_model_writefile_symtab(fsg_model_t *fsg, char const *file)
+{
+    FILE *fp;
+
+    assert(fsg);
+
+    E_INFO("Writing FSM symbol table '%s'\n", file);
+
+    if ((fp = fopen(file, "w")) == NULL) {
+        E_ERROR("fopen(%s,r) failed\n", file);
+        return;
+    }
+
+    fsg_model_write_symtab(fsg, fp);
+
+    fclose(fp);
+}

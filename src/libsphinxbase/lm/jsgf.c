@@ -482,54 +482,6 @@ jsgf_build_fsg(jsgf_t *grammar, jsgf_rule_t *rule, logmath_t *lmath, float32 lw)
     return fsg;
 }
 
-int
-jsgf_write_fsg(jsgf_t *grammar, jsgf_rule_t *rule, FILE *outfh)
-{
-    gnode_t *gn;
-
-    /* Clear previous links */
-    for (gn = grammar->links; gn; gn = gnode_next(gn)) {
-        ckd_free(gnode_ptr(gn));
-    }
-    glist_free(grammar->links);
-    grammar->links = NULL;
-    rule->entry = rule->exit = 0;
-    grammar->nstate = 0;
-
-    expand_rule(grammar, rule);
-
-    printf("FSG_BEGIN %s\n", rule->name);
-    printf("NUM_STATES %d\n", grammar->nstate);
-    printf("START_STATE %d\n", rule->entry);
-    printf("FINAL_STATE %d\n", rule->exit);
-    printf("\n# Transitions\n");
-
-    grammar->links = glist_reverse(grammar->links);
-    for (gn = grammar->links; gn; gn = gnode_next(gn)) {
-        jsgf_link_t *link = gnode_ptr(gn);
-
-        if (link->atom) {
-            if (jsgf_atom_is_rule(link->atom)) {
-                printf("TRANSITION %d %d %f\n",
-                       link->from, link->to,
-                       link->atom->weight);
-            }
-            else {
-                printf("TRANSITION %d %d %f %s\n",
-                       link->from, link->to,
-                       link->atom->weight, link->atom->name);
-            }
-        }
-        else {
-            printf("TRANSITION %d %d %f\n", link->from, link->to, 1.0);
-        }               
-    }
-
-    printf("FSG_END\n");
-
-    return 0;
-}
-
 jsgf_rule_t *
 jsgf_define_rule(jsgf_t *jsgf, char *name, jsgf_rhs_t *rhs, int public)
 {

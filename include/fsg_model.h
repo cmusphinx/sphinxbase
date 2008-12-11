@@ -282,4 +282,28 @@ void fsg_model_write(fsg_model_t *fsg, FILE *fp);
 SPHINXBASE_EXPORT
 void fsg_model_writefile(fsg_model_t *fsg, char const *file);
 
+/**
+ * Write FSG to a file in AT&T FSM format.
+ */
+SPHINXBASE_EXPORT
+void fsg_model_write_fsm(fsg_model_t *fsg, FILE *fp);
+
+/**
+ * Write FSG to a file in AT&T FSM format.
+ */
+SPHINXBASE_EXPORT
+void fsg_model_writefile_fsm(fsg_model_t *fsg, char const *file);
+
+/**
+ * Write FSG symbol table to a file (for AT&T FSM)
+ */
+SPHINXBASE_EXPORT
+void fsg_model_write_symtab(fsg_model_t *fsg, FILE *file);
+
+/**
+ * Write FSG symbol table to a file (for AT&T FSM)
+ */
+SPHINXBASE_EXPORT
+void fsg_model_writefile_symtab(fsg_model_t *fsg, char const *file);
+
 #endif /* __FSG_MODEL_H__ */
