@@ -534,14 +534,16 @@ fe_free(fe_t * fe)
         return fe->refcount;
 
     /* kill FE instance - free everything... */
-    fe_free_2d((void *) fe->mel_fb->mel_cosine);
-    if (fe->mel_fb->lifter)
-        free(fe->mel_fb->lifter);
-    ckd_free(fe->mel_fb->spec_start);
-    ckd_free(fe->mel_fb->filt_start);
-    ckd_free(fe->mel_fb->filt_width);
-    ckd_free(fe->mel_fb->filt_coeffs);
-    ckd_free(fe->mel_fb);
+    if (fe->mel_fb) {
+        if (fe->mel_fb->mel_cosine)
+            fe_free_2d((void *) fe->mel_fb->mel_cosine);
+        ckd_free(fe->mel_fb->lifter);
+        ckd_free(fe->mel_fb->spec_start);
+        ckd_free(fe->mel_fb->filt_start);
+        ckd_free(fe->mel_fb->filt_width);
+        ckd_free(fe->mel_fb->filt_coeffs);
+        ckd_free(fe->mel_fb);
+    }
     ckd_free(fe->spch);
     ckd_free(fe->frame);
     ckd_free(fe->ccc);
