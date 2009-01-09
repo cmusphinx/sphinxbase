@@ -270,6 +270,21 @@ void *hash_table_delete(hash_table_t *h,    /**< In: Handle of hash table in
 	);
 
 /**
+ * Like hash_table_delete, but with an explicitly specified key length,
+ * instead of a NULL-terminated, C-style key string.  So the key
+ * string is a binary key (or bkey).  Hash tables containing such keys
+ * should be created with the HASH_CASE_YES option.  Otherwise, the
+ * results are unpredictable.
+ */
+SPHINXBASE_EXPORT
+void *hash_table_delete_bkey(hash_table_t *h,    /**< In: Handle of hash table in
+                                               which a key will be deleted */
+                             const char *key,     /**< In: C-style NULL-terminated
+                                               key string for the new entry */
+                             size_t len
+	);
+
+/**
  * Delete all entries from a hash_table.
  */
 SPHINXBASE_EXPORT
@@ -300,6 +315,28 @@ void *hash_table_enter_bkey(hash_table_t *h,	/**< In: Handle of hash table
 #define hash_table_enter_bkey_int32(h,k,l,v) \
     ((int32)(long)hash_table_enter_bkey((h),(k),(l),(void *)(long)(v)))
 
+/**
+ * Like hash_table_replace, but with an explicitly specified key length,
+ * instead of a NULL-terminated, C-style key string.  So the key
+ * string is a binary key (or bkey).  Hash tables containing such keys
+ * should be created with the HASH_CASE_YES option.  Otherwise, the
+ * results are unpredictable.
+ */
+SPHINXBASE_EXPORT
+void *hash_table_replace_bkey(hash_table_t *h, /**< In: Handle of hash table in which to create entry */
+                              const char *key, /**< In: Key buffer */
+                              size_t len,	/**< In: Length of above key buffer */
+                              void *val	  /**< In: Value to be associated with above key */
+    );
+
+/**
+ * Replace a 32-bit integer value in a hash table.
+ *
+ * This macro is the clean way to do this and avoid compiler warnings
+ * on 64-bit platforms.
+ */
+#define hash_table_replace_bkey_int32(h,k,l,v)                          \
+    ((int32)(long)hash_table_replace_bkey((h),(k),(l),(void *)(long)(v)))
 
 /**
  * Look up a key in a hash table and optionally return the associated

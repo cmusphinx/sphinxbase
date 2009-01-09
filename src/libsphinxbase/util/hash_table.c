@@ -551,6 +551,31 @@ hash_table_enter_bkey(hash_table_t * h, const char *key, size_t len, void *val)
     return (enter(h, hash, key, len, val, 0));
 }
 
+void *
+hash_table_replace_bkey(hash_table_t * h, const char *key, size_t len, void *val)
+{
+    uint32 hash;
+    char *str;
+
+    str = makekey((uint8 *) key, len, NULL);
+    hash = key2hash(h, str);
+    ckd_free(str);
+
+    return (enter(h, hash, key, len, val, 1));
+}
+
+void *
+hash_table_delete_bkey(hash_table_t * h, const char *key, size_t len)
+{
+    uint32 hash;
+    char *str;
+
+    str = makekey((uint8 *) key, len, NULL);
+    hash = key2hash(h, str);
+
+    return (delete(h, hash, key, len));
+}
+
 void
 hash_table_display(hash_table_t * h, int32 showdisplay)
 {
