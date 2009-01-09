@@ -741,7 +741,7 @@ cmd_ln_parse_file_r(cmd_ln_t *inout_cmdln, const arg_t * defn, const char *filen
 
     do {
         /* Handle arguments that are commented out */
-        if (len == 0 && ch == '#' && argc % 2 == 0) {
+        while (len == 0 && ch == '#' && argc % 2 == 0) {
             /* Skip everything until newline */
             for (ch = fgetc(file); ch != EOF && ch != '\n'; ch = fgetc(file)) ;
             /* Skip to the next interesting character */
