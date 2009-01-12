@@ -316,11 +316,58 @@ SPHINXBASE_EXPORT
 int32 ngram_model_get_size(ngram_model_t *model);
 
 /**
- * Get the counts of the various N-grams in the model
+ * Get the counts of the various N-grams in the model.
  */
 SPHINXBASE_EXPORT
 int32 const *ngram_model_get_counts(ngram_model_t *model);
 
+/**
+ * M-gram iterator object.
+ */
+typedef struct ngram_iter_s ngram_iter_t;
+
+/**
+ * Iterate over all M-grams.
+ *
+ * @param model Language model to query.
+ * @param m Order of the M-Grams requested minus one (i.e. order of the history)
+ */
+SPHINXBASE_EXPORT
+ngram_iter_t *ngram_model_mgrams(ngram_model_t *model, int m);
+
+/**
+ * Iterate over all M-gram successors of an M-1-gram.
+ *
+ * @param model Language model to query.
+ * @param itor Iterator pointing to the M-gram to get successors of.
+ */
+SPHINXBASE_EXPORT
+ngram_iter_t *ngram_model_successors(ngram_model_t *model, ngram_iter_t *itor);
+
+/**
+ * Get information from the current M-gram in an iterator.
+ *
+ * @param out_score Output: Score for this M-gram (including any word
+ *                          penalty and language weight).
+ * @param out_bowt Output: Backoff weight for this M-gram.
+ * @return read-only array of word IDs.
+ */
+SPHINXBASE_EXPORT
+int32 const *ngram_iter_get(ngram_iter_t *itor,
+                            int32 *out_score,
+                            int32 *out_bowt);
+
+/**
+ * Advance an M-gram iterator.
+ */
+SPHINXBASE_EXPORT
+ngram_iter_t *ngram_iter_next(ngram_iter_t *itor);
+
+/**
+ * Terminate an M-gram iterator.
+ */
+SPHINXBASE_EXPORT
+void ngram_iter_free(ngram_iter_t *itor);
 
 /**
  * Add a word (unigram) to the language model.

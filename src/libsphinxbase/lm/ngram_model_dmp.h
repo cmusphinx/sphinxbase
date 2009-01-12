@@ -55,7 +55,7 @@ struct bigram_s {
     uint16 prob2;	/**< Index into array of actual bigram probs */
     uint16 bo_wt2;	/**< Index into array of actual bigram backoff wts */
     uint16 trigrams;	/**< Index of 1st entry in lm_t.trigrams[],
-			   RELATIVE TO its segment base (see above) */
+			   RELATIVE TO its segment base (see lm3g_model.h) */
 };
 
 /**
