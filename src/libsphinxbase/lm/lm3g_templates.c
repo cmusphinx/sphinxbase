@@ -315,24 +315,32 @@ lm3g_template_successors(ngram_iter_t *bitor)
     itor->ug = from->ug;
     switch (bitor->m) {
     case 0:
+        /* This indicates no successors (FIXME: make sure this is true!) */
+        if (itor->ug->bo_wt1.l == 0)
+            goto done;
         /* Start iterating from first bigram successor of from->ug. */
         itor->bg = model->lm3g.bigrams + itor->ug->bigrams;
         break;
     case 1:
-        /* Start iterating from first trigram successor of from->bg. */
         itor->bg = from->bg;
+        /* This indicates no successors (FIXME: make sure this is true!) */
+        if (model->lm3g.bo_wt2[itor->bg->bo_wt2].l == 0)
+            goto done;
+        /* Start iterating from first trigram successor of from->bg. */
         itor->tg = (model->lm3g.trigrams 
                     + FIRST_TG(model, (itor->bg - model->lm3g.bigrams)));
         break;
     case 2:
     default:
         /* All invalid! */
-        ckd_free(itor);
-        return NULL;
+        goto done;
     }
 
     ngram_iter_init((ngram_iter_t *)itor, bitor->model, bitor->m + 1, TRUE);
     return (ngram_iter_t *)itor;
+    done:
+        ckd_free(itor);
+        return NULL;
 }
 
 static int32 const *

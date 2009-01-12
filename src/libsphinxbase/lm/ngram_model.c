@@ -608,6 +608,9 @@ ngram_model_mgrams(ngram_model_t *model, int m)
 ngram_iter_t *
 ngram_iter_successors(ngram_iter_t *itor)
 {
+    /* Stop when we are at the highest order N-Gram. */
+    if (itor->m == itor->model->n - 1)
+        return NULL;
     return (*itor->model->funcs->successors)(itor);
 }
 
