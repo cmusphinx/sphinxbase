@@ -306,9 +306,9 @@ lm3g_template_mgrams(ngram_model_t *base, int m)
 }
 
 static ngram_iter_t *
-lm3g_template_successors(ngram_model_t *base, ngram_iter_t *bitor)
+lm3g_template_successors(ngram_iter_t *bitor)
 {
-    NGRAM_MODEL_TYPE *model = (NGRAM_MODEL_TYPE *)base;
+    NGRAM_MODEL_TYPE *model = (NGRAM_MODEL_TYPE *)bitor->model;
     lm3g_iter_t *from = (lm3g_iter_t *)bitor;
     lm3g_iter_t *itor = ckd_calloc(1, sizeof(*itor));
 
@@ -331,7 +331,7 @@ lm3g_template_successors(ngram_model_t *base, ngram_iter_t *bitor)
         return NULL;
     }
 
-    ngram_iter_init((ngram_iter_t *)itor, base, bitor->m + 1, TRUE);
+    ngram_iter_init((ngram_iter_t *)itor, bitor->model, bitor->m + 1, TRUE);
     return (ngram_iter_t *)itor;
 }
 

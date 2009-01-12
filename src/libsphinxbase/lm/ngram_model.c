@@ -606,9 +606,9 @@ ngram_model_mgrams(ngram_model_t *model, int m)
 }
 
 ngram_iter_t *
-ngram_model_successors(ngram_model_t *model, ngram_iter_t *itor)
+ngram_iter_successors(ngram_iter_t *itor)
 {
-    return (*model->funcs->successors)(model, itor);
+    return (*itor->model->funcs->successors)(itor);
 }
 
 int32 const *

@@ -336,15 +336,6 @@ SPHINXBASE_EXPORT
 ngram_iter_t *ngram_model_mgrams(ngram_model_t *model, int m);
 
 /**
- * Iterate over all M-gram successors of an M-1-gram.
- *
- * @param model Language model to query.
- * @param itor Iterator pointing to the M-gram to get successors of.
- */
-SPHINXBASE_EXPORT
-ngram_iter_t *ngram_model_successors(ngram_model_t *model, ngram_iter_t *itor);
-
-/**
  * Get information from the current M-gram in an iterator.
  *
  * @param out_score Output: Score for this M-gram (including any word
@@ -356,6 +347,14 @@ SPHINXBASE_EXPORT
 int32 const *ngram_iter_get(ngram_iter_t *itor,
                             int32 *out_score,
                             int32 *out_bowt);
+
+/**
+ * Iterate over all M-gram successors of an M-1-gram.
+ *
+ * @param itor Iterator pointing to the M-1-gram to get successors of.
+ */
+SPHINXBASE_EXPORT
+ngram_iter_t *ngram_iter_successors(ngram_iter_t *itor);
 
 /**
  * Advance an M-gram iterator.

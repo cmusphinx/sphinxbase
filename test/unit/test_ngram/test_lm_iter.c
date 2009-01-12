@@ -99,7 +99,7 @@ main(int argc, char *argv[])
 		       ngram_word(model, wids[0]),
 		       logmath_log_to_log10(lmath, bowt));
 
-		for (itor2 = ngram_model_successors(model, itor);
+		for (itor2 = ngram_iter_successors(itor);
 		     itor2; itor2 = ngram_iter_next(itor2)) {
 			wids = ngram_iter_get(itor2, &score, &bowt);
 			printf("%.4f %s %s %.4f\n",
@@ -108,8 +108,8 @@ main(int argc, char *argv[])
 			       ngram_word(model, wids[1]),
 			       logmath_log_to_log10(lmath, bowt));
 		}
-		itor2 = ngram_model_successors(model, itor);
-		for (itor3 = ngram_model_successors(model, itor2);
+		itor2 = ngram_iter_successors(itor);
+		for (itor3 = ngram_iter_successors(itor2);
 		     itor3; itor3 = ngram_iter_next(itor3)) {
 			wids = ngram_iter_get(itor3, &score, &bowt);
 			printf("%.4f %s %s %s\n",
