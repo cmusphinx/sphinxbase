@@ -535,6 +535,7 @@ fsg_model_read(FILE * fp, logmath_t *lmath, float32 lw)
            fsg->n_state, hash_table_inuse(vocab), n_trans, n_null_trans);
 
     /* Do transitive closure on null transitions */
+    /* FIXME: This is evil, we should do epsilon removal and determinization instead. */
     nulls = fsg_model_null_trans_closure(fsg, nulls);
     glist_free(nulls);
 
