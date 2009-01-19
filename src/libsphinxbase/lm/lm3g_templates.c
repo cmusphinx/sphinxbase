@@ -316,7 +316,7 @@ lm3g_template_successors(ngram_iter_t *bitor)
     switch (bitor->m) {
     case 0:
         /* This indicates no successors (FIXME: make sure this is true!) */
-        if (itor->ug->bo_wt1.l == 0)
+        if (itor->ug->bo_wt1.l == 0 && itor->ug->bigrams == 0)
             goto done;
         /* Start iterating from first bigram successor of from->ug. */
         itor->bg = model->lm3g.bigrams + itor->ug->bigrams;
@@ -361,7 +361,10 @@ lm3g_template_iter_get(ngram_iter_t *base,
         break;
     case 1:
         *out_score = model->lm3g.prob2[itor->bg->prob2].l;
-        *out_bowt = model->lm3g.bo_wt2[itor->bg->bo_wt2].l;
+        if (model->lm3g.bo_wt2)
+            *out_bowt = model->lm3g.bo_wt2[itor->bg->bo_wt2].l;
+        else
+            *out_bowt = 0;
         break;
     case 2:
         *out_score = model->lm3g.prob3[itor->tg->prob3].l;
