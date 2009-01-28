@@ -260,6 +260,7 @@ _E__fatal_sys_error(char const *fmt, ...)
 {
     va_list pvar;
     FILE *logfp;
+    int local_errno = errno;
 
     logfp = err_get_logfp();
     if (logfp) {
@@ -267,10 +268,7 @@ _E__fatal_sys_error(char const *fmt, ...)
         vfprintf(logfp, fmt, pvar);
         va_end(pvar);
 
-        putc(';', logfp);
-        putc(' ', logfp);
-
-        fprintf(logfp, "%s\n", strerror(errno));
+        fprintf(logfp, "; %s\n", strerror(local_errno));
         fflush(logfp);
     }
 
@@ -288,6 +286,7 @@ _E__sys_error(char const *fmt, ...)
 {
     va_list pvar;
     FILE *logfp;
+    int local_errno = errno;
 
     logfp = err_get_logfp();
     if (logfp == NULL)
@@ -297,11 +296,7 @@ _E__sys_error(char const *fmt, ...)
     vfprintf(logfp, fmt, pvar);
     va_end(pvar);
 
-    putc(';', logfp);
-    putc(' ', logfp);
-
-    perror("");
-
+    fprintf(logfp, "; %s\n", strerror(local_errno));
     fflush(logfp);
 }
 
