@@ -225,6 +225,7 @@ fe_init_auto_r(cmd_ln_t *config)
         E_WARN
             ("Number of FFT points has to be a power of 2 higher than %d\n",
              (fe->frame_size));
+        fe_free(fe);
         return (NULL);
     }
 
