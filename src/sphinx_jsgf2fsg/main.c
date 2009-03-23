@@ -57,7 +57,7 @@ get_fsg(jsgf_t *grammar, const char *name)
         if ((name == NULL && jsgf_rule_public(rule))
             || (name && strlen(rule_name)-2 == strlen(name) &&
                 0 == strncmp(rule_name + 1, name, strlen(rule_name) - 2))) {
-            fsg = jsgf_build_fsg(grammar, rule, logmath_retain(lmath), 1.0);
+            fsg = jsgf_build_fsg_raw(grammar, rule, logmath_retain(lmath), 1.0);
             jsgf_rule_iter_free(itor);
             break;
         }

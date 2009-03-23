@@ -652,7 +652,6 @@ fsg_model_write(fsg_model_t * fsg, FILE * fp)
         }
     }
 
-    fprintf(fp, "%c\n", FSG_MODEL_COMMENT_CHAR);
     fprintf(fp, "%s\n", FSG_MODEL_END_DECL);
 
     fflush(fp);

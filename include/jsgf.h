@@ -141,13 +141,16 @@ fsg_model_t *jsgf_build_fsg(jsgf_t *grammar, jsgf_rule_t *rule,
                             logmath_t *lmath, float32 lw);
 
 /**
- * Convert a JSGF rule to Sphinx FSG text form.
+ * Build a Sphinx FSG object from a JSGF rule.
  *
- * This does a direct conversion without doing transitive closure on
- * null transitions and so forth.
+ * This differs from jsgf_build_fsg() in that it does not do closure
+ * on epsilon transitions or any other postprocessing.  For the time
+ * being this is necessary in order to write it to a file - the FSG
+ * code will be fixed soon.
  */
 SPHINXBASE_EXPORT
-int jsgf_write_fsg(jsgf_t *grammar, jsgf_rule_t *rule, FILE *outfh);
+fsg_model_t *jsgf_build_fsg_raw(jsgf_t *grammar, jsgf_rule_t *rule,
+                                logmath_t *lmath, float32 lw);
 
 #ifdef __cplusplus
 }

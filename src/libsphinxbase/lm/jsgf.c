@@ -437,8 +437,9 @@ jsgf_rule_public(jsgf_rule_t *rule)
     return rule->public;
 }
 
-fsg_model_t *
-jsgf_build_fsg(jsgf_t *grammar, jsgf_rule_t *rule, logmath_t *lmath, float32 lw)
+static fsg_model_t *
+jsgf_build_fsg_internal(jsgf_t *grammar, jsgf_rule_t *rule,
+                        logmath_t *lmath, float32 lw, int do_closure)
 {
     fsg_model_t *fsg;
     glist_t nulls;
@@ -476,10 +477,26 @@ jsgf_build_fsg(jsgf_t *grammar, jsgf_rule_t *rule, logmath_t *lmath, float32 lw)
             fsg_model_null_trans_add(fsg, link->from, link->to, 0);
         }            
     }
-    nulls = fsg_model_null_trans_closure(fsg, NULL);
-    glist_free(nulls);
+    if (do_closure) {
+        nulls = fsg_model_null_trans_closure(fsg, NULL);
+        glist_free(nulls);
+    }
 
     return fsg;
+}
+
+fsg_model_t *
+jsgf_build_fsg(jsgf_t *grammar, jsgf_rule_t *rule,
+               logmath_t *lmath, float32 lw)
+{
+    return jsgf_build_fsg_internal(grammar, rule, lmath, lw, TRUE);
+}
+
+fsg_model_t *
+jsgf_build_fsg_raw(jsgf_t *grammar, jsgf_rule_t *rule,
+                   logmath_t *lmath, float32 lw)
+{
+    return jsgf_build_fsg_internal(grammar, rule, lmath, lw, FALSE);
 }
 
 jsgf_rule_t *
