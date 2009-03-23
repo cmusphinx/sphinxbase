@@ -39,7 +39,7 @@ main(int argc, char *argv[])
 	TEST_EQUAL(1024, fread(buf, sizeof(int16), 1024, raw));
 
 	nsamp = 1024;
-	TEST_EQUAL(0, fe_process_frames(fe, NULL, &nsamp, NULL, &nfr));
+	TEST_ASSERT(fe_process_frames(fe, NULL, &nsamp, NULL, &nfr) >= 0);
 	TEST_EQUAL(1024, nsamp);
 	TEST_EQUAL(4, nfr);
 
@@ -49,7 +49,7 @@ main(int argc, char *argv[])
 
 	printf("frame_size %d frame_shift %d\n", frame_size, frame_shift);
 	/* Process the first frame. */
-	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, &cepbuf1[0], &nfr));
+	TEST_ASSERT(fe_process_frames(fe, &inptr, &nsamp, &cepbuf1[0], &nfr) >= 0);
 	printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, nfr);
 	TEST_EQUAL(nfr, 1);
 
@@ -57,19 +57,19 @@ main(int argc, char *argv[])
 	 * of input, because it already got sufficient overflow
 	 * samples last time around.  This is implementation-dependent
 	 * so we shouldn't actually test for it. */
-	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, &cepbuf1[1], &nfr));
+	TEST_ASSERT(fe_process_frames(fe, &inptr, &nsamp, &cepbuf1[1], &nfr) >= 0);
 	printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, nfr);
 	TEST_EQUAL(nfr, 1);
 
-	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, &cepbuf1[2], &nfr));
+	TEST_ASSERT(fe_process_frames(fe, &inptr, &nsamp, &cepbuf1[2], &nfr) >= 0);
 	printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, nfr);
 	TEST_EQUAL(nfr, 1);
 
-	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, &cepbuf1[3], &nfr));
+	TEST_ASSERT(fe_process_frames(fe, &inptr, &nsamp, &cepbuf1[3], &nfr) >= 0);
 	printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, nfr);
 	TEST_EQUAL(nfr, 1);
 
-	TEST_EQUAL(0, fe_end_utt(fe, cepbuf1[4], &nfr));
+	TEST_ASSERT(fe_end_utt(fe, cepbuf1[4], &nfr) >= 0);
 	printf("nfr %d\n", nfr);
 	TEST_EQUAL(nfr, 1);
 
@@ -81,11 +81,11 @@ main(int argc, char *argv[])
 	nfr = 5;
 	nsamp = 1024;
 	TEST_EQUAL(0, fe_start_utt(fe));
-	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, cepbuf2, &nfr));
+	TEST_ASSERT(fe_process_frames(fe, &inptr, &nsamp, cepbuf2, &nfr) >= 0);
 	printf("nfr %d\n", nfr);
 	TEST_EQUAL(nfr, 4);
 	nfr = 1;
-	TEST_EQUAL(0, fe_end_utt(fe, cepbuf2[4], &nfr));
+	TEST_ASSERT(fe_end_utt(fe, cepbuf2[4], &nfr) >= 0);
 	printf("nfr %d\n", nfr);
 	TEST_EQUAL(nfr, 1);
 
@@ -110,29 +110,29 @@ main(int argc, char *argv[])
 	i = 5;
 	nsamp = 256;
 	TEST_EQUAL(0, fe_start_utt(fe));
-	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, cptr, &i));
+	TEST_ASSERT(fe_process_frames(fe, &inptr, &nsamp, cptr, &i) >= 0);
 	printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, i);
 	cptr += i;
 	nfr -= i;
 	i = nfr;
 	nsamp = 256;
-	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, cptr, &i));
+	TEST_ASSERT(fe_process_frames(fe, &inptr, &nsamp, cptr, &i) >= 0);
 	printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, i);
 	cptr += i;
 	nfr -= i;
 	i = nfr;
 	nsamp = 256;
-	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, cptr, &i));
+	TEST_ASSERT(fe_process_frames(fe, &inptr, &nsamp, cptr, &i) >= 0);
 	printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, i);
 	cptr += i;
 	nfr -= i;
 	i = nfr;
 	nsamp = 256;
-	TEST_EQUAL(0, fe_process_frames(fe, &inptr, &nsamp, cptr, &i));
+	TEST_ASSERT(fe_process_frames(fe, &inptr, &nsamp, cptr, &i) >= 0);
 	printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, i);
 	cptr += i;
 	nfr -= i;
-	TEST_EQUAL(0, fe_end_utt(fe, *cptr, &nfr));
+	TEST_ASSERT(fe_end_utt(fe, *cptr, &nfr) >= 0);
 	printf("nfr %d\n", nfr);
 	TEST_EQUAL(nfr, 1);
 
@@ -152,35 +152,35 @@ main(int argc, char *argv[])
 	inptr = &buf[0];
 	i = 0;
 	TEST_EQUAL(0, fe_start_utt(fe));
-	TEST_EQUAL(0, fe_process_utt(fe, inptr, 256, &cptr, &nfr));
+	TEST_ASSERT(fe_process_utt(fe, inptr, 256, &cptr, &nfr) >= 0);
 	printf("i %d nfr %d\n", i, nfr);
 	if (nfr)
 		memcpy(cepbuf2[i], cptr[0], nfr * DEFAULT_NUM_CEPSTRA * sizeof(**cptr));
 	ckd_free_2d(cptr);
 	i += nfr;
 	inptr += 256;
-	TEST_EQUAL(0, fe_process_utt(fe, inptr, 256, &cptr, &nfr));
+	TEST_ASSERT(fe_process_utt(fe, inptr, 256, &cptr, &nfr) >= 0);
 	printf("i %d nfr %d\n", i, nfr);
 	if (nfr)
 		memcpy(cepbuf2[i], cptr[0], nfr * DEFAULT_NUM_CEPSTRA * sizeof(**cptr));
 	ckd_free_2d(cptr);
 	i += nfr;
 	inptr += 256;
-	TEST_EQUAL(0, fe_process_utt(fe, inptr, 256, &cptr, &nfr));
+	TEST_ASSERT(fe_process_utt(fe, inptr, 256, &cptr, &nfr) >= 0);
 	printf("i %d nfr %d\n", i, nfr);
 	if (nfr)
 		memcpy(cepbuf2[i], cptr[0], nfr * DEFAULT_NUM_CEPSTRA * sizeof(**cptr));
 	ckd_free_2d(cptr);
 	i += nfr;
 	inptr += 256;
-	TEST_EQUAL(0, fe_process_utt(fe, inptr, 256, &cptr, &nfr));
+	TEST_ASSERT(fe_process_utt(fe, inptr, 256, &cptr, &nfr) >= 0);
 	printf("i %d nfr %d\n", i, nfr);
 	if (nfr)
 		memcpy(cepbuf2[i], cptr[0], nfr * DEFAULT_NUM_CEPSTRA * sizeof(**cptr));
 	ckd_free_2d(cptr);
 	i += nfr;
 	inptr += 256;
-	TEST_EQUAL(0, fe_end_utt(fe, cepbuf2[i], &nfr));
+	TEST_ASSERT(fe_end_utt(fe, cepbuf2[i], &nfr) >= 0);
 	printf("i %d nfr %d\n", i, nfr);
 	TEST_EQUAL(nfr, 1);
 

@@ -1001,9 +1001,9 @@ fe_mel_cep(fe_t * fe, mfcc_t *mfcep)
         }
     }
     else if (fe->transform == DCT_II)
-        fe_dct2(fe, mfspec, mfcep, 0);
+        fe_dct2(fe, mfspec, mfcep, FALSE);
     else if (fe->transform == DCT_HTK)
-        fe_dct2(fe, mfspec, mfcep, 1);
+        fe_dct2(fe, mfspec, mfcep, TRUE);
     else
         fe_spec2cep(fe, mfspec, mfcep);
 
@@ -1100,7 +1100,7 @@ fe_write_frame(fe_t * fe, mfcc_t * fea)
     fe_mel_cep(fe, fea);
     fe_lifter(fe, fea);
 
-    return 0;
+    return 1;
 }
 
 void *

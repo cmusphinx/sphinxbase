@@ -339,11 +339,11 @@ fe_process_frames(fe_t *fe,
                   int32 *inout_nframes)
 {
     int32 frame_count;
-    int i, n_overflow, orig_n_overflow;
+    int outidx, i, n, n_overflow, orig_n_overflow;
     int16 const *orig_spch;
 
     /* In the special case where there is no output buffer, return the
-     * number of frames which would be generated. */
+     * maximum number of frames which would be generated. */
     if (buf_cep == NULL) {
         if (*inout_nsamps + fe->num_overflow_samps < (size_t)fe->frame_size)
             *inout_nframes = 0;
@@ -351,7 +351,7 @@ fe_process_frames(fe_t *fe,
             *inout_nframes = 1
                 + ((*inout_nsamps + fe->num_overflow_samps - fe->frame_size)
                    / fe->frame_shift);
-        return 0;
+        return *inout_nframes;
     }
 
     /* Are there not enough samples to make at least 1 frame? */
@@ -386,6 +386,8 @@ fe_process_frames(fe_t *fe,
     /* Limit it to the number of output frames available. */
     if (frame_count > *inout_nframes)
         frame_count = *inout_nframes;
+    /* Index of output frame. */
+    outidx = 0;
 
     /* Start processing, taking care of any incoming overflow. */
     if (fe->num_overflow_samps) {
@@ -395,7 +397,10 @@ fe_process_frames(fe_t *fe,
         memcpy(fe->overflow_samps + fe->num_overflow_samps,
                *inout_spch, offset * sizeof(**inout_spch));
         fe_read_frame(fe, fe->overflow_samps, fe->frame_size);
-        fe_write_frame(fe, buf_cep[0]);
+        assert(outidx < frame_count);
+        if ((n = fe_write_frame(fe, buf_cep[outidx])) < 0)
+            return -1;
+        outidx += n;
         /* Update input-output pointers and counters. */
         *inout_spch += offset;
         *inout_nsamps -= offset;
@@ -403,29 +408,30 @@ fe_process_frames(fe_t *fe,
     }
     else {
         fe_read_frame(fe, *inout_spch, fe->frame_size);
-        fe_write_frame(fe, buf_cep[0]);
+        assert(outidx < frame_count);
+        if ((n = fe_write_frame(fe, buf_cep[outidx])) < 0)
+            return -1;
+        outidx += n;
         /* Update input-output pointers and counters. */
         *inout_spch += fe->frame_size;
         *inout_nsamps -= fe->frame_size;
     }
-    /* Update the number of remaining frames. */
-    --*inout_nframes;
 
     /* Process all remaining frames. */
     for (i = 1; i < frame_count; ++i) {
         assert(*inout_nsamps >= (size_t)fe->frame_shift);
-        assert(*inout_nframes > 0);
 
         fe_shift_frame(fe, *inout_spch, fe->frame_shift);
-        fe_write_frame(fe, buf_cep[i]);
+        assert(outidx < frame_count);
+        if ((n = fe_write_frame(fe, buf_cep[outidx])) < 0)
+            return -1;
+        outidx += n;
         /* Update input-output pointers and counters. */
         *inout_spch += fe->frame_shift;
         *inout_nsamps -= fe->frame_shift;
         /* Amount of data behind the original input which is still needed. */
         if (fe->num_overflow_samps > 0)
             fe->num_overflow_samps -= fe->frame_shift;
-        /* Update number of remaining frames. */
-        --*inout_nframes;
     }
 
     /* How many relevant overflow samples are there left? */
@@ -470,7 +476,7 @@ fe_process_frames(fe_t *fe,
     }
 
     /* Finally update the frame counter with the number of frames we procesed. */
-    *inout_nframes = frame_count;
+    *inout_nframes = outidx; /* FIXME: Not sure why I wrote it this way... */
     return 0;
 }
 
@@ -499,23 +505,19 @@ fe_process_utt(fe_t * fe, int16 const * spch, size_t nsamps,
 int32
 fe_end_utt(fe_t * fe, mfcc_t * cepvector, int32 * nframes)
 {
-    int32 frame_count;
-
     /* Process any remaining data. */
     if (fe->num_overflow_samps > 0) {
         fe_read_frame(fe, fe->overflow_samps, fe->num_overflow_samps);
-        fe_write_frame(fe, cepvector);
-        frame_count = 1;
+        *nframes = fe_write_frame(fe, cepvector);
     }
     else {
-        frame_count = 0;
+        *nframes = 0;
     }
 
     /* reset overflow buffers... */
     fe->num_overflow_samps = 0;
     fe->start_flag = 0;
 
-    *nframes = frame_count;
     return 0;
 }
 
