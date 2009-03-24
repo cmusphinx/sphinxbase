@@ -1579,14 +1579,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\libsphinxbase\lm\ngram_model_fst.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\src\libsphinxbase\lm\ngram_model_htk.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\src\libsphinxbase\lm\ngram_model_set.c"
 				>
 			</File>
