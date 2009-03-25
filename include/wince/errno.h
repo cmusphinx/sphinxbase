@@ -1,6 +1,6 @@
 /* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* ====================================================================
- * Copyright (c) 1999-2004 Carnegie Mellon University.  All rights
+ * Copyright (c) 2007 Carnegie Mellon University.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,53 +32,65 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * ====================================================================
+/*********************************************************************
  *
- */
-/*
- * unlimit.c -- "unlimit" the memory usage of program.
+ * File: errno.h
  * 
- * **********************************************
- * CMU ARPA Speech Project
- *
- * Copyright (c) 1999 Carnegie Mellon University.
- * ALL RIGHTS RESERVED.
- * **********************************************
+ * Description: functions and variables missing from Windows CE standard
+ * library
  * 
- * HISTORY
- * $Log$
- * Revision 1.5  2005/06/22  03:12:31  arthchan2003
- * 1, Fixed doxygen documentation, 2, Added  keyword.
+ * Author: Silvio Moioli <silvio@moioli.net>
  * 
- * Revision 1.3  2005/03/30 01:22:48  archan
- * Fixed mistakes in last updates. Add
- *
- * 
- * 03-Oct-96	M K Ravishankar (rkm@cs.cmu.edu) at Carnegie Mellon University.
- * 		Copied from Sphinx-II sources.
- */
+ *********************************************************************/
 
+#ifndef __ERRNO_H__
+#define __ERRNO_H__
 
-#if ((! _WIN32) && (! _HPUX_SOURCE))
-#include <sys/time.h>
-#include <sys/resource.h>
+#ifdef __cplusplus
+extern "C" extern int errno;
+extern "C" char *__cdecl strerror(int errnum );
+#else
+extern int errno;
+char *__cdecl strerror(int errnum);
 #endif
 
-#include "unlimit.h"
+#define EPERM           1
+#define ENOENT          2
+#define ESRCH           3
+#define EINTR           4
+#define EIO             5
+#define ENXIO           6
+#define E2BIG           7
+#define ENOEXEC         8
+#define EBADF           9
+#define ECHILD          10
+#define EAGAIN          11
+#define ENOMEM          12
+#define EACCES          13
+#define EFAULT          14
+#define EBUSY           16
+#define EEXIST          17
+#define EXDEV           18
+#define ENODEV          19
+#define ENOTDIR         20
+#define EISDIR          21
+#define EINVAL          22
+#define ENFILE          23
+#define EMFILE          24
+#define ENOTTY          25
+#define EFBIG           27
+#define ENOSPC          28
+#define ESPIPE          29
+#define EROFS           30
+#define EMLINK          31
+#define EPIPE           32
+#define EDOM            33
+#define ERANGE          34
+#define EDEADLK         36
+#define ENAMETOOLONG    38
+#define ENOLCK          39
+#define ENOSYS          40
+#define ENOTEMPTY       41
+#define EILSEQ          42
 
-
-/*
- * The limit is set to the maximum of your system.
- */
-void
-unlimit(void)
-{
-#if 0
-#if ((! WIN32) && (! _HPUX_SOURCE))
-    struct rlimit rl;
-
-    getrlimit(RLIMIT_DATA, &rl);
-    rl.rlim_cur = rl.rlim_max;
-    setrlimit(RLIMIT_DATA, &rl);
-#endif
-#endif
-}
+#endif /* __ERRNO_H__ */

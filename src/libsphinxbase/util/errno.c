@@ -1,6 +1,6 @@
 /* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* ====================================================================
- * Copyright (c) 1999-2004 Carnegie Mellon University.  All rights
+ * Copyright (c) 2007 Carnegie Mellon University.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,53 +32,26 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * ====================================================================
+/*********************************************************************
  *
- */
-/*
- * unlimit.c -- "unlimit" the memory usage of program.
+ * File: errno.c
  * 
- * **********************************************
- * CMU ARPA Speech Project
- *
- * Copyright (c) 1999 Carnegie Mellon University.
- * ALL RIGHTS RESERVED.
- * **********************************************
+ * Description: functions and variables missing from Windows CE standard
+ * library
  * 
- * HISTORY
- * $Log$
- * Revision 1.5  2005/06/22  03:12:31  arthchan2003
- * 1, Fixed doxygen documentation, 2, Added  keyword.
+ * Author: Silvio Moioli <silvio@moioli.net>
  * 
- * Revision 1.3  2005/03/30 01:22:48  archan
- * Fixed mistakes in last updates. Add
- *
- * 
- * 03-Oct-96	M K Ravishankar (rkm@cs.cmu.edu) at Carnegie Mellon University.
- * 		Copied from Sphinx-II sources.
- */
+ *********************************************************************/
 
+#include <errno.h>
 
-#if ((! _WIN32) && (! _HPUX_SOURCE))
-#include <sys/time.h>
-#include <sys/resource.h>
+#if defined(_WIN32_WCE)
+int errno;
+int _doserrno;
+int _sys_nerr;
+
+char* strerror(int errno){ 
+    static char buf[32]="wince::strerror called."; 
+    return buf; 
+} 
 #endif
-
-#include "unlimit.h"
-
-
-/*
- * The limit is set to the maximum of your system.
- */
-void
-unlimit(void)
-{
-#if 0
-#if ((! WIN32) && (! _HPUX_SOURCE))
-    struct rlimit rl;
-
-    getrlimit(RLIMIT_DATA, &rl);
-    rl.rlim_cur = rl.rlim_max;
-    setrlimit(RLIMIT_DATA, &rl);
-#endif
-#endif
-}
