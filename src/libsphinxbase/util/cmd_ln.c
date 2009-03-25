@@ -781,6 +781,7 @@ cmd_ln_parse_file_r(cmd_ln_t *inout_cmdln, const arg_t * defn, const char *filen
             /* Add the string to the list of arguments */
             f_argv[argc] = ckd_salloc(str);
             len = 0;
+            str[0] = '\0';
             argc++;
 
             if (quoting)
