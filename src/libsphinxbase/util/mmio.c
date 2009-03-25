@@ -70,12 +70,13 @@
 # include <sys/mman.h>
 #endif /* !_WIN32 */
 
+/** Silvio Moioli: slightly updated */
 #if defined(_WIN32_WCE) || defined(GNUWINCE)
 struct mmio_file_s {
 	int dummy;
 };
 
-void *
+mmio_file_t *
 mmio_file_read(const char *filename)
 {
     HANDLE ffm, fd;
@@ -106,7 +107,7 @@ mmio_file_read(const char *filename)
     CloseHandle(ffm);
     CloseHandle(fd);
 
-    return rv;
+    return (mmio_file_t *) rv;
 }
 
 void
@@ -117,13 +118,12 @@ mmio_file_unmap(mmio_file_t *mf)
     }
 }
 
-void
-mmio_file_unmap(mmio_file_t *mf)
+void *
+mmio_file_ptr(mmio_file_t *mf)
 {
-    if (!UnmapViewOfFile((void *)mf)) {
-        E_ERROR("Failed to UnmapViewOfFile: %08x\n", GetLastError());
-    }
+    return (void *)mf;
 }
+
 #elif defined(WIN32) /* !WINCE */
 struct mmio_file_s {
 	int dummy;

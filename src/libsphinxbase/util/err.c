@@ -315,9 +315,11 @@ _E__abort_error(char const *fmt, ...)
     }
 
 #if defined(__ADSPBLACKFIN__) && !defined(__linux__)
-    while(1);
-#else 
-	abort();
+while(1);
+#elif defined(_WIN32_WCE)
+exit(-1);
+#else
+abort();
 #endif
 
 }

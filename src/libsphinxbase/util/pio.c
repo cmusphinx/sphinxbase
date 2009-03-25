@@ -361,11 +361,12 @@ fread_retry(void *pointer, int32 size, int32 num_items, FILE * stream)
 }
 
 
+/* Silvio Moioli: updated to use Unicode */
 #ifdef _WIN32_WCE /* No stat() on WinCE */
 int32
 stat_retry(const char *file, struct stat * statbuf)
 {
-    WIN32_FIND_DATA file_data;
+    WIN32_FIND_DATAW file_data;
     HANDLE *h;
     wchar_t *wfile;
     size_t len;
@@ -373,7 +374,7 @@ stat_retry(const char *file, struct stat * statbuf)
     len = mbstowcs(NULL, file, 0) + 1;
     wfile = ckd_calloc(len, sizeof(*wfile));
     mbstowcs(wfile, file, len);
-    if ((h = FindFirstFile(wfile, &file_data)) == INVALID_HANDLE_VALUE) {
+    if ((h = FindFirstFileW(wfile, &file_data)) == INVALID_HANDLE_VALUE) {
         ckd_free(wfile);
         return -1;
     }

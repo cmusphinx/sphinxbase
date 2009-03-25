@@ -72,7 +72,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
+#include <strfuncs.h>
 
 #ifdef _WIN32
 #pragma warning (disable: 4996) 
@@ -88,6 +88,9 @@
 #include "info.h"
 #include "err.h"
 #include "bio.h"
+
+/* Silvio Moioli: switched to stat_reply that's Windows CE friendly. */
+#include "pio.h"
 
 /** \file main_cepview.c
     \brief Main driver of cepview
@@ -235,7 +238,7 @@ read_cep(char const *file, float ***cep, int *numframes, int cepsize)
     int i, n, byterev, sf, ef;
     float32 **mfcbuf;
 
-    if (stat(file, &statbuf) < 0) {
+    if (stat_retry(file, &statbuf) < 0) {
         printf("stat(%s) failed\n", file);
         return IO_ERR;
     }
@@ -305,3 +308,27 @@ read_cep(char const *file, float ***cep, int *numframes, int cepsize)
     *cep = mfcbuf;
     return IO_SUCCESS;
 }
+
+/** Silvio Moioli: Windows CE/Mobile entry point added. */
+#if defined(_WIN32_WCE)
+#pragma comment(linker,"/entry:mainWCRTStartup")
+
+//Windows Mobile has the Unicode main only
+int wmain(int32 argc, wchar_t *wargv[]) {
+    char** argv;
+    size_t wlen;
+    size_t len;
+    int i;
+
+    argv = malloc(argc*sizeof(char*));
+    for (i=0; i<argc; i++){
+        wlen = lstrlenW(wargv[i]);
+        len = wcstombs(NULL, wargv[i], wlen);
+        argv[i] = malloc(len+1);
+        wcstombs(argv[i], wargv[i], wlen);
+    }
+
+    //assuming ASCII parameters
+    return main(argc, argv);
+}
+#endif

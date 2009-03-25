@@ -96,6 +96,9 @@ jsgf_grammar_new(jsgf_t *parent)
 
         grammar->rules = hash_table_new(64, 0);
         grammar->imports = hash_table_new(16, 0);
+
+        /* Silvio Moioli: no getenv() in Windows CE */
+        #if !defined(_WIN32_WCE)
         if ((jsgf_path = getenv("JSGF_PATH")) != NULL) {
             char *word, *c;
 
@@ -114,6 +117,7 @@ jsgf_grammar_new(jsgf_t *parent)
             /* Default to current directory. */
             grammar->searchpath = glist_add_ptr(grammar->searchpath, ckd_salloc("."));
         }
+        #endif 
     }
 
     return grammar;

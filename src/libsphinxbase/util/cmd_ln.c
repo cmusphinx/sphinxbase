@@ -209,9 +209,13 @@ arg_resolve_env(const char *str)
                 if (j - (i + 2) < 100) {
                     strncpy(env_name, i + 2, j - (i + 2));
                     env_name[j - (i + 2)] = '\0';
+                    #if !defined(_WIN32_WCE)
                     env_val = getenv(env_name);
                     if (env_val)
                         strappend(&resolved_str, &alloced, env_val);
+                    #else
+                    env_val = 0;
+                    #endif
                 }
                 i = j + 1;
             } else {

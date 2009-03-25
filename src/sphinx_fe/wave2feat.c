@@ -44,7 +44,7 @@
 #pragma warning (disable: 4996 4018)
 #endif
 
-#if defined(WIN32) && !defined(GNUWINCE)
+#if defined(WIN32) && !defined(GNUWINCE) && !defined(_WIN32_WCE)
 #include <errno.h>
 #endif
 
@@ -1145,6 +1145,31 @@ fe_convert_with_dct(globals_t * P, fe_t * FE, char *infile, char *outfile)
 
     return FE_SUCCESS;
 }
+
+
+/** Silvio Moioli: Windows CE/Mobile entry point added. */
+#if defined(_WIN32_WCE)
+#pragma comment(linker,"/entry:mainWCRTStartup")
+
+//Windows Mobile has the Unicode main only
+int wmain(int32 argc, wchar_t *wargv[]) {
+    char** argv;
+    size_t wlen;
+    size_t len;
+    int i;
+
+    argv = malloc(argc*sizeof(char*));
+    for (i=0; i<argc; i++){
+        wlen = lstrlenW(wargv[i]);
+        len = wcstombs(NULL, wargv[i], wlen);
+        argv[i] = malloc(len+1);
+        wcstombs(argv[i], wargv[i], wlen);
+    }
+
+    //assuming ASCII parameters
+    return main(argc, argv);
+}
+#endif
 
 /*
  * Log record.  Maintained by RCS.

@@ -85,6 +85,7 @@
 #include "err.h"
 #include "ckd_alloc.h"
 
+/* Silvio Moioli: updated to use Unicode */
 #ifdef _WIN32_WCE
 DWORD unlink(const char *filename)
 {
@@ -95,7 +96,7 @@ DWORD unlink(const char *filename)
 	len = mbstowcs(NULL, filename, 0);
 	wfilename = ckd_calloc(len+1, sizeof(*wfilename));
 	mbstowcs(wfilename, filename, len);
-	rv = DeleteFile(wfilename);
+	rv = DeleteFileW(wfilename);
 	ckd_free(wfilename);
 
 	return rv;

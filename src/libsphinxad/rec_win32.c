@@ -70,14 +70,22 @@
                                            So that at reasonable sampling rates
                                            data is returned frequently enough.) */
 
+/* Silvio Moioli: using OutputDebugStringW instead of OutputDebugString */
 #ifdef _WIN32_WCE
+#include "ckd_alloc.h"
 static void
 wavein_error(char *src, int32 ret)
 {
     TCHAR errbuf[512];
+    wchar_t* werrbuf;
+    size_t len;
 
-    waveInGetErrorText(ret, errbuf, sizeof(errbuf));
-	OutputDebugString(errbuf);
+    waveOutGetErrorText(ret, errbuf, sizeof(errbuf));
+    len = mbstowcs(NULL, errbuf, 0) + 1;
+    werrbuf = ckd_calloc(len, sizeof(*werrbuf));
+    mbstowcs(werrbuf, errbuf, len);
+
+    OutputDebugStringW(werrbuf);
 }
 
 #else

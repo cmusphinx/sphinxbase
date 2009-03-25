@@ -149,13 +149,14 @@ cond_timed_wait(HANDLE cond, int sec, int nsec)
     return rv;
 }
 
+/* Silvio Moioli: updated to use Unicode */
 sbevent_t *
 sbevent_init(void)
 {
     sbevent_t *evt;
 
     evt = ckd_calloc(1, sizeof(*evt));
-    evt->evt = CreateEvent(NULL, FALSE, FALSE, NULL);
+    evt->evt = CreateEventW(NULL, FALSE, FALSE, NULL);
     if (evt->evt == NULL) {
         ckd_free(evt);
         return NULL;
@@ -229,7 +230,7 @@ sbmsgq_init(size_t depth)
 
     msgq = ckd_calloc(1, sizeof(*msgq));
     msgq->depth = depth;
-    msgq->evt = CreateEvent(NULL, FALSE, FALSE, NULL);
+    msgq->evt = CreateEventW(NULL, FALSE, FALSE, NULL);
     if (msgq->evt == NULL) {
         ckd_free(msgq);
         return NULL;
