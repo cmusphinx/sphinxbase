@@ -43,6 +43,7 @@
 #ifndef __MMIO_H__
 #define __MMIO_H__
 
+#include <sphinxbase_export.h>
 
 #ifdef __cplusplus
 extern "C" {
