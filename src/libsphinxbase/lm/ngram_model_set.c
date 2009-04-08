@@ -276,7 +276,6 @@ ngram_model_set_read(cmd_ln_t *config,
                     void *val;
                     classdef_t *classdef;
 
-                    E_INFO("Adding class '%s'\n", str);
                     if (hash_table_lookup(classes, str, &val) == -1) {
                         E_ERROR("Unknown class %s in control file\n", str);
                         goto error_out;
@@ -287,6 +286,8 @@ ngram_model_set_read(cmd_ln_t *config,
                                               classdef->n_words) < 0) {
                         goto error_out;
                     }
+                    E_INFO("Added class %s containing %d words\n",
+                           str, classdef->n_words);
                 }
                 if (strcmp(str, "}") != 0) {
                     E_ERROR("Unexpected EOF in %s\n", lmctlfile);

@@ -269,7 +269,7 @@ void ngram_class_free(ngram_class_t *lmclass);
 /**
  * Get the in-class log probability for a word in an N-Gram class.
  *
- * @return This probability, or 0 if word not found.
+ * @return This probability, or 1 if word not found.
  */
 int32 ngram_class_prob(ngram_class_t *lmclass, int32 wid);
 

@@ -420,9 +420,7 @@ ngram_ng_score(ngram_model_t *model, int32 wid, int32 *history,
         ngram_class_t *lmclass = model->classes[NGRAM_CLASSID(wid)];
 
         class_weight = ngram_class_prob(lmclass, wid);
-        if (class_weight == 0) /* Yes, this is correct, because
-                                * log_zero is not available to
-                                * ngram_class_prob() */
+        if (class_weight == 1) /* Meaning, not found in class. */
             return model->log_zero;
         wid = lmclass->tag_wid;
     }
@@ -496,7 +494,7 @@ ngram_ng_prob(ngram_model_t *model, int32 wid, int32 *history,
         ngram_class_t *lmclass = model->classes[NGRAM_CLASSID(wid)];
 
         class_weight = ngram_class_prob(lmclass, wid);
-        if (class_weight == model->log_zero)
+        if (class_weight == 1) /* Meaning, not found in class. */
             return class_weight;
         wid = lmclass->tag_wid;
     }
@@ -929,7 +927,7 @@ ngram_class_prob(ngram_class_t *lmclass, int32 wid)
         while (hash != -1 && lmclass->nword_hash[hash].wid != wid)
             hash = lmclass->nword_hash[hash].next;
         if (hash == -1)
-            return 0;
+            return 1;
         return lmclass->nword_hash[hash].prob1;
     }
     else {
