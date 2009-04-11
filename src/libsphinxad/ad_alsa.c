@@ -378,7 +378,7 @@ ad_read(ad_rec_t * handle, int16 * buf, int32 max)
         length = 0;
     }
     else if (length == -EPIPE) {
-        fprintf(stderr, "Input overrrun (non-fatal)\n");
+        fprintf(stderr, "Input overrun, read calls are too rare (non-fatal)\n");
         err = snd_pcm_prepare(handle->dspH);
 	if (err < 0) {
 		fprintf(stderr, "Can't recover from underrun: %s\n",
