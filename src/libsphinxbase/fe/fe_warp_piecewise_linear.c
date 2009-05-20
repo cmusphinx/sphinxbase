@@ -149,11 +149,11 @@ fe_warp_piecewise_linear_set_parameters(char const *param_str,
             params[1] = sampling_rate * 0.85f;
         }
         final_piece[0] =
-            (sampling_rate -
-             params[0] * params[1]) / (sampling_rate - params[1]);
+            (nyquist_frequency -
+             params[0] * params[1]) / (nyquist_frequency - params[1]);
         final_piece[1] =
-            sampling_rate * params[1] * (params[0] -
-                                         1.0f) / (sampling_rate -
+            nyquist_frequency * params[1] * (params[0] -
+                                         1.0f) / (nyquist_frequency -
                                                   params[1]);
     }
     else {
