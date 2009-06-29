@@ -135,7 +135,7 @@ fixlog2(uint32 x)
   asm("cntlzw %0, %1\n": "=r"(y):"r"(x));
     x <<= y;
     y = 31 - y;
-#elif defined(XSCALE)
+#elif defined __ARM_ARCH_5__ || defined __ARM_ARCH_5T__ || defined __ARM_ARCH_5TE__
   asm("clz %0, %1\n": "=r"(y):"r"(x));
     x <<= y;
     y = 31 - y;
