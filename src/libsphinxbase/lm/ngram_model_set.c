@@ -135,7 +135,7 @@ ngram_model_set_init(cmd_ln_t *config,
     /* Do consistency checking on the models.  They must all use the
      * same logbase and shift. */
     lmath = models[0]->lmath;
-    for (i = 0; i < n_models; ++i) {
+    for (i = 1; i < n_models; ++i) {
         if (logmath_get_base(models[i]->lmath) != logmath_get_base(lmath)
             || logmath_get_shift(models[i]->lmath) != logmath_get_shift(lmath)) {
             E_ERROR("Log-math parameters don't match, will not create LM set\n");
@@ -461,7 +461,7 @@ ngram_model_set_current_wid(ngram_model_t *base,
     if (set->cur == -1 || set_wid >= base->n_words)
         return NGRAM_INVALID_WID;
     else
-        return set->widmap[set->cur][set_wid];
+        return set->widmap[set_wid][set->cur];
 }
 
 int32
@@ -475,7 +475,7 @@ ngram_model_set_known_wid(ngram_model_t *base,
     else if (set->cur == -1) {
         int32 i;
         for (i = 0; i < set->n_models; ++i) {
-            if (set->widmap[i][set_wid] != ngram_unknown_wid(set->lms[i]))
+            if (set->widmap[set_wid][i] != ngram_unknown_wid(set->lms[i]))
                 return TRUE;
         }
         return FALSE;
