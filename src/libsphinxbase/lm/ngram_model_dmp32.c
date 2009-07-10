@@ -50,11 +50,15 @@ ngram_model_dmp32_read(cmd_ln_t *config,
                        const char *file_name,
                        logmath_t *lmath)
 {
+    return NULL;
+
+#if 0
     ngram_model_t *model;
 
     model = ckd_calloc(1, sizeof(*model));
     model->funcs = &ngram_model_dmp32_funcs;
     return model;
+#endif
 }
 
 int

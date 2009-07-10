@@ -195,7 +195,7 @@ ngram_model_init(ngram_model_t *base,
         hash_table_empty(base->wid);
     else
         base->wid = hash_table_new(n_unigram, FALSE);
-    base->n_1g_alloc = base->n_words = n_unigram;
+    base->n_counts[0] = base->n_1g_alloc = base->n_words = n_unigram;
 
     return 0;
 }

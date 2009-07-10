@@ -242,6 +242,7 @@ ReadUnigrams(FILE * fp, ngram_model_arpa_t * model)
         E_WARN("lm_t.ucount(%d) != #unigrams read(%d)\n",
                base->n_counts[0], wcnt);
         base->n_counts[0] = wcnt;
+        base->n_words = wcnt;
     }
     return 0;
 }
