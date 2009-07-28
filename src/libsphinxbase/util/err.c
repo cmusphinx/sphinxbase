@@ -47,6 +47,34 @@
 #include "err.h"
 #include "config.h"
 
+#ifdef SPHINX_DEBUG
+static int sphinx_debug_level;
+int
+err_set_debug_level(int level)
+{
+    int prev = sphinx_debug_level;
+    sphinx_debug_level = level;
+    return prev;
+}
+int
+err_get_debug_level(void)
+{
+    return sphinx_debug_level;
+}
+#else
+int
+err_set_debug_level(int level)
+{
+    return 0;
+}
+
+int
+err_get_debug_level(void)
+{
+    return 0;
+}
+#endif
+
 #if defined(HAVE_PTHREAD_H)
 #include <pthread.h>
 static pthread_key_t logfp_index;

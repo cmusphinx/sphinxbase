@@ -87,6 +87,8 @@ extern "C" {
 SPHINXBASE_EXPORT
 void _E__pr_header(char const *file, long line, char const *msg);
 SPHINXBASE_EXPORT
+void _E__pr_debug_header(char const *file, long line, int level);
+SPHINXBASE_EXPORT
 void _E__pr_info_header(char const *file, long line, char const *tag);
 SPHINXBASE_EXPORT
 void _E__pr_info_header_wofn(char const *msg);
@@ -178,6 +180,50 @@ int err_set_logfile(char const *file);
  */
 #define E_ERROR	  _E__pr_header(__FILE__, __LINE__, "ERROR"),_E__pr_warn
 
+/**
+ * Set debugging verbosity level.
+ *
+ * Note that debugging messages are only enabled when compiled with -DDEBUG.
+ *
+ * @param level Verbosity level to set, or 0 to disable debug messages.
+ */
+SPHINXBASE_EXPORT
+int err_set_debug_level(int level);
+
+/**
+ * Get debugging verbosity level.
+ *
+ * Note that debugging messages are only enabled when compiled with -DDEBUG.
+ */
+SPHINXBASE_EXPORT
+int err_get_debug_level(void);
+
+/**
+ * Print debugging information to standard error stream.
+ *
+ * This will only print a message if:
+ *  1. Debugging is enabled at compile time
+ *  2. The debug level is greater than or equal to \a level
+ *
+ * Note that for portability reasons the format and arguments must be
+ * enclosed in an extra set of parentheses.
+ */
+#ifdef SPHINX_DEBUG
+#define E_DEBUG(level,x) {                              \
+        if (err_get_debug_level() >= level) {           \
+            _E__pr_header(__FILE__, __LINE__, "DEBUG"); \
+            _E__pr_info x;                              \
+        }                                               \
+    }
+#define E_DEBUGCONT(level,x) {                          \
+        if (err_get_debug_level() >= level) {           \
+            _E__pr_info x;                              \
+        }                                               \
+    }
+#else
+#define E_DEBUG(level,x)
+#define E_DEBUGCONT(level,x)
+#endif
 
 #ifdef __cplusplus
 }

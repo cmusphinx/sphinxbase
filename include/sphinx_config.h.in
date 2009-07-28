@@ -43,3 +43,6 @@
 
 /* The size of `long long', as computed by sizeof. */
 #undef SIZEOF_LONG_LONG
+
+/* Enable debugging output */
+#undef SPHINX_DEBUG
