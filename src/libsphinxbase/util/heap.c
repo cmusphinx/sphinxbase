@@ -68,6 +68,7 @@
 #include <assert.h>
 
 #include "heap.h"
+#include "err.h"
 #include "ckd_alloc.h"
 
 
