@@ -77,7 +77,7 @@ enum string_edge_e {
  * Remove whitespace from a string, modifying it in-place.
  *
  * @param string string to trim, contents will be modified.
- * @param which one of TRIM_START, TRIM_END, or TRIM_BOTH.
+ * @param which one of STRING_START, STRING_END, or STRING_BOTH.
  */
 SPHINXBASE_EXPORT
 char *string_trim(char *string, enum string_edge_e which);
