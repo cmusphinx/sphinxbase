@@ -600,6 +600,9 @@ ngram_iter_init(ngram_iter_t *itor, ngram_model_t *model,
 ngram_iter_t *
 ngram_model_mgrams(ngram_model_t *model, int m)
 {
+    /* The fact that m=n-1 is not exactly obvious.  Prevent accidents. */
+    if (m >= model->n)
+        return NULL;
     return (*model->funcs->mgrams)(model, m);
 }
 

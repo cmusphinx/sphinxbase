@@ -331,6 +331,8 @@ typedef struct ngram_iter_s ngram_iter_t;
  *
  * @param model Language model to query.
  * @param m Order of the M-Grams requested minus one (i.e. order of the history)
+ * @return An iterator over the requested M, or NULL if no N-grams of
+ * order M+1 exist.
  */
 SPHINXBASE_EXPORT
 ngram_iter_t *ngram_model_mgrams(ngram_model_t *model, int m);
