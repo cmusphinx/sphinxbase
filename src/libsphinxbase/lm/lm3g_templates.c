@@ -39,6 +39,8 @@
  * DMP/DMP32/ARPA (for now) model code.
  */
 
+#include <assert.h>
+
 /* Locate a specific bigram within a bigram list */
 #define BINARY_SEARCH_THRESH	16
 static int32
@@ -277,6 +279,87 @@ typedef struct lm3g_iter_s {
     bigram_t *bg;
     trigram_t *tg;
 } lm3g_iter_t;
+
+static ngram_iter_t *
+lm3g_template_iter(ngram_model_t *base, int32 wid,
+                   int32 *history, int32 n_hist)
+{
+    NGRAM_MODEL_TYPE *model = (NGRAM_MODEL_TYPE *)base;
+    lm3g_iter_t *itor = ckd_calloc(1, sizeof(*itor));
+
+    ngram_iter_init((ngram_iter_t *)itor, base, n_hist, FALSE);
+
+    if (n_hist == 0) {
+        /* Unigram is the easiest. */
+        itor->ug = model->lm3g.unigrams + wid;
+        return (ngram_iter_t *)itor;
+    }
+    else if (n_hist == 1) {
+        int32 i, n, b;
+        /* Find the bigram, as in bg_score above (duplicate code...) */
+        itor->ug = model->lm3g.unigrams + history[0];
+        b = FIRST_BG(model, history[0]);
+        n = FIRST_BG(model, history[0] + 1) - b;
+        itor->bg = model->lm3g.bigrams + b;
+        /* If no such bigram exists then fail. */
+        if ((i = find_bg(itor->bg, n, wid)) < 0) {
+            ngram_iter_free((ngram_iter_t *)itor);
+            return NULL;
+        }
+        itor->bg += i;
+        return (ngram_iter_t *)itor;
+    }
+    else if (n_hist == 2) {
+        int32 i, n;
+        tginfo_t *tginfo, *prev_tginfo;
+        /* Find the trigram, as in tg_score above (duplicate code...) */
+        itor->ug = model->lm3g.unigrams + history[1];
+        prev_tginfo = NULL;
+        for (tginfo = model->lm3g.tginfo[history[0]];
+             tginfo; tginfo = tginfo->next) {
+            if (tginfo->w1 == history[1])
+                break;
+            prev_tginfo = tginfo;
+        }
+
+        if (!tginfo) {
+            load_tginfo(model, history[1], history[0]);
+            tginfo = model->lm3g.tginfo[history[0]];
+        }
+        else if (prev_tginfo) {
+            prev_tginfo->next = tginfo->next;
+            tginfo->next = model->lm3g.tginfo[history[0]];
+            model->lm3g.tginfo[history[0]] = tginfo;
+        }
+
+        tginfo->used = 1;
+
+        /* Trigrams for w1,w2 now pointed to by tginfo */
+        n = tginfo->n_tg;
+        itor->tg = tginfo->tg;
+        if ((i = find_tg(itor->tg, n, wid)) >= 0) {
+            itor->tg += i;
+            /* Now advance the bigram pointer accordingly.  FIXME:
+             * Note that we actually already found the relevant bigram
+             * in load_tginfo. */
+            itor->bg = model->lm3g.bigrams;
+            while (FIRST_TG(model, (itor->bg - model->lm3g.bigrams + 1))
+                   <= (itor->tg - model->lm3g.trigrams))
+                ++itor->bg;
+            return (ngram_iter_t *)itor;
+        }
+        else {
+            ngram_iter_free((ngram_iter_t *)itor);
+            return (ngram_iter_t *)NULL;
+        }
+    }
+    else {
+        /* Should not happen. */
+        assert(n_hist == 0); /* Guaranteed to fail. */
+        ngram_iter_free((ngram_iter_t *)itor);
+        return NULL;
+    }
+}
 
 static ngram_iter_t *
 lm3g_template_mgrams(ngram_model_t *base, int m)

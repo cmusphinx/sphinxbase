@@ -80,6 +80,8 @@ cdef extern from "ngram_model.h":
     int32 ngram_model_get_size(ngram_model_t *model)
     int32 *ngram_model_get_counts(ngram_model_t *model)
     ctypedef struct ngram_iter_t
+    ngram_iter_t *ngram_ng_iter(ngram_model_t *model, int32 wid,
+                                int32 *history, int32 n_hist)
     ngram_iter_t *ngram_model_mgrams(ngram_model_t *model, int m)
     int32 *ngram_iter_get(ngram_iter_t *itor,
                           int32 *out_score,
@@ -101,12 +103,12 @@ cdef class NGramModel:
 cdef class LogMath:
     cdef logmath_t *lmath
 
-cdef class NGram:
-    cdef readonly float log_prob, log_bowt
-    cdef readonly object words
-
 cdef class NGramIter:
     cdef NGramModel lm
     cdef ngram_iter_t *itor
     cdef int first_item
     cdef int m
+    cdef readonly float log_prob, log_bowt
+    cdef readonly object words
+
+    cdef set_iter(NGramIter self, ngram_iter_t *itor)

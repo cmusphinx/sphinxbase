@@ -157,6 +157,11 @@ typedef struct ngram_funcs_s {
     /**
      * Implementation-specific function for iterating.
      */
+    ngram_iter_t * (*iter)(ngram_model_t *model, int32 wid, int32 *history, int32 n_hist);
+
+    /**
+     * Implementation-specific function for iterating.
+     */
     ngram_iter_t * (*mgrams)(ngram_model_t *model, int32 m);
 
     /**

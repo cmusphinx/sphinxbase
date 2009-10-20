@@ -338,6 +338,18 @@ SPHINXBASE_EXPORT
 ngram_iter_t *ngram_model_mgrams(ngram_model_t *model, int m);
 
 /**
+ * Get an iterator over M-grams pointing to the specified M-gram.
+ */
+SPHINXBASE_EXPORT
+ngram_iter_t *ngram_iter(ngram_model_t *model, const char *word, ...);
+
+/**
+ * Get an iterator over M-grams pointing to the specified M-gram.
+ */
+SPHINXBASE_EXPORT
+ngram_iter_t *ngram_ng_iter(ngram_model_t *model, int32 wid, int32 *history, int32 n_hist);
+
+/**
  * Get information from the current M-gram in an iterator.
  *
  * @param out_score Output: Score for this M-gram (including any word

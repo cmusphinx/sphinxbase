@@ -277,11 +277,50 @@ cdef class NGramModel:
         return logmath_log_to_ln(self.lmath, score), n_used
 
     def mgrams(self, m):
+        """
+        Return an iterator over each N-gram of order m+1.
+
+        This allows Pythonic iteration over the parameters of an
+        N-Gram model.
+
+        @param m: Order of requested N-grams minus one
+        @type m: int
+        @return: Iterator over M+1-grams
+        @rtype: NGramIter
+        """
         cdef NGramIter itor
         itor = NGramIter(self, m)
         itor.itor = ngram_model_mgrams(self.lm, m)
-        if itor.itor == NULL:
-            return None
+        return itor
+
+    def ngram(self, word, *args):
+        """
+        Return an N-Gram iterator pointing to a given N-gram.
+
+        This allows you to iterate over its successors among other
+        things.
+
+        @param word: Head word of requested N-gram.
+        @type word: str
+        @param args: History words of requested N-gram
+        @type args: str
+        @return: Iterator pointing to N-gram.
+        """
+        cdef NGramIter itor
+        cdef int32 wid
+        cdef int32 *hist
+        cdef int32 n_hist
+        wid = ngram_wid(self.lm, word)
+        n_hist = len(args)
+        hist = <int32 *>ckd_calloc(n_hist, sizeof(int32))
+        for i from 0 <= i < n_hist:
+            spam = args[i]
+            hist[i] = ngram_wid(self.lm, spam)
+        itor = NGramIter(self, n_hist)
+        # We do set_iter here, because we're returning something the
+        # user is immediately going to do stuff with.
+        itor.set_iter(ngram_ng_iter(self.lm, wid, hist, n_hist))
+        ckd_free(hist)
         return itor
 
 cdef class NGramIter:
@@ -298,31 +337,37 @@ cdef class NGramIter:
         self.first_item = True
 
     def __iter__(self):
+        self.first_item = True
         return self
 
-    def __next__(self):
+    cdef set_iter(NGramIter self, ngram_iter_t *itor):
         cdef int32 prob, bowt
         cdef int32 *wids
-        cdef NGram ng
+
+        if itor == NULL:
+            raise StopIteration
+        self.itor = itor
         if self.first_item:
             self.first_item = False
-        else:
-            self.itor = ngram_iter_next(self.itor)
-        if self.itor == NULL:
-            raise StopIteration
-        wids = ngram_iter_get(self.itor, &prob, &bowt)
-        ng = NGram()
-        ng.log_prob = logmath_log_to_ln(self.lm.lmath, prob)
-        ng.log_bowt = logmath_log_to_ln(self.lm.lmath, bowt)
-        ng.words = []
+        wids = ngram_iter_get(itor, &prob, &bowt)
+        self.log_prob = logmath_log_to_ln(self.lm.lmath, prob)
+        self.log_bowt = logmath_log_to_ln(self.lm.lmath, bowt)
+        self.words = []
         for i in range(0, self.m+1):
-            ng.words.append(ngram_word(self.lm.lm, wids[i]))
-        return ng
+            self.words.append(ngram_word(self.lm.lm, wids[i]))
+
+    def __next__(self):
+        if self.first_item:
+            self.set_iter(self.itor)
+        else:
+            self.set_iter(ngram_iter_next(self.itor))
+        return self
 
     def successors(self):
+        """
+        Get an iterator over N+1-gram successors of an N-gram.
+        """
         cdef NGramIter itor
-        itor = NGramIter(self.lm, self.m - 1)
+        itor = NGramIter(self.lm, self.m + 1)
         itor.itor = ngram_iter_successors(self.itor)
-        if itor.itor == NULL:
-            return None
         return itor

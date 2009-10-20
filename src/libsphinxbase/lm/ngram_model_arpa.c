@@ -670,6 +670,7 @@ static ngram_funcs_t ngram_model_arpa_funcs = {
     lm3g_template_raw_score,        /* raw_score */
     lm3g_template_add_ug,           /* add_ug */
     lm3g_template_flush,            /* flush */
+    lm3g_template_iter,             /* iter */
     lm3g_template_mgrams,           /* mgrams */
     lm3g_template_successors,       /* successors */
     lm3g_template_iter_get,         /* iter_get */
