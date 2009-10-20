@@ -79,6 +79,15 @@ cdef extern from "ngram_model.h":
 
     int32 ngram_model_get_size(ngram_model_t *model)
     int32 *ngram_model_get_counts(ngram_model_t *model)
+    ctypedef struct ngram_iter_t
+    ngram_iter_t *ngram_model_mgrams(ngram_model_t *model, int m)
+    int32 *ngram_iter_get(ngram_iter_t *itor,
+                          int32 *out_score,
+                          int32 *out_bowt)
+    ngram_iter_t *ngram_iter_next(ngram_iter_t *itor)
+    ngram_iter_t *ngram_iter_successors(ngram_iter_t *itor)
+    void ngram_iter_free(ngram_iter_t *itor)
+
 
 # Extension classes
 cdef class NGramModel:
@@ -88,3 +97,10 @@ cdef class NGramModel:
 
     cdef set_lm(NGramModel self, ngram_model_t *lm)
     cdef set_lmath(NGramModel self, logmath_t *lmath)
+
+cdef class LogMath:
+    cdef logmath_t *lmath
+
+cdef class NGramIter:
+    cdef ngram_iter_t *itor
+    cdef int first_item
