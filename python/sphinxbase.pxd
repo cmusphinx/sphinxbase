@@ -101,6 +101,12 @@ cdef class NGramModel:
 cdef class LogMath:
     cdef logmath_t *lmath
 
+cdef class NGram:
+    cdef readonly float log_prob, log_bowt
+    cdef readonly object words
+
 cdef class NGramIter:
+    cdef NGramModel lm
     cdef ngram_iter_t *itor
     cdef int first_item
+    cdef int m

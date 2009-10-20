@@ -276,6 +276,14 @@ cdef class NGramModel:
         ckd_free(hist)
         return logmath_log_to_ln(self.lmath, score), n_used
 
+    def mgrams(self, m):
+        cdef NGramIter itor
+        itor = NGramIter(self, m)
+        itor.itor = ngram_model_mgrams(self.lm, m)
+        if itor.itor == NULL:
+            return None
+        return itor
+
 cdef class NGramIter:
     """
     N-Gram language model iterator class.
@@ -283,19 +291,38 @@ cdef class NGramIter:
     This class provides access to the individual N-grams stored in a
     language model.
     """
-    def __cinit__(self):
+    def __cinit__(self, NGramModel lm, int m):
         self.itor = NULL
-        self.first_link = True
+        self.lm = lm
+        self.m = m
+        self.first_item = True
 
     def __iter__(self):
         return self
 
     def __next__(self):
+        cdef int32 prob, bowt
+        cdef int32 *wids
+        cdef NGram ng
         if self.first_item:
             self.first_item = False
         else:
             self.itor = ngram_iter_next(self.itor)
         if self.itor == NULL:
             raise StopIteration
-        # Return score, bowt, word ids
-        
+        wids = ngram_iter_get(self.itor, &prob, &bowt)
+        ng = NGram()
+        ng.log_prob = logmath_log_to_ln(self.lm.lmath, prob)
+        ng.log_bowt = logmath_log_to_ln(self.lm.lmath, bowt)
+        ng.words = []
+        for i in range(0, self.m+1):
+            ng.words.append(ngram_word(self.lm.lm, wids[i]))
+        return ng
+
+    def successors(self):
+        cdef NGramIter itor
+        itor = NGramIter(self.lm, self.m - 1)
+        itor.itor = ngram_iter_successors(self.itor)
+        if itor.itor == NULL:
+            return None
+        return itor
