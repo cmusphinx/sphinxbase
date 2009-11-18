@@ -119,7 +119,12 @@ calc_entropy(ngram_model_t *lm, char **words, int32 n,
 {
 	int32 *wids;
 	int32 startwid;
-	int32 i, ch, nccs, noovs;
+	int32 i, ch, nccs, noovs, unk;
+
+        if (n == 0)
+            return 0;
+
+        unk = ngram_unknown_wid(lm);
 
 	/* Reverse this array into an array of word IDs. */
 	wids = ckd_calloc(n, sizeof(*wids));
@@ -141,7 +146,7 @@ calc_entropy(ngram_model_t *lm, char **words, int32 n,
 			continue;
 		}
 		/* Skip and count OOVs. */
-		if (wids[i] == NGRAM_INVALID_WID) {
+		if (wids[i] == NGRAM_INVALID_WID || wids[i] == unk) {
 			++noovs;
 			continue;
 		}
@@ -156,6 +161,9 @@ calc_entropy(ngram_model_t *lm, char **words, int32 n,
 	if (out_n_oovs) *out_n_oovs = noovs;
 
 	/* Calculate cross-entropy CH = - 1/N sum log P(W|H) */
+        n -= (nccs + noovs);
+        if (n <= 0)
+            return 0;
 	return ch / n;
 }
 
@@ -194,7 +202,7 @@ evaluate_file(ngram_model_t *lm, logmath_t *lmath, const char *lsnfn)
 
 		tmp_ch = calc_entropy(lm, words, n, &tmp_nccs, &tmp_noovs);
 
-		ch += (float64) tmp_ch * n * log_to_log2;
+		ch += (float64) tmp_ch * (n - tmp_nccs - tmp_noovs) * log_to_log2;
 		nccs += tmp_nccs;
 		noovs += tmp_noovs;
 		nwords += n;
@@ -202,7 +210,7 @@ evaluate_file(ngram_model_t *lm, logmath_t *lmath, const char *lsnfn)
 		ckd_free(words);
 	}
 
-	ch /= nwords;
+	ch /= (nwords - nccs - noovs);
 	printf("cross-entropy: %f bits\n", ch);
 
 	/* Calculate perplexity pplx = exp CH */
@@ -210,8 +218,8 @@ evaluate_file(ngram_model_t *lm, logmath_t *lmath, const char *lsnfn)
 
 	/* Report OOVs and CCs */
 	printf("%d words evaluated\n", nwords);
-	printf("%d OOVs, %d context cues removed\n",
-	       noovs, nccs);
+	printf("%d OOVs (%.2f%%), %d context cues removed\n",
+	       noovs, (double)noovs / nwords * 100, nccs);
 }
 
 static void
