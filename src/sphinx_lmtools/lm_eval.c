@@ -268,6 +268,12 @@ main(int argc, char *argv[])
 
 	/* Load the language model. */
 	lmfn = cmd_ln_str_r(config, "-lm");
+	if (lmfn == NULL
+	    || (lm = ngram_model_read(config, lmfn,
+				      NGRAM_AUTO, lmath)) == NULL) {
+		E_FATAL("Failed to load language model from %s\n",
+			cmd_ln_str_r(config, "-lm"));
+	}
         if ((probdefn = cmd_ln_str_r(config, "-probdef")) != NULL)
             ngram_model_read_classdef(lm, probdefn);
         ngram_model_apply_weights(lm,
@@ -275,12 +281,6 @@ main(int argc, char *argv[])
                                   cmd_ln_float32_r(config, "-wip"),
                                   cmd_ln_float32_r(config, "-uw"));
 
-	if (lmfn == NULL
-	    || (lm = ngram_model_read(config, lmfn,
-				      NGRAM_AUTO, lmath)) == NULL) {
-		E_FATAL("Failed to load language model from %s\n",
-			cmd_ln_str_r(config, "-lm"));
-	}
 
 	/* Now evaluate some text. */
 	lsnfn = cmd_ln_str_r(config, "-lsn");
