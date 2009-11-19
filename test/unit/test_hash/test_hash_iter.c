@@ -1,5 +1,5 @@
 /**
- * @file test_config.c Test hash tables
+ * @file test_hash_iter.c Test hash table iterators
  * @author David Huggins-Daines <dhuggins@cs.cmu.edu>
  */
 

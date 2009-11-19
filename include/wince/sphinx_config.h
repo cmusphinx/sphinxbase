@@ -38,3 +38,6 @@
 
 /* The size of `long', as computed by sizeof. */
 #define SIZEOF_LONG 4
+
+/* Extension for executables */
+#define EXEEXT ".exe"

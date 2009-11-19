@@ -74,6 +74,14 @@ ngram_file_name_to_type(const char *file_name)
             return NGRAM_ARPA; /* Default file type */
         }
     }
+    else if (0 == strcmp_nocase(ext, ".bz2")) {
+        while (--ext >= file_name) {
+            if (*ext == '.') break;
+        }
+        if (ext < file_name) {
+            return NGRAM_ARPA; /* Default file type */
+        }
+    }
     /* We use strncmp because there might be a .gz on the end. */
     if (0 == strncmp_nocase(ext, ".ARPA", 5))
         return NGRAM_ARPA;

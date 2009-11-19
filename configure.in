@@ -297,6 +297,7 @@ test/unit/test_logmath/Makefile
 test/unit/test_ngram/Makefile
 test/unit/test_fsg/Makefile
 test/unit/test_thread/Makefile
+test/unit/test_util/Makefile
 test/regression/testfuncs.sh
 test/regression/Makefile
 ])

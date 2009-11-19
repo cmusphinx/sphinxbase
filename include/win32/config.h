@@ -62,3 +62,6 @@
 
 /* We do not have unistd.h. */
 #define YY_NO_UNISTD_H 1
+
+/* Extension for executables */
+#define EXEEXT ".exe"

@@ -47,7 +47,45 @@
 
 #include "pio.h"
 #include "err.h"
+#include "strfuncs.h"
 #include "ckd_alloc.h"
+
+#ifndef EXEEXT
+#define EXEEXT ""
+#endif
+
+enum {
+    COMP_NONE,
+    COMP_COMPRESS,
+    COMP_GZIP,
+    COMP_BZIP2
+};
+
+static void
+guess_comptype(char const *file, int32 *ispipe, int32 *isgz)
+{
+    int k;
+
+    k = strlen(file);
+    *ispipe = 0;
+    *isgz = COMP_NONE;
+    if ((k > 2)
+        && ((strcmp(file + k - 2, ".Z") == 0)
+            || (strcmp(file + k - 2, ".z") == 0))) {
+        *ispipe = 1;
+        *isgz = COMP_COMPRESS;
+    }
+    else if ((k > 3) && ((strcmp(file + k - 3, ".gz") == 0)
+                        || (strcmp(file + k - 3, ".GZ") == 0))) {
+        *ispipe = 1;
+        *isgz = COMP_GZIP;
+    }
+    else if ((k > 4) && ((strcmp(file + k - 4, ".bz2") == 0)
+                        || (strcmp(file + k - 4, ".BZ2") == 0))) {
+        *ispipe = 1;
+        *isgz = COMP_BZIP2;
+    }
+}
 
 FILE *
 fopen_comp(const char *file, const char *mode, int32 * ispipe)
@@ -57,28 +95,8 @@ fopen_comp(const char *file, const char *mode, int32 * ispipe)
 #ifndef HAVE_POPEN
     *ispipe = 0; /* No popen() on WinCE */
 #else /* HAVE_POPEN */
-    int32 k, isgz;
-    k = strlen(file);
-#if defined(WIN32)
-    *ispipe = (k > 3) && ((strcmp(file + k - 3, ".gz") == 0)
-                          || (strcmp(file + k - 3, ".GZ") == 0));
-    isgz = *ispipe;
-#else
-    *ispipe = 0;
-    isgz = 0;
-    if ((k > 2)
-        && ((strcmp(file + k - 2, ".Z") == 0)
-            || (strcmp(file + k - 2, ".z") == 0))) {
-        *ispipe = 1;
-    }
-    else {
-        if ((k > 3) && ((strcmp(file + k - 3, ".gz") == 0)
-                        || (strcmp(file + k - 3, ".GZ") == 0))) {
-            *ispipe = 1;
-            isgz = 1;
-        }
-    }
-#endif /* NOT WIN32 */
+    int32 isgz;
+    guess_comptype(file, ispipe, &isgz);
 #endif /* HAVE_POPEN */
 
     if (*ispipe) {
@@ -86,55 +104,53 @@ fopen_comp(const char *file, const char *mode, int32 * ispipe)
         /* Shouldn't get here, anyway */
         E_FATAL("No popen() on WinCE\n");
 #else
-        char command[16384];
-#if defined(WIN32) 
+        char *command = NULL;
+
         if (strcmp(mode, "r") == 0) {
-            sprintf(command, "gzip.exe -d -c %s", file);
-            if ((fp = _popen(command, mode)) == NULL) {
-                E_ERROR_SYSTEM("_popen (%s,%s) failed\n", command, mode);
+            switch (isgz) {
+            case COMP_GZIP:
+                command = string_join("gunzip" EXEEXT, " -c ", file, NULL);
+                break;
+            case COMP_COMPRESS:
+                command = string_join("zcat" EXEEXT, " ", file, NULL);
+                break;
+            case COMP_BZIP2:
+                command = string_join("bunzip2" EXEEXT, " -c ", file, NULL);
+                break;
+            default:
+                E_FATAL("Unknown  compression type %d\n", isgz);
+            }
+            if ((fp = popen(command, mode)) == NULL) {
+                E_ERROR_SYSTEM("popen (%s,%s) failed\n", command, mode);
+                ckd_free(command);
                 return NULL;
             }
         }
         else if (strcmp(mode, "w") == 0) {
-            sprintf(command, "gzip.exe > %s", file);
-
-            if ((fp = _popen(command, mode)) == NULL) {
-                E_ERROR_SYSTEM("_popen (%s,%s) failed\n", command, mode);
+            switch (isgz) {
+            case COMP_GZIP:
+                command = string_join("gzip" EXEEXT, " > ", file, NULL);
+                break;
+            case COMP_COMPRESS:
+                command = string_join("compress" EXEEXT, " -c > ", file, NULL);
+                break;
+            case COMP_BZIP2:
+                command = string_join("bzip2" EXEEXT, " > ", file, NULL);
+                break;
+            default:
+                E_FATAL("Unknown compression type %d\n", isgz);
+            }
+            if ((fp = popen(command, mode)) == NULL) {
+                E_ERROR_SYSTEM("popen (%s,%s) failed\n", command, mode);
+                ckd_free(command);
                 return NULL;
             }
+            ckd_free(command);
         }
         else {
             E_ERROR("fopen_comp not implemented for mode = %s\n", mode);
             return NULL;
         }
-#else
-        if (strcmp(mode, "r") == 0) {
-            if (isgz)
-                sprintf(command, "gunzip -c %s", file);
-            else
-                sprintf(command, "zcat %s", file);
-
-            if ((fp = popen(command, mode)) == NULL) {
-                E_ERROR_SYSTEM("popen (%s,%s) failed\n", command, mode);
-                return NULL;
-            }
-        }
-        else if (strcmp(mode, "w") == 0) {
-            if (isgz)
-                sprintf(command, "gzip > %s", file);
-            else
-                sprintf(command, "compress -c > %s", file);
-
-            if ((fp = popen(command, mode)) == NULL) {
-                E_ERROR_SYSTEM("popen (%s,%s) failed\n", command, mode);
-                return NULL;
-            }
-        }
-        else {
-            E_ERROR("fopen_comp not implemented for mode = %s\n", mode);
-            return NULL;
-        }
-#endif /* NOT WIN32 */
 #endif /* HAVE_POPEN */
     }
     else {
@@ -170,64 +186,58 @@ fopen_compchk(const char *file, int32 * ispipe)
     /* And therefore the rest of this function is useless. */
     return (fopen_comp(file, "r", ispipe));
 #else /* HAVE_POPEN */
-    char tmpfile[16384];
-    int32 k, isgz;
-    struct stat statbuf;
+    int32 isgz;
+    FILE *fh;
 
-    k = strlen(file);
-
-#if defined(WIN32)
-    *ispipe = (k > 3) && ((strcmp(file + k - 3, ".gz") == 0)
-                          || (strcmp(file + k - 3, ".GZ") == 0));
-    isgz = *ispipe;
-#else
-    *ispipe = 0;
-    isgz = 0;
-    if ((k > 2)
-        && ((strcmp(file + k - 2, ".Z") == 0)
-            || (strcmp(file + k - 2, ".z") == 0))) {
-        *ispipe = 1;
-    }
+    /* First just try to fopen_comp() it */
+    if ((fh = fopen_comp(file, "r", ispipe)) != NULL)
+        return fh;
     else {
-        if ((k > 3) && ((strcmp(file + k - 3, ".gz") == 0)
-                        || (strcmp(file + k - 3, ".GZ") == 0))) {
-            *ispipe = 1;
-            isgz = 1;
-        }
-    }
-#endif
+        char *tmpfile;
+        int k;
 
-    strcpy(tmpfile, file);
-    if (stat(tmpfile, &statbuf) != 0) {
         /* File doesn't exist; try other compressed/uncompressed form, as appropriate */
-        E_ERROR_SYSTEM("stat(%s) failed\n", tmpfile);
-
-        if (*ispipe) {
-            if (isgz)
-                tmpfile[k - 3] = '\0';
-            else
-                tmpfile[k - 2] = '\0';
-
-            if (stat(tmpfile, &statbuf) != 0)
-                return NULL;
-        }
-        else {
+        guess_comptype(file, ispipe, &isgz);
+        k = strlen(file);
+        tmpfile = ckd_calloc(k+5, 1);
+        strcpy(tmpfile, file);
+        switch (isgz) {
+        case COMP_GZIP:
+            tmpfile[k - 3] = '\0';
+            break;
+        case COMP_BZIP2:
+            tmpfile[k - 4] = '\0';
+            break;
+        case COMP_COMPRESS:
+            tmpfile[k - 2] = '\0';
+            break;
+        case COMP_NONE:
             strcpy(tmpfile + k, ".gz");
-            if (stat(tmpfile, &statbuf) != 0) {
-#if (! WIN32)
-                strcpy(tmpfile + k, ".Z");
-                if (stat(tmpfile, &statbuf) != 0)
-                    return NULL;
-#else
-                return NULL;
-#endif
+            if ((fh = fopen_comp(tmpfile, "r", ispipe)) != NULL) {
+                E_WARN("Using %s instead of %s\n", tmpfile, file);
+                ckd_free(tmpfile);
+                return fh;
             }
+            strcpy(tmpfile + k, ".bz2");
+            if ((fh = fopen_comp(tmpfile, "r", ispipe)) != NULL) {
+                E_WARN("Using %s instead of %s\n", tmpfile, file);
+                ckd_free(tmpfile);
+                return fh;
+            }
+            strcpy(tmpfile + k, ".Z");
+            if ((fh = fopen_comp(tmpfile, "r", ispipe)) != NULL) {
+                E_WARN("Using %s instead of %s\n", tmpfile, file);
+                ckd_free(tmpfile);
+                return fh;
+            }
+            ckd_free(tmpfile);
+            return NULL;
         }
-
         E_WARN("Using %s instead of %s\n", tmpfile, file);
+        fh = fopen_comp(tmpfile, "r", ispipe);
+        ckd_free(tmpfile);
+        return NULL;
     }
-
-    return (fopen_comp(tmpfile, "r", ispipe));
 #endif /* HAVE_POPEN */
 }
 

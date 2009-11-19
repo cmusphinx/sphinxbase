@@ -19,5 +19,6 @@ SUBDIRS=test_ad					\
 	test_logmath				\
 	test_ngram				\
 	test_fsg				\
+	test_util				\
 	$(maybe_threads)
 
