@@ -51,6 +51,9 @@ extern "C" {
 #endif
 
 #include <stdlib.h>
+#ifdef S60
+#include <types.h>
+#endif
 
 /* Win32/WinCE DLL gunk */
 #include <sphinxbase_export.h>

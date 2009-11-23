@@ -2269,7 +2269,7 @@ sb_strtod
 #ifdef Avoid_Underflow
 			if (scale && y <= 2*P*Exp_msk1) {
 				if (aadj <= 0x7fffffff) {
-					if ((z = aadj) <= 0)
+					if ((z = (uint32)aadj) <= 0)
 						z = 1;
 					aadj = z;
 					aadj1 = dsign ? aadj : -aadj;

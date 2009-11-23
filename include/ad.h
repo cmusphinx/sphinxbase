@@ -291,6 +291,18 @@ typedef struct {
   int32 recording;
 } ad_rec_t;
 
+#elif defined(AD_BACKEND_S60)
+
+typedef struct ad_rec_s {
+    void* recorder;
+    int32 recording;
+    int32 sps;
+    int32 bps;
+} ad_rec_t;
+
+SPHINXBASE_EXPORT
+ad_rec_t *ad_open_sps_bufsize (int32 samples_per_sec, int32 bufsize_msec);
+
 #else
 
 #define DEFAULT_DEVICE NULL

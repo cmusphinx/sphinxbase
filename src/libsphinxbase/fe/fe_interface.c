@@ -71,7 +71,7 @@ fe_parse_general_params(cmd_ln_t *config, fe_t * fe)
 
     fe->config = config;
     fe->sampling_rate = cmd_ln_float32_r(config, "-samprate");
-    fe->frame_rate = cmd_ln_int32_r(config, "-frate");
+    fe->frame_rate = (int16)cmd_ln_int32_r(config, "-frate");
     if (cmd_ln_boolean_r(config, "-dither")) {
         fe->dither = 1;
         fe->seed = cmd_ln_int32_r(config, "-seed");
@@ -84,8 +84,8 @@ fe_parse_general_params(cmd_ln_t *config, fe_t * fe)
     fe->window_length = cmd_ln_float32_r(config, "-wlen");
     fe->pre_emphasis_alpha = cmd_ln_float32_r(config, "-alpha");
 
-    fe->num_cepstra = cmd_ln_int32_r(config, "-ncep");
-    fe->fft_size = cmd_ln_int32_r(config, "-nfft");
+    fe->num_cepstra = (uint8)cmd_ln_int32_r(config, "-ncep");
+    fe->fft_size = (int16)cmd_ln_int32_r(config, "-nfft");
 
     /* Check FFT size, compute FFT order (log_2(n)) */
     for (j = fe->fft_size, fe->fft_order = 0; j > 1; j >>= 1, fe->fft_order++) {

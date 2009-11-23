@@ -75,6 +75,7 @@
 #include <sphinxbase_export.h>
 #include <sphinx_config.h>
 #include <prim_type.h>
+#include <cmd_ln.h>
 
 
 #ifdef __cplusplus

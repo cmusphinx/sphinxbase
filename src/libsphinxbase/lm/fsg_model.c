@@ -535,7 +535,6 @@ fsg_model_read(FILE * fp, logmath_t *lmath, float32 lw)
            fsg->n_state, hash_table_inuse(vocab), n_trans, n_null_trans);
 
     /* Do transitive closure on null transitions */
-    /* FIXME: This is evil, we should do epsilon removal and determinization instead. */
     nulls = fsg_model_null_trans_closure(fsg, nulls);
     glist_free(nulls);
 
@@ -637,7 +636,7 @@ fsg_model_write(fsg_model_t * fsg, FILE * fp)
 
                 fprintf(fp, "%s %d %d %f %s\n", FSG_MODEL_TRANSITION_DECL,
                         tl->from_state, tl->to_state,
-                        logmath_exp(fsg->lmath, tl->logs2prob / fsg->lw),
+                        logmath_exp(fsg->lmath, (int32)(tl->logs2prob / fsg->lw)),
                         (tl->wid < 0) ? "" : fsg_model_word_str(fsg, tl->wid));
             }
 
@@ -647,7 +646,7 @@ fsg_model_write(fsg_model_t * fsg, FILE * fp)
                 fprintf(fp, "%s %d %d %f\n",
                         FSG_MODEL_TRANSITION_DECL,
                         tl->from_state, tl->to_state,
-                        logmath_exp(fsg->lmath, tl->logs2prob / fsg->lw));
+                        logmath_exp(fsg->lmath, (int32)(tl->logs2prob / fsg->lw)));
             }
         }
     }
