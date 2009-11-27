@@ -79,8 +79,6 @@
 			  SWAP_INT32(low);  SWAP_INT32(high);\
 			  temp = *low; *low = *high; *high = temp;}
 
-/* Rather confusing backwards compatibility macros for dealing with
- * explicitly big or little-endian data. */
 #ifdef WORDS_BIGENDIAN
 #define SWAP_BE_64(x)
 #define SWAP_BE_32(x)

@@ -243,6 +243,18 @@ heap_top(heap_t heap, void **data, int32 * val)
     return 1;
 }
 
+int32
+heap_size(heap_t heap)
+{
+    heapnode_t **hp, *h;
+
+    hp = (heapnode_t **) heap;
+    h = *hp;
+
+    if (h == NULL)
+        return 0;
+    return h->nl + h->nr + 1;
+}
 
 int32
 heap_destroy(heap_t heap)

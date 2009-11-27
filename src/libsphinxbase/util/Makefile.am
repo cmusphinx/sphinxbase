@@ -22,6 +22,7 @@ libsphinxutil_la_SOURCES = \
         glist.c \
         hash_table.c \
         heap.c \
+	huff_code.c \
         info.c \
 	logmath.c \
 	mmio.c \

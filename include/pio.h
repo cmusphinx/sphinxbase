@@ -218,6 +218,48 @@ struct stat {
 #endif
 
 /**
+ * Bitstream encoder - for writing compressed files.
+ */
+typedef struct bit_encode_s bit_encode_t;
+
+/**
+ * Attach bitstream encoder to a file.
+ */
+bit_encode_t *bit_encode_attach(FILE *outfh);
+
+/**
+ * Retain pointer to a bit encoder.
+ */
+bit_encode_t *bit_encode_retain(bit_encode_t *be);
+
+/**
+ * Release pointer to a bit encoder.
+ *
+ * Note that this does NOT flush any leftover bits.
+ */
+int bit_encode_free(bit_encode_t *be);
+
+/**
+ * Write bits to encoder.
+ */
+int bit_encode_write(bit_encode_t *be, unsigned char const *bits, int nbits);
+
+/**
+ * Write lowest-order bits of codeword to encoder.
+ */
+int bit_encode_write_cw(bit_encode_t *be, uint32 codeword, int nbits);
+
+/**
+ * Flush any unwritten bits, zero-padding if necessary.
+ */
+int bit_encode_flush(bit_encode_t *be);
+
+/**
+ * There is no bitstream decoder, because a stream abstraction is too
+ * slow.  Instead we read blocks of bits and treat them as bitvectors.
+ */
+
+/**
  * Like fread_retry, but for stat.  Arguments identical to regular stat.
  * Return value: 0 if successful, -1 if stat failed several attempts.
  */

@@ -461,3 +461,89 @@ stat_mtime(const char *file)
     return ((int32) statbuf.st_mtime);
 }
 #endif /* !_WIN32_WCE */
+
+struct bit_encode_s {
+    FILE *fh;
+    unsigned char buf, bbits;
+    int16 refcount;
+};
+
+bit_encode_t *
+bit_encode_attach(FILE *outfh)
+{
+    bit_encode_t *be;
+
+    be = ckd_calloc(1, sizeof(*be));
+    be->refcount = 1;
+    be->fh = outfh;
+    return be;
+}
+
+bit_encode_t *
+bit_encode_retain(bit_encode_t *be)
+{
+    ++be->refcount;
+    return be;
+}
+
+int
+bit_encode_free(bit_encode_t *be)
+{
+    if (be == NULL)
+        return 0;
+    if (--be->refcount > 0)
+        return be->refcount;
+    ckd_free(be);
+
+    return 0;
+}
+
+int
+bit_encode_write(bit_encode_t *be, unsigned char const *bits, int nbits)
+{
+    int tbits;
+
+    tbits = nbits + be->bbits;
+    if (tbits < 8)  {
+        /* Append to buffer. */
+        be->buf |= ((bits[0] >> (8 - nbits)) << (8 - tbits));
+    }
+    else {
+        int i = 0;
+        while (tbits >= 8) {
+            /* Shift bits out of the buffer and splice with high-order bits */
+            fputc(be->buf | ((bits[i]) >> be->bbits), be->fh);
+            /* Put low-order bits back into buffer */
+            be->buf = (bits[i] << (8 - be->bbits)) & 0xff;
+            tbits -= 8;
+            ++i;
+        }
+    }
+    /* tbits contains remaining number of  bits. */
+    be->bbits = tbits;
+
+    return nbits;
+}
+
+int
+bit_encode_write_cw(bit_encode_t *be, uint32 codeword, int nbits)
+{
+    unsigned char bits[4];
+    codeword <<= (32 - nbits);
+    bits[0] = (codeword >> 24) & 0xff;
+    bits[1] = (codeword >> 16) & 0xff;
+    bits[2] = (codeword >> 8) & 0xff;
+    bits[3] = codeword & 0xff;
+    return bit_encode_write(be, bits, nbits);
+}
+
+int
+bit_encode_flush(bit_encode_t *be)
+{
+    if (be->bbits) {
+        fputc(be->buf, be->fh);
+        be->bbits = 0;
+    }
+    return 0;
+}
+

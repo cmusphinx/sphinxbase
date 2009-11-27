@@ -88,6 +88,8 @@ extern "C" {
 }
 #endif
 
+/* FIXME.  This is dumb, it should use an opaque structure, at least
+ * (and, that would still be binary compatible, too) */
 typedef void *heap_t;
 
 
@@ -125,6 +127,11 @@ int32 heap_top (heap_t heap,	/**< In: Heap whose topmost item is to be returned 
 SPHINXBASE_EXPORT
 int32 heap_pop (heap_t heap, void **data, int32 *val);
 
+/**
+ * Return the number of items in the heap.
+ */
+SPHINXBASE_EXPORT
+int32 heap_size(heap_t heap);
 
 /**
  * Destroy the given heap; free the heap nodes.  NOTE: Data pointers in the nodes are NOT freed.

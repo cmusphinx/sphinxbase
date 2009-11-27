@@ -1,5 +1,7 @@
 check_PROGRAMS = \
-	test_fopen
+	test_fopen \
+	test_huff_code \
+	test_bit_encode
 
 TESTS = $(check_PROGRAMS)
 
