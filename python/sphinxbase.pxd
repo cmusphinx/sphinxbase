@@ -12,6 +12,11 @@ ctypedef float float32
 ctypedef int int32
 ctypedef double float64
 
+# Get Python stuff to access stdio
+cdef extern from "Python.h":
+    ctypedef struct FILE
+    FILE *PyFile_AsFile(object)
+
 cdef extern from "logmath.h":
     ctypedef struct logmath_t
     logmath_t *logmath_init(float64 base, int shift, int use_table)
@@ -90,6 +95,21 @@ cdef extern from "ngram_model.h":
     ngram_iter_t *ngram_iter_successors(ngram_iter_t *itor)
     void ngram_iter_free(ngram_iter_t *itor)
 
+cdef extern from "huff_code.h":
+    ctypedef struct huff_code_t
+    huff_code_t *huff_code_build_int(int *values, int *frequencies, int nvals)
+    huff_code_t *huff_code_build_str(char **values, int *frequencies, int nvals)
+    huff_code_t *huff_code_read(FILE *infh)
+    int huff_code_write(huff_code_t *hc, FILE *outfh)
+    int huff_code_dump(huff_code_t *hc, FILE *dumpfh)
+    huff_code_t *huff_code_retain(huff_code_t *hc)
+    int huff_code_free(huff_code_t *hc)
+    FILE *huff_code_attach(huff_code_t *hc, FILE *fh, char *mode)
+    FILE *huff_code_detach(huff_code_t *hc)
+    int huff_code_encode_int(huff_code_t *hc, int sym, unsigned int *outcw)
+    int huff_code_encode_str(huff_code_t *hc, char *sym, unsigned int *outcw)
+    int huff_code_decode_int(huff_code_t *hc, char *data, int offset)
+    char *huff_code_decode_str(huff_code_t *hc, char *data, int offset)
 
 # Extension classes
 cdef class NGramModel:
@@ -112,3 +132,7 @@ cdef class NGramIter:
     cdef readonly object words
 
     cdef set_iter(NGramIter self, ngram_iter_t *itor)
+
+cdef class HuffCode:
+    cdef huff_code_t *hc
+    cdef file fh

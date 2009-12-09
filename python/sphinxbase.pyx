@@ -371,3 +371,39 @@ cdef class NGramIter:
         itor = NGramIter(self.lm, self.m + 1)
         itor.itor = ngram_iter_successors(self.itor)
         return itor
+
+cdef class HuffCode:
+    """
+    Huffman coding class.
+    """
+    def __init__(self, alphabet):
+        """
+        Construct a Huffman code from an alphabet of symbols with frequencies.
+
+        @param alphabet: Alphabet of (symbol, frequency) pairs
+        @ptype alphabet: [(str, int)]
+        """
+        cdef char **symbols
+        cdef int *frequencies
+        cdef int nsym
+
+        nsym = len(alphabet)
+        frequencies = <int *>ckd_calloc(nsym, sizeof(int))
+        symbols = <char **>ckd_calloc(nsym, sizeof(char *))
+        for i, spam in enumerate(alphabet):
+            sym, freq = spam
+            sss = str(sym)
+            frequencies[i] = freq
+            symbols[i] = sss
+        self.hc = huff_code_build_str(symbols, frequencies, nsym)
+        ckd_free(frequencies)
+        ckd_free(symbols)
+
+    def write(self, file outfh):
+        huff_code_write(self.hc, PyFile_AsFile(outfh))
+
+    def dump(self, file outfh):
+        huff_code_dump(self.hc, PyFile_AsFile(outfh))
+
+    def __dealloc__(self):
+        huff_code_free(self.hc)
