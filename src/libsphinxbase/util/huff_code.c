@@ -538,7 +538,7 @@ huff_code_decode_data(huff_code_t *hc, char const **inout_data, int *inout_offse
     cw = !!(byte & (1 << (7-(*inout_offset)++)));
     cwlen = 1;
     /* printf("%.*x ", cwlen, cw); */
-    while (cw < hc->firstcode[cwlen]) {
+    while (cwlen <= hc->maxbits && cw < hc->firstcode[cwlen]) {
         ++cwlen;
         cw <<= 1;
         if (*inout_offset > 7) {
@@ -548,6 +548,8 @@ huff_code_decode_data(huff_code_t *hc, char const **inout_data, int *inout_offse
         cw |= !!(byte & (1 << (7-(*inout_offset)++)));
         /* printf("%.*x ", cwlen, cw); */
     }
+    if (cwlen > hc->maxbits) /* FAIL: invalid data */
+        return NULL;
 
     /* Put the last byte back if there are bits left over. */
     if (*inout_offset < 8)
@@ -571,7 +573,7 @@ huff_code_decode_fh(huff_code_t *hc)
     cw = !!(byte & (1 << (7-hc->boff++)));
     cwlen = 1;
     /* printf("%.*x ", cwlen, cw); */
-    while (cw < hc->firstcode[cwlen]) {
+    while (cwlen <= hc->maxbits && cw < hc->firstcode[cwlen]) {
         ++cwlen;
         cw <<= 1;
         if (hc->boff > 7) {
@@ -582,6 +584,8 @@ huff_code_decode_fh(huff_code_t *hc)
         cw |= !!(byte & (1 << (7-hc->boff++)));
         /* printf("%.*x ", cwlen, cw); */
     }
+    if (cwlen > hc->maxbits) /* FAIL: invalid data */
+        return NULL;
 
     /* Put the last byte back if there are bits left over. */
     if (hc->boff < 8)
