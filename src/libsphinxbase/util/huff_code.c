@@ -329,9 +329,11 @@ huff_code_read(FILE *infh)
     /* Read the symbol tables. */
     hc->codewords = hash_table_new(hc->maxbits, HASH_CASE_YES);
     for (i = 1; i <= hc->maxbits; ++i) {
-        fread(&hc->firstcode[i], 4, 1, infh);
+        if (fread(&hc->firstcode[i], 4, 1, infh) != 1)
+            goto error_out;
         SWAP_BE_32(&hc->firstcode[i]);
-        fread(&hc->numl[i], 4, 1, infh);
+        if (fread(&hc->numl[i], 4, 1, infh) != 1)
+            goto error_out;
         SWAP_BE_32(&hc->numl[i]);
         hc->syms[i] = ckd_calloc(hc->numl[i], sizeof(**hc->syms));
         for (j = 0; j < hc->numl[i]; ++j) {
@@ -339,7 +341,8 @@ huff_code_read(FILE *infh)
             cw->nbits = i;
             cw->codeword = hc->firstcode[i] + j;
             if (hc->type == HUFF_CODE_INT) {
-                fread(&cw->r.ival, 4, 1, infh);
+                if (fread(&cw->r.ival, 4, 1, infh) != 1)
+                    goto error_out;
                 SWAP_BE_32(&cw->r.ival);
                 hash_table_enter_bkey(hc->codewords,
                                       (char const *)&cw->r.ival,
@@ -356,6 +359,9 @@ huff_code_read(FILE *infh)
     }
 
     return hc;
+error_out:
+    huff_code_free(hc);
+    return NULL;
 }
 
 int
@@ -522,7 +528,39 @@ huff_code_encode_str(huff_code_t *hc, char const *sym, uint32 *outcw)
 }
 
 static huff_codeword_t *
-huff_code_decode(huff_code_t *hc, char const *data, int offset)
+huff_code_decode_data(huff_code_t *hc, char const **inout_data, int *inout_offset)
+{
+    uint32 cw;
+    int cwlen;
+    int byte;
+
+    byte = *(*inout_data)++;
+    cw = !!(byte & (1 << (7-(*inout_offset)++)));
+    cwlen = 1;
+    /* printf("%.*x ", cwlen, cw); */
+    while (cw < hc->firstcode[cwlen]) {
+        ++cwlen;
+        cw <<= 1;
+        if (*inout_offset > 7) {
+            byte = *(*inout_data)++;
+            *inout_offset = 0;
+        }
+        cw |= !!(byte & (1 << (7-(*inout_offset)++)));
+        /* printf("%.*x ", cwlen, cw); */
+    }
+
+    /* Put the last byte back if there are bits left over. */
+    if (*inout_offset < 8)
+        --*inout_data;
+    else
+        *inout_offset = 0;
+
+    /* printf("%.*x\n", cwlen, cw); */
+    return hc->syms[cwlen] + (cw - hc->firstcode[cwlen]);
+}
+
+static huff_codeword_t *
+huff_code_decode_fh(huff_code_t *hc)
 {
     uint32 cw;
     int cwlen;
@@ -532,6 +570,7 @@ huff_code_decode(huff_code_t *hc, char const *data, int offset)
         return NULL;
     cw = !!(byte & (1 << (7-hc->boff++)));
     cwlen = 1;
+    /* printf("%.*x ", cwlen, cw); */
     while (cw < hc->firstcode[cwlen]) {
         ++cwlen;
         cw <<= 1;
@@ -541,6 +580,7 @@ huff_code_decode(huff_code_t *hc, char const *data, int offset)
             hc->boff = 0;
         }
         cw |= !!(byte & (1 << (7-hc->boff++)));
+        /* printf("%.*x ", cwlen, cw); */
     }
 
     /* Put the last byte back if there are bits left over. */
@@ -549,24 +589,43 @@ huff_code_decode(huff_code_t *hc, char const *data, int offset)
     else
         hc->boff = 0;
 
+    /* printf("%.*x\n", cwlen, cw); */
     return hc->syms[cwlen] + (cw - hc->firstcode[cwlen]);
 }
 
-int32
-huff_code_decode_int(huff_code_t *hc, char const *data, int offset)
+int
+huff_code_decode_int(huff_code_t *hc, int *outval,
+                     char const **inout_data, int *inout_offset)
 {
-    huff_codeword_t *cw = huff_code_decode(hc, data, offset);
+    huff_codeword_t *cw;
+
+    if (inout_data)
+        cw = huff_code_decode_data(hc, inout_data, inout_offset);
+    else if (hc->fh)
+        cw = huff_code_decode_fh(hc);
+    else
+        return -1;
 
     if (cw == NULL)
-        return -1; /* FIXME: Uh, no. Not an out-of-band value. */
+        return -1;
+    if (outval)
+        *outval = cw->r.ival;
 
-    return cw->r.ival;
+    return 0;
 }
 
 char const *
-huff_code_decode_str(huff_code_t *hc, char const *data, int offset)
+huff_code_decode_str(huff_code_t *hc,
+                     char const **inout_data, int *inout_offset)
 {
-    huff_codeword_t *cw = huff_code_decode(hc, data, offset);
+    huff_codeword_t *cw;
+
+    if (inout_data)
+        cw = huff_code_decode_data(hc, inout_data, inout_offset);
+    else if (hc->fh)
+        cw = huff_code_decode_fh(hc);
+    else
+        return NULL;
 
     if (cw == NULL)
         return NULL;

@@ -20,12 +20,14 @@ char * const svalues[10] = {
 	"foo", "bar", "baz", "quux", "argh",
 	"hurf", "burf", "blatz", "unf", "woof"
 };
+char const cdata[] = { 0x08, 0x30, 0x40, 0x4c, 0x00, 0x04, 0x50 };
 
 void
 test_intcode(huff_code_t *hc)
 {
 	FILE *fh;
-	int i;
+	char const *dptr;
+	int i, offset;
 
 	fh = fopen("hufftest.out", "wb");
 	huff_code_attach(hc, fh, "wb");
@@ -37,20 +39,32 @@ test_intcode(huff_code_t *hc)
 	fh = fopen("hufftest.out", "rb");
 	huff_code_attach(hc, fh, "rb");
 	for (i = 0; i < 10; ++i) {
-		int val = huff_code_decode_int(hc, NULL, 0);
+		int32 val;
+		huff_code_decode_int(hc, &val, NULL, 0);
 		printf("%d ", val);
 		TEST_EQUAL(val, ivalues[i]);
 	}
 	printf("\n");
 	huff_code_detach(hc);
 	fclose(fh);
+
+	dptr = cdata;
+	offset = 0;
+	for (i = 0; i < 10; ++i) {
+		int32 val;
+		huff_code_decode_int(hc, &val, &dptr, &offset);
+		printf("%d ", val);
+		TEST_EQUAL(val, ivalues[i]);
+	}
+	printf("\n");
 }
 
 void
 test_strcode(huff_code_t *hc)
 {
 	FILE *fh;
-	int i;
+	char const *dptr;
+	int i, offset;
 
 	fh = fopen("hufftest.out", "wb");
 	huff_code_attach(hc, fh, "wb");
@@ -69,6 +83,15 @@ test_strcode(huff_code_t *hc)
 	printf("\n");
 	huff_code_detach(hc);
 	fclose(fh);
+
+	dptr = cdata;
+	offset = 0;
+	for (i = 0; i < 10; ++i) {
+		char const *val = huff_code_decode_str(hc, &dptr, &offset);
+		printf("%s ", val);
+		TEST_EQUAL(0, strcmp(val, svalues[i]));
+	}
+	printf("\n");
 }
 
 int
