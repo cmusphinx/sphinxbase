@@ -100,8 +100,8 @@ cdef extern from "huff_code.h":
     huff_code_t *huff_code_build_int(int *values, int *frequencies, int nvals)
     huff_code_t *huff_code_build_str(char **values, int *frequencies, int nvals)
     huff_code_t *huff_code_read(FILE *infh)
-    int huff_code_write(huff_code_t *hc, FILE *outfh)
-    int huff_code_dump(huff_code_t *hc, FILE *dumpfh)
+    int huff_code_write(huff_code_t *hc, FILE *outfh) except -1
+    int huff_code_dump(huff_code_t *hc, FILE *dumpfh) except -1
     huff_code_t *huff_code_retain(huff_code_t *hc)
     int huff_code_free(huff_code_t *hc)
     FILE *huff_code_attach(huff_code_t *hc, FILE *fh, char *mode)
