@@ -543,6 +543,7 @@ ngram_model_set_iter_t *ngram_model_set_iter_next(ngram_model_set_iter_t *itor);
 /**
  * Finish iteration over a langauge model set.
  */
+SPHINXBASE_EXPORT
 void ngram_model_set_iter_free(ngram_model_set_iter_t *itor);
 
 /**

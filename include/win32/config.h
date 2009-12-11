@@ -52,7 +52,7 @@
 #define HAVE_ERRNO_H 1
 
 /* We don't have popen, but we do have _popen */
-#define HAVE_POPEN 1
+/* #define HAVE_POPEN 1 */
 
 /* We do have perror */
 #define HAVE_PERROR 1
