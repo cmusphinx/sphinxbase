@@ -21,6 +21,7 @@ pkginclude_HEADERS =				\
 	glist.h					\
 	hash_table.h				\
 	heap.h					\
+	huff_code.h				\
 	info.h					\
 	jsgf.h					\
 	libutil.h				\
