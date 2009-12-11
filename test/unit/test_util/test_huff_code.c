@@ -20,7 +20,7 @@ char * const svalues[10] = {
 	"foo", "bar", "baz", "quux", "argh",
 	"hurf", "burf", "blatz", "unf", "woof"
 };
-char const cdata[] = { 0x08, 0x30, 0x40, 0x4c, 0x00, 0x04, 0x50 };
+char const cdata[7] = { 0x08, 0x30, 0x40, 0x4c, 0x00, 0x04, 0x50 };
 
 void
 test_intcode(huff_code_t *hc)
@@ -28,6 +28,8 @@ test_intcode(huff_code_t *hc)
 	FILE *fh;
 	char const *dptr;
 	int i, offset;
+	size_t dlen;
+	int32 val;
 
 	fh = fopen("hufftest.out", "wb");
 	huff_code_attach(hc, fh, "wb");
@@ -40,7 +42,7 @@ test_intcode(huff_code_t *hc)
 	huff_code_attach(hc, fh, "rb");
 	for (i = 0; i < 10; ++i) {
 		int32 val;
-		huff_code_decode_int(hc, &val, NULL, 0);
+		huff_code_decode_int(hc, &val, NULL, NULL, 0);
 		printf("%d ", val);
 		TEST_EQUAL(val, ivalues[i]);
 	}
@@ -49,13 +51,27 @@ test_intcode(huff_code_t *hc)
 	fclose(fh);
 
 	dptr = cdata;
+	dlen = 7;
 	offset = 0;
 	for (i = 0; i < 10; ++i) {
-		int32 val;
-		huff_code_decode_int(hc, &val, &dptr, &offset);
+		huff_code_decode_int(hc, &val, &dptr, &dlen, &offset);
 		printf("%d ", val);
 		TEST_EQUAL(val, ivalues[i]);
 	}
+	TEST_EQUAL(dlen, 1);
+	TEST_EQUAL(offset, 4);
+	printf("\n");
+
+	dptr = cdata;
+	dlen = 7;
+	offset = 0;
+	i = 0;
+	while (huff_code_decode_int(hc, &val, &dptr, &dlen, &offset) != -1) {
+		printf("%d ", val);
+		TEST_EQUAL(val, ivalues[i++]);
+	}
+	TEST_EQUAL(dlen, 1);
+	TEST_EQUAL(offset, 4);
 	printf("\n");
 }
 
@@ -65,6 +81,7 @@ test_strcode(huff_code_t *hc)
 	FILE *fh;
 	char const *dptr;
 	int i, offset;
+	size_t dlen;
 
 	fh = fopen("hufftest.out", "wb");
 	huff_code_attach(hc, fh, "wb");
@@ -76,7 +93,7 @@ test_strcode(huff_code_t *hc)
 	fh = fopen("hufftest.out", "rb");
 	huff_code_attach(hc, fh, "rb");
 	for (i = 0; i < 10; ++i) {
-		char const *val = huff_code_decode_str(hc, NULL, 0);
+		char const *val = huff_code_decode_str(hc, NULL, NULL, 0);
 		printf("%s ", val);
 		TEST_EQUAL(0, strcmp(val, svalues[i]));
 	}
@@ -85,12 +102,15 @@ test_strcode(huff_code_t *hc)
 	fclose(fh);
 
 	dptr = cdata;
+	dlen = 7;
 	offset = 0;
 	for (i = 0; i < 10; ++i) {
-		char const *val = huff_code_decode_str(hc, &dptr, &offset);
+		char const *val = huff_code_decode_str(hc, &dptr, &dlen, &offset);
 		printf("%s ", val);
 		TEST_EQUAL(0, strcmp(val, svalues[i]));
 	}
+	TEST_EQUAL(dlen, 1);
+	TEST_EQUAL(offset, 4);
 	printf("\n");
 }
 

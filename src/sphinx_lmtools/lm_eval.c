@@ -43,6 +43,7 @@
 #include <cmd_ln.h>
 #include <ckd_alloc.h>
 #include <err.h>
+#include <pio.h>
 #include <strfuncs.h>
 
 #include <stdio.h>
@@ -171,7 +172,7 @@ static void
 evaluate_file(ngram_model_t *lm, logmath_t *lmath, const char *lsnfn)
 {
 	FILE *fh;
-	char line[256];
+        lineiter_t *litor;
 	int32 nccs, noovs, nwords;
 	float64 ch, log_to_log2;;
 
@@ -183,17 +184,17 @@ evaluate_file(ngram_model_t *lm, logmath_t *lmath, const char *lsnfn)
 	log_to_log2 = log(logmath_get_base(lmath)) / log(2);
 	nccs = noovs = nwords = 0;
 	ch = 0.0;
-	while (fgets(line, sizeof(line), fh)) {
+        for (litor = lineiter_start(fh); litor; litor = lineiter_next(litor)) {
 		char **words;
 		int32 n, tmp_ch, tmp_noovs, tmp_nccs;
 
-		n = str2words(line, NULL, 0);
+		n = str2words(litor->buf, NULL, 0);
 		if (n < 0)
 			E_FATAL("str2words(line, NULL, 0) = %d, should not happen\n", n);
 		if (n == 0) /* Do nothing! */
 			continue;
 		words = ckd_calloc(n, sizeof(*words));
-		str2words(line, words, n);
+		str2words(litor->buf, words, n);
 
 		/* Remove any utterance ID (FIXME: has to be a single "word") */
 		if (words[n-1][0] == '('
@@ -288,7 +289,6 @@ main(int argc, char *argv[])
                                   cmd_ln_float32_r(config, "-lw"),
                                   cmd_ln_float32_r(config, "-wip"),
                                   cmd_ln_float32_r(config, "-uw"));
-
 
 	/* Now evaluate some text. */
 	lsnfn = cmd_ln_str_r(config, "-lsn");

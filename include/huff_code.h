@@ -114,12 +114,16 @@ int huff_code_encode_str(huff_code_t *hc, char const *sym, uint32 *outcw);
  * Decode an integer, reading it from the file if no data given.
  */
 int huff_code_decode_int(huff_code_t *hc, int *outval,
-                         char const **inout_data, int *inout_offset);
+                         char const **inout_data,
+                         size_t *inout_data_len,
+                         int *inout_offset);
 
 /**
  * Decode a string, reading it from the file if no data given.
  */
 char const *huff_code_decode_str(huff_code_t *hc,
-                                 char const **inout_data, int *inout_offset);
+                                 char const **inout_data,
+                                 size_t *inout_data_len,
+                                 int *inout_offset);
 
 #endif /* __HUFF_CODE_H__ */

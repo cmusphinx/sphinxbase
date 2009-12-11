@@ -405,5 +405,90 @@ cdef class HuffCode:
     def dump(self, file outfh):
         huff_code_dump(self.hc, PyFile_AsFile(outfh))
 
+    def encode(self, seq):
+        """
+        Encode a sequence of symbols to a byte array, returning that
+        array and the bit offset of the next codeword in the last
+        byte (i.e. 8 minutes the number of extra zero bits)
+        """
+        cdef unsigned int cw
+        cdef int cwlen, nbits = 0, nbytes, offset, i
+        cdef unsigned char buf = 0
+        cdef char *output
+        
+        for sym in seq:
+            cwlen = huff_code_encode_str(self.hc, sym, &cw)
+            nbits += cwlen
+        nbytes = (nbits + 7) / 8 # Python 3.0 problem...
+        offset = 0
+        output = <char *>PyMem_Malloc(nbytes + 1)
+        output[nbytes] = 0
+        i = 0
+        for sym in seq:
+            cwlen = huff_code_encode_str(self.hc, sym, &cw)
+            #dstr = "".join([("%02x" % ord(b)) for b in output[0:i]])
+            #print "sym: %s cw: %.*x buf: %02x offset: %d output: %s" \
+            #      % (sym, cwlen, cw, buf, offset, dstr)
+            # Do one byte at a time
+            while cwlen >= 8:
+                # Fill low bits of buf
+                buf |= (cw >> (cwlen - (8 - offset))) & ((1 << (8 - offset)) - 1)
+                # Append buf to output
+                #print "adding: %02x cwlen %d => %d" % (buf, cwlen, cwlen - 8)
+                output[i] = buf
+                i += 1
+                # Fill high bits of buf
+                cwlen -= 8
+                buf = (cw >> cwlen) & ((1 << offset) - 1)
+                buf <<= (8-offset)
+            # Do one last byte if necessary
+            if cwlen >= (8 - offset):
+                # Fill low bits of buf
+                buf |= (cw >> (cwlen - (8 - offset))) & ((1 << (8 - offset)) - 1)
+                # Append buf to output
+                #print "adding: %02x cwlen %d => %d" % (buf, cwlen, cwlen - (8 - offset))
+                output[i] = buf
+                i += 1
+                cwlen -= (8 - offset)
+            # Add remaining bits to buf
+            buf |= ((cw & ((1 << cwlen) - 1)) << (8 - offset - cwlen))
+            offset += cwlen
+            #dstr = "".join([("%02x" % ord(b)) for b in output[0:i]])
+            #print "after buf: %02x offset: %d output: %s" \
+            #      % (buf, offset, dstr)
+        if offset > 0:
+            # Append buf to output
+            output[i] = buf
+            i += 1
+        #dstr = "".join([("%02x" % ord(b)) for b in output[0:i]])
+        #print "output:", dstr
+        outstr = PyString_FromStringAndSize(output, nbytes)
+        PyMem_Free(output)
+        return (outstr, offset)
+
+    def decode(self, data):
+        """
+        Decode a sequence of symbols from a string, returning the
+        sequence and the bit offset of the next codeword in the last
+        byte (i.e. 8 minutes the number of remaining bits)
+        """
+        cdef int offset
+        cdef char *dptr
+        cdef char *strval
+        cdef size_t dlen
+
+        dlen = len(data)
+        offset = 0
+        dptr = data
+        output = []
+        while True:
+            strval = huff_code_decode_str(self.hc, &dptr, &dlen, &offset)
+            if strval == NULL:
+                break
+            output.append(strval)
+        if dlen > 1:
+            raise ValueError, "Invalid data at position %d" % (len(data) - dlen)
+        return (output, offset)
+
     def __dealloc__(self):
         huff_code_free(self.hc)

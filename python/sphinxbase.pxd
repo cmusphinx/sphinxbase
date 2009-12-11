@@ -16,6 +16,9 @@ ctypedef double float64
 cdef extern from "Python.h":
     ctypedef struct FILE
     FILE *PyFile_AsFile(object)
+    void *PyMem_Malloc(size_t n)
+    void PyMem_Free(void *p)
+    object PyString_FromStringAndSize(char *v, Py_ssize_t len)
 
 cdef extern from "logmath.h":
     ctypedef struct logmath_t
@@ -108,8 +111,12 @@ cdef extern from "huff_code.h":
     FILE *huff_code_detach(huff_code_t *hc)
     int huff_code_encode_int(huff_code_t *hc, int sym, unsigned int *outcw)
     int huff_code_encode_str(huff_code_t *hc, char *sym, unsigned int *outcw)
-    int huff_code_decode_int(huff_code_t *hc, char *data, int offset)
-    char *huff_code_decode_str(huff_code_t *hc, char *data, int offset)
+    int huff_code_decode_int(huff_code_t *hc, int *outval,
+                             char **inout_data, size_t *inout_dlen,
+                             int *inout_offset)
+    char *huff_code_decode_str(huff_code_t *hc,
+                               char **inout_data, size_t *inout_dlen,
+                               int *inout_offset)
 
 # Extension classes
 cdef class NGramModel:
