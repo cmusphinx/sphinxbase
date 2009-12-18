@@ -76,7 +76,7 @@ typedef enum ngram_file_type_e {
     NGRAM_AUTO,  /**< Determine file type automatically */
     NGRAM_ARPA,  /**< ARPABO text format (the standard) */
     NGRAM_DMP,   /**< Sphinx .DMP format */
-    NGRAM_DMP32, /**< Sphinx .DMP32 format */
+    NGRAM_DMP32, /**< Sphinx .DMP32 format (NOT SUPPORTED) */
 } ngram_file_type_t;
 
 #define NGRAM_INVALID_WID -1 /**< Impossible word ID */

@@ -78,4 +78,14 @@ typedef struct ngram_model_dmp_s {
     mmio_file_t *dump_mmap; /**< mmap() of dump file (or NULL if none) */
 } ngram_model_dmp_t;
 
+/**
+ * Construct a DMP format model from a generic base model.
+ *
+ * Note: If base is already a DMP format model, this just calls
+ * ngram_model_retain(), and any changes will also be made in the base
+ * model.
+ */
+ngram_model_dmp_t *ngram_model_dmp_build(ngram_model_t *base);
+
+
 #endif /*  __NGRAM_MODEL_DMP_H__ */

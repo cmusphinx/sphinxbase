@@ -244,11 +244,6 @@ int ngram_model_arpa_write(ngram_model_t *model,
  */
 int ngram_model_dmp_write(ngram_model_t *model,
 			  const char *file_name);
-/**
- * Write an N-Gram model to a Sphinx .DMP32 binary file.
- */
-int ngram_model_dmp32_write(ngram_model_t *model,
-			    const char *file_name);
 
 /**
  * Read a probdef file.

@@ -95,13 +95,14 @@ ngram_model_dmp_read(cmd_ln_t *config,
     char *map_base = NULL;
     size_t offset = 0, filesize;
 
+    base = NULL;
     do_mmap = FALSE;
     if (config)
         do_mmap = cmd_ln_boolean_r(config, "-mmap");
 
     if ((fp = fopen_comp(file_name, "rb", &is_pipe)) == NULL) {
         E_ERROR("Dump file %s not found\n", file_name);
-        return NULL;
+        goto error_out;
     }
 
     if (is_pipe && do_mmap) {
@@ -110,25 +111,23 @@ ngram_model_dmp_read(cmd_ln_t *config,
     }
 
     do_swap = FALSE;
-    fread(&k, sizeof(k), 1, fp);
+    if (fread(&k, sizeof(k), 1, fp) != 1)
+        goto error_out;
     if (k != strlen(darpa_hdr)+1) {
         SWAP_INT32(&k);
         if (k != strlen(darpa_hdr)+1) {
             E_ERROR("Wrong magic header size number %x: %s is not a dump file\n", k, file_name);
-            fclose(fp);
-            return NULL;
+            goto error_out;
         }
         do_swap = 1;
     }
-    if (fread(str, sizeof(char), k, fp) != (size_t) k) {
+    if (fread(str, 1, k, fp) != (size_t) k) {
         E_ERROR("Cannot read header\n");
-        fclose_comp(fp, is_pipe);
-        return NULL;
+        goto error_out;
     }
     if (strncmp(str, darpa_hdr, k) != 0) {
         E_ERROR("Wrong header %s: %s is not a dump file\n", darpa_hdr);
-        fclose(fp);
-        return NULL;
+        goto error_out;
     }
 
     if (do_mmap) {
@@ -146,36 +145,39 @@ ngram_model_dmp_read(cmd_ln_t *config,
         }
     }
 
-    fread(&k, sizeof(k), 1, fp);
+    if (fread(&k, sizeof(k), 1, fp) != 1)
+        goto error_out;
     if (do_swap) SWAP_INT32(&k);
-    if (fread(str, sizeof(char), k, fp) != (size_t) k) {
+    if (fread(str, 1, k, fp) != (size_t) k) {
         E_ERROR("Cannot read LM filename in header\n");
-        fclose(fp);
-        return NULL;
+        goto error_out;
     }
 
     /* read version#, if present (must be <= 0) */
-    fread(&vn, sizeof(vn), 1, fp);
+    if (fread(&vn, sizeof(vn), 1, fp) != 1)
+        goto error_out;
     if (do_swap) SWAP_INT32(&vn);
     if (vn <= 0) {
         /* read and don't compare timestamps (we don't care) */
-        fread(&ts, sizeof(ts), 1, fp);
+        if (fread(&ts, sizeof(ts), 1, fp) != 1)
+            goto error_out;
         if (do_swap) SWAP_INT32(&ts);
 
         /* read and skip format description */
         for (;;) {
-            fread(&k, sizeof(k), 1, fp);
+            if (fread(&k, sizeof(k), 1, fp) != 1)
+                goto error_out;
             if (do_swap) SWAP_INT32(&k);
             if (k == 0)
                 break;
-            if (fread(str, sizeof(char), k, fp) != (size_t) k) {
+            if (fread(str, 1, k, fp) != (size_t) k) {
                 E_ERROR("fread(word) failed\n");
-                fclose(fp);
-                return NULL;
+                goto error_out;
             }
         }
         /* read model->ucount */
-        fread(&n_unigram, sizeof(n_unigram), 1, fp);
+        if (fread(&n_unigram, sizeof(n_unigram), 1, fp) != 1)
+            goto error_out;
         if (do_swap) SWAP_INT32(&n_unigram);
     }
     else {
@@ -183,9 +185,11 @@ ngram_model_dmp_read(cmd_ln_t *config,
     }
 
     /* read model->bcount, tcount */
-    fread(&n_bigram, sizeof(n_bigram), 1, fp);
+    if (fread(&n_bigram, sizeof(n_bigram), 1, fp) != 1)
+        goto error_out;
     if (do_swap) SWAP_INT32(&n_bigram);
-    fread(&n_trigram, sizeof(n_trigram), 1, fp);
+    if (fread(&n_trigram, sizeof(n_trigram), 1, fp) != 1)
+        goto error_out;
     if (do_swap) SWAP_INT32(&n_trigram);
     E_INFO("ngrams 1=%d, 2=%d, 3=%d\n", n_unigram, n_bigram, n_trigram);
 
@@ -211,9 +215,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
         /* Skip over the mapping ID, we don't care about it. */
         if (fread(ugptr, sizeof(int32), 1, fp) != 1) {
             E_ERROR("fread(mapid[%d]) failed\n", i);
-            ngram_model_free(base);
-            fclose_comp(fp, is_pipe);
-            return NULL;
+            goto error_out;
         }
         /* Read the actual unigram structure. */
         if (fread(ugptr, sizeof(unigram_t), 1, fp) != 1)  {
@@ -269,9 +271,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
         if (fread(model->lm3g.bigrams, sizeof(bigram_t), n_bigram + 1, fp)
             != (size_t) n_bigram + 1) {
             E_ERROR("fread(bigrams) failed\n");
-            ngram_model_free(base);
-            fclose_comp(fp, is_pipe);
-            return NULL;
+            goto error_out;
         }
         if (do_swap) {
             for (i = 0, bgptr = model->lm3g.bigrams; i <= n_bigram;
@@ -298,9 +298,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
                 (model->lm3g.trigrams, sizeof(trigram_t), n_trigram, fp)
                 != (size_t) n_trigram) {
                 E_ERROR("fread(trigrams) failed\n");
-                ngram_model_free(base);
-                fclose_comp(fp, is_pipe);
-                return NULL;
+                goto error_out;
             }
             if (do_swap) {
                 for (i = 0, tgptr = model->lm3g.trigrams; i < n_trigram;
@@ -319,15 +317,14 @@ ngram_model_dmp_read(cmd_ln_t *config,
     /* read n_prob2 and prob2 array (in memory) */
     if (do_mmap)
         fseek(fp, offset, SEEK_SET);
-    fread(&k, sizeof(k), 1, fp);
+    if (fread(&k, sizeof(k), 1, fp) != 1)
+        goto error_out;
     if (do_swap) SWAP_INT32(&k);
     model->lm3g.n_prob2 = k;
     model->lm3g.prob2 = ckd_calloc(k, sizeof(*model->lm3g.prob2));
     if (fread(model->lm3g.prob2, sizeof(*model->lm3g.prob2), k, fp) != (size_t) k) {
         E_ERROR("fread(prob2) failed\n");
-        ngram_model_free(base);
-        fclose_comp(fp, is_pipe);
-        return NULL;
+        goto error_out;
     }
     for (i = 0; i < k; i++) {
         if (do_swap)
@@ -339,15 +336,14 @@ ngram_model_dmp_read(cmd_ln_t *config,
 
     /* read n_bo_wt2 and bo_wt2 array (in memory) */
     if (base->n > 2) {
-        fread(&k, sizeof(k), 1, fp);
+        if (fread(&k, sizeof(k), 1, fp) != 1)
+            goto error_out;
         if (do_swap) SWAP_INT32(&k);
         model->lm3g.n_bo_wt2 = k;
         model->lm3g.bo_wt2 = ckd_calloc(k, sizeof(*model->lm3g.bo_wt2));
         if (fread(model->lm3g.bo_wt2, sizeof(*model->lm3g.bo_wt2), k, fp) != (size_t) k) {
             E_ERROR("fread(bo_wt2) failed\n");
-            ngram_model_free(base);
-            fclose_comp(fp, is_pipe);
-            return NULL;
+            goto error_out;
         }
         for (i = 0; i < k; i++) {
             if (do_swap)
@@ -360,15 +356,14 @@ ngram_model_dmp_read(cmd_ln_t *config,
 
     /* read n_prob3 and prob3 array (in memory) */
     if (base->n > 2) {
-        fread(&k, sizeof(k), 1, fp);
+        if (fread(&k, sizeof(k), 1, fp) != 1)
+            goto error_out;
         if (do_swap) SWAP_INT32(&k);
         model->lm3g.n_prob3 = k;
         model->lm3g.prob3 = ckd_calloc(k, sizeof(*model->lm3g.prob3));
         if (fread(model->lm3g.prob3, sizeof(*model->lm3g.prob3), k, fp) != (size_t) k) {
             E_ERROR("fread(prob3) failed\n");
-            ngram_model_free(base);
-            fclose_comp(fp, is_pipe);
-            return NULL;
+            goto error_out;
         }
         for (i = 0; i < k; i++) {
             if (do_swap)
@@ -391,15 +386,14 @@ ngram_model_dmp_read(cmd_ln_t *config,
         }
         else {
             k = (n_bigram + 1) / BG_SEG_SZ + 1;
-            fread(&k, sizeof(k), 1, fp);
+            if (fread(&k, sizeof(k), 1, fp) != 1)
+                goto error_out;
             if (do_swap) SWAP_INT32(&k);
             model->lm3g.tseg_base = ckd_calloc(k, sizeof(int32));
             if (fread(model->lm3g.tseg_base, sizeof(int32), k, fp) !=
                 (size_t) k) {
                 E_ERROR("fread(tseg_base) failed\n");
-                ngram_model_free(base);
-                fclose_comp(fp, is_pipe);
-                return NULL;
+                goto error_out;
             }
             if (do_swap)
                 for (i = 0; i < k; i++)
@@ -417,14 +411,13 @@ ngram_model_dmp_read(cmd_ln_t *config,
     }
     else {
         base->writable = TRUE;
-        fread(&k, sizeof(k), 1, fp);
+        if (fread(&k, sizeof(k), 1, fp) != 1)
+            goto error_out;
         if (do_swap) SWAP_INT32(&k);
-        tmp_word_str = ckd_calloc(k, sizeof(char));
-        if (fread(tmp_word_str, sizeof(char), k, fp) != (size_t) k) {
+        tmp_word_str = ckd_calloc(k, 1);
+        if (fread(tmp_word_str, 1, k, fp) != (size_t) k) {
             E_ERROR("fread(word-string) failed\n");
-            ngram_model_free(base);
-            fclose_comp(fp, is_pipe);
-            return NULL;
+            goto error_out;
         }
     }
 
@@ -435,9 +428,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
     if (j != n_unigram) {
         E_ERROR("Error reading word strings (%d doesn't match n_unigrams %d)\n",
                 j, n_unigram);
-        ngram_model_free(base);
-        fclose_comp(fp, is_pipe);
-        return NULL;
+        goto error_out;
     }
 
     /* Break up string just read into words */
@@ -468,14 +459,301 @@ ngram_model_dmp_read(cmd_ln_t *config,
 
     fclose_comp(fp, is_pipe);
     return base;
+
+error_out:
+    fclose_comp(fp, is_pipe);
+    ngram_model_free(base);
+    return NULL;
 }
 
+ngram_model_dmp_t *
+ngram_model_dmp_build(ngram_model_t *base)
+{
+    ngram_model_dmp_t *model;
+    ngram_model_t *newbase;
+
+    if (base->funcs == &ngram_model_dmp_funcs)
+        return (ngram_model_dmp_t *)ngram_model_retain(base);
+
+    /* Initialize new base model structure with params from base. */
+    model = ckd_calloc(1, sizeof(*model));
+    newbase = &model->base;
+    ngram_model_init(newbase, &ngram_model_dmp_funcs,
+                     logmath_retain(base->lmath),
+                     base->n, base->n_counts[0]);
+    /* Copy N-gram counts over. */
+    memcpy(newbase->n_counts, base->n_counts,
+           base->n * sizeof(*base->n_counts));
+
+    /* Construct quantized probability table for bigrams and
+     * (optionally) trigrams. */
+
+    return model;
+}
+
+static void
+fwrite_int32(FILE *fh, int32 val)
+{
+    fwrite(&val, 4, 1, fh);
+}
+
+static void
+fwrite_ug(FILE *fh, unigram_t *ug, logmath_t *lmath)
+{
+    int32 bogus = -1;
+    float32 log10val;
+
+    /* Bogus dictionary mapping field. */
+    fwrite(&bogus, 4, 1, fh);
+    /* Convert values to log10. */
+    log10val = logmath_log_to_log10(lmath, ug->prob1.l);
+    fwrite(&log10val, 4, 1, fh);
+    log10val = logmath_log_to_log10(lmath, ug->bo_wt1.l);
+    fwrite(&log10val, 4, 1, fh);
+    fwrite_int32(fh, ug->bigrams);
+}
+
+static void
+fwrite_bg(FILE *fh, bigram_t *bg)
+{
+    fwrite(bg, sizeof(*bg), 1, fh);
+}
+
+static void
+fwrite_tg(FILE *fh, trigram_t *tg)
+{
+    fwrite(tg, sizeof(*tg), 1, fh);
+}
+
+/** Please look at the definition of 
+ */
+static char const *fmtdesc[] = {
+    "BEGIN FILE FORMAT DESCRIPTION",
+    "Header string length (int32) and string (including trailing 0)",
+    "Original LM filename string-length (int32) and filename (including trailing 0)",
+    "(int32) version number (present iff value <= 0)",
+    "(int32) original LM file modification timestamp (iff version# present)",
+    "(int32) string-length and string (including trailing 0) (iff version# present)",
+    "... previous entry continued any number of times (iff version# present)",
+    "(int32) 0 (terminating sequence of strings) (iff version# present)",
+    "(int32) log_bg_seg_sz (present iff different from default value of LOG2_BG_SEG_SZ)",
+    "(int32) lm_t.ucount (must be > 0)",
+    "(int32) lm_t.bcount",
+    "(int32) lm_t.tcount",
+    "lm_t.ucount+1 unigrams (including sentinel)",
+    "lm_t.bcount+1 bigrams (including sentinel 64 bits (bg_t) each if version=-1/-2, 128 bits (bg32_t) each if version=-3",
+    "lm_t.tcount trigrams (present iff lm_t.tcount > 0 32 bits (tg_t) each if version=-1/-2, 64 bits (tg32_t) each if version=-3)",
+    "(int32) lm_t.n_prob2",
+    "(int32) lm_t.prob2[]",
+    "(int32) lm_t.n_bo_wt2 (present iff lm_t.tcount > 0)",
+    "(int32) lm_t.bo_wt2[] (present iff lm_t.tcount > 0)",
+    "(int32) lm_t.n_prob3 (present iff lm_t.tcount > 0)",
+    "(int32) lm_t.prob3[] (present iff lm_t.tcount > 0)",
+    "(int32) (lm_t.bcount+1)/BG_SEG_SZ+1 (present iff lm_t.tcount > 0)",
+    "(int32) lm_t.tseg_base[] (present iff lm_t.tcount > 0)",
+    "(int32) Sum(all word string-lengths, including trailing 0 for each)",
+    "All word strings (including trailing 0 for each)",
+    "END FILE FORMAT DESCRIPTION",
+    NULL,
+};
+
+static void
+lm3g_dump_write_header(FILE * fh)
+{
+    int32 k;
+    k = strlen(darpa_hdr) + 1;
+    fwrite_int32(fh, k);
+    fwrite(darpa_hdr, 1, k, fh);
+}
+
+static void
+lm3g_dump_write_lm_filename(FILE * fh, const char *lmfile)
+{
+    int32 k;
+
+    k = strlen(lmfile) + 1;
+    fwrite_int32(fh, k);
+    fwrite(lmfile, 1, k, fh);
+}
+
+#define LMDMP_VERSION_TG_16BIT -1 /**< VERSION 1 is the simplest DMP file which
+				     is trigram or lower which used 16 bits in
+				     bigram and trigram.*/
+
+static void
+lm3g_dump_write_version(FILE * fh, int32 mtime)
+{
+    fwrite_int32(fh, LMDMP_VERSION_TG_16BIT);   /* version # */
+    fwrite_int32(fh, mtime);
+}
+
+static void
+lm3g_dump_write_ngram_counts(FILE * fh, ngram_model_t *model)
+{
+    fwrite_int32(fh, model->n_counts[0]);
+    fwrite_int32(fh, model->n_counts[1]);
+    fwrite_int32(fh, model->n_counts[2]);
+}
+
+static void
+lm3g_dump_write_fmtdesc(FILE * fh)
+{
+    int32 i, k;
+    long pos;
+
+    /* Write file format description into header */
+    for (i = 0; fmtdesc[i] != NULL; i++) {
+        k = strlen(fmtdesc[i]) + 1;
+        fwrite_int32(fh, k);
+        fwrite(fmtdesc[i], 1, k, fh);
+    }
+    /* Pad it out in order to achieve 32-bit alignment */
+    pos = ftell(fh);
+    k = pos & 3;
+    if (k) {
+        fwrite_int32(fh, 4-k);
+        fwrite("!!!!", 1, 4-k, fh);
+    }
+    fwrite_int32(fh, 0);
+}
+
+static void
+lm3g_dump_write_unigram(FILE *fh, ngram_model_t *model)
+{
+    ngram_model_dmp_t *lm = (ngram_model_dmp_t *)model;
+    int32 i;
+
+    for (i = 0; i <= model->n_counts[0]; i++) {
+        fwrite_ug(fh, &(lm->lm3g.unigrams[i]), model->lmath);
+    }
+}
+
+
+static void
+lm3g_dump_write_bigram(FILE *fh, ngram_model_t *model)
+{
+    ngram_model_dmp_t *lm = (ngram_model_dmp_t *)model;
+    int32 i;
+
+    for (i = 0; i <= model->n_counts[1]; i++) {
+        fwrite_bg(fh, &(lm->lm3g.bigrams[i]));
+    }
+
+}
+
+static void
+lm3g_dump_write_trigram(FILE *fh, ngram_model_t *model)
+{
+    ngram_model_dmp_t *lm = (ngram_model_dmp_t *)model;
+    int32 i;
+
+    for (i = 0; i < model->n_counts[2]; i++) {
+        fwrite_tg(fh, &(lm->lm3g.trigrams[i]));
+    }
+}
+
+static void
+lm3g_dump_write_bgprob(FILE *fh, ngram_model_t *model)
+{
+    ngram_model_dmp_t *lm = (ngram_model_dmp_t *)model;
+    int32 i;
+
+    fwrite_int32(fh, lm->lm3g.n_prob2);
+    for (i = 0; i < lm->lm3g.n_prob2; i++) {
+        float32 log10val = logmath_log_to_log10(model->lmath, lm->lm3g.prob2[i].l);
+        fwrite(&log10val, 4, 1, fh);
+    }
+}
+
+static void
+lm3g_dump_write_tgbowt(FILE *fh, ngram_model_t *model)
+{
+    ngram_model_dmp_t *lm = (ngram_model_dmp_t *)model;
+    int32 i;
+
+    fwrite_int32(fh, lm->lm3g.n_bo_wt2);
+    for (i = 0; i < lm->lm3g.n_bo_wt2; i++) {
+        float32 log10val = logmath_log_to_log10(model->lmath, lm->lm3g.bo_wt2[i].l);
+        fwrite(&log10val, 4, 1, fh);
+    }
+}
+
+static void
+lm3g_dump_write_tgprob(FILE *fh, ngram_model_t *model)
+{
+    ngram_model_dmp_t *lm = (ngram_model_dmp_t *)model;
+    int32 i;
+
+    fwrite_int32(fh, lm->lm3g.n_prob3);
+    for (i = 0; i < lm->lm3g.n_prob3; i++) {
+        float32 log10val = logmath_log_to_log10(model->lmath, lm->lm3g.prob3[i].l);
+        fwrite(&log10val, 4, 1, fh);
+    }
+}
+
+static void
+lm3g_dump_write_tg_segbase(FILE *fh, ngram_model_t *model)
+{
+    ngram_model_dmp_t *lm = (ngram_model_dmp_t *)model;
+    int32 i, k;
+
+    k = (model->n_counts[1] + 1) / BG_SEG_SZ + 1;
+    fwrite_int32(fh, k);
+    for (i = 0; i < k; i++)
+        fwrite_int32(fh, lm->lm3g.tseg_base[i]);
+}
+
+static void
+lm3g_dump_write_wordstr(FILE *fh, ngram_model_t *model)
+{
+    int32 i, k;
+
+    k = 0;
+    for (i = 0; i < model->n_counts[0]; i++)
+        k += strlen(model->word_str[i]) + 1;
+    fwrite_int32(fh, k);
+    for (i = 0; i < model->n_counts[0]; i++)
+        fwrite(model->word_str[i], 1,
+               strlen(model->word_str[i]) + 1, fh);
+}
+
+#if 0
 int
-ngram_model_dmp_write(ngram_model_t *model,
+ngram_model_dmp_write(ngram_model_t *base,
                       const char *file_name)
 {
-    return -1;
+    ngram_model_dmp_t *model;
+    FILE *fh;
+
+    /* First, construct a DMP model from the base model. */
+    model = ngram_model_dmp_build(base);
+
+    /* Now write it, confident in the knowledge that it's the right
+     * kind of language model internally. */
+    if ((fh = fopen(file_name, "wb")) == NULL) {
+        E_ERROR("Cannot create file %s\n", file_name);
+        return -1;
+    }
+    lm3g_dump_write_header(fh);
+    lm3g_dump_write_lm_filename(fh, file_name);
+    lm3g_dump_write_version(fh, 0);
+    lm3g_dump_write_fmtdesc(fh);
+    lm3g_dump_write_ngram_counts(fh, model);
+    lm3g_dump_write_unigram(fh, model);
+    lm3g_dump_write_bigram(fh, model);
+    lm3g_dump_write_trigram(fh, model);
+    lm3g_dump_write_bgprob(fh, model);
+    if (model->n > 2) {
+        lm3g_dump_write_tgbowt(fh, model);
+        lm3g_dump_write_tgprob(fh, model);
+        lm3g_dump_write_tg_segbase(fh, model);
+    }
+    lm3g_dump_write_wordstr(fh, model);
+    ngram_model_free(model);
+
+    return fclose(fh);
 }
+#endif
 
 static int
 ngram_model_dmp_apply_weights(ngram_model_t *base, float32 lw,

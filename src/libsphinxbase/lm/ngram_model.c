@@ -85,8 +85,6 @@ ngram_file_name_to_type(const char *file_name)
     /* We use strncmp because there might be a .gz on the end. */
     if (0 == strncmp_nocase(ext, ".ARPA", 5))
         return NGRAM_ARPA;
-    if (0 == strncmp_nocase(ext, ".DMP32", 6))
-        return NGRAM_DMP32;
     if (0 == strncmp_nocase(ext, ".DMP", 4))
         return NGRAM_DMP;
     return NGRAM_ARPA; /* Default file type */
@@ -106,8 +104,6 @@ ngram_model_read(cmd_ln_t *config,
             break;
         if ((model = ngram_model_dmp_read(config, file_name, lmath)) != NULL)
             break;
-        if ((model = ngram_model_dmp32_read(config, file_name, lmath)) != NULL)
-            break;
         return NULL;
     }
     case NGRAM_ARPA:
@@ -116,9 +112,9 @@ ngram_model_read(cmd_ln_t *config,
     case NGRAM_DMP:
         model = ngram_model_dmp_read(config, file_name, lmath);
         break;
-    case NGRAM_DMP32:
-        model = ngram_model_dmp32_read(config, file_name, lmath);
-        break;
+    default:
+        E_ERROR("language model file type not supported\n");
+        return NULL;
     }
 
     /* Now set weights based on config if present. */
@@ -153,11 +149,12 @@ ngram_model_write(ngram_model_t *model, const char *file_name,
         return ngram_model_arpa_write(model, file_name);
     case NGRAM_DMP:
         return ngram_model_dmp_write(model, file_name);
-    case NGRAM_DMP32:
-        return ngram_model_dmp32_write(model, file_name);
+    default:
+        E_ERROR("language model file type not supported\n");
+        return -1;
     }
-
-    return -1; /* In case your compiler is really stupid. */
+    E_ERROR("language model file type not supported\n");
+    return -1;
 }
 
 int32
