@@ -92,6 +92,9 @@ char *string_trim(char *string, enum string_edge_e which);
 SPHINXBASE_EXPORT
 double atof_c(char const *str);
 
+SPHINXBASE_EXPORT
+uint32 utf8_decode(uint32 *state, uint32 *codep, uint32 *byte);
+
 /* FIXME: Both of these string splitting functions basically suck.  I
  have attempted to fix them as best I can.  (dhuggins@cs, 20070808) */
 
