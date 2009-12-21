@@ -717,6 +717,13 @@ lm3g_dump_write_wordstr(FILE *fh, ngram_model_t *model)
                strlen(model->word_str[i]) + 1, fh);
 }
 
+int
+ngram_model_dmp_write(ngram_model_t *base,
+                      const char *file_name)
+{
+	return -1;
+}
+
 #if 0
 int
 ngram_model_dmp_write(ngram_model_t *base,
