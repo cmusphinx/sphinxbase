@@ -104,9 +104,8 @@ fopen_comp(const char *file, const char *mode, int32 * ispipe)
         /* Shouldn't get here, anyway */
         E_FATAL("No popen() on WinCE\n");
 #else
-        char *command = NULL;
-
         if (strcmp(mode, "r") == 0) {
+            char *command;
             switch (isgz) {
             case COMP_GZIP:
                 command = string_join("gunzip" EXEEXT, " -c ", file, NULL);
@@ -125,8 +124,10 @@ fopen_comp(const char *file, const char *mode, int32 * ispipe)
                 ckd_free(command);
                 return NULL;
             }
+            ckd_free(command);
         }
         else if (strcmp(mode, "w") == 0) {
+            char *command;
             switch (isgz) {
             case COMP_GZIP:
                 command = string_join("gzip" EXEEXT, " > ", file, NULL);
