@@ -57,6 +57,36 @@ typedef union {
 } lmprob_t;
 
 /**
+ * Bigram probs and bo-wts, and trigram probs are kept in separate
+ * tables rather than within the bigram_t and trigram_t structures.
+ * These tables hold unique prob and bo-wt values, and can be < 64K
+ * long.  The following tree structure is used to construct these
+ * tables of unique values.  Whenever a new value is read from the LM
+ * file, the sorted tree structure is searched to see if the value
+ * already exists, and inserted if not found.
+ */
+typedef struct sorted_entry_s {
+    lmprob_t val;               /**< value being kept in this node */
+    uint16 lower;               /**< index of another entry.  All descendants down
+                                   this path have their val < this node's val.
+                                   0 => no son exists (0 is root index) */
+    uint16 higher;              /**< index of another entry.  All descendants down
+                                   this path have their val > this node's val
+                                   0 => no son exists (0 is root index) */
+} sorted_entry_t;
+
+/**
+ * The sorted list.  list is a (64K long) array.  The first entry is the
+ * root of the tree and is created during initialization.
+ */
+typedef struct {
+    sorted_entry_t *list;
+    int32 free;                 /**< first free element in list */
+} sorted_list_t;
+
+#define MAX_SORTED_ENTRIES	65534
+
+/**
  * Unigram structure (common among all lm3g implementations)
  */
 typedef struct unigram_s {
@@ -135,5 +165,14 @@ void lm3g_apply_weights(ngram_model_t *base,
 int32 lm3g_add_ug(ngram_model_t *base,
                   lm3g_model_t *lm3g, int32 wid, int32 lweight);
 
+
+/**
+ * Initialize sorted list with the 0-th entry = MIN_PROB_F, which may be needed
+ * to replace spurious values in the Darpa LM file.
+ */
+void init_sorted_list(sorted_list_t *l);
+void free_sorted_list(sorted_list_t *l);
+lmprob_t *vals_in_sorted_list(sorted_list_t *l);
+int32 sorted_id(sorted_list_t * l, int32 *val);
 
 #endif /* __NGRAM_MODEL_LM3G_H__ */

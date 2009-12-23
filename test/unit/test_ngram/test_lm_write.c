@@ -1,6 +1,7 @@
 #include <ngram_model.h>
 #include <logmath.h>
 #include <strfuncs.h>
+#include <err.h>
 
 #include "test_macros.h"
 
@@ -45,19 +46,46 @@ main(int argc, char *argv[])
 	/* Initialize a logmath object to pass to ngram_read */
 	lmath = logmath_init(1.0001, 0, 0);
 
+	/* Convert ARPA to DMP */
+	E_INFO("Converting ARPA to DMP\n");
 	model = ngram_model_read(NULL, LMDIR "/100.arpa.bz2", NGRAM_ARPA, lmath);
-	TEST_ASSERT(model);
+	test_lm_vals(model);
+	TEST_EQUAL(0, ngram_model_write(model, "100.tmp.DMP", NGRAM_DMP));
+	ngram_model_free(model);
+
+	/* Convert DMP to ARPA */
+	E_INFO("Converting DMP to ARPA\n");
+	model = ngram_model_read(NULL, LMDIR "/100.arpa.DMP", NGRAM_DMP, lmath);
+	test_lm_vals(model);
 	TEST_EQUAL(0, ngram_model_write(model, "100.tmp.arpa", NGRAM_ARPA));
 	ngram_model_free(model);
 
+	/* Test converted DMP */
+	E_INFO("Testing converted DMP\n");
+	model = ngram_model_read(NULL, "100.tmp.DMP", NGRAM_DMP, lmath);
+	test_lm_vals(model);
+	ngram_model_free(model);
+
+	/* Test converted ARPA */
+	E_INFO("Testing converted ARPA\n");
 	model = ngram_model_read(NULL, "100.tmp.arpa", NGRAM_ARPA, lmath);
 	test_lm_vals(model);
-	TEST_EQUAL(0, ngram_model_write(model, "100.tmp.dmp", NGRAM_DMP));
 	ngram_model_free(model);
 
-	model = ngram_model_read(NULL, "100.tmp.dmp", NGRAM_DMP, lmath);
+	/* Convert DMP back to ARPA*/
+	E_INFO("Converting ARPA back to DMP\n");
+	model = ngram_model_read(NULL, "100.tmp.arpa", NGRAM_ARPA, lmath);
 	test_lm_vals(model);
+	TEST_EQUAL(0, ngram_model_write(model, "100.tmp.DMP", NGRAM_DMP));
 	ngram_model_free(model);
 
+	/* Convert ARPA back to DMP */
+	E_INFO("Converting DMP back to ARPA\n");
+	model = ngram_model_read(NULL, "100.tmp.DMP", NGRAM_DMP, lmath);
+	test_lm_vals(model);
+	TEST_EQUAL(0, ngram_model_write(model, "100.tmp.arpa", NGRAM_ARPA));
+	ngram_model_free(model);
+
+	logmath_free(lmath);
 	return 0;
 }

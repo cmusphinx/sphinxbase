@@ -49,93 +49,13 @@
 
 #include <string.h>
 #include <limits.h>
+#include <assert.h>
 
 static ngram_funcs_t ngram_model_arpa_funcs;
 
 #define TSEG_BASE(m,b)		((m)->lm3g.tseg_base[(b)>>LOG_BG_SEG_SZ])
 #define FIRST_BG(m,u)		((m)->lm3g.unigrams[u].bigrams)
 #define FIRST_TG(m,b)		(TSEG_BASE((m),(b))+((m)->lm3g.bigrams[b].trigrams))
-
-/*
- * Initialize sorted list with the 0-th entry = MIN_PROB_F, which may be needed
- * to replace spurious values in the Darpa LM file.
- */
-static void
-init_sorted_list(sorted_list_t * l)
-{
-    /* FIXME FIXME FIXME: Fixed size array!??! */
-    l->list = ckd_calloc(MAX_SORTED_ENTRIES,
-                         sizeof(sorted_entry_t));
-    l->list[0].val.l = INT_MIN;
-    l->list[0].lower = 0;
-    l->list[0].higher = 0;
-    l->free = 1;
-}
-
-static void
-free_sorted_list(sorted_list_t * l)
-{
-    free(l->list);
-}
-
-static lmprob_t *
-vals_in_sorted_list(sorted_list_t * l)
-{
-    lmprob_t *vals;
-    int32 i;
-
-    vals = ckd_calloc(l->free, sizeof(lmprob_t));
-    for (i = 0; i < l->free; i++)
-        vals[i] = l->list[i].val;
-    return (vals);
-}
-
-static int32
-sorted_id(sorted_list_t * l, int32 *val)
-{
-    int32 i = 0;
-
-    for (;;) {
-        if (*val == l->list[i].val.l)
-            return (i);
-        if (*val < l->list[i].val.l) {
-            if (l->list[i].lower == 0) {
-                if (l->free >= MAX_SORTED_ENTRIES) {
-                    /* Make the best of a bad situation. */
-                    E_WARN("sorted list overflow (%d => %d)\n",
-                           *val, l->list[i].val.l);
-                    return i;
-                }
-
-                l->list[i].lower = l->free;
-                (l->free)++;
-                i = l->list[i].lower;
-                l->list[i].val.l = *val;
-                return (i);
-            }
-            else
-                i = l->list[i].lower;
-        }
-        else {
-            if (l->list[i].higher == 0) {
-                if (l->free >= MAX_SORTED_ENTRIES) {
-                    /* Make the best of a bad situation. */
-                    E_WARN("sorted list overflow (%d => %d)\n",
-                           *val, l->list[i].val);
-                    return i;
-                }
-
-                l->list[i].higher = l->free;
-                (l->free)++;
-                i = l->list[i].higher;
-                l->list[i].val.l = *val;
-                return (i);
-            }
-            else
-                i = l->list[i].higher;
-        }
-    }
-}
 
 /*
  * Read and return #unigrams, #bigrams, #trigrams as stated in input file.
@@ -669,6 +589,7 @@ ngram_model_arpa_write(ngram_model_t *model,
             wids = ngram_iter_get(itor, &score, &bowt);
             fprintf(fh, "%.4f ", logmath_log_to_log10(model->lmath, score));
             for (j = 0; j <= i; ++j) {
+                assert(wids[j] < model->n_counts[0]);
                 fprintf(fh, "%s ", model->word_str[wids[j]]);
             }
             if (i < model->n-1)

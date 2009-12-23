@@ -597,7 +597,7 @@ ngram_iter_init(ngram_iter_t *itor, ngram_model_t *model,
                 int m, int successor)
 {
     itor->model = model;
-    itor->wids = ckd_calloc(m, sizeof(*itor->wids));
+    itor->wids = ckd_calloc(model->n, sizeof(*itor->wids));
     itor->m = m;
     itor->successor = successor;
 }

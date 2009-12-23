@@ -412,6 +412,13 @@ lm3g_template_successors(ngram_iter_t *bitor)
         /* Start iterating from first trigram successor of from->bg. */
         itor->tg = (model->lm3g.trigrams 
                     + FIRST_TG(model, (itor->bg - model->lm3g.bigrams)));
+#if 0
+        printf("%s %s => %d (%s)\n",
+               model->base.word_str[itor->ug - model->lm3g.unigrams],
+               model->base.word_str[itor->bg->wid],
+               FIRST_TG(model, (itor->bg - model->lm3g.bigrams)),
+               model->base.word_str[itor->tg->wid]);
+#endif
         break;
     case 2:
     default:
@@ -428,7 +435,7 @@ lm3g_template_successors(ngram_iter_t *bitor)
 
 static int32 const *
 lm3g_template_iter_get(ngram_iter_t *base,
-                         int32 *out_score, int32 *out_bowt)
+                       int32 *out_score, int32 *out_bowt)
 {
     NGRAM_MODEL_TYPE *model = (NGRAM_MODEL_TYPE *)base->model;
     lm3g_iter_t *itor = (lm3g_iter_t *)base;
@@ -436,6 +443,9 @@ lm3g_template_iter_get(ngram_iter_t *base,
     base->wids[0] = itor->ug - model->lm3g.unigrams;
     if (itor->bg) base->wids[1] = itor->bg->wid;
     if (itor->tg) base->wids[2] = itor->tg->wid;
+#if 0
+    printf("itor_get: %d %d %d\n", base->wids[0], base->wids[1], base->wids[2]);
+#endif
 
     switch (base->m) {
     case 0:
@@ -477,12 +487,19 @@ lm3g_template_iter_next(ngram_iter_t *base)
         /* Check for end condition. */
         if (itor->bg - model->lm3g.bigrams >= base->model->n_counts[1])
             goto done;
-        /* Advance unigram pointer if necessary. */
+        /* Advance unigram pointer if necessary in order to get one
+         * that points to this bigram. */
         while (itor->bg - model->lm3g.bigrams >= itor->ug[1].bigrams) {
-            /* Stop if this is a successor iterator. */
+            /* Stop if this is a successor iterator, since we don't
+             * want a new unigram. */
             if (base->successor)
                 goto done;
             ++itor->ug;
+            if (itor->ug == model->lm3g.unigrams + base->model->n_counts[0]) {
+                E_ERROR("Bigram %d has no vaild unigram parent\n",
+                        itor->bg - model->lm3g.bigrams);
+                goto done;
+            }
         }
         break;
     case 2:
@@ -496,10 +513,20 @@ lm3g_template_iter_next(ngram_iter_t *base)
             if (base->successor)
                 goto done;
             ++itor->bg;
+            if (itor->bg == model->lm3g.bigrams + base->model->n_counts[1]) {
+                E_ERROR("Trigram %d has no vaild bigram parent\n",
+                        itor->tg - model->lm3g.trigrams);
+                goto done;
+            }
         }
         /* Advance unigram pointer if necessary. */
         while (itor->bg - model->lm3g.bigrams >= itor->ug[1].bigrams) {
             ++itor->ug;
+            if (itor->ug == model->lm3g.unigrams + base->model->n_counts[0]) {
+                E_ERROR("Trigram %d has no vaild unigram parent\n",
+                        itor->tg - model->lm3g.trigrams);
+                goto done;
+            }
         }
         break;
     default: /* Should not happen. */
@@ -508,11 +535,12 @@ lm3g_template_iter_next(ngram_iter_t *base)
 
     return (ngram_iter_t *)itor;
 done:
-        ngram_iter_free(base);
-        return NULL;
+    ngram_iter_free(base);
+    return NULL;
 }
 
 static void
 lm3g_template_iter_free(ngram_iter_t *base)
 {
+    ckd_free(base);
 }

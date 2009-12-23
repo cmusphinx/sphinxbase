@@ -233,6 +233,8 @@ ngram_model_dmp_read(cmd_ln_t *config,
         /* Convert values to log. */
         ugptr->prob1.l = logmath_log10_to_log(lmath, ugptr->prob1.f);
         ugptr->bo_wt1.l = logmath_log10_to_log(lmath, ugptr->bo_wt1.f);
+        E_DEBUG(2, ("ug %d: prob %d bo %d bigrams %d\n",
+                    i, ugptr->prob1.l, ugptr->bo_wt1.l, ugptr->bigrams));
         ++ugptr;
     }
     E_INFO("%8d = LM.unigrams(+trailer) read\n", n_unigram);
@@ -471,11 +473,21 @@ ngram_model_dmp_build(ngram_model_t *base)
 {
     ngram_model_dmp_t *model;
     ngram_model_t *newbase;
+    ngram_iter_t *itor;
+    sorted_list_t sorted_prob2;
+    sorted_list_t sorted_bo_wt2;
+    sorted_list_t sorted_prob3;
+    bigram_t *bgptr;
+    trigram_t *tgptr;
+    int i, bgcount, tgcount, seg;
 
-    if (base->funcs == &ngram_model_dmp_funcs)
+    if (base->funcs == &ngram_model_dmp_funcs) {
+        E_INFO("Using existing DMP model.\n");
         return (ngram_model_dmp_t *)ngram_model_retain(base);
+    }
 
     /* Initialize new base model structure with params from base. */
+    E_INFO("Building DMP model...\n");
     model = ckd_calloc(1, sizeof(*model));
     newbase = &model->base;
     ngram_model_init(newbase, &ngram_model_dmp_funcs,
@@ -484,9 +496,137 @@ ngram_model_dmp_build(ngram_model_t *base)
     /* Copy N-gram counts over. */
     memcpy(newbase->n_counts, base->n_counts,
            base->n * sizeof(*base->n_counts));
+    /* Make sure word strings are freed. */
+    newbase->writable = TRUE;
+    /* Initialize unigram table and string table. */
+    model->lm3g.unigrams = new_unigram_table(newbase->n_counts[0] + 1);
+    for (itor = ngram_model_mgrams(base, 0); itor;
+         itor = ngram_iter_next(itor)) {
+        int32 prob1, bo_wt1;
+        int32 const *wids;
+
+        /* Can't guarantee they will go in unigram order, so just to
+         * be correct, we do this... */
+        wids = ngram_iter_get(itor, &prob1, &bo_wt1);
+        model->lm3g.unigrams[wids[0]].prob1.l = prob1;
+        model->lm3g.unigrams[wids[0]].bo_wt1.l = bo_wt1;
+        newbase->word_str[wids[0]] = ckd_salloc(ngram_word(base, wids[0]));
+        if ((hash_table_enter_int32(newbase->wid,
+                                    newbase->word_str[wids[0]], wids[0]))
+            != wids[0]) {
+                E_WARN("Duplicate word in dictionary: %s\n", newbase->word_str[wids[0]]);
+        }
+    }
+    E_INFO("%8d = #unigrams created\n", newbase->n_counts[0]);
 
     /* Construct quantized probability table for bigrams and
-     * (optionally) trigrams. */
+     * (optionally) trigrams.  Hesitate to use the "sorted list" thing
+     * since it isn't so useful, but it's there already. */
+    init_sorted_list(&sorted_prob2);
+    if (newbase->n > 2) {
+        init_sorted_list(&sorted_bo_wt2);
+        init_sorted_list(&sorted_prob3);
+    }
+    /* Construct bigram and trigram arrays. */
+    bgptr = model->lm3g.bigrams = ckd_calloc(newbase->n_counts[1] + 1, sizeof(bigram_t));
+    if (newbase->n > 2) {
+        tgptr = model->lm3g.trigrams = ckd_calloc(newbase->n_counts[2], sizeof(trigram_t));
+        model->lm3g.tseg_base =
+            ckd_calloc((newbase->n_counts[1] + 1) / BG_SEG_SZ + 1, sizeof(int32));
+    }
+    else
+        tgptr = NULL;
+    /* Since bigrams and trigrams have to be contiguous with others
+     * with the same N-1-gram, we traverse them in depth-first order
+     * to build the bigram and trigram arrays. */
+    for (i = 0; i < newbase->n_counts[0]; ++i) {
+        ngram_iter_t *uitor;
+        bgcount = bgptr - model->lm3g.bigrams;
+        /* First bigram index (same as next if no bigrams...) */
+        model->lm3g.unigrams[i].bigrams = bgcount;
+        E_DEBUG(2, ("unigram %d: %s => bigram %d\n", i, newbase->word_str[i], bgcount));
+        /* All bigrams corresponding to unigram i */
+        for (itor = ngram_iter_successors((uitor = ngram_ng_iter(base, i, NULL, 0)));
+             itor; ++bgptr, itor = ngram_iter_next(itor)) {
+            int32 prob2, bo_wt2;
+            int32 const *wids;
+            ngram_iter_t *titor;
+
+            wids = ngram_iter_get(itor, &prob2, &bo_wt2);
+            bgptr->wid = wids[1];
+            bgptr->prob2 = sorted_id(&sorted_prob2, &prob2);
+            if (newbase->n > 2) {
+                tgcount = (tgptr - model->lm3g.trigrams);
+
+                /* Backoff weight (only if there are trigrams...) */
+                bgptr->bo_wt2 = sorted_id(&sorted_bo_wt2, &bo_wt2);
+
+                /* Find bigram segment for this bigram (this isn't
+                 * used unless there are trigrams) */
+                seg = bgcount >> LOG_BG_SEG_SZ;
+                /* If we just crossed a bigram segment boundary, then
+                 * point tseg_base for the new segment to the current
+                 * trigram pointer. */
+                if (seg != (bgcount - 1) >> LOG_BG_SEG_SZ)
+                    model->lm3g.tseg_base[seg] = tgcount;
+                /* Now calculate the trigram offset. */
+                bgptr->trigrams = tgcount - model->lm3g.tseg_base[seg];
+                E_DEBUG(2, ("bigram %d %s %s => trigram %d:%d\n",
+                            bgcount,
+                            newbase->word_str[wids[0]],
+                            newbase->word_str[wids[1]],
+                            seg, bgptr->trigrams));
+
+                /* And fill in successors' trigram info. */
+                for (titor = ngram_iter_successors(itor);
+                     titor; ++tgptr, titor = ngram_iter_next(titor)) {
+                    int32 prob3, dummy;
+
+                    wids = ngram_iter_get(titor, &prob3, &dummy);
+                    tgptr->wid = wids[2];
+                    tgptr->prob3 = sorted_id(&sorted_prob3, &prob3);
+                    E_DEBUG(2, ("trigram %d %s %s %s => prob %d\n",
+                                tgcount,
+                                newbase->word_str[wids[0]],
+                                newbase->word_str[wids[1]],
+                                newbase->word_str[wids[2]],
+                                tgptr->prob3));
+                }
+            }
+        }
+        ngram_iter_free(uitor);
+    }
+    /* Add sentinal unigram and bigram records. */
+    bgcount = bgptr - model->lm3g.bigrams;
+    tgcount = tgptr - model->lm3g.trigrams;
+    seg = bgcount >> LOG_BG_SEG_SZ;
+    if (seg != (bgcount - 1) >> LOG_BG_SEG_SZ)
+        model->lm3g.tseg_base[seg] = tgcount;
+    model->lm3g.unigrams[i].bigrams = bgcount;
+    bgptr->trigrams = tgcount - model->lm3g.tseg_base[seg];
+
+    /* Now create probability tables. */
+    model->lm3g.n_prob2 = sorted_prob2.free;
+    model->lm3g.prob2 = vals_in_sorted_list(&sorted_prob2);
+    E_INFO("%8d = #bigrams created\n", newbase->n_counts[1]);
+    E_INFO("%8d = #prob2 entries\n", model->lm3g.n_prob2);
+    free_sorted_list(&sorted_prob2);
+    if (newbase->n > 2) {
+        /* Create trigram bo-wts array. */
+        model->lm3g.n_bo_wt2 = sorted_bo_wt2.free;
+        model->lm3g.bo_wt2 = vals_in_sorted_list(&sorted_bo_wt2);
+        free_sorted_list(&sorted_bo_wt2);
+        E_INFO("%8d = #bo_wt2 entries\n", model->lm3g.n_bo_wt2);
+        /* Create trigram probability table. */
+        model->lm3g.n_prob3 = sorted_prob3.free;
+        model->lm3g.prob3 = vals_in_sorted_list(&sorted_prob3);
+        E_INFO("%8d = #trigrams created\n", newbase->n_counts[2]);
+        E_INFO("%8d = #prob3 entries\n", model->lm3g.n_prob3);
+        free_sorted_list(&sorted_prob3);
+        /* Initialize tginfo */
+        model->lm3g.tginfo = ckd_calloc(newbase->n_counts[0], sizeof(tginfo_t *));
+        model->lm3g.le = listelem_alloc_init(sizeof(tginfo_t));
+    }
 
     return model;
 }
@@ -558,7 +698,7 @@ static char const *fmtdesc[] = {
 };
 
 static void
-lm3g_dump_write_header(FILE * fh)
+ngram_model_dmp_write_header(FILE * fh)
 {
     int32 k;
     k = strlen(darpa_hdr) + 1;
@@ -567,7 +707,7 @@ lm3g_dump_write_header(FILE * fh)
 }
 
 static void
-lm3g_dump_write_lm_filename(FILE * fh, const char *lmfile)
+ngram_model_dmp_write_lm_filename(FILE * fh, const char *lmfile)
 {
     int32 k;
 
@@ -581,14 +721,14 @@ lm3g_dump_write_lm_filename(FILE * fh, const char *lmfile)
 				     bigram and trigram.*/
 
 static void
-lm3g_dump_write_version(FILE * fh, int32 mtime)
+ngram_model_dmp_write_version(FILE * fh, int32 mtime)
 {
     fwrite_int32(fh, LMDMP_VERSION_TG_16BIT);   /* version # */
     fwrite_int32(fh, mtime);
 }
 
 static void
-lm3g_dump_write_ngram_counts(FILE * fh, ngram_model_t *model)
+ngram_model_dmp_write_ngram_counts(FILE * fh, ngram_model_t *model)
 {
     fwrite_int32(fh, model->n_counts[0]);
     fwrite_int32(fh, model->n_counts[1]);
@@ -596,7 +736,7 @@ lm3g_dump_write_ngram_counts(FILE * fh, ngram_model_t *model)
 }
 
 static void
-lm3g_dump_write_fmtdesc(FILE * fh)
+ngram_model_dmp_write_fmtdesc(FILE * fh)
 {
     int32 i, k;
     long pos;
@@ -618,7 +758,7 @@ lm3g_dump_write_fmtdesc(FILE * fh)
 }
 
 static void
-lm3g_dump_write_unigram(FILE *fh, ngram_model_t *model)
+ngram_model_dmp_write_unigram(FILE *fh, ngram_model_t *model)
 {
     ngram_model_dmp_t *lm = (ngram_model_dmp_t *)model;
     int32 i;
@@ -630,7 +770,7 @@ lm3g_dump_write_unigram(FILE *fh, ngram_model_t *model)
 
 
 static void
-lm3g_dump_write_bigram(FILE *fh, ngram_model_t *model)
+ngram_model_dmp_write_bigram(FILE *fh, ngram_model_t *model)
 {
     ngram_model_dmp_t *lm = (ngram_model_dmp_t *)model;
     int32 i;
@@ -642,7 +782,7 @@ lm3g_dump_write_bigram(FILE *fh, ngram_model_t *model)
 }
 
 static void
-lm3g_dump_write_trigram(FILE *fh, ngram_model_t *model)
+ngram_model_dmp_write_trigram(FILE *fh, ngram_model_t *model)
 {
     ngram_model_dmp_t *lm = (ngram_model_dmp_t *)model;
     int32 i;
@@ -653,7 +793,7 @@ lm3g_dump_write_trigram(FILE *fh, ngram_model_t *model)
 }
 
 static void
-lm3g_dump_write_bgprob(FILE *fh, ngram_model_t *model)
+ngram_model_dmp_write_bgprob(FILE *fh, ngram_model_t *model)
 {
     ngram_model_dmp_t *lm = (ngram_model_dmp_t *)model;
     int32 i;
@@ -666,7 +806,7 @@ lm3g_dump_write_bgprob(FILE *fh, ngram_model_t *model)
 }
 
 static void
-lm3g_dump_write_tgbowt(FILE *fh, ngram_model_t *model)
+ngram_model_dmp_write_tgbowt(FILE *fh, ngram_model_t *model)
 {
     ngram_model_dmp_t *lm = (ngram_model_dmp_t *)model;
     int32 i;
@@ -679,7 +819,7 @@ lm3g_dump_write_tgbowt(FILE *fh, ngram_model_t *model)
 }
 
 static void
-lm3g_dump_write_tgprob(FILE *fh, ngram_model_t *model)
+ngram_model_dmp_write_tgprob(FILE *fh, ngram_model_t *model)
 {
     ngram_model_dmp_t *lm = (ngram_model_dmp_t *)model;
     int32 i;
@@ -692,7 +832,7 @@ lm3g_dump_write_tgprob(FILE *fh, ngram_model_t *model)
 }
 
 static void
-lm3g_dump_write_tg_segbase(FILE *fh, ngram_model_t *model)
+ngram_model_dmp_write_tg_segbase(FILE *fh, ngram_model_t *model)
 {
     ngram_model_dmp_t *lm = (ngram_model_dmp_t *)model;
     int32 i, k;
@@ -704,7 +844,7 @@ lm3g_dump_write_tg_segbase(FILE *fh, ngram_model_t *model)
 }
 
 static void
-lm3g_dump_write_wordstr(FILE *fh, ngram_model_t *model)
+ngram_model_dmp_write_wordstr(FILE *fh, ngram_model_t *model)
 {
     int32 i, k;
 
@@ -721,19 +861,13 @@ int
 ngram_model_dmp_write(ngram_model_t *base,
                       const char *file_name)
 {
-	return -1;
-}
-
-#if 0
-int
-ngram_model_dmp_write(ngram_model_t *base,
-                      const char *file_name)
-{
     ngram_model_dmp_t *model;
+    ngram_model_t *newbase;
     FILE *fh;
 
     /* First, construct a DMP model from the base model. */
     model = ngram_model_dmp_build(base);
+    newbase = &model->base;
 
     /* Now write it, confident in the knowledge that it's the right
      * kind of language model internally. */
@@ -741,26 +875,25 @@ ngram_model_dmp_write(ngram_model_t *base,
         E_ERROR("Cannot create file %s\n", file_name);
         return -1;
     }
-    lm3g_dump_write_header(fh);
-    lm3g_dump_write_lm_filename(fh, file_name);
-    lm3g_dump_write_version(fh, 0);
-    lm3g_dump_write_fmtdesc(fh);
-    lm3g_dump_write_ngram_counts(fh, model);
-    lm3g_dump_write_unigram(fh, model);
-    lm3g_dump_write_bigram(fh, model);
-    lm3g_dump_write_trigram(fh, model);
-    lm3g_dump_write_bgprob(fh, model);
-    if (model->n > 2) {
-        lm3g_dump_write_tgbowt(fh, model);
-        lm3g_dump_write_tgprob(fh, model);
-        lm3g_dump_write_tg_segbase(fh, model);
+    ngram_model_dmp_write_header(fh);
+    ngram_model_dmp_write_lm_filename(fh, file_name);
+    ngram_model_dmp_write_version(fh, 0);
+    ngram_model_dmp_write_fmtdesc(fh);
+    ngram_model_dmp_write_ngram_counts(fh, newbase);
+    ngram_model_dmp_write_unigram(fh, newbase);
+    ngram_model_dmp_write_bigram(fh, newbase);
+    ngram_model_dmp_write_trigram(fh, newbase);
+    ngram_model_dmp_write_bgprob(fh, newbase);
+    if (newbase->n > 2) {
+        ngram_model_dmp_write_tgbowt(fh, newbase);
+        ngram_model_dmp_write_tgprob(fh, newbase);
+        ngram_model_dmp_write_tg_segbase(fh, newbase);
     }
-    lm3g_dump_write_wordstr(fh, model);
-    ngram_model_free(model);
+    ngram_model_dmp_write_wordstr(fh, newbase);
+    ngram_model_free(newbase);
 
     return fclose(fh);
 }
-#endif
 
 static int
 ngram_model_dmp_apply_weights(ngram_model_t *base, float32 lw,

@@ -43,9 +43,11 @@
 #include "lm3g_model.h"
 #include "listelem_alloc.h"
 #include "ckd_alloc.h"
+#include "err.h"
 
 #include <string.h>
 #include <assert.h>
+#include <limits.h>
 
 void
 lm3g_tginfo_free(ngram_model_t *base, lm3g_model_t *lm3g)
@@ -171,3 +173,81 @@ lm3g_add_ug(ngram_model_t *base,
 
     return score;
 }
+
+void
+init_sorted_list(sorted_list_t * l)
+{
+    /* FIXME FIXME FIXME: Fixed size array!??! */
+    l->list = ckd_calloc(MAX_SORTED_ENTRIES,
+                         sizeof(sorted_entry_t));
+    l->list[0].val.l = INT_MIN;
+    l->list[0].lower = 0;
+    l->list[0].higher = 0;
+    l->free = 1;
+}
+
+void
+free_sorted_list(sorted_list_t * l)
+{
+    free(l->list);
+}
+
+lmprob_t *
+vals_in_sorted_list(sorted_list_t * l)
+{
+    lmprob_t *vals;
+    int32 i;
+
+    vals = ckd_calloc(l->free, sizeof(lmprob_t));
+    for (i = 0; i < l->free; i++)
+        vals[i] = l->list[i].val;
+    return (vals);
+}
+
+int32
+sorted_id(sorted_list_t * l, int32 *val)
+{
+    int32 i = 0;
+
+    for (;;) {
+        if (*val == l->list[i].val.l)
+            return (i);
+        if (*val < l->list[i].val.l) {
+            if (l->list[i].lower == 0) {
+                if (l->free >= MAX_SORTED_ENTRIES) {
+                    /* Make the best of a bad situation. */
+                    E_WARN("sorted list overflow (%d => %d)\n",
+                           *val, l->list[i].val.l);
+                    return i;
+                }
+
+                l->list[i].lower = l->free;
+                (l->free)++;
+                i = l->list[i].lower;
+                l->list[i].val.l = *val;
+                return (i);
+            }
+            else
+                i = l->list[i].lower;
+        }
+        else {
+            if (l->list[i].higher == 0) {
+                if (l->free >= MAX_SORTED_ENTRIES) {
+                    /* Make the best of a bad situation. */
+                    E_WARN("sorted list overflow (%d => %d)\n",
+                           *val, l->list[i].val);
+                    return i;
+                }
+
+                l->list[i].higher = l->free;
+                (l->free)++;
+                i = l->list[i].higher;
+                l->list[i].val.l = *val;
+                return (i);
+            }
+            else
+                i = l->list[i].higher;
+        }
+    }
+}
+
