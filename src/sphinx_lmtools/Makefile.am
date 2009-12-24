@@ -1,12 +1,9 @@
-bin_PROGRAMS = sphinx_lm_eval
+bin_PROGRAMS = sphinx_lm_eval sphinx_lm_convert
 
 bin_SCRIPTS = sphinx_lm_sort
-
 EXTRA_DIST = sphinx_lm_sort
 
-sphinx_lm_eval_SOURCES = lm_eval.c
-
-sphinx_lm_eval_LDADD = \
+LDADD = \
 	$(top_builddir)/src/libsphinxbase/libsphinxbase.la \
 	$(top_builddir)/src/libsphinxbase/lm/libsphinxlm.la
 

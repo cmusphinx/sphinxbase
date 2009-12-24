@@ -64,109 +64,136 @@ ngram_file_name_to_type(const char *file_name)
 
     ext = strrchr(file_name, '.');
     if (ext == NULL) {
-        return NGRAM_ARPA; /* Default file type */
+        return NGRAM_INVALID;
     }
     if (0 == strcmp_nocase(ext, ".gz")) {
         while (--ext >= file_name) {
             if (*ext == '.') break;
         }
         if (ext < file_name) {
-            return NGRAM_ARPA; /* Default file type */
-        }
-    }
-    else if (0 == strcmp_nocase(ext, ".bz2")) {
-        while (--ext >= file_name) {
-            if (*ext == '.') break;
-        }
-        if (ext < file_name) {
-            return NGRAM_ARPA; /* Default file type */
-        }
-    }
-    /* We use strncmp because there might be a .gz on the end. */
-    if (0 == strncmp_nocase(ext, ".ARPA", 5))
+            return NGRAM_INVALID;
+         }
+     }
+     else if (0 == strcmp_nocase(ext, ".bz2")) {
+         while (--ext >= file_name) {
+             if (*ext == '.') break;
+         }
+         if (ext < file_name) {
+             return NGRAM_INVALID;
+         }
+     }
+     /* We use strncmp because there might be a .gz on the end. */
+     if (0 == strncmp_nocase(ext, ".ARPA", 5))
+         return NGRAM_ARPA;
+     if (0 == strncmp_nocase(ext, ".DMP", 4))
+         return NGRAM_DMP;
+     return NGRAM_INVALID;
+ }
+
+ngram_file_type_t
+ngram_str_to_type(const char *str_name)
+{
+    if (0 == strcmp_nocase(str_name, "arpa"))
         return NGRAM_ARPA;
-    if (0 == strncmp_nocase(ext, ".DMP", 4))
+    if (0 == strcmp_nocase(str_name, "dmp"))
         return NGRAM_DMP;
-    return NGRAM_ARPA; /* Default file type */
+    return NGRAM_INVALID;
 }
 
-ngram_model_t *
-ngram_model_read(cmd_ln_t *config,
-		 const char *file_name,
-                 ngram_file_type_t file_type,
-		 logmath_t *lmath)
+char const *
+ngram_type_to_str(int type)
 {
-    ngram_model_t *model = NULL;
-
-    switch (file_type) {
-    case NGRAM_AUTO: {
-        if ((model = ngram_model_arpa_read(config, file_name, lmath)) != NULL)
-            break;
-        if ((model = ngram_model_dmp_read(config, file_name, lmath)) != NULL)
-            break;
+    switch (type) {
+    case NGRAM_ARPA:
+        return "arpa";
+    case NGRAM_DMP:
+        return "dmp";
+    default:
         return NULL;
     }
-    case NGRAM_ARPA:
-        model = ngram_model_arpa_read(config, file_name, lmath);
-        break;
-    case NGRAM_DMP:
-        model = ngram_model_dmp_read(config, file_name, lmath);
-        break;
-    default:
-        E_ERROR("language model file type not supported\n");
-        return NULL;
-    }
-
-    /* Now set weights based on config if present. */
-    if (config) {
-        float32 lw = 1.0;
-        float32 wip = 1.0;
-        float32 uw = 1.0;
-
-        if (cmd_ln_exists_r(config, "-lw"))
-            lw = cmd_ln_float32_r(config, "-lw");
-        if (cmd_ln_exists_r(config, "-wip"))
-            wip = cmd_ln_float32_r(config, "-wip");
-        if (cmd_ln_exists_r(config, "-uw"))
-            uw = cmd_ln_float32_r(config, "-uw");
-
-        ngram_model_apply_weights(model, lw, wip, uw);
-    }
-
-    return model;
 }
 
-int
-ngram_model_write(ngram_model_t *model, const char *file_name,
-		  ngram_file_type_t file_type)
-{
-    switch (file_type) {
-    case NGRAM_AUTO: {
-        file_type = ngram_file_name_to_type(file_name);
-        return ngram_model_write(model, file_name, file_type);
-    }
-    case NGRAM_ARPA:
-        return ngram_model_arpa_write(model, file_name);
-    case NGRAM_DMP:
-        return ngram_model_dmp_write(model, file_name);
-    default:
-        E_ERROR("language model file type not supported\n");
-        return -1;
-    }
-    E_ERROR("language model file type not supported\n");
-    return -1;
-}
 
-int32
-ngram_model_init(ngram_model_t *base,
-                 ngram_funcs_t *funcs,
-                 logmath_t *lmath,
-                 int32 n, int32 n_unigram)
-{
-    base->refcount = 1;
-    base->funcs = funcs;
-    base->n = n;
-    /* If this was previously initialized... */
+ ngram_model_t *
+ ngram_model_read(cmd_ln_t *config,
+                  const char *file_name,
+                  ngram_file_type_t file_type,
+                  logmath_t *lmath)
+ {
+     ngram_model_t *model = NULL;
+
+     switch (file_type) {
+     case NGRAM_AUTO: {
+         if ((model = ngram_model_arpa_read(config, file_name, lmath)) != NULL)
+             break;
+         if ((model = ngram_model_dmp_read(config, file_name, lmath)) != NULL)
+             break;
+         return NULL;
+     }
+     case NGRAM_ARPA:
+         model = ngram_model_arpa_read(config, file_name, lmath);
+         break;
+     case NGRAM_DMP:
+         model = ngram_model_dmp_read(config, file_name, lmath);
+         break;
+     default:
+         E_ERROR("language model file type not supported\n");
+         return NULL;
+     }
+
+     /* Now set weights based on config if present. */
+     if (config) {
+         float32 lw = 1.0;
+         float32 wip = 1.0;
+         float32 uw = 1.0;
+
+         if (cmd_ln_exists_r(config, "-lw"))
+             lw = cmd_ln_float32_r(config, "-lw");
+         if (cmd_ln_exists_r(config, "-wip"))
+             wip = cmd_ln_float32_r(config, "-wip");
+         if (cmd_ln_exists_r(config, "-uw"))
+             uw = cmd_ln_float32_r(config, "-uw");
+
+         ngram_model_apply_weights(model, lw, wip, uw);
+     }
+
+     return model;
+ }
+
+ int
+ ngram_model_write(ngram_model_t *model, const char *file_name,
+                   ngram_file_type_t file_type)
+ {
+     switch (file_type) {
+     case NGRAM_AUTO: {
+         file_type = ngram_file_name_to_type(file_name);
+         /* Default to ARPA (catches .lm and other things) */
+         if (file_type == NGRAM_INVALID)
+             file_type = NGRAM_ARPA;
+         return ngram_model_write(model, file_name, file_type);
+     }
+     case NGRAM_ARPA:
+         return ngram_model_arpa_write(model, file_name);
+     case NGRAM_DMP:
+         return ngram_model_dmp_write(model, file_name);
+     default:
+         E_ERROR("language model file type not supported\n");
+         return -1;
+     }
+     E_ERROR("language model file type not supported\n");
+     return -1;
+ }
+
+ int32
+ ngram_model_init(ngram_model_t *base,
+                  ngram_funcs_t *funcs,
+                  logmath_t *lmath,
+                  int32 n, int32 n_unigram)
+ {
+     base->refcount = 1;
+     base->funcs = funcs;
+     base->n = n;
+     /* If this was previously initialized... */
     if (base->n_counts == NULL)
         base->n_counts = ckd_calloc(3, sizeof(*base->n_counts));
     /* Don't reset weights if logmath object hasn't changed. */

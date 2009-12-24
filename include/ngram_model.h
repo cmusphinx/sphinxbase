@@ -73,9 +73,10 @@ typedef struct ngram_class_s ngram_class_t;
  * File types for N-Gram files
  */
 typedef enum ngram_file_type_e {
-    NGRAM_AUTO,  /**< Determine file type automatically */
-    NGRAM_ARPA,  /**< ARPABO text format (the standard) */
-    NGRAM_DMP,   /**< Sphinx .DMP format */
+    NGRAM_INVALID = -1, /**< Not a valid file type. */
+    NGRAM_AUTO,  /**< Determine file type automatically. */
+    NGRAM_ARPA,  /**< ARPABO text format (the standard). */
+    NGRAM_DMP,   /**< Sphinx .DMP format. */
     NGRAM_DMP32, /**< Sphinx .DMP32 format (NOT SUPPORTED) */
 } ngram_file_type_t;
 
@@ -110,13 +111,36 @@ ngram_model_t *ngram_model_read(cmd_ln_t *config,
 /**
  * Write an N-Gram model to disk.
  *
- * @note This is not yet implemented.
- *
  * @return 0 for success, <0 on error
  */
 SPHINXBASE_EXPORT
 int ngram_model_write(ngram_model_t *model, const char *file_name,
 		      ngram_file_type_t format);
+
+/**
+ * Guess the file type for an N-Gram model from the filename.
+ *
+ * @return the guessed file type, or NGRAM_INVALID if none could be guessed.
+ */
+SPHINXBASE_EXPORT
+ngram_file_type_t ngram_file_name_to_type(const char *file_name);
+
+/**
+ * Get the N-Gram file type from a string.
+ *
+ * @return file type, or NGRAM_INVALID if no such file type exists.
+ */
+SPHINXBASE_EXPORT
+ngram_file_type_t ngram_str_to_type(const char *str_name);
+
+/**
+ * Get the canonical name for an N-Gram file type.
+ *
+ * @return read-only string with the name for this file type, or NULL
+ * if no such type exists.
+ */
+SPHINXBASE_EXPORT
+char const *ngram_type_to_str(int type);
 
 /**
  * Retain ownership of an N-Gram model.

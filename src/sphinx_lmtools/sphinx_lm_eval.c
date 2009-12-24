@@ -35,7 +35,7 @@
  *
  */
 /**
- * \file lm_eval.c
+ * \file sphinx_lm_eval.c
  * Language model evaluation tool.
  */
 #include <logmath.h>
