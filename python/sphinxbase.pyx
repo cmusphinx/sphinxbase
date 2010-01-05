@@ -376,16 +376,31 @@ cdef class HuffCode:
     """
     Huffman coding class.
     """
-    def __init__(self, alphabet):
+    def __init__(self, alphabet=None, infile=None):
         """
-        Construct a Huffman code from an alphabet of symbols with frequencies.
+        Construct a Huffman code from an alphabet of symbols with
+        frequencies, or read one from a file.  Either the alphabet or
+        infile argument (but not both) must be passed to this
+        constructor.
 
         @param alphabet: Alphabet of (symbol, frequency) pairs
         @ptype alphabet: [(str, int)]
+        @param infile: File handle or filename to read from
+        @ptype infile: file | str
         """
         cdef char **symbols
         cdef int *frequencies
         cdef int nsym
+
+        if alphabet == None and infile == None:
+            raise ValueError, "One of alphabet or infile must be passed to constructor"
+        if alphabet != None and infile != None:
+            raise ValueError, "Only one of alphabet or infile must be passed to constructor"
+
+        self.fh = None
+        if infile:
+            self.read(infile)
+            return
 
         nsym = len(alphabet)
         frequencies = <int *>ckd_calloc(nsym, sizeof(int))
@@ -399,11 +414,21 @@ cdef class HuffCode:
         ckd_free(frequencies)
         ckd_free(symbols)
 
-    def write(self, file outfh):
-        huff_code_write(self.hc, PyFile_AsFile(outfh))
+    def read(self, infile):
+        if not isinstance(infile, file):
+            infile = file(infile, "rb")
+        huff_code_free(self.hc)
+        self.hc = huff_code_read(PyFile_AsFile(infile))
 
-    def dump(self, file outfh):
-        huff_code_dump(self.hc, PyFile_AsFile(outfh))
+    def write(self, outfile):
+        if not isinstance(outfile, file):
+            outfile = file(outfile, "wb")
+        huff_code_write(self.hc, PyFile_AsFile(outfile))
+
+    def dump(self, outfile):
+        if not isinstance(outfile, file):
+            outfile = file(outfile, "w")
+        huff_code_dump(self.hc, PyFile_AsFile(outfile))
 
     def encode(self, seq):
         """
@@ -419,7 +444,7 @@ cdef class HuffCode:
         for sym in seq:
             cwlen = huff_code_encode_str(self.hc, sym, &cw)
             nbits += cwlen
-        nbytes = (nbits + 7) / 8 # Python 3.0 problem...
+        nbytes = int((nbits + 7) / 8)
         offset = 0
         output = <char *>PyMem_Malloc(nbytes + 1)
         output[nbytes] = 0
@@ -490,5 +515,33 @@ cdef class HuffCode:
             raise ValueError, "Invalid data at position %d" % (len(data) - dlen)
         return (output, offset)
 
+    def attach(self, fh, char *mode):
+        if not isinstance(fh, file):
+            fh = file(fh, mode)
+        self.fh = fh
+        huff_code_attach(self.hc, PyFile_AsFile(fh), mode)
+
+    def detach(self):
+        huff_code_detach(self.hc)
+        self.fh = None
+
+    def encode_to_file(self, seq):
+        if self.fh == None:
+            raise RuntimeError, "No file is attached"
+        for sym in seq:
+            huff_code_encode_str(self.hc, sym, NULL)
+
+    def decode_from_file(self):
+        cdef char *sym
+        if self.fh == None:
+            raise RuntimeError, "No file is attached"
+        sym = huff_code_decode_str(self.hc, NULL, NULL, NULL)
+        if sym == NULL:
+            return None
+        else:
+            return sym
+
     def __dealloc__(self):
+        if self.fh:
+            self.detach()
         huff_code_free(self.hc)
