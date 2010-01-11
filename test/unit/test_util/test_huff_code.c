@@ -20,6 +20,9 @@ char * const svalues[10] = {
 	"foo", "bar", "baz", "quux", "argh",
 	"hurf", "burf", "blatz", "unf", "woof"
 };
+char * const svalues2[10] = {
+	"1","2","3","4","5","6","7","8","9","10"
+};
 char const cdata[7] = { 0x08, 0x30, 0x40, 0x4c, 0x00, 0x04, 0x50 };
 
 void
@@ -76,7 +79,7 @@ test_intcode(huff_code_t *hc)
 }
 
 void
-test_strcode(huff_code_t *hc)
+test_strcode(huff_code_t *hc, char * const *svalues)
 {
 	FILE *fh;
 	char const *dptr;
@@ -85,14 +88,14 @@ test_strcode(huff_code_t *hc)
 
 	fh = fopen("hufftest.out", "wb");
 	huff_code_attach(hc, fh, "wb");
-	for (i = 0; i < 10; ++i) {
+	for (i = 9; i >= 0; --i) {
 		huff_code_encode_str(hc, svalues[i], NULL);
 	}
 	huff_code_detach(hc);
 	fclose(fh);
 	fh = fopen("hufftest.out", "rb");
 	huff_code_attach(hc, fh, "rb");
-	for (i = 0; i < 10; ++i) {
+	for (i = 9; i >= 0; --i) {
 		char const *val = huff_code_decode_str(hc, NULL, NULL, 0);
 		printf("%s ", val);
 		TEST_EQUAL(0, strcmp(val, svalues[i]));
@@ -136,7 +139,7 @@ main(int argc, char *argv[])
 
 	hc = huff_code_build_str(svalues, frequencies, 10);
 	huff_code_dump(hc, stdout);
-	test_strcode(hc);
+	test_strcode(hc, svalues);
 	fh = fopen("huffcode.out", "wb");
 	huff_code_write(hc, fh);
 	fclose(fh);
@@ -145,7 +148,12 @@ main(int argc, char *argv[])
 	fh = fopen("huffcode.out", "rb");
 	hc = huff_code_read(fh);
 	fclose(fh);
-	test_strcode(hc);
+	test_strcode(hc, svalues);
+	huff_code_free(hc);
+
+	hc = huff_code_build_str(svalues2, frequencies, 10);
+	huff_code_dump(hc, stdout);
+	test_strcode(hc, svalues2);
 	huff_code_free(hc);
 
 	return 0;
