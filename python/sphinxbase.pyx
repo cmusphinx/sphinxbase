@@ -435,7 +435,7 @@ cdef class HuffCode:
         bogus = []
         for i, spam in enumerate(alphabet):
             sym, freq = spam
-            bogus.append(str(sym))
+            bogus.append(repr(sym))
             frequencies[i] = freq
             symbols[i] = bogus[-1]
         self.hc = huff_code_build_str(symbols, frequencies, nsym)
@@ -470,7 +470,7 @@ cdef class HuffCode:
         cdef char *output
         
         for sym in seq:
-            sss = str(sym)
+            sss = repr(sym)
             cwlen = huff_code_encode_str(self.hc, sss, &cw)
             nbits += cwlen
         nbytes = int((nbits + 7) / 8)
@@ -480,7 +480,7 @@ cdef class HuffCode:
         i = 0
         nbits = 0
         for sym in seq:
-            sss = str(sym)
+            sss = repr(sym)
             cwlen = huff_code_encode_str(self.hc, sss, &cw)
             #print "sym: %s cw: %s buf: %s output: %s" \
             #      % (sym, bincw(cw, cwlen), bincw(buf >> (8-offset), offset),
@@ -570,7 +570,7 @@ cdef class HuffCode:
         if self.fh == None:
             raise RuntimeError, "No file is attached"
         for sym in seq:
-            strsym = str(sym)
+            strsym = repr(sym)
             huff_code_encode_str(self.hc, strsym, NULL)
 
     def decode_from_file(self):
