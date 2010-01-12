@@ -430,11 +430,14 @@ cdef class HuffCode:
         nsym = len(alphabet)
         frequencies = <int *>ckd_calloc(nsym, sizeof(int))
         symbols = <char **>ckd_calloc(nsym, sizeof(char *))
+        # Need to create separate Python objects for each string,
+        # otherwise we get random duplicates of the codewords...
+        bogus = []
         for i, spam in enumerate(alphabet):
             sym, freq = spam
-            sss = str(sym)
+            bogus.append(str(sym))
             frequencies[i] = freq
-            symbols[i] = sss
+            symbols[i] = bogus[-1]
         self.hc = huff_code_build_str(symbols, frequencies, nsym)
         ckd_free(frequencies)
         ckd_free(symbols)
