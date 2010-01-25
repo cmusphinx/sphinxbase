@@ -493,15 +493,23 @@ fsg_model_read(FILE * fp, logmath_t *lmath, float32 lw)
 
         if ((strcmp(wordptr[0], FSG_MODEL_T_DECL) == 0)
             || (strcmp(wordptr[0], FSG_MODEL_TRANSITION_DECL) == 0)) {
+
+
             if (((n != 4) && (n != 5))
                 || (sscanf(wordptr[1], "%d", &i) != 1)
                 || (sscanf(wordptr[2], "%d", &j) != 1)
-                || (sscanf(wordptr[3], "%f", &p) != 1)
                 || (i < 0) || (i >= fsg->n_state)
-                || (j < 0) || (j >= fsg->n_state)
-                || (p <= 0.0) || (p > 1.0)) {
+                || (j < 0) || (j >= fsg->n_state)) {
                 E_ERROR
                     ("Line[%d]: transition spec malformed; Expecting: from-state to-state trans-prob [word]\n",
+                     lineno);
+                goto parse_error;
+            }
+
+            p = atof_c(wordptr[3]);
+            if ((p <= 0.0) || (p > 1.0)) {
+                E_ERROR
+                    ("Line[%d]: transition spec malformed; Expecting float as transition probability\n",
                      lineno);
                 goto parse_error;
             }

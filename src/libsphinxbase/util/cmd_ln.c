@@ -80,6 +80,7 @@
 #include "ckd_alloc.h"
 #include "hash_table.h"
 #include "case.h"
+#include "strfuncs.h"
 
 typedef struct cmd_ln_val_s {
     anytype_t val;
@@ -346,8 +347,9 @@ cmd_ln_val_init(int t, const char *str)
             break;
         case ARG_FLOATING:
         case REQARG_FLOATING:
-            if (sscanf(e_str, "%lf", &val.fl) != 1)
-                valid = 0;
+            if (e_str == NULL || e_str[0] == 0)
+        	valid = 0;
+            val.fl = atof_c(e_str);
             break;
         case ARG_BOOLEAN:
         case REQARG_BOOLEAN:
