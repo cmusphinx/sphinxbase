@@ -186,6 +186,26 @@ cdef class NGramModel:
         self.uw = uw
         ngram_model_apply_weights(self.lm, lw, wip, uw)
 
+    def get_size(self):
+        """
+        Get the order of this model (i.e. the "N" in "N-gram")
+
+        @return: Order of this model
+        @rtype: int
+        """
+        return ngram_model_get_size(self.lm)
+
+    def get_counts(self):
+        """
+        Get the counts of each size of N-gram.
+
+        @return: Counts of 1, 2, ..., N grams
+        @rtype: tuple(int)
+        """
+        cdef int *counts
+        counts = ngram_model_get_counts(self.lm)
+        return tuple([counts[i] for i in range(ngram_model_get_size(self.lm))])
+
     def wid(self, word):
         """
         Get the internal ID for a word.
