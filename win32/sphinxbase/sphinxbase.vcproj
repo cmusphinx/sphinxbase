@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="sphinxbase"
 	ProjectGUID="{2F025EAD-99BD-40F5-B2CC-F0A28CAD7F2D}"
 	RootNamespace="sphinxbase"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -82,6 +83,8 @@
 				LinkIncremental="1"
 				SuppressStartupBanner="true"
 				ProgramDatabaseFile=".\../../lib/Release/sphinxbase.pdb"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary=".\../../lib/Release/sphinxbase.lib"
 				TargetMachine="1"
 			/>
@@ -104,9 +107,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -178,6 +178,8 @@
 				SuppressStartupBanner="true"
 				GenerateDebugInformation="true"
 				ProgramDatabaseFile=".\../../lib/Debug/sphinxbase.pdb"
+				RandomizedBaseAddress="1"
+				DataExecutionPrevention="0"
 				ImportLibrary=".\../../lib/Debug/sphinxbase.lib"
 				TargetMachine="1"
 			/>
@@ -200,9 +202,6 @@
 			/>
 			<Tool
 				Name="VCAppVerifierTool"
-			/>
-			<Tool
-				Name="VCWebDeploymentTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
@@ -851,6 +850,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\src\libsphinxbase\util\errno.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\libsphinxbase\util\f2c_lite.c"
 				>
 				<FileConfiguration
@@ -1415,6 +1418,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\src\libsphinxbase\util\huff_code.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\libsphinxbase\util\info.c"
 				>
 				<FileConfiguration
@@ -1907,6 +1914,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\src\libsphinxbase\util\utf8.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\libsphinxbase\fe\yin.c"
 				>
 			</File>
@@ -2048,7 +2059,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\include\huff_code.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\include\info.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\jsgf.h"
 				>
 			</File>
 			<File
@@ -2125,6 +2144,10 @@
 			</File>
 			<File
 				RelativePath="..\..\include\s3_arraylist.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\include\sbthread.h"
 				>
 			</File>
 			<File

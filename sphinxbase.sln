@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual Studio 2005
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual C++ Express 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sphinx_cepview", "win32\sphinx_cepview\sphinx_cepview.vcproj", "{06364F13-FBCE-4E2B-9289-0DD39E246205}"
 	ProjectSection(ProjectDependencies) = postProject
 		{2F025EAD-99BD-40F5-B2CC-F0A28CAD7F2D} = {2F025EAD-99BD-40F5-B2CC-F0A28CAD7F2D}
