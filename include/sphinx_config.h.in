@@ -1,6 +1,4 @@
-/* sphinx_config.h: Externally visible configuration parameters for
- * SphinxBase.
- */
+/* sphinx_config.h: Externally visible configuration parameters */
 
 /* Use ALSA library for sound I/O */
 #undef AD_BACKEND_ALSA

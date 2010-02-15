@@ -55,7 +55,9 @@ extern "C" {
 }
 #endif
 
-#define DEFAULT_RADIX (12)
+#ifndef DEFAULT_RADIX
+#define DEFAULT_RADIX 12
+#endif
 
 /** Fixed-point computation type. */
 typedef int32 fixed32;
