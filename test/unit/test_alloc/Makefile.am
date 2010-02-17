@@ -6,7 +6,7 @@ TESTS = test_ckd_alloc test_ckd_alloc_catch test_ckd_alloc_fail.sh test_ckd_allo
 INCLUDES = \
 	-I$(top_srcdir)/include \
 	-I$(top_builddir)/include \
-	-DDATADIR=\"$(top_srcdir)/test/regression\"
+	-DTESTDATADIR=\"$(top_srcdir)/test/regression\"
 
 noinst_HEADERS = test_macros.h
 EXTRA_DIST = test_ckd_alloc_fail.sh test_ckd_alloc_abort.sh

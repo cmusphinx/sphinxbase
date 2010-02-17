@@ -22,7 +22,7 @@ main(int argc, char *argv[])
     int k, n_calib_samp;
     int16 *calib, *cptr;
 
-    TEST_ASSERT(infp = fopen(DATADIR "/chan3.raw", "rb"));
+    TEST_ASSERT(infp = fopen(TESTDATADIR "/chan3.raw", "rb"));
     TEST_ASSERT(cont = cont_ad_init(NULL, NULL));
 
     n_calib_samp = cont_ad_calib_size(cont);

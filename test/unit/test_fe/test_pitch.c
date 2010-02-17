@@ -18,7 +18,7 @@ main(int argc, char *argv[])
 	int nfr;
 
 	/* To make life easier, read the whole thing. */
-	TEST_ASSERT(raw = fopen(DATADIR "/chan3.raw", "rb"));
+	TEST_ASSERT(raw = fopen(TESTDATADIR "/chan3.raw", "rb"));
 	fseek(raw, 0, SEEK_END);
 	nsamp = ftell(raw) / 2;
 	buf = ckd_calloc(nsamp, 2);

@@ -23,7 +23,7 @@ process(sbthread_t *th)
 	if ((fe = fe_init_auto_r(sbthread_config(th))) == NULL)
 		return -1;
 
-	if ((raw = fopen(DATADIR "/chan3.raw", "rb")) == NULL)
+	if ((raw = fopen(TESTDATADIR "/chan3.raw", "rb")) == NULL)
 		return -1;
 	fseek(raw, 0, SEEK_END);
 	fsize = ftell(raw);

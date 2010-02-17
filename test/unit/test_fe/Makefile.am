@@ -4,7 +4,7 @@ TESTS = test_fe test_pitch
 INCLUDES = \
 	-I$(top_srcdir)/include \
 	-I$(top_builddir)/include \
-	-DDATADIR=\"$(top_srcdir)/test/regression\"
+	-DTESTDATADIR=\"$(top_srcdir)/test/regression\"
 
 noinst_HEADERS = test_macros.h
 

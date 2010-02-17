@@ -39,7 +39,7 @@ main(int argc, char *argv[])
     ad.sps = 16000;
     ad.bps = 2;
 
-    TEST_ASSERT(infp = fopen(DATADIR "/chan3.raw", "rb"));
+    TEST_ASSERT(infp = fopen(TESTDATADIR "/chan3.raw", "rb"));
     TEST_ASSERT(cont = cont_ad_init(&ad, file_ad_read));
 
     printf("Calibrating ...");

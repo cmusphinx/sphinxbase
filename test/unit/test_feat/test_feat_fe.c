@@ -25,8 +25,8 @@ main(int argc, char *argv[])
 	size_t nsamp;
 	int32 total_frames, ncep, nfr, i;
 
-	if ((raw = fopen(DATADIR "/chan3.raw", "rb")) == NULL) {
-		perror(DATADIR "/chan3.raw");
+	if ((raw = fopen(TESTDATADIR "/chan3.raw", "rb")) == NULL) {
+		perror(TESTDATADIR "/chan3.raw");
 		return 1;
 	}
 

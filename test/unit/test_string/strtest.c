@@ -27,12 +27,12 @@ main(int argc, char *argv[])
         return 0;
     }
     else if (!strcmp(argv[1], "fread_line")) {
-        FILE *fp = fopen(DATADIR "/_fread_line.txt", "r");
+        FILE *fp = fopen(TESTDATADIR "/_fread_line.txt", "r");
         char *line;
         size_t len;
 
         if (fp == NULL) {
-            perror("Failed to open " DATADIR "/_fread_line.txt");
+            perror("Failed to open " TESTDATADIR "/_fread_line.txt");
             return 1;
         }
         line = fread_line(fp, &len);

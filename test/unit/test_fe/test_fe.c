@@ -33,7 +33,7 @@ main(int argc, char *argv[])
 	TEST_EQUAL(frame_shift, DEFAULT_FRAME_SHIFT);
 	TEST_EQUAL(frame_size, (int)(DEFAULT_WINDOW_LENGTH*DEFAULT_SAMPLING_RATE));
 
-	TEST_ASSERT(raw = fopen(DATADIR "/chan3.raw", "rb"));
+	TEST_ASSERT(raw = fopen(TESTDATADIR "/chan3.raw", "rb"));
 
 	TEST_EQUAL(0, fe_start_utt(fe));
 	TEST_EQUAL(1024, fread(buf, sizeof(int16), 1024, raw));

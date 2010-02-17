@@ -3,7 +3,7 @@ check_PROGRAMS = strtest test_atof
 INCLUDES = \
 	-I$(top_srcdir)/include \
 	-I$(top_builddir)/include \
-	-DDATADIR=\"$(srcdir)\"
+	-DTESTDATADIR=\"$(srcdir)\"
 
 LDADD = ${top_builddir}/src/libsphinxbase/libsphinxbase.la
 
