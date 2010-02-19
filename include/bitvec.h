@@ -94,6 +94,15 @@ typedef uint32 bitvec_t;
 #define bitvec_set(v,b)		(v[(b)/BITVEC_BITS] |= (1UL << ((b) & (BITVEC_BITS-1))))
 
 /**
+ * Set all n bits in bit vector v
+ * @param v is a vector
+ * @param n is the number of bits
+ */
+
+#define bitvec_set_all(v,n)	memset(v, (bitvec_t)-1, \
+                                       (((n)+BITVEC_BITS-1)/BITVEC_BITS) * \
+                                       sizeof(bitvec_t))
+/**
  * Clear the b-th bit of bit vector v
  * @param v is a vector
  * @param b is the bit which will be set
