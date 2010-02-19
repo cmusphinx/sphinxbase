@@ -106,7 +106,7 @@ internal_set_logfp(FILE *fh)
     pthread_setspecific(logfp_index, (void *)fh);
 }
 
-#elif defined(WIN32)
+#elif defined(_WIN32) || defined(__CYGWIN__) /* Use Windows TLS on Cygwin */
 #include <windows.h>
 static DWORD logfp_index; /** TLS index for log file */
 static LONG logfp_index_once = 0; /** True if we have initialized TLS */

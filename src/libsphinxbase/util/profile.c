@@ -147,7 +147,7 @@ pctr_free(pctr_t * pc)
 }
 
 
-#if (WIN32) && !defined(GNUWINCE)
+#if defined(_WIN32) && !defined(GNUWINCE)
 
 #define TM_LOWSCALE	1e-7
 #define TM_HIGHSCALE	(4294967296.0 * TM_LOWSCALE);
@@ -177,7 +177,7 @@ make_sec(struct timeval *s)
 void
 ptmr_start(ptmr_t * tm)
 {
-#if (! WIN32) || defined(GNUWINCE)
+#if (! defined(_WIN32)) || defined(GNUWINCE)
     struct timeval e_start;     /* Elapsed time */
 
 #if (! _HPUX_SOURCE)
@@ -213,7 +213,7 @@ ptmr_stop(ptmr_t * tm)
 {
     float64 dt_cpu, dt_elapsed;
 
-#if (! WIN32) || defined(GNUWINCE)
+#if (! defined(_WIN32)) || defined(GNUWINCE)
     struct timeval e_stop;      /* Elapsed time */
 
 #if (! _HPUX_SOURCE)

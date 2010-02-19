@@ -77,7 +77,7 @@ path2basename(const char *path, char *base)
     int32 i, l;
 
     l = strlen(path);
-#ifdef WIN32
+#if defined(_WIN32) || defined(__CYGWIN__)
     for (i = l - 1; (i >= 0) && !(path[i] == '/' || path[i] == '\\'); --i);
 #else
     for (i = l - 1; (i >= 0) && !(path[i] == '/'); --i);

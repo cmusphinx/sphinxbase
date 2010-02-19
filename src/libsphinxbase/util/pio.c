@@ -167,7 +167,7 @@ fclose_comp(FILE * fp, int32 ispipe)
 {
     if (ispipe) {
 #ifdef HAVE_POPEN
-#if defined(WIN32)
+#if defined(_WIN32)
         _pclose(fp);
 #else
         pclose(fp);

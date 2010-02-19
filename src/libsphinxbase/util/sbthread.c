@@ -50,7 +50,7 @@
 /*
  * Platform-specific parts: threads, mutexes, and signals.
  */
-#ifdef _WIN32
+#if defined(_WIN32) || defined(__CYGWIN__) /* Use Windows threads on Cygwin too */
 #define _WIN32_WINNT 0x0400
 #include <windows.h>
 

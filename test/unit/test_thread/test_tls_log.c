@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <sbthread.h>
+#include <strfuncs.h>
 #include <fe.h>
 #include <ckd_alloc.h>
 #include <err.h>
@@ -79,8 +80,9 @@ main(int argc, char *argv[])
 		sprintf(logfile, "%03d.log", i);
 		TEST_ASSERT(logfh = fopen(logfile, "r"));
 		while (fgets(line, sizeof(line), logfh)) {
-			printf("%s: %s", logfile, line);
-			TEST_EQUAL(0, strcmp(line, "INFO: test_tls_log.c(43): nfr = 1436\n"));
+			string_trim(line, STRING_BOTH);
+			printf("%s: |%s|\n", logfile, line);
+			TEST_EQUAL(0, strcmp(line, "INFO: test_tls_log.c(44): nfr = 1436"));
 		}
 		fclose(logfh);
 	}
