@@ -78,11 +78,16 @@ typedef int32 fixed32;
  * A veritable multiplicity of implementations exist, starting with
  * the fastest ones...
  */
-#if defined(__arm__) /* Actually this is StrongARM-specific... */
+
+
+/* Actually this is StrongARM-specific and not armv6-compatible.  
+ * Skip out iPhone targets by skipping __APPLE__ builds. 
+ */
+#if defined(__arm__) && !defined(__APPLE__)
 #define FIXMUL(a,b) FIXMUL_ANY(a,b,DEFAULT_RADIX)
 #define FIXMUL_ANY(a,b,r) ({				\
       int cl, ch, _a = a, _b = b;			\
-      asm ("smull %0, %1, %2, %3\n"			\
+      __asm__ ("smull %0, %1, %2, %3\n"			\
 	   "mov %0, %0, lsr %4\n"			\
 	   "orr %0, %0, %1, lsl %5\n"			\
 	   : "=&r" (cl), "=&r" (ch)			\
@@ -94,7 +99,7 @@ typedef int32 fixed32;
 /* Use the accumulators for the 16.16 case (probably not as efficient as it could be). */
 #define FIXMUL(a,b) ({					\
       int c, _a = a, _b = b;				\
-	asm("%0.L = %1.l * %2.l (FU);\n\t"		\
+	__asm__("%0.L = %1.l * %2.l (FU);\n\t"		\
 	    "%0.H = %1.h * %2.h (IS);\n\t"		\
 	    "A1 = %0;\n\t"				\
 	    "A1 += %1.h * %2.l (IS, M);\n\t"		\

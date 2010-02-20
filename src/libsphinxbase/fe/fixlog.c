@@ -127,15 +127,16 @@ fixlog2(uint32 x)
         return MIN_FIXLOG2;
 
     /* Get the exponent. */
-#ifdef __i386__
-  asm("bsrl %1, %0\n": "=r"(y): "g"(x):"cc");
+
+#ifdef __i386__ 
+  __asm__("bsrl %1, %0\n": "=r"(y): "g"(x):"cc");
     x <<= (31 - y);
 #elif defined(__ppc__)
-  asm("cntlzw %0, %1\n": "=r"(y):"r"(x));
+  __asm__("cntlzw %0, %1\n": "=r"(y):"r"(x));
     x <<= y;
     y = 31 - y;
 #elif defined __ARM_ARCH_5__ || defined __ARM_ARCH_5T__ || defined __ARM_ARCH_5TE__
-  asm("clz %0, %1\n": "=r"(y):"r"(x));
+  __asm__("clz %0, %1\n": "=r"(y):"r"(x));
     x <<= y;
     y = 31 - y;
 #else
