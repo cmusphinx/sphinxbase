@@ -293,6 +293,8 @@ lineiter_next(lineiter_t *li)
 void
 lineiter_free(lineiter_t *li)
 {
+    if (li == NULL)
+        return;
     ckd_free(li->buf);
     ckd_free(li);
 }

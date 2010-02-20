@@ -61,28 +61,25 @@ static ngram_funcs_t ngram_model_arpa_funcs;
  * Read and return #unigrams, #bigrams, #trigrams as stated in input file.
  */
 static int
-ReadNgramCounts(FILE * fp, int32 * n_ug, int32 * n_bg, int32 * n_tg)
+ReadNgramCounts(lineiter_t **li, int32 * n_ug, int32 * n_bg, int32 * n_tg)
 {
-    char string[256];
     int32 ngram, ngram_cnt;
 
     /* skip file until past the '\data\' marker */
-    do {
-        if (fgets(string, sizeof(string), fp) == NULL) {
-            E_ERROR_SYSTEM("Failed to read N-gram counts");
-            return -1;
-        }
+    while (*li) {
+        string_trim((*li)->buf, STRING_BOTH);
+        if (strcmp((*li)->buf, "\\data\\") == 0)
+            break;
+        *li = lineiter_next(*li);
     }
-    while ((strcmp(string, "\\data\\\n") != 0) && (!feof(fp)));
-
-    if (strcmp(string, "\\data\\\n") != 0) {
+    if (*li == NULL || strcmp((*li)->buf, "\\data\\") != 0) {
         E_ERROR("No \\data\\ mark in LM file\n");
         return -1;
     }
 
     *n_ug = *n_bg = *n_tg = 0;
-    while (fgets(string, sizeof(string), fp) != NULL) {
-        if (sscanf(string, "ngram %d=%d", &ngram, &ngram_cnt) != 2)
+    while ((*li = lineiter_next(*li))) {
+        if (sscanf((*li)->buf, "ngram %d=%d", &ngram, &ngram_cnt) != 2)
             break;
         switch (ngram) {
         case 1:
@@ -99,13 +96,20 @@ ReadNgramCounts(FILE * fp, int32 * n_ug, int32 * n_bg, int32 * n_tg)
             return -1;
         }
     }
+    if (*li == NULL) {
+        E_ERROR("EOF while reading ngram counts\n");
+        return -1;
+    }
 
-    /* Position file to just after the unigrams header '\1-grams:\' */
-    while ((strcmp(string, "\\1-grams:\n") != 0) && (!feof(fp))) {
-        if (fgets(string, sizeof(string), fp) == NULL) {
-            E_ERROR_SYSTEM("Failed to read \\1-grams: mark");
-            return -1;
-        }
+    /* Position iterator to the unigrams header '\1-grams:\' */
+    while ((*li = lineiter_next(*li))) {
+        string_trim((*li)->buf, STRING_BOTH);
+        if (strcmp((*li)->buf, "\\1-grams:") == 0)
+            break;
+    }
+    if (*li == NULL) {
+        E_ERROR_SYSTEM("Failed to read \\1-grams: mark");
+        return -1;
     }
 
     /* Check counts;  NOTE: #trigrams *CAN* be 0 */
@@ -117,30 +121,32 @@ ReadNgramCounts(FILE * fp, int32 * n_ug, int32 * n_bg, int32 * n_tg)
 }
 
 /*
- * Read in the unigrams from given file into the LM structure model.  On
- * entry to this procedure, the file pointer is positioned just after the
+ * Read in the unigrams from given file into the LM structure model.
+ * On entry to this procedure, the iterator is positioned to the
  * header line '\1-grams:'.
  */
 static int
-ReadUnigrams(FILE * fp, ngram_model_arpa_t * model)
+ReadUnigrams(lineiter_t **li, ngram_model_arpa_t * model)
 {
     ngram_model_t *base = &model->base;
-    char string[256];
     int32 wcnt;
     float p1;
 
     E_INFO("Reading unigrams\n");
 
     wcnt = 0;
-    while ((fgets(string, sizeof(string), fp) != NULL) &&
-           (strcmp(string, "\\2-grams:\n") != 0)) {
+    while ((*li = lineiter_next(*li))) {
         char *wptr[3], *name;
         float32 bo_wt = 0.0f;
         int n;
 
-        if ((n = str2words(string, wptr, 3)) < 2) {
-            if (string[0] != '\n')
-                E_WARN("Format error; unigram ignored: %s\n", string);
+        string_trim((*li)->buf, STRING_BOTH);
+        if (strcmp((*li)->buf, "\\2-grams:") == 0)
+            break;
+
+        if ((n = str2words((*li)->buf, wptr, 3)) < 2) {
+            if ((*li)->buf[0] != '\0')
+                E_WARN("Format error; unigram ignored: %s\n", (*li)->buf);
             continue;
         }
         else {
@@ -179,10 +185,9 @@ ReadUnigrams(FILE * fp, ngram_model_arpa_t * model)
  * Read bigrams from given file into given model structure.
  */
 static int
-ReadBigrams(FILE * fp, ngram_model_arpa_t * model)
+ReadBigrams(lineiter_t **li, ngram_model_arpa_t * model)
 {
     ngram_model_t *base = &model->base;
-    char string[1024];
     int32 w1, w2, prev_w1, bgcount;
     bigram_t *bgptr;
 
@@ -192,15 +197,16 @@ ReadBigrams(FILE * fp, ngram_model_arpa_t * model)
     bgptr = model->lm3g.bigrams;
     prev_w1 = -1;
 
-    while (fgets(string, sizeof(string), fp) != NULL) {
+    while ((*li = lineiter_next(*li))) {
         float32 p, bo_wt = 0.0f;
         int32 p2, bo_wt2;
         char *wptr[4], *word1, *word2;
         int n;
 
+        string_trim((*li)->buf, STRING_BOTH);
         wptr[3] = NULL;
-        if ((n = str2words(string, wptr, 4)) < 3) {
-            if (string[0] != '\n')
+        if ((n = str2words((*li)->buf, wptr, 4)) < 3) {
+            if ((*li)->buf[0] != '\0')
                 break;
             continue;
         }
@@ -258,9 +264,9 @@ ReadBigrams(FILE * fp, ngram_model_arpa_t * model)
             E_INFOCONT(".");
         }
     }
-    if ((strcmp(string, "\\end\\") != 0)
-        && (strcmp(string, "\\3-grams:") != 0)) {
-        E_ERROR("Bad bigram: %s\n", string);
+    if (*li == NULL || ((strcmp((*li)->buf, "\\end\\") != 0)
+                        && (strcmp((*li)->buf, "\\3-grams:") != 0))) {
+        E_ERROR("Bad bigram: %s\n", (*li)->buf);
         return -1;
     }
 
@@ -274,10 +280,9 @@ ReadBigrams(FILE * fp, ngram_model_arpa_t * model)
  * Very similar to ReadBigrams.
  */
 static int
-ReadTrigrams(FILE * fp, ngram_model_arpa_t * model)
+ReadTrigrams(lineiter_t **li, ngram_model_arpa_t * model)
 {
     ngram_model_t *base = &model->base;
-    char string[1024];
     int32 i, w1, w2, w3, prev_w1, prev_w2, tgcount, prev_bg, bg, endbg;
     int32 seg, prev_seg, prev_seg_lastbg;
     trigram_t *tgptr;
@@ -292,13 +297,14 @@ ReadTrigrams(FILE * fp, ngram_model_arpa_t * model)
     prev_bg = -1;
     prev_seg = -1;
 
-    while (fgets(string, sizeof(string), fp) != NULL) {
+    while ((*li = lineiter_next(*li))) {
         float32 p;
         int32 p3;
         char *wptr[4], *word1, *word2, *word3;
 
-        if (str2words(string, wptr, 4) != 4) {
-            if (string[0] != '\n')
+        string_trim((*li)->buf, STRING_BOTH);
+        if (str2words((*li)->buf, wptr, 4) != 4) {
+            if ((*li)->buf[0] != '\0')
                 break;
             continue;
         }
@@ -351,7 +357,7 @@ ReadTrigrams(FILE * fp, ngram_model_arpa_t * model)
             bgptr = model->lm3g.bigrams + bg;
             for (; (bg < endbg) && (bgptr->wid != w2); bg++, bgptr++);
             if (bg >= endbg) {
-                E_ERROR("Missing bigram for trigram: %s", string);
+                E_ERROR("Missing bigram for trigram: %s", (*li)->buf);
                 return -1;
             }
 
@@ -408,8 +414,8 @@ ReadTrigrams(FILE * fp, ngram_model_arpa_t * model)
             E_INFOCONT(".");
         }
     }
-    if (strcmp(string, "\\end\\") != 0) {
-        E_ERROR("Bad trigram: %s\n", string);
+    if (*li == NULL || strcmp((*li)->buf, "\\end\\") != 0) {
+        E_ERROR("Bad trigram: %s\n", (*li)->buf);
         return -1;
     }
 
@@ -445,6 +451,7 @@ ngram_model_arpa_read(cmd_ln_t *config,
 		      const char *file_name,
 		      logmath_t *lmath)
 {
+    lineiter_t *li;
     FILE *fp;
     int32 is_pipe;
     int32 n_unigram;
@@ -458,9 +465,11 @@ ngram_model_arpa_read(cmd_ln_t *config,
         E_ERROR("File %s not found\n", file_name);
         return NULL;
     }
+    li = lineiter_start(fp);
  
     /* Read #unigrams, #bigrams, #trigrams from file */
-    if (ReadNgramCounts(fp, &n_unigram, &n_bigram, &n_trigram) == -1) {
+    if (ReadNgramCounts(&li, &n_unigram, &n_bigram, &n_trigram) == -1) {
+        lineiter_free(li);
         fclose_comp(fp, is_pipe);
         return NULL;
     }
@@ -498,7 +507,7 @@ ngram_model_arpa_read(cmd_ln_t *config,
             ckd_calloc((n_bigram + 1) / BG_SEG_SZ + 1,
                        sizeof(int32));
     }
-    if (ReadUnigrams(fp, model) == -1) {
+    if (ReadUnigrams(&li, model) == -1) {
         fclose_comp(fp, is_pipe);
         ngram_model_free(base);
         return NULL;
@@ -509,7 +518,7 @@ ngram_model_arpa_read(cmd_ln_t *config,
     if (base->n_counts[2] > 0)
         init_sorted_list(&model->sorted_bo_wt2);
 
-    if (ReadBigrams(fp, model) == -1) {
+    if (ReadBigrams(&li, model) == -1) {
         fclose_comp(fp, is_pipe);
         ngram_model_free(base);
         return NULL;
@@ -531,7 +540,7 @@ ngram_model_arpa_read(cmd_ln_t *config,
 
         init_sorted_list(&model->sorted_prob3);
 
-        if (ReadTrigrams(fp, model) == -1) {
+        if (ReadTrigrams(&li, model) == -1) {
             fclose_comp(fp, is_pipe);
             ngram_model_free(base);
             return NULL;
@@ -550,6 +559,7 @@ ngram_model_arpa_read(cmd_ln_t *config,
         model->lm3g.le = listelem_alloc_init(sizeof(tginfo_t));
     }
 
+    lineiter_free(li);
     fclose_comp(fp, is_pipe);
     return base;
 }
