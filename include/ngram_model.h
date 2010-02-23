@@ -178,6 +178,23 @@ SPHINXBASE_EXPORT
 int ngram_model_recode(ngram_model_t *model, const char *from, const char *to);
 
 /**
+ * Constants for case folding.
+ */
+typedef enum ngram_case_e {
+    NGRAM_UPPER,
+    NGRAM_LOWER
+} ngram_case_t;
+
+/**
+ * Case-fold word strings in an N-Gram model.
+ *
+ * WARNING: This is not Unicode aware, so any non-ASCII characters
+ * will not be converted.
+ */
+SPHINXBASE_EXPORT
+int ngram_model_casefold(ngram_model_t *model, int kase);
+
+/**
  * Apply a language weight, insertion penalty, and unigram weight to a
  * language model.
  *

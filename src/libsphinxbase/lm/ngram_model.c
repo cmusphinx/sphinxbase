@@ -292,6 +292,57 @@ ngram_model_free(ngram_model_t *model)
     return 0;
 }
 
+int
+ngram_model_casefold(ngram_model_t *model, int kase)
+{
+    int writable, i;
+    hash_table_t *new_wid;
+
+    /* Were word strings already allocated? */
+    writable = model->writable;
+    /* Either way, we are going to allocate some word strings. */
+    model->writable = TRUE;
+
+    /* And, don't forget, we need to rebuild the word to unigram ID
+     * mapping. */
+    new_wid = hash_table_new(model->n_words, FALSE);
+    for (i = 0; i < model->n_words; ++i) {
+        char *outstr;
+        if (writable) {
+            outstr = model->word_str[i];
+        }
+        else {
+            outstr = ckd_salloc(model->word_str[i]);
+        }
+        /* Don't case-fold <tags> or [classes] */
+        if (outstr[0] == '<' || outstr[0] == '[') {
+        }
+        else {
+            switch (kase) {
+            case NGRAM_UPPER:
+                ucase(outstr);
+                break;
+            case NGRAM_LOWER:
+                lcase(outstr);
+                break;
+            default:
+                ;
+            }
+        }
+        model->word_str[i] = outstr;
+
+        /* Now update the hash table.  We might have terrible
+         * collisions here, so warn about them. */
+        if (hash_table_enter_int32(new_wid, model->word_str[i], i) != i) {
+            E_WARN("Duplicate word in dictionary after conversion: %s\n",
+                   model->word_str[i]);
+        }
+    }
+    /* Swap out the hash table. */
+    hash_table_free(model->wid);
+    model->wid = new_wid;
+    return 0;
+}
 
 #ifdef HAVE_ICONV
 int

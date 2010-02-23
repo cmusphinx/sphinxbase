@@ -91,6 +91,11 @@ static const arg_t defn[] = {
     "utf8",
     "Output language model text encoding"},
 
+  { "-case",
+    ARG_STRING,
+    NULL,
+    "Ether 'lower' or 'upper' - case fold to lower/upper case (NOT UNICODE AWARE)\n" },
+
   { "-mmap",
     ARG_BOOLEAN,
     "no",
@@ -106,6 +111,7 @@ main(int argc, char *argv[])
 	ngram_model_t *lm;
 	logmath_t *lmath;
         int itype, otype;
+        char const *kase;
 
 	if ((config = cmd_ln_parse_r(NULL, defn, argc, argv, TRUE)) == NULL)
 		return 1;
@@ -150,6 +156,18 @@ main(int argc, char *argv[])
                 E_ERROR("Failed to recode language model from %s to %s\n",
                         cmd_ln_str_r(config, "-ienc"),
                         cmd_ln_str_r(config, "-oenc"));
+                goto error_out;
+            }
+        }
+
+        /* Case fold if requested. */
+        if ((kase = cmd_ln_str_r(config, "-case"))) {
+            if (0 == strcmp(kase, "lower")) {
+            }
+            else if (0 == strcmp(kase, "upper")) {
+            }
+            else {
+                E_ERROR("Unknown value for -case: %s\n", kase);
                 goto error_out;
             }
         }

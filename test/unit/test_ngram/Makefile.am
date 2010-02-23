@@ -4,6 +4,7 @@ check_PROGRAMS = \
 	test_lm_score \
 	test_lm_add \
 	test_lm_recode \
+	test_lm_casefold \
 	test_lm_class \
 	test_lm_set \
 	test_lm_iter \
