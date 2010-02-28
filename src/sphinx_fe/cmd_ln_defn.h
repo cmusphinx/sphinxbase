@@ -49,7 +49,6 @@
 
 #include "cmd_ln.h"
 #include "fe.h"
-#include "wave2feat.h"
 
 const char helpstr[] =
   "Description: \n\
@@ -71,7 +70,6 @@ This example creates a cepstral file named \"output.mfc\" from an input audio fi
 \n\
 sphinx_fe -i  input.raw \n\
         -o   output.mfc \n\
-        -raw yes \n\
         -input_endian little \n\
         -samprate  16000 \n\
         -lowerf    130 \n\
@@ -170,7 +168,7 @@ static arg_t defn[] = {
   { "-feat",
     ARG_STRING,
     "sphinx",
-    "SPHINX format - big endian" },
+    "Format of output files - currently only 'sphinx' is supported, 'htk' might work soon too." },
   
   { "-mach_endian",
     ARG_STRING,
@@ -183,8 +181,23 @@ static arg_t defn[] = {
   
   { "-blocksize",
     ARG_INT32,
-    "200000",
-    "Block size, used to limit the number of samples used at a time when reading very large audio files" },
+    "2048",
+    "Number of samples to read at a time." },
+
+  { "-spec2cep",
+    ARG_BOOLEAN,
+    "no",
+    "Input is log spectral files, output is cepstral files" },
+
+  { "-cep2spec",
+    ARG_BOOLEAN,
+    "no",
+    "Input is cepstral files, output is log spectral files" },
+
+  { "-verbose",
+    ARG_BOOLEAN,
+    "no",
+    "Show input filenames" },
   
   { NULL, 0, NULL, NULL }
 };

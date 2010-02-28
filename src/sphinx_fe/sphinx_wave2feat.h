@@ -1,5 +1,6 @@
+/* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* ====================================================================
- * Copyright (c) 1996-2000 Carnegie Mellon University.  All rights 
+ * Copyright (c) 1996-2004 Carnegie Mellon University.  All rights 
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,57 +34,33 @@
  * ====================================================================
  *
  */
+#ifndef __SPHINX_FE_H__
+#define __SPHINX_FE_H__
 
-#ifndef _WAVE2FEAT_H_
-#define _WAVE2FEAT_H_
+/**
+ * Waveform to feature converter object.
+ */
+typedef struct sphinx_wave2feat_s sphinx_wave2feat_t;
 
-#define NULL_CHAR '\0'
-#define MAXCHARS 2048
+/**
+ * Initialize waveform to feature converter.
+ */
+sphinx_wave2feat_t *sphinx_wave2feat_init(cmd_ln_t *config);
 
-/* Huh? */
-#define ONE_CHAN "1"
+/**
+ * Release a waveform to feature converter.
+ */
+int sphinx_wave2feat_free(sphinx_wave2feat_t *w2f);
 
-/* Enums for wavefile types. */
-enum {
-    WAV = 1,
-    RAW = 2,
-    NIST = 3,
-    MSWAV = 4
-};
+/**
+ * Retain a waveform to feature converter.
+ */
+sphinx_wave2feat_t *sphinx_wave2feat_retain(sphinx_wave2feat_t *w2f);
 
-/* Enums for input endianness. */
-enum {
-    LITTLE =  1,
-    BIG =  2
-};
+/**
+ * Convert one file.
+ */
+int sphinx_wave2feat_convert_file(sphinx_wave2feat_t *w2f,
+				  char const *infile, char const *outfile);
 
-/* Enums for conversion operations. */
-enum {
-    WAV2FEAT = 0,
-    SPEC2CEP = 1,
-    CEP2SPEC = 2
-};
-
-#define COUNT_PARTIAL 1
-#define COUNT_WHOLE 0
-#define HEADER_BYTES 1024
-
-/** RIFF 44-byte header structure for MS wav files */
-typedef struct RIFFHeader{
-        char rifftag[4];      /* "RIFF" string */
-        int32 TotalLength;      /* Total length */
-        char wavefmttag[8];   /* "WAVEfmt " string (note space after 't') */
-        int32 RemainingLength;  /* Remaining length */
-        int16 data_format;    /* data format tag, 1 = PCM */
-        int16 numchannels;    /* Number of channels in file */
-        int32 SamplingFreq;     /* Sampling frequency */
-        int32 BytesPerSec;      /* Average bytes/sec */
-        int16 BlockAlign;     /* Block align */
-        int16 BitsPerSample;  /* 8 or 16 bit */
-        char datatag[4];      /* "data" string */
-        int32 datalength;       /* Raw data length */
-} MSWAV_hdr;
-
-extern int32 g_nskip, g_runlen;
-
-#endif
+#endif /* __SPHINX_FE_H__ */

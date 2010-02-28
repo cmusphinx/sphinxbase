@@ -1,9 +1,9 @@
 bin_PROGRAMS = sphinx_fe
 
-sphinx_fe_SOURCES = wave2feat.c
+sphinx_fe_SOURCES = sphinx_fe.c
 
 noinst_HEADERS = cmd_ln_defn.h			\
-	wave2feat.h
+	sphinx_wave2feat.h
 
 sphinx_fe_LDADD = \
 	$(top_builddir)/src/libsphinxbase/libsphinxbase.la

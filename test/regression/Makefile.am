@@ -4,8 +4,11 @@ EXTRA_DIST =					\
 	chan3.logspec				\
 	chan3-logspec.cepview			\
 	chan3-smoothspec.cepview		\
+	chan3.ctl				\
 	chan3.mfc				\
 	chan3.raw				\
+	chan3.wav				\
+	chan3.sph				\
 	chan3.f0				\
 	tutorial-check.sh			\
         crontab					\

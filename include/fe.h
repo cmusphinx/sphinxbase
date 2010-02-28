@@ -119,16 +119,6 @@ extern "C" {
     "legacy", \
     "Which type of transform to use to calculate cepstra (legacy, dct, or htk)" }, \
    \
-  { "-spec2cep", \
-    ARG_BOOLEAN, \
-    "no", \
-    "Input is log spectral files, output is cepstral files" }, \
-   \
-  { "-cep2spec", \
-    ARG_BOOLEAN, \
-    "no", \
-    "Input is cepstral files, output is log spectral files" }, \
-   \
   { "-alpha", \
     ARG_FLOAT32, \
     ARG_STRINGIFY(DEFAULT_PRE_EMPHASIS_ALPHA), \
@@ -222,12 +212,7 @@ extern "C" {
   { "-remove_dc", \
     ARG_BOOLEAN, \
     "no", \
-    "Remove DC offset from each frame" }, \
-   \
-  { "-verbose", \
-    ARG_BOOLEAN, \
-    "no", \
-    "Show input filenames" }
+    "Remove DC offset from each frame" } \
   
 #ifdef FIXED_POINT
 /** MFCC computation type. */
