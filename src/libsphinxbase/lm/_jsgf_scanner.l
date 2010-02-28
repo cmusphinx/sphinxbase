@@ -46,7 +46,7 @@
 %option header-file="jsgf_scanner.h"
 %s COMMENT
 
-ws       [ \t\n]
+ws       [ \t\r\n]
 rulename \<[^<>]+\>
 tag      \{(\\.|[^\}]+)*\}
 weight   \/[0-9]*(\.[0-9]+)?\/
