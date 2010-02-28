@@ -212,7 +212,13 @@ extern "C" {
   { "-remove_dc", \
     ARG_BOOLEAN, \
     "no", \
-    "Remove DC offset from each frame" } \
+    "Remove DC offset from each frame" }, \
+                                          \
+  { "-verbose", \
+    ARG_BOOLEAN, \
+    "no", \
+    "Show input filenames" } \
+  
   
 #ifdef FIXED_POINT
 /** MFCC computation type. */

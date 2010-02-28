@@ -194,11 +194,6 @@ static arg_t defn[] = {
     "no",
     "Input is cepstral files, output is log spectral files" },
 
-  { "-verbose",
-    ARG_BOOLEAN,
-    "no",
-    "Show input filenames" },
-  
   { NULL, 0, NULL, NULL }
 };
 
