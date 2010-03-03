@@ -10,10 +10,14 @@ EXTRA_DIST = autogen.sh					\
 	win32/sphinx_fe/sphinx_fe.vcproj		\
 	win32/sphinxbase/sphinxbase.vcproj		\
 	win32/sphinx_cepview/sphinx_cepview.vcproj	\
+	m4/pkg.m4					\
 	m4/iconv.m4					\
 	m4/lib-ld.m4					\
 	m4/lib-link.m4					\
-	m4/lib-prefix.m4
+	m4/lib-prefix.m4				\
+	group/ABLD.BAT					\
+	group/bld.inf					\
+	group/sphinxbase_s60.mmp
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = sphinxbase.pc

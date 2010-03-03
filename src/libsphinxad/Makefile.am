@@ -1,3 +1,4 @@
+
 # libsphinxad: Audio Device interface for Sphinx
 
 lib_LTLIBRARIES = libsphinxad.la
@@ -11,6 +12,7 @@ EXTRA_libsphinxad_la_SOURCES = ad_base.c \
 	ad_oss_bsd.c \
 	ad_alsa.c \
 	ad_sunos.c \
+	ad_s60.cpp \
 	audio_utils_sunos.c \
 	play_win32.c \
 	rec_win32.c
