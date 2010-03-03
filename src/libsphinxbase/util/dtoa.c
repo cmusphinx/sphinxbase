@@ -1077,7 +1077,7 @@ ulp
 #endif
 {
 	register Long L;
-	double a;
+	U a;
 
 	L = (word0(x) & Exp_mask) - (P-1)*Exp_msk1;
 #ifndef Avoid_Underflow
@@ -1120,7 +1120,7 @@ b2d
 {
 	ULong *xa, *xa0, w, y, z;
 	int k;
-	double d;
+	U d;
 #ifdef VAX
 	ULong d0, d1;
 #else
@@ -1185,12 +1185,13 @@ d2b
 #ifdef KR_headers
 	(d, e, bits) double d; int *e, *bits;
 #else
-	(double d, int *e, int *bits)
+	(double _d, int *e, int *bits)
 #endif
 {
 	Bigint *b;
 	int de, k;
 	ULong *x, y, z;
+	U d;
 #ifndef Sudden_Underflow
 	int i;
 #endif
@@ -1202,6 +1203,7 @@ d2b
 #define d0 word0(d)
 #define d1 word1(d)
 #endif
+	dval(d) = _d;
 
 #ifdef Pack_32
 	b = Balloc(1);
@@ -1326,7 +1328,7 @@ ratio
 	(Bigint *a, Bigint *b)
 #endif
 {
-	double da, db;
+	U da, db;
 	int k, ka, kb;
 
 	dval(da) = b2d(a, &ka);
@@ -1433,7 +1435,7 @@ hexnan
 #ifdef KR_headers
 	(rvp, sp) double *rvp; CONST char **sp;
 #else
-	(double *rvp, CONST char **sp)
+	(U *rvp, CONST char **sp)
 #endif
 {
 	ULong c, x[2];
@@ -1513,7 +1515,8 @@ sb_strtod
 	int bb2, bb5, bbe, bd2, bd5, bbbits, bs2, c, dsign,
 		 e, e1, esign, i, j, k, nd, nd0, nf, nz, nz0, sign;
 	CONST char *s, *s0, *s1;
-	double aadj, aadj1, adj, rv, rv0;
+	double aadj, adj;
+	U rv, rv0, aadj1;
 	Long L;
 	ULong y, z;
 	Bigint *bb, *bb1, *bd, *bd0, *bs, *delta;
@@ -2208,14 +2211,14 @@ sb_strtod
 			}
 		if ((aadj = ratio(delta, bs)) <= 2.) {
 			if (dsign)
-				aadj = aadj1 = 1.;
+				aadj = dval(aadj1) = 1.;
 			else if (word1(rv) || word0(rv) & Bndry_mask) {
 #ifndef Sudden_Underflow
 				if (word1(rv) == Tiny1 && !word0(rv))
 					goto undfl;
 #endif
 				aadj = 1.;
-				aadj1 = -1.;
+				dval(aadj1) = -1.;
 				}
 			else {
 				/* special case -- power of FLT_RADIX to be */
@@ -2225,24 +2228,24 @@ sb_strtod
 					aadj = 1./FLT_RADIX;
 				else
 					aadj *= 0.5;
-				aadj1 = -aadj;
+				dval(aadj1) = -aadj;
 				}
 			}
 		else {
 			aadj *= 0.5;
-			aadj1 = dsign ? aadj : -aadj;
+			dval(aadj1) = dsign ? aadj : -aadj;
 #ifdef Check_FLT_ROUNDS
 			switch(Rounding) {
 				case 2: /* towards +infinity */
-					aadj1 -= 0.5;
+					dval(aadj1) -= 0.5;
 					break;
 				case 0: /* towards 0 */
 				case 3: /* towards -infinity */
-					aadj1 += 0.5;
+					dval(aadj1) += 0.5;
 				}
 #else
 			if (Flt_Rounds == 0)
-				aadj1 += 0.5;
+				dval(aadj1) += 0.5;
 #endif /*Check_FLT_ROUNDS*/
 			}
 		y = word0(rv) & Exp_mask;
@@ -2252,7 +2255,7 @@ sb_strtod
 		if (y == Exp_msk1*(DBL_MAX_EXP+Bias-1)) {
 			dval(rv0) = dval(rv);
 			word0(rv) -= P*Exp_msk1;
-			adj = aadj1 * ulp(dval(rv));
+			adj = dval(aadj1) * ulp(dval(rv));
 			dval(rv) += adj;
 			if ((word0(rv) & Exp_mask) >=
 					Exp_msk1*(DBL_MAX_EXP+Bias-P)) {
@@ -2272,11 +2275,11 @@ sb_strtod
 					if ((z = (uint32)aadj) <= 0)
 						z = 1;
 					aadj = z;
-					aadj1 = dsign ? aadj : -aadj;
+					dval(aadj1) = dsign ? aadj : -aadj;
 					}
 				word0(aadj1) += (2*P+1)*Exp_msk1 - y;
 				}
-			adj = aadj1 * ulp(dval(rv));
+			adj = dval(aadj1) * ulp(dval(rv));
 			dval(rv) += adj;
 #else
 #ifdef Sudden_Underflow
