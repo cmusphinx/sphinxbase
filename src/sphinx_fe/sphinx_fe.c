@@ -47,6 +47,7 @@
 #include "fe.h"
 #include "strfuncs.h"
 #include "pio.h"
+#include "filename.h"
 #include "cmd_ln.h"
 #include "err.h"
 #include "ckd_alloc.h"
@@ -597,6 +598,14 @@ build_filenames(cmd_ln_t *config, char const *basename,
                                eo ? "." : "",
                                eo ? eo : "",
                               NULL);
+    /* Build output directory structure if possible/requested (it is
+     * by default). */
+    if (cmd_ln_boolean_r(config, "-build_outdirs")) {
+        char *dirname = ckd_salloc(*out_outfile);
+        path2dirname(*out_outfile, dirname);
+        build_directory(dirname);
+        ckd_free(dirname);
+    }
 }
 
 static int

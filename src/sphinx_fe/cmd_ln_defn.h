@@ -140,6 +140,11 @@ static arg_t defn[] = {
     NULL,
     "Output extension to be applied to all output files" },
   
+  { "-build_outdirs",
+    ARG_BOOLEAN,
+    "yes",
+    "Create missing subdirectories in output directory" },
+
   { "-nist",
     ARG_BOOLEAN,
     "no",
