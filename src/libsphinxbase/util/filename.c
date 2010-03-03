@@ -85,6 +85,26 @@ path2basename(const char *path, char *base)
     strcpy(base, path + i + 1);
 }
 
+/* Return all leading pathname components */
+void
+path2dirname(const char *path, char *dir)
+{
+    int32 i, l;
+
+    l = strlen(path);
+#if defined(_WIN32) || defined(__CYGWIN__)
+    for (i = l - 1; (i >= 0) && !(path[i] == '/' || path[i] == '\\'); --i);
+#else
+    for (i = l - 1; (i >= 0) && !(path[i] == '/'); --i);
+#endif
+    if (i <= 0)
+        dir[0] = '\0';
+    else {
+        memcpy(dir, path, i);
+        dir[i] = '\0';
+    }
+}
+
 
 /* Strip off the shortest trailing .xyz suffix */
 void

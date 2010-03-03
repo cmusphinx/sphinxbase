@@ -1,7 +1,9 @@
 check_PROGRAMS = \
 	test_fopen \
 	test_huff_code \
-	test_bit_encode
+	test_bit_encode \
+	test_build_directory \
+	test_filename
 
 TESTS = $(check_PROGRAMS)
 

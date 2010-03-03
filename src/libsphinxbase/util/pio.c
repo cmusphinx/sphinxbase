@@ -43,9 +43,16 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
 #include <assert.h>
 
 #include "pio.h"
+#include "filename.h"
 #include "err.h"
 #include "strfuncs.h"
 #include "ckd_alloc.h"
@@ -117,6 +124,7 @@ fopen_comp(const char *file, const char *mode, int32 * ispipe)
                 command = string_join("bunzip2" EXEEXT, " -c ", file, NULL);
                 break;
             default:
+                command = NULL; /* Make compiler happy. */
                 E_FATAL("Unknown  compression type %d\n", isgz);
             }
             if ((fp = popen(command, mode)) == NULL) {
@@ -139,6 +147,7 @@ fopen_comp(const char *file, const char *mode, int32 * ispipe)
                 command = string_join("bzip2" EXEEXT, " > ", file, NULL);
                 break;
             default:
+                command = NULL; /* Make compiler happy. */
                 E_FATAL("Unknown compression type %d\n", isgz);
             }
             if ((fp = popen(command, mode)) == NULL) {
@@ -550,3 +559,46 @@ bit_encode_flush(bit_encode_t *be)
     return 0;
 }
 
+#ifdef HAVE_SYS_STAT_H /* Unix, Cygwin */
+int
+build_directory(const char *path)
+{
+    int rv;
+
+    /* Utterly failed... */
+    if (strlen(path) == 0)
+        return -1;
+    /* Utterly succeeded... */
+    else if ((rv = mkdir(path, 0777)) == 0)
+        return 0;
+    /* Or, it already exists... */
+    else if (errno == EEXIST)
+        return 0;
+    else if (errno != ENOENT) {
+        E_ERROR_SYSTEM("Failed to create %s");
+        return -1;
+    }
+    else {
+        char *dirname = ckd_salloc(path);
+        path2dirname(path, dirname);
+        build_directory(dirname);
+        ckd_free(dirname);
+        return mkdir(path, 0777);
+    }
+}
+#elif defined(_WIN32)
+/* FIXME: Implement this. */
+int
+build_directory(const char *path)
+{
+    E_ERROR("build_directory() unimplemented on your platform!\n");
+    return -1;
+}
+#else
+int
+build_directory(const char *path)
+{
+    E_ERROR("build_directory() unimplemented on your platform!\n");
+    return -1;
+}
+#endif

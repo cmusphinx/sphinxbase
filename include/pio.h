@@ -273,6 +273,14 @@ int32 stat_retry (const char *file, struct stat *statbuf);
 SPHINXBASE_EXPORT
 int32 stat_mtime (const char *file);
 
+/**
+ * Create a directory and all of its parent directories, as needed.
+ *
+ * @return 0 on success, <0 on failure.
+ */
+SPHINXBASE_EXPORT
+int build_directory(const char *path);
+
 #ifdef __cplusplus
 }
 #endif

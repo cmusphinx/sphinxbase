@@ -78,10 +78,17 @@ extern "C" {
 
 /**
  * Strip off leading path components from the given path and copy the base into base.
- * Caller must have allocated base.
+ * Caller must have allocated base (hint: it's always shorter than path).
  */
 SPHINXBASE_EXPORT
 void path2basename(const char *path, char *base);
+
+/**
+ * Strip off filename from the given path and copy the directory name into dir
+ * Caller must have allocated dir (hint: it's always shorter than path).
+ */
+SPHINXBASE_EXPORT
+void path2dirname(const char *path, char *dir);
 
 
 /**
