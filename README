@@ -11,6 +11,7 @@ Installation Guide:
 This section contains installation for various platforms
 
 Linux/Unix installation
+^^^^^^^^^^^^^^^^^^^^^^^
 
 sphinxbase is used by other modules.  The convention requires the
 physical layout of the code looks like this:
@@ -52,12 +53,29 @@ customize it by running ./configure with an argument, as in
 
     >./configure --prefix=/my/own/installation/directory
 
+XCode Installation (for iPhone):
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Sphinxbase uses the standard unix autogen system, and there's a script
+included, 'build_for_iphone.sh' that will setup configure to create
+binaries that are XCode friendly.
+
+1) ./autogen.sh
+2) ./build_for_iphone.sh simulator
+3) ./build_for_iphone.sh device
+
+Then in XCode, open your project info, and for 'All Configurations', and
+set:
+
+'Header Search Paths' = "$(HOME)$(SDK_DIR)/include/sphinxbase"
+'Library Search Paths' = "$(HOME)$(SDK_DIR)/lib"
+'Other Linker Flags' = "-lsphinxbase"
+
 Windows Installation:
 ^^^^^^^^^^^^^^^^^^^^^
-To compile sphinxbase in Visual C++ 6.0,
+To compile sphinxbase in Visual Studio 2008 Express (or newer):
 1, unzip the file.
 2, rename the directory to sphinxbase
-3, go into the sphinxbase folder and click sphinxbase.dsw
+3, go into the sphinxbase folder and click sphinxbase.sln
 4, in the menu, choose Build -> Rebuild All -> Batch Build -> Build
 
 In Step 4, make sure all projects are selected, preferably the
