@@ -426,17 +426,18 @@ output_frames_sphinx(sphinx_wave2feat_t *wtf, mfcc_t **frames, int nfr)
 }
 
 typedef enum htk_feature_kind_e {
-    LPC = 1,
-    LPCREFC = 2,
-    LPCEPSTRA = 3,
-    LPCDELCEP = 4,
-    IREFC = 5,
-    MFCC = 6,
-    FBANK = 7,
-    MELSPEC = 8,
-    USER = 9,
-    DISCRETE = 10,
-    PLP = 11
+    WAVEFORM = 0,   /* PCM audio (rarely used) */
+    LPC = 1,        /* LPC filter coefficients */
+    LPCREFC = 2,    /* LPC reflection coefficients */
+    LPCEPSTRA = 3,  /* LPC-based cepstral coefficients */
+    LPCDELCEP = 4,  /* LPCC plus deltas */
+    IREFC = 5,      /* 16-bit integer LPC reflection coefficients */
+    MFCC = 6,       /* MFCCs */
+    FBANK = 7,      /* Log mel spectrum */
+    MELSPEC = 8,    /* Linear mel spectrum */
+    USER = 9,       /* User defined */
+    DISCRETE = 10,  /* Vector quantized data */
+    PLP = 11        /* PLP coefficients */
 } htk_feature_kind_t;
 
 typedef enum htk_feature_flag_e {
@@ -445,7 +446,7 @@ typedef enum htk_feature_flag_e {
     _D = 0000400, /* has delta coefficients */
     _A = 0001000, /* has acceleration (delta-delta) coefficients */
     _C = 0002000, /* is compressed */
-    _Z = 0004000, /* has zero mean static coefficients */
+    _Z = 0004000, /* has zero mean static coefficients (i.e. CMN) */
     _K = 0010000, /* has CRC checksum */
     _O = 0020000, /* has 0th cepstral coefficient */
     _V = 0040000, /* has VQ data */
