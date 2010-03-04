@@ -170,10 +170,10 @@ static arg_t defn[] = {
     "1",
     "Channel to process" },
   
-  { "-feat",
+  { "-ofmt",
     ARG_STRING,
     "sphinx",
-    "Format of output files - currently only 'sphinx' is supported, 'htk' might work soon too." },
+    "Format of output files - one of sphinx, htk, text." },
   
   { "-mach_endian",
     ARG_STRING,
