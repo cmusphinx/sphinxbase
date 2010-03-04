@@ -381,7 +381,7 @@ static const audio_type_t types[] = {
 #ifdef HAVE_SNDFILE
     { "-sndfile", &detect_sndfile, &decode_sndfile },
 #endif
-    { "-raw", &detect_raw, &decode_pcm },
+    { "-raw", &detect_raw, &decode_pcm }
 };
 static const int ntypes = sizeof(types)/sizeof(types[0]);
 static const audio_type_t mfcc_type = {
@@ -425,10 +425,133 @@ output_frames_sphinx(sphinx_wave2feat_t *wtf, mfcc_t **frames, int nfr)
     return nfloat;
 }
 
+typedef enum htk_feature_kind_e {
+    LPC = 1,
+    LPCREFC = 2,
+    LPCEPSTRA = 3,
+    LPCDELCEP = 4,
+    IREFC = 5,
+    MFCC = 6,
+    FBANK = 7,
+    MELSPEC = 8,
+    USER = 9,
+    DISCRETE = 10,
+    PLP = 11
+} htk_feature_kind_t;
+
+typedef enum htk_feature_flag_e {
+    _E = 0000100, /* has energy */
+    _N = 0000200, /* absolute energy supressed */
+    _D = 0000400, /* has delta coefficients */
+    _A = 0001000, /* has acceleration (delta-delta) coefficients */
+    _C = 0002000, /* is compressed */
+    _Z = 0004000, /* has zero mean static coefficients */
+    _K = 0010000, /* has CRC checksum */
+    _O = 0020000, /* has 0th cepstral coefficient */
+    _V = 0040000, /* has VQ data */
+    _T = 0100000  /* has third differential coefficients */
+} htk_feature_flag_t;
+
+/**
+ * Output HTK format header.
+ */
+static int
+output_header_htk(sphinx_wave2feat_t *wtf, int32 nfloat)
+{
+    int32 samp_period;
+    int16 samp_size;
+    int16 param_kind;
+    int swap = FALSE;
+
+    /* HTK files are big-endian. */
+    if (0 == strcmp("little", cmd_ln_str_r(wtf->config, "-mach_endian")))
+        swap = TRUE;
+    /* Same file size thing as in Sphinx files (I think) */
+    if (swap) SWAP_INT32(&nfloat);
+    if (fwrite(&nfloat, 4, 1, wtf->outfh) != 1)
+        return -1;
+    /* Sample period in 100ns units. */
+    samp_period = (int32)(1e+7 / cmd_ln_float32_r(wtf->config, "-frate"));
+    if (swap) SWAP_INT32(&samp_period);
+    if (fwrite(&samp_period, 4, 1, wtf->outfh) != 1)
+        return -1;
+    /* Sample size - veclen * sizeof each sample. */
+    samp_size = wtf->veclen * 4;
+    if (swap) SWAP_INT16(&samp_size);
+    if (fwrite(&samp_size, 2, 1, wtf->outfh) != 1)
+        return -1;
+    /* Format and flags. */
+    if (cmd_ln_boolean_r(wtf->config, "-logspec")
+        || cmd_ln_boolean_r(wtf->config, "-cep2spec"))
+        param_kind = FBANK; /* log mel-filter bank outputs */
+    else
+        param_kind = MFCC | _O; /* MFCC + CEP0 (note reordering...) */
+    if (swap) SWAP_INT16(&param_kind);
+    if (fwrite(&param_kind, 2, 1, wtf->outfh) != 1)
+        return -1;
+
+    return 0;
+}
+
+/**
+ * Output frames in HTK format.
+ */
+static int
+output_frames_htk(sphinx_wave2feat_t *wtf, mfcc_t **frames, int nfr)
+{
+    int i, j, swap, htk_reorder, nfloat = 0;
+
+    fe_mfcc_to_float(wtf->fe, frames, (float32 **)frames, nfr);
+    /* This is possibly inefficient, but probably not a big deal. */
+    swap = (0 == strcmp("little", cmd_ln_str_r(wtf->config, "-mach_endian")));
+    htk_reorder = (0 == strcmp("htk", wtf->ot->name)
+                   && !(cmd_ln_boolean_r(wtf->config, "-logspec")
+                        || cmd_ln_boolean_r(wtf->config, "-cep2spec")));
+    for (i = 0; i < nfr; ++i) {
+        if (htk_reorder) {
+            mfcc_t c0 = frames[i][0];
+            memmove(frames[i] + 1, frames[i], (wtf->veclen - 1) * 4);
+            frames[i][wtf->veclen - 1] = c0;
+        }
+        if (swap)
+            for (j = 0; j < wtf->veclen; ++j)
+                SWAP_FLOAT32(frames[i] + j);
+        if (fwrite(frames[i], sizeof(float32), wtf->veclen, wtf->outfh) != wtf->veclen) {
+            E_ERROR_SYSTEM("Writing %d values to %s failed",
+                           wtf->veclen, wtf->outfile);
+            return -1;
+        }
+        nfloat += wtf->veclen;
+    }
+    return nfloat;
+}
+
+/**
+ * Output frames in text format.
+ */
+static int
+output_frames_text(sphinx_wave2feat_t *wtf, mfcc_t **frames, int nfr)
+{
+    int i, j, nfloat = 0;
+
+    fe_mfcc_to_float(wtf->fe, frames, (float32 **)frames, nfr);
+    for (i = 0; i < nfr; ++i) {
+        for (j = 0; j < wtf->veclen; ++j) {
+            fprintf(wtf->outfh, "%.5g", frames[i][j]);
+            if (j == wtf->veclen - 1)
+                fprintf(wtf->outfh, "\n");
+            else
+                fprintf(wtf->outfh, " ");
+        }
+        nfloat += wtf->veclen;
+    }
+    return nfloat;
+}
+
 static const output_type_t outtypes[] = {
     { "sphinx", &output_header_sphinx, &output_frames_sphinx },
-/*    { "htk", &output_header_htk, &output_frames_htk },
-      { "text", NULL, &output_frames_text }, */
+    { "htk", &output_header_htk, &output_frames_htk },
+    { "text", NULL, &output_frames_text }
 };
 static const int nouttypes = sizeof(outtypes)/sizeof(outtypes[0]);
 
@@ -548,8 +671,7 @@ sphinx_wave2feat_convert_file(sphinx_wave2feat_t *wtf,
     if ((atype = detect_audio_type(wtf, infile)) == NULL)
         return -1;
 
-    /* Determine whether to byteswap input (we never byteswap output
-     * anymore) */
+    /* Determine whether to byteswap input. */
     wtf->byteswap = strcmp(cmd_ln_str_r(wtf->config, "-mach_endian"),
                            cmd_ln_str_r(wtf->config, "-input_endian"));
 
@@ -592,8 +714,9 @@ sphinx_wave2feat_convert_file(sphinx_wave2feat_t *wtf,
         E_ERROR_SYSTEM("Failed to open %s for writing", outfile);
         return -1;
     }
-    /* Leave blank space for float count at start of mfcc file. */
-    if ((*wtf->ot->output_header)(wtf, 0) < 0) {
+    /* Write an empty header, which we'll fill in later. */
+    if (wtf->ot->output_header &&
+        (*wtf->ot->output_header)(wtf, 0) < 0) {
         E_ERROR_SYSTEM("Failed to write empty header to %s\n", outfile);
         goto error_out;
     }
