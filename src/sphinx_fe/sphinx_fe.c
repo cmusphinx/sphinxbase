@@ -296,12 +296,10 @@ decode_pcm(sphinx_wave2feat_t *wtf)
     int nfloat, n;
 
     fe_start_utt(wtf->fe);
-    nsamp = wtf->blocksize;
     nfloat = 0;
-    while ((nsamp = fread(wtf->audio, 2, nsamp, wtf->infh)) != 0) {
+    while ((nsamp = fread(wtf->audio, 2, wtf->blocksize, wtf->infh)) != 0) {
         size_t nvec;
         int16 const *inspeech;
-
 
         /* Byteswap stuff here if necessary. */
         if (wtf->byteswap) {
@@ -311,7 +309,6 @@ decode_pcm(sphinx_wave2feat_t *wtf)
             
         inspeech = wtf->audio;
         nvec = wtf->featsize;
-
         /* Consume all samples. */
         while (nsamp) {
             nfr = nvec;
