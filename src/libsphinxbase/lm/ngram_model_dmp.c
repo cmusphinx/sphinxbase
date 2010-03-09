@@ -47,6 +47,7 @@
 #include "byteorder.h"
 #include "listelem_alloc.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -546,13 +547,19 @@ ngram_model_dmp_build(ngram_model_t *base)
         model->lm3g.unigrams[i].bigrams = bgcount;
         E_DEBUG(2, ("unigram %d: %s => bigram %d\n", i, newbase->word_str[i], bgcount));
         /* All bigrams corresponding to unigram i */
-        for (itor = ngram_iter_successors((uitor = ngram_ng_iter(base, i, NULL, 0)));
+        uitor = ngram_ng_iter(base, i, NULL, 0);
+        for (itor = ngram_iter_successors(uitor);
              itor; ++bgptr, itor = ngram_iter_next(itor)) {
             int32 prob2, bo_wt2;
             int32 const *wids;
             ngram_iter_t *titor;
 
             wids = ngram_iter_get(itor, &prob2, &bo_wt2);
+            /* FIXME FIXME FIXME: not sure why this happens... */
+            if (bgptr - model->lm3g.bigrams < newbase->n_counts[1]) {
+                ngram_iter_free(itor);
+                break;
+            }
             bgptr->wid = wids[1];
             bgptr->prob2 = sorted_id(&sorted_prob2, &prob2);
             if (newbase->n > 2) {
@@ -582,6 +589,7 @@ ngram_model_dmp_build(ngram_model_t *base)
                      titor; ++tgptr, titor = ngram_iter_next(titor)) {
                     int32 prob3, dummy;
 
+                    assert(tgptr - model->lm3g.trigrams < newbase->n_counts[2]);
                     wids = ngram_iter_get(titor, &prob3, &dummy);
                     tgptr->wid = wids[2];
                     tgptr->prob3 = sorted_id(&sorted_prob3, &prob3);
