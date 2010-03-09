@@ -90,14 +90,15 @@ main(int argc, char *argv[])
 		int32 score, bowt;
 		int32 const *wids;
 
-		itor = ngram_model_mgrams(model, 0);
-		itor = ngram_iter_next(itor);
-		itor = ngram_iter_next(itor);
+		/* Test the boundary condition - successors of last 1-gram. */
+		itor = ngram_ng_iter(model, ngram_model_get_counts(model)[0] - 1,
+				     NULL, 0);
 		wids = ngram_iter_get(itor, &score, &bowt);
 		printf("%.4f %s %.4f\n",
 		       logmath_log_to_log10(lmath, score),
 		       ngram_word(model, wids[0]),
 		       logmath_log_to_log10(lmath, bowt));
+		TEST_EQUAL(wids[0], ngram_wid(model, "~"));
 
 		for (itor2 = ngram_iter_successors(itor);
 		     itor2; itor2 = ngram_iter_next(itor2)) {
@@ -107,6 +108,8 @@ main(int argc, char *argv[])
 			       ngram_word(model, wids[0]),
 			       ngram_word(model, wids[1]),
 			       logmath_log_to_log10(lmath, bowt));
+			TEST_EQUAL(wids[0], ngram_wid(model, "~"));
+			TEST_EQUAL(wids[1], ngram_wid(model, "eleven"));
 		}
 		itor2 = ngram_iter_successors(itor);
 		for (itor3 = ngram_iter_successors(itor2);
@@ -117,6 +120,9 @@ main(int argc, char *argv[])
 			       ngram_word(model, wids[0]),
 			       ngram_word(model, wids[1]),
 			       ngram_word(model, wids[2]));
+			TEST_EQUAL(wids[0], ngram_wid(model, "~"));
+			TEST_EQUAL(wids[1], ngram_wid(model, "eleven"));
+			TEST_EQUAL(wids[2], ngram_wid(model, "per"));
 		}
 		ngram_iter_free(itor2);
 		ngram_iter_free(itor);
