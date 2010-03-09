@@ -786,14 +786,41 @@ run_control_file(sphinx_wave2feat_t *wtf, char const *ctlfile)
 {
     lineiter_t *li;
     FILE *ctlfh;
+    int nskip, runlen, npart;
 
     if ((ctlfh = fopen(ctlfile, "r")) == NULL) {
         E_ERROR_SYSTEM("Failed to open control file %s", ctlfile);
         return -1;
     }
+    nskip = cmd_ln_int32_r(wtf->config, "-nskip");
+    runlen = cmd_ln_int32_r(wtf->config, "-runlen");
+    if ((npart = cmd_ln_int32_r(wtf->config, "-npart"))) {
+        /* Count lines in the file. */
+        int nlines, partlen, part;
+        part = cmd_ln_int32_r(wtf->config, "-part");
+        for (nlines = 0, li = lineiter_start(ctlfh); li; li = lineiter_next(li))
+            ++nlines;
+        fseek(ctlfh, 0, SEEK_SET);
+        partlen = nlines / npart;
+        nskip = partlen * (part - 1);
+        if (part == npart)
+            runlen = -1;
+        else
+            runlen = partlen;
+    }
+    if (runlen != -1)
+        E_INFO("Processing %d utterances at position %d\n", runlen, nskip);
+    else
+        E_INFO("Processing all remaining utterances at position %d\n", nskip);
     for (li = lineiter_start(ctlfh); li; li = lineiter_next(li)) {
         char *infile, *outfile;
         int rv;
+
+        if (nskip-- > 0)
+            continue;
+        if (runlen == 0)
+            break;
+        --runlen;
 
         string_trim(li->buf, STRING_BOTH);
         build_filenames(wtf->config, li->buf, &infile, &outfile);
