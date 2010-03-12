@@ -18,7 +18,7 @@ run_program sphinx_fe/sphinx_fe \
 -verbose yes \
 -c $tests/regression/chan3.ctl \
 -di $tests/regression \
--do $tests/regression \
+-do . \
 -eo mfc \
 -input_endian little \
 > $tmpout 2>&1 

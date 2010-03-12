@@ -22,6 +22,7 @@ LDADD = ${top_builddir}/src/libsphinxbase/libsphinxbase.la
 noinst_HEADERS = test_macros.h
 
 EXTRA_DIST = 100.arpa.gz \
+	100.arpa.bz2 \
 	100.arpa.DMP \
 	100.probdef \
 	100.lmctl \
@@ -29,3 +30,5 @@ EXTRA_DIST = 100.arpa.gz \
 	100_2.arpa.DMP \
 	turtle.lm \
 	turtle.lm.DMP
+
+CLEANFILES = 100.tmp.arpa 100.tmp.DMP

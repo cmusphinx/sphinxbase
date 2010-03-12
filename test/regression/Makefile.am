@@ -23,7 +23,10 @@ EXTRA_DIST =					\
 CLEANFILES = test*.err test*.out		\
 	test-sphinx_fe.mfc			\
 	test-sphinx_fe.cepview			\
-	test-sphinx_pitch.f0
+	test-sphinx_pitch.f0			\
+	chan3.sph.mfc				\
+	chan3.wav.mfc				\
+	chan3.raw.mfc
 
 # Disable sphinx_fe tests for now if fixed-point due to imprecision
 if FIXED_POINT

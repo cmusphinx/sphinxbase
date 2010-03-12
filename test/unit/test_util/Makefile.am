@@ -16,4 +16,4 @@ LDADD = ${top_builddir}/src/libsphinxbase/libsphinxbase.la
 
 noinst_HEADERS = test_macros.h
 
-CLEANFILES = *.log
+CLEANFILES = *.log *.out
