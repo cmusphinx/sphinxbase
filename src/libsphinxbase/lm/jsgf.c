@@ -503,6 +503,23 @@ jsgf_build_fsg_raw(jsgf_t *grammar, jsgf_rule_t *rule,
     return jsgf_build_fsg_internal(grammar, rule, lmath, lw, FALSE);
 }
 
+int
+jsgf_write_fsg(jsgf_t *grammar, jsgf_rule_t *rule, FILE *outfh)
+{
+    fsg_model_t *fsg;
+    logmath_t *lmath = logmath_init(1.0001, 0, 0);
+
+    if ((fsg = jsgf_build_fsg_raw(grammar, rule, lmath, 1.0)) == NULL)
+        goto error_out;
+
+    fsg_model_write(fsg, outfh);
+    logmath_free(lmath);
+    return 0;
+
+error_out:
+    logmath_free(lmath);
+    return -1;
+}
 jsgf_rule_t *
 jsgf_define_rule(jsgf_t *jsgf, char *name, jsgf_rhs_t *rhs, int public)
 {

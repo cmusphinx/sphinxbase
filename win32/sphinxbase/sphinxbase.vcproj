@@ -1874,6 +1874,10 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\src\libsphinxbase\util\string_wce.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\src\libsphinxbase\util\unlimit.c"
 				>
 				<FileConfiguration

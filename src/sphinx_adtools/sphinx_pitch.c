@@ -436,7 +436,9 @@ extract_pitch(const char *in, const char *out)
     }
     buf = ckd_calloc(flen, sizeof(*buf));
     /* Read the first full frame of data. */
-    fread(buf, sizeof(*buf), flen, infh);
+    if (fread(buf, sizeof(*buf), flen, infh) != flen) {
+        /* Fail silently, which is probably okay. */
+    }
     yin_start(yin);
     nsamps = 0;
     while (!feof(infh)) {
@@ -454,7 +456,9 @@ extract_pitch(const char *in, const char *out)
         }
         /* Shift it back and get the next frame's overlap. */
         memmove(buf, buf + fshift, (flen - fshift) * sizeof(*buf));
-        fread(buf + flen - fshift, sizeof(*buf), fshift, infh);
+        if (fread(buf + flen - fshift, sizeof(*buf), fshift, infh) != fshift) {
+            /* Fail silently (FIXME: really?) */
+        }
     }
     yin_end(yin);
     /* Process trailing frames of data. */

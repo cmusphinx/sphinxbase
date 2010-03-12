@@ -56,14 +56,17 @@ print_appl_info(char *appl_name)
 {
 #if !(defined(_WIN32) || defined(_WIN32_WCE))
     {
+        /* FIXME: Argh. */
         char host[4096], path[16384];
 
         gethostname(host, 1024);
         host[1023] = '\0';
-        getcwd(path, sizeof(path));
 
         E_INFO("Host: '%s'\n", host);
-        E_INFO("Directory: '%s'\n", path);
+        if (getcwd(path, sizeof(path)) == NULL)
+            E_ERROR_SYSTEM("Failed to get current directory");
+        else
+            E_INFO("Directory: '%s'\n", path);
     }
 #endif
 

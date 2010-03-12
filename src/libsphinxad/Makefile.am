@@ -3,7 +3,10 @@
 
 lib_LTLIBRARIES = libsphinxad.la
 
-libsphinxad_la_LDFLAGS = -version-info 0:0:0
+# Confusing libtool version info means:
+#
+# This is API version 2, software release 1, which also supports API version 1
+libsphinxad_la_LDFLAGS = -version-info 0:1:0
 
 libsphinxad_la_SOURCES = cont_ad_base.c
 

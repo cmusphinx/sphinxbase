@@ -59,6 +59,8 @@ extern "C" {
 }
 #endif
 
+#define YY_NO_INPUT /* Silence a compiler warning. */
+
 typedef struct jsgf_rhs_s jsgf_rhs_t;
 typedef struct jsgf_atom_s jsgf_atom_t;
 typedef struct jsgf_link_s jsgf_link_t;
