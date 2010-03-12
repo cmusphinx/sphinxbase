@@ -164,7 +164,7 @@ lm3g_tg_score(NGRAM_MODEL_TYPE *model, int32 lw1,
     trigram_t *tg;
     tginfo_t *tginfo, *prev_tginfo;
 
-    if ((base->n < 3) || (lw1 < 0))
+    if ((base->n < 3) || (lw1 < 0) || (lw2 < 0))
         return (lm3g_bg_score(model, lw2, lw3, n_used));
 
     prev_tginfo = NULL;
@@ -223,7 +223,7 @@ lm3g_template_score(ngram_model_t *base, int32 wid,
 
 static int32
 lm3g_template_raw_score(ngram_model_t *base, int32 wid,
-                          int32 *history, int32 n_hist,
+                        int32 *history, int32 n_hist,
                           int32 *n_used)
 {
     NGRAM_MODEL_TYPE *model = (NGRAM_MODEL_TYPE *)base;
