@@ -387,7 +387,7 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
-				RelativePath="..\..\src\sphinx_fe\wave2feat.c"
+				RelativePath="..\..\src\sphinx_fe\sphinx_fe.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -436,7 +436,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\sphinx_fe\wave2feat.h"
+				RelativePath="..\..\src\sphinx_fe\sphinx_wave2feat.h"
 				>
 			</File>
 		</Filter>
