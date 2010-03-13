@@ -171,8 +171,10 @@ main(int argc, char *argv[])
         /* Case fold if requested. */
         if ((kase = cmd_ln_str_r(config, "-case"))) {
             if (0 == strcmp(kase, "lower")) {
+                ngram_model_casefold(lm, NGRAM_LOWER);
             }
             else if (0 == strcmp(kase, "upper")) {
+                ngram_model_casefold(lm, NGRAM_UPPER);
             }
             else {
                 E_ERROR("Unknown value for -case: %s\n", kase);

@@ -464,7 +464,8 @@ ngram_model_dmp_read(cmd_ln_t *config,
     return base;
 
 error_out:
-    fclose_comp(fp, is_pipe);
+    if (fp)
+        fclose_comp(fp, is_pipe);
     ngram_model_free(base);
     return NULL;
 }
