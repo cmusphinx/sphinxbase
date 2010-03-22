@@ -12,6 +12,15 @@ INCLUDES = \
 LDADD = ${top_builddir}/src/libsphinxbase/libsphinxbase.la -lm
 
 
-TESTS = $(srcdir)/_*.test
-EXTRA_DIST = $(TESTS) $(srcdir)/_*.res
+TESTS = _test_determinant.test			\
+	_test_invert.test			\
+	_test_solve.test
+
+EXTRA_DIST = _test_determinant.res		\
+	_test_determinant.test			\
+	_test_invert.res			\
+	_test_invert.test			\
+	_test_solve.res				\
+	_test_solve.test
+
 CLEANFILES = *.out

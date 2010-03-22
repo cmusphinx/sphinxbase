@@ -66,7 +66,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(_WIN32)
+#if defined(_WIN32) && !defined(__SYMBIAN32__)
 # include <windows.h>
 # ifndef _WIN32_WCE
 #  include <time.h>
@@ -147,7 +147,7 @@ pctr_free(pctr_t * pc)
 }
 
 
-#if defined(_WIN32) && !defined(GNUWINCE)
+#if defined(_WIN32) && !defined(GNUWINCE) && !defined(__SYMBIAN32__)
 
 #define TM_LOWSCALE	1e-7
 #define TM_HIGHSCALE	(4294967296.0 * TM_LOWSCALE);
@@ -177,7 +177,7 @@ make_sec(struct timeval *s)
 void
 ptmr_start(ptmr_t * tm)
 {
-#if (! defined(_WIN32)) || defined(GNUWINCE)
+#if (! defined(_WIN32)) || defined(GNUWINCE) || defined(__SYMBIAN32__)
     struct timeval e_start;     /* Elapsed time */
 
 #if (! _HPUX_SOURCE)
@@ -213,7 +213,7 @@ ptmr_stop(ptmr_t * tm)
 {
     float64 dt_cpu, dt_elapsed;
 
-#if (! defined(_WIN32)) || defined(GNUWINCE)
+#if (! defined(_WIN32)) || defined(GNUWINCE) || defined(__SYMBIAN32__)
     struct timeval e_stop;      /* Elapsed time */
 
 #if (! _HPUX_SOURCE)

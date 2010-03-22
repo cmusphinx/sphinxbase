@@ -40,7 +40,9 @@ EXTRA_DIST = \
 	slapack_lite.c \
 	blas_lite.c \
 	f2c_lite.c \
-	err_wince.c
+	err_wince.c \
+	string_wce.c \
+	errno.c
 
 INCLUDES = -I$(top_srcdir)/include \
            -I$(top_builddir)/include 

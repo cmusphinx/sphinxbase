@@ -3,7 +3,7 @@ dnl try not to hurt yourself ;)
 
 AC_INIT(sphinxbase, 0.6.99)
 AM_CONFIG_HEADER([include/config.h include/sphinx_config.h])
-AM_INIT_AUTOMAKE([no-define dist-bzip2 dist-zip])
+AM_INIT_AUTOMAKE([no-define])
 
 CFLAGS=${CFLAGS:--g -O2 -Wall}
 
@@ -28,7 +28,6 @@ esac
 
 AC_ISC_POSIX
 AC_PROG_CC
-AC_PROG_CXX # Actually we don't compile any C++ this is just to make Automake happy
 AM_PROG_CC_STDC
 # Don't even bother until the rest of the world has an up-to-date Flex
 #AM_PROG_LEX

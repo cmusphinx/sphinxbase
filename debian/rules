@@ -21,41 +21,54 @@ else
 	CFLAGS += -O2
 endif
 
+PYVERS=$(shell pyversions -r)
+
 config.status: configure
 	dh_testdir
-	# Add here commands to configure the package.
-	./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info --with-alsa --without-lapack $(BUILD_FIXED) CFLAGS="$(CFLAGS)" --with-python=python2.5
+	./configure --host=$(DEB_HOST_GNU_TYPE) --build=$(DEB_BUILD_GNU_TYPE) --prefix=/usr --mandir=\$${prefix}/share/man --infodir=\$${prefix}/share/info --with-alsa --without-lapack $(BUILD_FIXED) CFLAGS="$(CFLAGS)"
 
 
 build: build-stamp
 build-stamp:  config.status
 	dh_testdir
 	$(MAKE)
+	$(RM) -r python/build
+	set -e; \
+	for PYTHON in $(PYVERS); do \
+		(cd python && $$PYTHON setup.py build); \
+	done
+	set -e; \
+	for PYTHON in $(PYVERS); do \
+		(cd python && $$PYTHON-dbg setup.py build); \
+	done
 	touch $@
 
 clean:
 	dh_testdir
 	dh_testroot
 	rm -f build-stamp 
-
-	# Add here commands to clean up after the build process.
 	[ ! -f Makefile ] || $(MAKE) distclean
-ifneq "$(wildcard /usr/share/misc/config.sub)" ""
-	cp -f /usr/share/misc/config.sub config.sub
-endif
-ifneq "$(wildcard /usr/share/misc/config.guess)" ""
-	cp -f /usr/share/misc/config.guess config.guess
-endif
 	dh_clean 
+	$(RM) -r debian/python-sphinxbase debian/python-sphinxbase-dbg
+	$(RM) -r python/build
 
 install: build
 	dh_testdir
 	dh_testroot
 	dh_clean -k 
 	dh_installdirs
-
-	# Add here commands to install the package into debian/tmp
 	$(MAKE) DESTDIR=$(CURDIR)/debian/tmp install
+	set -e; \
+	for PYTHON in $(PYVERS); do \
+	    (cd python && $$PYTHON setup.py install --root=$(CURDIR)/debian/python-sphinxbase --install-layout=deb) ; \
+	done
+	set -e; \
+	for PYTHON in $(PYVERS); do \
+	    (cd python && $$PYTHON-dbg setup.py install --root=$(CURDIR)/debian/python-sphinxbase-dbg --install-layout=deb) ; \
+	done
+	find debian/python-*-dbg ! -type d ! -name '*.so' | xargs rm -f
+	find debian/python-*-dbg -depth -empty -exec rmdir {} \;
+	-find debian -name '*.py[co]' | xargs rm -f
 
 # Build architecture-independent files here.
 binary-indep: build install
@@ -71,9 +84,12 @@ binary-arch: build install
 	dh_install --sourcedir=debian/tmp
 	dh_installman
 	dh_link
-	dh_strip
+	dh_strip --exclude=_d.so
+	rm -rf debian/python-sphinxbase-dbg/usr/share/doc/python-sphinxbase-dbg
+	ln -s python-sphinxbase debian/python-sphinxbase-dbg/usr/share/doc/python-sphinxbase-dbg
 	dh_compress -X.py
 	dh_fixperms
+	dh_pysupport
 	dh_makeshlibs
 	dh_installdeb
 	dh_shlibdeps

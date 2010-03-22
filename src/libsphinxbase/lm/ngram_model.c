@@ -551,7 +551,9 @@ ngram_score(ngram_model_t *model, const char *word, ...)
 int32
 ngram_tg_score(ngram_model_t *model, int32 w3, int32 w2, int32 w1, int32 *n_used)
 {
-    int32 hist[2] = { w2, w1 };
+    int32 hist[2];
+    hist[0] = w2;
+    hist[1] = w1;
     return ngram_ng_score(model, w3, hist, 2, n_used);
 }
 

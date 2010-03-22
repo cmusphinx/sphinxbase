@@ -94,7 +94,7 @@ static const arg_t defn[] = {
   { "-case",
     ARG_STRING,
     NULL,
-    "Ether 'lower' or 'upper' - case fold to lower/upper case (NOT UNICODE AWARE)\n" },
+    "Ether 'lower' or 'upper' - case fold to lower/upper case (NOT UNICODE AWARE)" },
 
   { "-mmap",
     ARG_BOOLEAN,

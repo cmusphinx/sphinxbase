@@ -7,7 +7,16 @@ INCLUDES = \
 
 LDADD = ${top_builddir}/src/libsphinxbase/libsphinxbase.la
 
+TESTS = _fread_line.test			\
+	_nextword.test				\
+	_str2words.test				\
+	_string_join.test			\
+	_string_trim.test			\
+	test_atof
 
-TESTS = $(srcdir)/_*.test test_atof
-
-EXTRA_DIST = $(TESTS) _fread_line.txt
+EXTRA_DIST = _fread_line.txt			\
+	 _fread_line.test			\
+	_nextword.test				\
+	_str2words.test				\
+	_string_join.test			\
+	_string_trim.test

@@ -127,8 +127,7 @@ fixlog2(uint32 x)
         return MIN_FIXLOG2;
 
     /* Get the exponent. */
-
-#ifdef __i386__ 
+#if defined(__GNUC__) && defined(__i386__) 
   __asm__("bsrl %1, %0\n": "=r"(y): "g"(x):"cc");
     x <<= (31 - y);
 #elif defined(__ppc__)

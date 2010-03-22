@@ -52,7 +52,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#if defined(_WIN32) || defined(GNUWINCE)
+#if (defined(_WIN32) || defined(GNUWINCE)) && !defined(__SYMBIAN32__)
 # ifdef GNUWINCE
 #  include <sys/wcebase.h>
 #  include <sys/wcetypes.h>

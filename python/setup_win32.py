@@ -6,7 +6,7 @@ except:
 import os
 
 setup(name = 'SphinxBase',
-      version = '0.4.1',
+      version = '0.6',
       author = 'David Huggins-Daines',
       author_email = 'dhuggins@cs.cmu.edu',
       description = 'Python interface to CMU Sphinx base libraries',

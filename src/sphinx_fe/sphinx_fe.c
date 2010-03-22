@@ -844,7 +844,9 @@ main(int argc, char *argv[])
     int rv;
 
     /* Initialize config. */
-    config = cmd_ln_parse_r(NULL, defn, argc, argv, TRUE);
+    if ((config = cmd_ln_parse_r(NULL, defn, argc, argv, TRUE)) == NULL)
+        return 2;
+
     /* Parse an argument file if there's one in there. */
     if (cmd_ln_str_r(config, "-argfile"))
         config = cmd_ln_parse_file_r(config, defn,

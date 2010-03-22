@@ -1,3 +1,10 @@
+sphinxbase (0.6-0svn1) unstable; urgency=low
+
+  * Update to new release version.  NOTE: This is the upstream generic
+    package, your distributor should provide an official version.
+
+ -- David Huggins-Daines <dhuggins@cs.cmu.edu>  Thu, 18 Mar 2010 10:34:05 -0400
+
 sphinxbase (0.4-0svn1) unstable; urgency=low
 
   * Snapshot version!

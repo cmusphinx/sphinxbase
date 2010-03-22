@@ -7,7 +7,16 @@ INCLUDES = \
 LDADD = ${top_builddir}/src/libsphinxbase/libsphinxbase.la -lm
 
 
-TESTS = $(srcdir)/_*.test
+TESTS = _test_parse_badargs.test		\
+	_test_parse_defaults_r.test		\
+	_test_parse_defaults.test		\
+	_test_parse_goodargs.test		\
+	_test_parse_multiple.test
 
 
-EXTRA_DIST = $(TESTS) $(srcdir)/_*.res
+EXTRA_DIST = $(TESTS)				\
+	_test_parse_badargs.res			\
+	_test_parse_defaults.res		\
+	_test_parse_defaults_r.res		\
+	_test_parse_goodargs.res		\
+	_test_parse_multiple.res

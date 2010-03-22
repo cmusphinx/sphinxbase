@@ -1,17 +1,17 @@
 /*
 ============================================================================
- Name		: sphinxbase_s60.mmp
+ Name		: sphinxbase.mmp
  Author	  : 
  Copyright   : Your copyright notice
- Description : This is the project specification file for sphinxbase_s60.
+ Description : This is the project specification file for sphinxbase.
 ============================================================================
 */
 
-TARGET		  sphinxbase_s60.lib
-TARGETTYPE	  lib
-UID			 0
+TARGET		  sphinxbase.dll
+TARGETTYPE	  DLL
+UID 0x1000008d 0xe000acd4
 
-USERINCLUDE	 ..\include
+USERINCLUDE	 ..\include ..\include\s60
 SYSTEMINCLUDE   \epoc32\include \epoc32\include\stdapis \epoc32\include\stdapis\sys \epoc32\include\mmf\server
 
 
@@ -32,3 +32,4 @@ SOURCEPATH ..\src\libsphinxad
 SOURCE ad_s60.cpp
 
 
+EXPORTUNFROZEN

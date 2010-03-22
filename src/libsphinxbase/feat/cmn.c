@@ -121,7 +121,7 @@ cmn_type_from_str(const char *str)
 
     for (i = 0; i < n_cmn_type_str; ++i) {
         if (0 == strcmp(str, cmn_type_str[i]))
-            return i;
+            return (cmn_type_t)i;
     }
     E_FATAL("Unknown CMN type '%s'\n", str);
     return CMN_NONE;

@@ -15,8 +15,9 @@ EXTRA_libsphinxad_la_SOURCES = ad_base.c \
 	ad_oss_bsd.c \
 	ad_alsa.c \
 	ad_sunos.c \
-	ad_s60.cpp \
-	audio_utils_sunos.c \
+	audio_utils_sunos.c
+
+EXTRA_DIST = ad_s60.cpp \
 	play_win32.c \
 	rec_win32.c
 

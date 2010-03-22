@@ -50,7 +50,7 @@
 /*
  * Platform-specific parts: threads, mutexes, and signals.
  */
-#if defined(_WIN32) || defined(__CYGWIN__) /* Use Windows threads on Cygwin too */
+#if (defined(_WIN32) || defined(__CYGWIN__)) && !defined(__SYMBIAN32__)
 #define _WIN32_WINNT 0x0400
 #include <windows.h>
 
@@ -514,7 +514,7 @@ sbmsgq_send(sbmsgq_t *q, size_t len, void const *data)
         size_t len1 = q->depth - in;
         memcpy(q->data + in, data, len1);
         q->nbytes += len1;
-        data += len1;
+        data = (char const *)data + len1;
         len -= len1;
         in = 0;
     }
