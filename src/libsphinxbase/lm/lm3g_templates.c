@@ -533,9 +533,6 @@ lm3g_template_iter_next(ngram_iter_t *base)
         goto done;
     }
 
-    assert(itor->ug - model->lm3g.unigrams < base->model->n_counts[0]);
-    assert(itor->bg - model->lm3g.bigrams < base->model->n_counts[1]);
-    assert(itor->tg - model->lm3g.trigrams < base->model->n_counts[2]);
     return (ngram_iter_t *)itor;
 done:
     ngram_iter_free(base);
