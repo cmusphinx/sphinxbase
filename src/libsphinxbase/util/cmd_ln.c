@@ -503,7 +503,7 @@ cmd_ln_appl_exit()
 cmd_ln_t *
 cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv[], int strict)
 {
-    int32 i, j, n;
+    int32 i, j, n, argstart;
     hash_table_t *defidx = NULL;
     cmd_ln_t *cmdln;
 
@@ -549,17 +549,19 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
     if (cmdln->ht == NULL)
         cmdln->ht = hash_table_new(n, 0 /* argument names are case-sensitive */ );
 
-    /* Parse command line arguments (name-value pairs); skip argv[0] if argc is odd */
-    for (j = argc % 2; j < argc; j += 2) {
+
+    /* skip argv[0] if it doesn't start with dash */
+    argstart = 0;
+    if (argc > 0 && argv[0][0] != '-') {
+        argstart = 1;
+    } 
+
+    /* Parse command line arguments (name-value pairs) */
+    for (j = argstart; j < argc; j += 2) {
         arg_t *argdef;
         cmd_ln_val_t *val;
         void *v;
 
-        if (j + 1 >= argc) {
-            cmd_ln_print_help_r(cmdln, stderr, defn);
-            E_ERROR("Argument value for '%s' missing\n", argv[j]);
-            goto error;
-        }
         if (hash_table_lookup(defidx, argv[j], &v) < 0) {
             if (strict) {
                 E_ERROR("Unknown argument name '%s'\n", argv[j]);
@@ -572,7 +574,13 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
         }
         argdef = v;
 
-        /* Enter argument value */
+        /* Enter argument value */	
+	if (j + 1 >= argc) {
+            cmd_ln_print_help_r(cmdln, stderr, defn);
+            E_ERROR("Argument value for '%s' missing\n", argv[j]);
+            goto error;
+        }
+
         if (argdef == NULL)
             val = cmd_ln_val_init(ARG_STRING, argv[j + 1]);
         else {
