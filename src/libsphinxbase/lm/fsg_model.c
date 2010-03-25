@@ -322,8 +322,8 @@ fsg_model_add_alt(fsg_model_t * fsg, char const *baseword,
         fsg->altwords = bitvec_alloc(fsg->n_word_alloc);
     bitvec_set(fsg->altwords, altwid);
 
-    E_INFO("Adding alternate word transitions (%s,%s) to FSG\n",
-           baseword, altword);
+    E_DEBUG(2,("Adding alternate word transitions (%s,%s) to FSG\n",
+               baseword, altword));
 
     /* Look for all transitions involving baseword and duplicate them. */
     /* FIXME: This will also get slow, eventually... */
@@ -355,7 +355,7 @@ fsg_model_add_alt(fsg_model_t * fsg, char const *baseword,
         }
     }
 
-    E_INFO("Added %d alternate word transitions\n", ntrans);
+    E_DEBUG(2,("Added %d alternate word transitions\n", ntrans));
     return ntrans;
 }
 
