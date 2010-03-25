@@ -245,6 +245,24 @@ SPHINXBASE_EXPORT
 int32 fsg_model_null_trans_add(fsg_model_t * fsg, int32 from, int32 to, int32 logp);
 
 /**
+ * Add a "tag" transition between the given states.
+ *
+ * A "tag" transition is a null transition with a non-null word ID,
+ * which corresponds to a semantic tag or other symbol to be output
+ * when this transition is taken.
+ *
+ * As above, there can be at most one null or tag transition between
+ * the given states; duplicates are flagged and only the best prob
+ * retained.  Transition probs must be <= 1 (i.e., logprob <= 0).
+ *
+ * @return 1 if a new transition was added, 0 if the prob of an existing
+ * transition was upgraded; -1 if nothing was changed.
+ */
+SPHINXBASE_EXPORT
+int32 fsg_model_tag_trans_add(fsg_model_t * fsg, int32 from, int32 to,
+                              int32 logp, int32 wid);
+
+/**
  * Obtain transitive closure of null transitions in the given FSG.
  *
  * @param nulls List of null transitions, or NULL to find them automatically.

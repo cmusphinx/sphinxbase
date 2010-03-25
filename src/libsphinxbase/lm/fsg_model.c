@@ -128,7 +128,7 @@ fsg_model_trans_add(fsg_model_t * fsg,
 }
 
 int32
-fsg_model_null_trans_add(fsg_model_t * fsg, int32 from, int32 to, int32 logp)
+fsg_model_tag_trans_add(fsg_model_t * fsg, int32 from, int32 to, int32 logp, int32 wid)
 {
     fsg_link_t *link;
 
@@ -145,7 +145,6 @@ fsg_model_null_trans_add(fsg_model_t * fsg, int32 from, int32 to, int32 logp)
     /* Check for a duplicate link; if found, keep the higher prob */
     link = fsg->null_trans[from][to];
     if (link) {
-        assert(link->wid < 0);
         if (link->logs2prob < logp) {
             link->logs2prob = logp;
             return 0;
@@ -164,6 +163,12 @@ fsg_model_null_trans_add(fsg_model_t * fsg, int32 from, int32 to, int32 logp)
     fsg->null_trans[from][to] = link;
 
     return 1;
+}
+
+int32
+fsg_model_null_trans_add(fsg_model_t * fsg, int32 from, int32 to, int32 logp)
+{
+    return fsg_model_tag_trans_add(fsg, from, to, logp, -1);
 }
 
 glist_t
