@@ -13,18 +13,15 @@ cdef class LogMath:
     
     This class provides fast logarithmic math functions in base
     1.000+epsilon, useful for fixed point speech recognition.
-    """
-    def __cinit__(self, base=1.0001, shift=0, use_table=1):
-        """
-        Initialize a LogMath object.
 
-        @param base: The base B in which computation is to be done.
-        @type base: float
-        @param shift: Log values are shifted right by this many bits.
-        @type shift: int
-        @param use_table Whether to use an add table or not
-        @type use_table: bool
-        """
+    @param base: The base B in which computation is to be done.
+    @type base: float
+    @param shift: Log values are shifted right by this many bits.
+    @type shift: int
+    @param use_table Whether to use an add table or not
+    @type use_table: bool
+    """
+    def __init__(self, base=1.0001, shift=0, use_table=1):
         self.lmath = logmath_init(base, shift, use_table)
 
     def __dealloc__(self):
@@ -129,20 +126,17 @@ cdef class NGramModel:
     disk.  These can be in ARPABO text format or Sphinx DMP format.
     Methods are provided for scoring N-Grams based on the model,
     looking up words in the model, and adding words to the model.
-    """
-    def __cinit__(self, file=None, lw=1.0, wip=1.0, uw=1.0):
-        """
-        Initialize an N-Gram model.
 
-        @param file: Path to an N-Gram model file.
-        @type file: string
-        @param lw: Language weight to apply to model probabilities.
-        @type lw: float
-        @param wip: Word insertion penalty to add to model probabilities
-        @type wip: float
-        @param uw: Weight to give unigrams when interpolating with uniform distribution.
-        @type uw: float
-        """
+    @param file: Path to an N-Gram model file.
+    @type file: string
+    @param lw: Language weight to apply to model probabilities.
+    @type lw: float
+    @param wip: Word insertion penalty to add to model probabilities
+    @type wip: float
+    @param uw: Weight to give unigrams when interpolating with uniform distribution.
+    @type uw: float
+    """
+    def __init__(self, file=None, lw=1.0, wip=1.0, uw=1.0):
         self.lmath = logmath_init(1.0001, 0, 0)
         if file:
             self.lm = ngram_model_read(NULL, file, NGRAM_AUTO, self.lmath)
@@ -420,19 +414,18 @@ def bincw(int cw, int nbits):
 cdef class HuffCode:
     """
     Huffman coding class.
+
+    You can either construct a Huffman code from an alphabet of
+    symbols with frequencies, or read one from a file.  Either the
+    alphabet or infile argument (but not both) must be passed to the
+    constructor.
+
+    @param alphabet: Alphabet of (symbol, frequency) pairs
+    @type alphabet: [(str, int)]
+    @param infile: File handle or filename to read from
+    @type infile: file | str
     """
     def __init__(self, alphabet=None, infile=None):
-        """
-        Construct a Huffman code from an alphabet of symbols with
-        frequencies, or read one from a file.  Either the alphabet or
-        infile argument (but not both) must be passed to this
-        constructor.
-
-        @param alphabet: Alphabet of (symbol, frequency) pairs
-        @ptype alphabet: [(str, int)]
-        @param infile: File handle or filename to read from
-        @ptype infile: file | str
-        """
         cdef char **symbols
         cdef int *frequencies
         cdef int nsym
