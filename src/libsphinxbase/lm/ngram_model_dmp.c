@@ -556,11 +556,8 @@ ngram_model_dmp_build(ngram_model_t *base)
             ngram_iter_t *titor;
 
             wids = ngram_iter_get(itor, &prob2, &bo_wt2);
-            /* FIXME FIXME FIXME: not sure why this happens... */
-            if (bgptr - model->lm3g.bigrams >= newbase->n_counts[1]) {
-                ngram_iter_free(itor);
-                break;
-            }
+
+            assert (bgptr - model->lm3g.bigrams < newbase->n_counts[1]);
 
             bgptr->wid = wids[1];
             bgptr->prob2 = sorted_id(&sorted_prob2, &prob2);
