@@ -182,7 +182,7 @@ cdef class NGramModel:
 
     def get_size(self):
         """
-        Get the order of this model (i.e. the "N" in "N-gram")
+        Get the order of this model (i.e. the 'N' in 'N-gram')
 
         @return: Order of this model
         @rtype: int
@@ -229,10 +229,10 @@ cdef class NGramModel:
 
         The argument list consists of the history words (as
         null-terminated strings) of the N-Gram, in reverse order.
-        Therefore, if you wanted to get the N-Gram score for "a whole
-        joy", you would call::
+        Therefore, if you wanted to get the N-Gram score for 'a whole
+        joy', you would call::
 
-         score, n_used = model.score("joy", "whole", "a")
+         score, n_used = model.score('joy', 'whole', 'a')
 
         This function returns a tuple, consisting of the score and the
         number of words used in computing it (i.e. the effective size
@@ -248,7 +248,7 @@ cdef class NGramModel:
 
         For a closed-vocabulary model, unknown words are impossible
         and thus have zero probability.  Therefore, if C{word} is
-        unknown, this function will return a "zero" log-probability,
+        unknown, this function will return a 'zero' log-probability,
         i.e. a large negative number.
         """
         cdef int32 wid
@@ -272,7 +272,7 @@ cdef class NGramModel:
 
         This works effectively the same way as L{score}, except that
         any weights (language weight, insertion penalty) applied to
-        the language model are ignored and the "raw" probability value
+        the language model are ignored and the 'raw' probability value
         is returned.
         """
         cdef int32 wid
