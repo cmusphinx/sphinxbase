@@ -124,8 +124,8 @@ cdef class NGramModel:
 
     This class provides access to N-Gram language models stored on
     disk.  These can be in ARPABO text format or Sphinx DMP format.
-    Methods are provided for scoring N-Grams based on the model,
-    looking up words in the model, and adding words to the model.
+    Methods are provided for scoring N-Grams based on the model
+    and looking up words in the model.
 
     @param file: Path to an N-Gram model file.
     @type file: string
