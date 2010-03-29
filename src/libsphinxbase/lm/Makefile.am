@@ -15,6 +15,8 @@ libsphinxlm_la_SOURCES =			\
 	jsgf_scanner.c				\
 	jsgf_parser.y
 
+libsphinxlm_la_LIBADD = $(LTLIBICONV)
+
 noinst_HEADERS = ngram_model_internal.h		\
 	ngram_model_dmp.h			\
 	ngram_model_set.h			\
