@@ -398,12 +398,11 @@ lm3g_template_successors(ngram_iter_t *bitor)
     itor->ug = from->ug;
     switch (bitor->m) {
     case 0:
-        /* This indicates no successors  */
-        if (itor->ug->bo_wt1.l == 0 && itor->ug->bigrams == 0)
-            goto done;
-        /* Next itor bigrams is the same as this itor bigram. This means no successors too */
-        if ((itor->ug + 1) - model->lm3g.unigrams < bitor->model->n_counts[0] &&
-	    itor->ug->bigrams == (itor->ug + 1)->bigrams)
+        /* Next itor bigrams is the same as this itor bigram or
+	   itor bigrams is more than total count. This means no successors */
+        if (((itor->ug + 1) - model->lm3g.unigrams < bitor->model->n_counts[0] &&
+	    itor->ug->bigrams == (itor->ug + 1)->bigrams) || 
+	    itor->ug->bigrams == bitor->model->n_counts[1])
 	    goto done;
 	    
         /* Start iterating from first bigram successor of from->ug. */
@@ -413,12 +412,10 @@ lm3g_template_successors(ngram_iter_t *bitor)
         itor->bg = from->bg;
         
         /* This indicates no successors */
-        if (model->lm3g.bo_wt2[itor->bg->bo_wt2].l == 0)
-            goto done;
-        /* This indicates no successors too */
-        if ((itor->bg + 1) - model->lm3g.bigrams < bitor->model->n_counts[1] &&
+        if (((itor->bg + 1) - model->lm3g.bigrams < bitor->model->n_counts[1] &&
     	    FIRST_TG (model, itor->bg - model->lm3g.bigrams) == 
-    	    FIRST_TG (model, (itor->bg + 1) - model->lm3g.bigrams))
+    	    FIRST_TG (model, (itor->bg + 1) - model->lm3g.bigrams)) ||
+	    FIRST_TG (model, itor->bg - model->lm3g.bigrams) == bitor->model->n_counts[2])
     	    goto done;
     	    
         /* Start iterating from first trigram successor of from->bg. */

@@ -563,6 +563,7 @@ ngram_model_dmp_build(ngram_model_t *base)
             bgptr->prob2 = sorted_id(&sorted_prob2, &prob2);
             if (newbase->n > 2) {
                 tgcount = (tgptr - model->lm3g.trigrams);
+	        bgcount = (bgptr - model->lm3g.bigrams);
 
                 /* Backoff weight (only if there are trigrams...) */
                 bgptr->bo_wt2 = sorted_id(&sorted_bo_wt2, &bo_wt2);
