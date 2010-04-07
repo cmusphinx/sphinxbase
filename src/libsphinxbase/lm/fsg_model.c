@@ -429,9 +429,15 @@ fsg_model_read(FILE * fp, logmath_t *lmath, float32 lw)
             break;
         }
     }
-    /* Save FSG name, or it will get clobbered below :( */
-    if (n == 2)
+    /* Save FSG name, or it will get clobbered below :(.
+     * If name is missing, try the default.
+     */
+    if (n == 2) {
         fsgname = ckd_salloc(wordptr[1]);
+    } else {
+        E_WARN ("FSG name is missing\n");
+        fsgname = ckd_salloc("unknown");
+    }
 
     /* Read #states */
     n = nextline_str2words(fp, &lineno, &lineptr, &wordptr);
@@ -636,7 +642,7 @@ fsg_model_write(fsg_model_t * fsg, FILE * fp)
     gnode_t *gn;
     fsg_link_t *tl;
 
-    fprintf(fp, "%s\n", FSG_MODEL_BEGIN_DECL);
+    fprintf(fp, "%s %s\n", FSG_MODEL_BEGIN_DECL, fsg->name ? fsg->name : "");
     fprintf(fp, "%s %d\n", FSG_MODEL_NUM_STATES_DECL, fsg->n_state);
     fprintf(fp, "%s %d\n", FSG_MODEL_START_STATE_DECL, fsg->start_state);
     fprintf(fp, "%s %d\n", FSG_MODEL_FINAL_STATE_DECL, fsg->final_state);
