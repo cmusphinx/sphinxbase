@@ -136,7 +136,7 @@ huff_node_free_str(huff_node_t *root, int freestr)
 }
 
 static huff_node_t *
-huff_code_build_tree(heap_t q)
+huff_code_build_tree(heap_t *q)
 {
     huff_node_t *root = NULL;
     int32 rf;
@@ -230,7 +230,7 @@ huff_code_build_int(int32 const *values, int32 const *frequencies, int nvals)
 {
     huff_code_t *hc;
     huff_node_t *root;
-    heap_t q;
+    heap_t *q;
     int i;
 
     hc = ckd_calloc(1, sizeof(*hc));
@@ -270,7 +270,7 @@ huff_code_build_str(char * const *values, int32 const *frequencies, int nvals)
 {
     huff_code_t *hc;
     huff_node_t *root;
-    heap_t q;
+    heap_t *q;
     int i;
 
     hc = ckd_calloc(1, sizeof(*hc));

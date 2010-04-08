@@ -71,16 +71,24 @@
 #include "err.h"
 #include "ckd_alloc.h"
 
-
-/** One node on the heap */
-typedef struct heap_s {
-    void *data;                 /* Application data at this node */
-    int32 val;                  /* Associated with above application data; according to which
+/**
+ * One node on the heap
+ */
+typedef struct heapnode_s {
+    void *data;                 /**< Application data at this node */
+    int32 val;                  /**< Associated with above application data; according to which
                                    heap is sorted (in ascending order) */
-    int32 nl, nr;               /* #left/right descendants of this node (for balancing heap) */
-    struct heap_s *l;           /* Root of left descendant heap */
-    struct heap_s *r;           /* Root of right descendant heap */
+    int32 nl, nr;               /**< #left/right descendants of this node (for balancing heap) */
+    struct heapnode_s *l;       /**< Root of left descendant heap */
+    struct heapnode_s *r;       /**< Root of right descendant heap */
 } heapnode_t;
+
+/**
+ * Internal heap data structure.
+ */
+struct heap_s {
+    heapnode_t *top;
+};
 
 
 #if 0
@@ -101,15 +109,11 @@ heap_dump(heapnode_t * top, int32 level)
 #endif
 
 
-heap_t
+heap_t *
 heap_new(void)
 {
-    heapnode_t **h;
-
-    h = (heapnode_t **) ckd_calloc(1, sizeof(heapnode_t *));
-    *h = NULL;
-
-    return ((heap_t) h);
+    heap_t *h = ckd_calloc(1, sizeof(*h));
+    return h;
 }
 
 
@@ -153,15 +157,10 @@ subheap_insert(heapnode_t * root, void *data, int32 val)
 }
 
 
-int32
-heap_insert(heap_t heap, void *data, int32 val)
+int
+heap_insert(heap_t *heap, void *data, int32 val)
 {
-    heapnode_t **hp;
-
-    hp = (heapnode_t **) heap;
-
-    *hp = subheap_insert(*hp, data, val);
-
+    heap->top = subheap_insert(heap->top, data, val);
     return 0;
 }
 
@@ -206,65 +205,46 @@ subheap_pop(heapnode_t * root)
 }
 
 
-int32
-heap_pop(heap_t heap, void **data, int32 * val)
+int
+heap_pop(heap_t *heap, void **data, int32 * val)
 {
-    heapnode_t **hp, *h;
-
-    hp = (heapnode_t **) heap;
-    h = *hp;
-
-    if (!h)
+    if (heap->top == NULL)
         return 0;
-
-    *data = h->data;
-    *val = h->val;
-
-    *hp = subheap_pop(h);
-
+    *data = heap->top->data;
+    *val = heap->top->val;
+    heap->top = subheap_pop(heap->top);
     return 1;
 }
 
 
-int32
-heap_top(heap_t heap, void **data, int32 * val)
+int
+heap_top(heap_t *heap, void **data, int32 * val)
 {
-    heapnode_t **hp, *h;
-
-    hp = (heapnode_t **) heap;
-    h = *hp;
-
-    if (!h)
+    if (heap->top == NULL)
         return 0;
-
-    *data = h->data;
-    *val = h->val;
-
+    *data = heap->top->data;
+    *val = heap->top->val;
     return 1;
 }
 
-int32
-heap_size(heap_t heap)
+size_t
+heap_size(heap_t *heap)
 {
-    heapnode_t **hp, *h;
-
-    hp = (heapnode_t **) heap;
-    h = *hp;
-
-    if (h == NULL)
+    if (heap->top == NULL)
         return 0;
-    return h->nl + h->nr + 1;
+    return heap->top->nl + heap->top->nr + 1;
 }
 
-int32
-heap_destroy(heap_t heap)
+int
+heap_destroy(heap_t *heap)
 {
     void *data;
     int32 val;
 
     /* Empty the heap and free it */
-    while (heap_pop(heap, &data, &val) > 0);
-    ckd_free((char *) heap);
+    while (heap_pop(heap, &data, &val) > 0)
+        ;
+    ckd_free(heap);
 
     return 0;
 }

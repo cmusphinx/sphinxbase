@@ -694,6 +694,9 @@ hash_table_free(hash_table_t * h)
     hash_entry_t *e, *e2;
     int32 i;
 
+    if (h == NULL)
+        return;
+
     /* Free additional entries created for key collision cases */
     for (i = 0; i < h->size; i++) {
         for (e = h->table[i].next; e; e = e2) {

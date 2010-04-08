@@ -88,18 +88,15 @@ extern "C" {
 }
 #endif
 
-/* FIXME.  This is dumb, it should use an opaque structure, at least
- * (and, that would still be binary compatible, too) */
-typedef void *heap_t;
 
-
+typedef struct heap_s heap_t;
 
 
 /**
  * Allocate a new heap and return handle to it.
  */
 SPHINXBASE_EXPORT
-heap_t heap_new ( void );
+heap_t *heap_new(void);
 
 
 /**
@@ -107,9 +104,9 @@ heap_t heap_new ( void );
  * Return value: 0 if successful, -1 otherwise.
  */
 SPHINXBASE_EXPORT
-int32 heap_insert (heap_t heap,	/**< In: Heap into which item is to be inserted */
-		   void *data,	/**< In: Application-determined data pointer */
-		   int32 val	/**< In: According to item entered in sorted heap */
+int heap_insert(heap_t *heap,	/**< In: Heap into which item is to be inserted */
+                void *data,	/**< In: Application-determined data pointer */
+                int32 val	/**< In: According to item entered in sorted heap */
 	);
 /**
  * Return the topmost item in the heap.
@@ -117,21 +114,21 @@ int32 heap_insert (heap_t heap,	/**< In: Heap into which item is to be inserted 
  * 0 if heap is empty; -1 if some error occurred.
  */
 SPHINXBASE_EXPORT
-int32 heap_top (heap_t heap,	/**< In: Heap whose topmost item is to be returned */
-		void **data,	/**< Out: Data pointer associated with the topmost item */
-		int32 *val	/**< Out: Value associated with the topmost item */
+int heap_top(heap_t *heap,	/**< In: Heap whose topmost item is to be returned */
+             void **data,	/**< Out: Data pointer associated with the topmost item */
+             int32 *val		/**< Out: Value associated with the topmost item */
 	);
 /**
  * Like heap_top but also pop the top item off the heap.
  */
 SPHINXBASE_EXPORT
-int32 heap_pop (heap_t heap, void **data, int32 *val);
+int heap_pop(heap_t *heap, void **data, int32 *val);
 
 /**
  * Return the number of items in the heap.
  */
 SPHINXBASE_EXPORT
-int32 heap_size(heap_t heap);
+size_t heap_size(heap_t *heap);
 
 /**
  * Destroy the given heap; free the heap nodes.  NOTE: Data pointers in the nodes are NOT freed.
@@ -139,7 +136,7 @@ int32 heap_size(heap_t heap);
  */
 
 SPHINXBASE_EXPORT
-int32 heap_destroy (heap_t heap);
+int heap_destroy(heap_t *heap);
 
 #ifdef __cplusplus
 }
