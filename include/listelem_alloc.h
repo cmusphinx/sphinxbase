@@ -77,16 +77,28 @@ SPHINXBASE_EXPORT
 void listelem_alloc_free(listelem_alloc_t *le);
 
 
-/** 
- * Allocate a list element and return pointer to it.
- */
 SPHINXBASE_EXPORT
 void *__listelem_malloc__(listelem_alloc_t *le, char *file, int line);
 
 /** 
- * Macro of __listelem_malloc__
+ * Allocate a list element and return pointer to it.
  */
 #define listelem_malloc(le)	__listelem_malloc__((le),__FILE__,__LINE__)
+
+SPHINXBASE_EXPORT
+void *__listelem_malloc_id__(listelem_alloc_t *le, char *file, int line,
+                             int32 *out_id);
+
+/**
+ * Allocate a list element, returning a unique identifier.
+ */
+#define listelem_malloc_id(le, oid)	__listelem_malloc_id__((le),__FILE__,__LINE__,(oid))
+
+/**
+ * Retrieve a list element by its identifier.
+ */
+SPHINXBASE_EXPORT
+void *listelem_get_item(listelem_alloc_t *le, int32 id);
 
 /**
  * Free list element of given size 

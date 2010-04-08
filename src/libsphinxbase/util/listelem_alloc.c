@@ -68,11 +68,15 @@ struct listelem_alloc_s {
     size_t elemsize;            /**< Number of (char *) in element */
     size_t blocksize;           /**< Number of elements to alloc if run out of free elments */
     size_t blk_alloc;           /**< Number of alloc operations before increasing blocksize */
+    size_t n_blocks;            /**< Number of blocks allocated so far. */
     size_t n_alloc;
     size_t n_freed;
 };
 
 #define MIN_ALLOC	50      /**< Minimum number of elements to allocate in one block */
+#define BLKID_SHIFT     16      /**< Bit position of block number in element ID */
+#define BLKID_MASK ((1<<BLKID_SHIFT)-1)
+
 /**
  * Allocate a new block of elements.
  */
@@ -97,7 +101,15 @@ listelem_alloc_init(size_t elemsize)
     list->blocks = NULL;
     list->elemsize = elemsize;
     list->blocksize = MIN_ALLOC;
-    list->blk_alloc = (1 << 18) / (list->blocksize * sizeof(elemsize));
+    /* Intent of this is to increase block size once we allocate
+     * 256KiB (i.e. 1<<18). If somehow the element size is big enough
+     * to overflow that, just fail, people should use malloc anyway. */
+    list->blk_alloc = (1 << 18) / (list->blocksize * elemsize);
+    if (list->blk_alloc <= 0) {
+        E_ERROR("Element size * block size exceeds 256k, use malloc instead.\n");
+        ckd_free(list);
+        return NULL;
+    }
     list->n_alloc = 0;
     list->n_freed = 0;
 
@@ -126,11 +138,13 @@ listelem_add_block(listelem_alloc_t *list, char *caller_file, int caller_line)
 
     /* Check if block size should be increased (if many requests for this size) */
     if (list->blk_alloc == 0) {
+        /* See above.  No sense in allocating blocks bigger than
+         * 256KiB (well, actually, there might be, but we'll worry
+         * about that later). */
 	list->blocksize <<= 1;
-	list->blk_alloc =
-	    (1 << 18) / (list->blocksize * sizeof(list->elemsize));
-	if (list->blk_alloc <= 0)
-	    list->blk_alloc = (size_t) 0x70000000;   /* Limit blocksize to new value */
+        if (list->blocksize * list->elemsize > (1 << 18))
+            list->blocksize = (1 << 18) / list->elemsize;
+	list->blk_alloc = (1 << 18) / (list->blocksize * list->elemsize);
     }
 
     /* Allocate block */
@@ -147,7 +161,8 @@ listelem_add_block(listelem_alloc_t *list, char *caller_file, int caller_line)
     }
     /* Make sure the last element's forward pointer is NULL */
     *cpp = NULL;
-    --(list->blk_alloc);
+    --list->blk_alloc;
+    ++list->n_blocks;
 }
 
 
@@ -168,6 +183,51 @@ __listelem_malloc__(listelem_alloc_t *list, char *caller_file, int caller_line)
     return ptr;
 }
 
+void *
+__listelem_malloc_id__(listelem_alloc_t *list, char *caller_file,
+                       int caller_line, int32 *out_id)
+{
+    char **block;
+    void *ptr;
+    size_t ptridx;
+
+    /* Allocate a new block if list empty */
+    if (list->freelist == NULL)
+	listelem_add_block(list, caller_file, caller_line);
+
+    block = (char **)gnode_ptr(list->blocks);
+
+    /* Unlink and return first element in freelist */
+    ptr = list->freelist;
+    list->freelist = (char **) (*(list->freelist));
+    (list->n_alloc)++;
+
+    ptridx = ((char **)ptr - block) / (list->elemsize / sizeof(void *));
+    if (out_id)
+        *out_id = ((list->n_blocks - 1) << BLKID_SHIFT) | ptridx;
+
+    return ptr;
+}
+
+void *
+listelem_get_item(listelem_alloc_t *list, int32 id)
+{
+    int32 block, ptridx, i;
+    gnode_t *gn;
+
+    block = (id >> BLKID_SHIFT) & BLKID_MASK;
+    ptridx = id & BLKID_MASK;
+
+    i = list->n_blocks - (block + 1);
+    gn = list->blocks;
+    while (i > 0) {
+        gn = gnode_next(gn);
+        --i;
+    }
+
+    return (void *)((char **)gnode_ptr(gn)
+                    + ptridx * (list->elemsize / sizeof(void *)));
+}
 
 void
 __listelem_free__(listelem_alloc_t *list, void *elem,
@@ -177,6 +237,10 @@ __listelem_free__(listelem_alloc_t *list, void *elem,
 
     /*
      * Insert freed item at head of list.
+     *
+     * FIXME: As far as I can tell, this will not allow the freelist
+     * to cross blocks.  So it will waste memory (although it makes
+     * listitem_malloc_id() simpler this way).
      */
     cpp = (char **) elem;
     *cpp = (char *) list->freelist;
@@ -202,6 +266,9 @@ listelem_stats(listelem_alloc_t *list)
          (unsigned long)list->n_alloc,
          (unsigned long)list->n_freed,
          (unsigned long)n);
+    E_INFO("blk_alloc %lu, #blocks %lu\n",
+           (unsigned long)list->blk_alloc,
+           (unsigned long)list->n_blocks);
     E_INFO("Allocated blocks:\n");
     for (gn = list->blocks; gn; gn = gnode_next(gn))
 	E_INFO("%p\n", gnode_ptr(gn));
