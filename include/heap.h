@@ -68,6 +68,7 @@
 /* Win32/WinCE DLL gunk */
 #include <sphinxbase_export.h>
 #include <prim_type.h>
+#include <stdlib.h>
 
   /** \file heap.h
    * \brief Heap Implementation. 
@@ -123,6 +124,12 @@ int heap_top(heap_t *heap,	/**< In: Heap whose topmost item is to be returned */
  */
 SPHINXBASE_EXPORT
 int heap_pop(heap_t *heap, void **data, int32 *val);
+
+/**
+ * Remove an item from the heap.
+ */
+SPHINXBASE_EXPORT
+int heap_remove(heap_t *heap, void *data);
 
 /**
  * Return the number of items in the heap.

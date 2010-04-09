@@ -227,6 +227,48 @@ heap_top(heap_t *heap, void **data, int32 * val)
     return 1;
 }
 
+static int
+heap_remove_one(heap_t *heap, heapnode_t *top, void *data)
+{
+    if (top == NULL)
+        return -1;
+    else if (top->data == data) {
+        assert(top == heap->top);
+        heap->top = subheap_pop(heap->top);
+        return 0;
+    }
+    if (top->l) {
+        if (top->l->data == data) {
+            top->l = subheap_pop(top->l);
+            --top->nl;
+            return 0;
+        }
+        else if (heap_remove_one(heap, top->l, data) == 0) {
+            --top->nl;
+            return 0;
+        }
+    }
+    if (top->r) {
+        if (top->r->data == data) {
+            top->r = subheap_pop(top->r);
+            --top->nr;
+            return 0;
+        }
+        else if (heap_remove_one(heap, top->r, data) == 0) {
+            --top->nr;
+            return 0;
+        }
+    }
+    return -1;
+}
+
+int
+heap_remove(heap_t *heap, void *data)
+{
+    return heap_remove_one(heap, heap->top, data);
+}
+
+
 size_t
 heap_size(heap_t *heap)
 {
