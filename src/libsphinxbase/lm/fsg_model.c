@@ -422,7 +422,7 @@ fsg_model_read(FILE * fp, logmath_t *lmath, float32 lw)
 
         if ((strcmp(wordptr[0], FSG_MODEL_BEGIN_DECL) == 0)) {
             if (n > 2) {
-                E_ERROR("Line[%d]: malformed FSG_BEGIN delcaration\n",
+                E_ERROR("Line[%d]: malformed FSG_BEGIN declaration\n",
                         lineno);
                 goto parse_error;
             }
