@@ -134,7 +134,7 @@ main(int argc, char *argv[])
         if (cmd_ln_str_r(config, "-ifmt")) {
             if ((itype = ngram_str_to_type(cmd_ln_str_r(config, "-ifmt")))
                 == NGRAM_INVALID) {
-                E_ERROR("Invaild input type %s\n", cmd_ln_str_r(config, "-ifmt"));
+                E_ERROR("Invalid input type %s\n", cmd_ln_str_r(config, "-ifmt"));
                 goto error_out;
             }
             lm = ngram_model_read(config, cmd_ln_str_r(config, "-i"),
@@ -149,7 +149,7 @@ main(int argc, char *argv[])
         if (cmd_ln_str_r(config, "-ofmt")) {
             if ((otype = ngram_str_to_type(cmd_ln_str_r(config, "-ofmt")))
                 == NGRAM_INVALID) {
-                E_ERROR("Invaild output type %s\n", cmd_ln_str_r(config, "-ofmt"));
+                E_ERROR("Invalid output type %s\n", cmd_ln_str_r(config, "-ofmt"));
                 goto error_out;
             }
         }
