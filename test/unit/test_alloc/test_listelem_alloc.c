@@ -37,18 +37,28 @@ main(int argc, char *argv[])
 	listelem_stats(le);
 	listelem_alloc_free(le);
 
-	TEST_ASSERT(le = listelem_alloc_init(sizeof(struct bogus)));
-	listelem_stats(le);
-	for (i = 0; i < 60000; ++i) {
-		int32 id;
-		bogus1 = listelem_malloc_id(le, &id);
-		TEST_EQUAL(bogus1, listelem_get_item(le, id));
+	{
+		struct bogus *bogus[600];
+		int32 bogus_id[600];
+
+		le = listelem_alloc_init(sizeof(struct bogus));
+		for (i = 0; i < 600; ++i)
+			bogus[i] = listelem_malloc_id(le, bogus_id + i);
+		listelem_stats(le);
+		for (i = 0; i < 600; ++i) {
+			TEST_EQUAL(bogus[i], listelem_get_item(le, bogus_id[i]));
+		}
+		for (i = 0; i < 600; ++i)
+			listelem_free(le, bogus[i]);
+		listelem_stats(le);
+		for (i = 0; i < 600; ++i)
+			bogus[i] = listelem_malloc_id(le, bogus_id + i);
+		listelem_stats(le);
+		for (i = 0; i < 600; ++i)
+			TEST_EQUAL(bogus[i], listelem_get_item(le, bogus_id[i]));
+		listelem_alloc_free(le);
 	}
-	for (i = 0; i < 40; ++i) {
-		listelem_free(le, listelem_get_item(le, i));
-	}
-	listelem_stats(le);
-	listelem_alloc_free(le);
+
 
 	return 0;
 }
