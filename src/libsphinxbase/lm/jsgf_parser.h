@@ -67,7 +67,7 @@ typedef union YYSTYPE
 {
 
 /* Line 1676 of yacc.c  */
-#line 58 "jsgf_parser.y"
+#line 63 "jsgf_parser.y"
 
        char *name;
        float weight;

@@ -46,6 +46,11 @@
 #include "jsgf_parser.h"
 #include "jsgf_scanner.h"
 
+/* Suppress warnings from generated code */
+#if defined _MSC_VER
+#pragma warning(disable: 4273)
+#endif
+
 void yyerror(yyscan_t lex, jsgf_t *jsgf, const char *s);
 
 %}
