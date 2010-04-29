@@ -123,8 +123,10 @@ detect_riff(sphinx_wave2feat_t *wtf, char const *infile)
         return -1;
     }
     /* Make sure it is actually a RIFF file. */
-    if (0 != memcmp(hdr.rifftag, "RIFF", 4))
+    if (0 != memcmp(hdr.rifftag, "RIFF", 4)) {
+        fclose(fh);
         return FALSE;
+    }
 
     /* Get relevant information. */
     cmd_ln_set_int32_r(wtf->config, "-nchans", hdr.numchannels);
@@ -625,7 +627,7 @@ detect_audio_type(sphinx_wave2feat_t *wtf, char const *infile)
         || cmd_ln_boolean_r(wtf->config, "-cep2spec")) {
         int rv = mfcc_type.detect(wtf, infile);
         if (rv == -1)
-            return NULL;
+            goto error_out;
         return &mfcc_type;
     }
 
@@ -636,8 +638,9 @@ detect_audio_type(sphinx_wave2feat_t *wtf, char const *infile)
         if (cmd_ln_boolean_r(wtf->config, atype->name)) {
             rv = (*atype->detect)(wtf, infile);
             if (rv == -1)
-                return NULL;
-            break;
+                goto error_out;
+            else if (rv == TRUE)
+                break;
         }
     }
     if (i == ntypes) {
@@ -647,14 +650,19 @@ detect_audio_type(sphinx_wave2feat_t *wtf, char const *infile)
             atype = &types[i];
             rv = (*atype->detect)(wtf, infile);
             if (rv == -1)
-                return NULL;
+                goto error_out;
             else if (rv == TRUE)
-            break;
+                break;
         }
         if (i == ntypes)
-            atype = NULL;
+            goto error_out;
     }
     return atype;
+ error_out:
+    if (wtf->infh)
+        fclose(wtf->infh);
+    wtf->infh = NULL;
+    return NULL;
 }
 
 int
