@@ -69,6 +69,9 @@ cdef extern from "ngram_model.h":
                                     char *file_name,
                                     ngram_file_type_t file_type,
                                     logmath_t *lmath)
+    ngram_model_t *ngram_model_set_read(cmd_ln_t *config,
+                                        char *lmctlfile,
+                                        logmath_t *lmath)
     ngram_model_t *ngram_model_retain(ngram_model_t *model)
     int ngram_model_free(ngram_model_t *model)
 

@@ -136,11 +136,13 @@ cdef class NGramModel:
     @param uw: Weight to give unigrams when interpolating with uniform distribution.
     @type uw: float
     """
-    def __init__(self, file=None, lw=1.0, wip=1.0, uw=1.0):
+    def __init__(self, file=None, lw=1.0, wip=1.0, uw=1.0, lmctl=None):
         self.lmath = logmath_init(1.0001, 0, 0)
         if file:
             self.lm = ngram_model_read(NULL, file, NGRAM_AUTO, self.lmath)
             ngram_model_apply_weights(self.lm, lw, wip, uw)
+        elif lmctl:
+            self.lm = ngram_model_set_read(NULL, lmctl, self.lmath)
         else:
             self.lm = NULL
         self.lw = lw
