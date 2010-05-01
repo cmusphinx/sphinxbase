@@ -1,4 +1,5 @@
 EXTRA_DIST =					\
+	testfuncs_cygwin.sh			\
 	chan3.cepview				\
 	chan3-dither.cepview			\
 	chan3.logspec				\
