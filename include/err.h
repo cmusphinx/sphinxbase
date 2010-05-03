@@ -34,27 +34,6 @@
  * ====================================================================
  *
  */
-/*
- * err.h -- Package for checking and catching common errors, printing out
- *		errors nicely, etc.
- *
- * **********************************************
- * CMU ARPA Speech Project
- *
- * Copyright (c) 1999 Carnegie Mellon University.
- * ALL RIGHTS RESERVED.
- * **********************************************
- *
- * 6/01/95  Paul Placeway  CMU speech group
- * $Log: err.h,v $
- * Revision 1.10  2005/06/22 03:00:23  arthchan2003
- * 1, Add a E_INFO that produce no file names. 2, Add  keyword.
- *
- * Revision 1.3  2005/06/15 04:21:46  archan
- * 1, Fixed doxygen-documentation, 2, Add  keyword such that changes will be logged into a file.
- *
- */
-
 
 #ifndef _LIBUTIL_ERR_H_
 #define _LIBUTIL_ERR_H_
@@ -72,10 +51,19 @@
  * @file err.h
  * @brief Implementation of logging routines. 
  *
- * Logging, warning and error message output funtionality is provided in this file.
+ * Logging, warning, debug and error message output funtionality is provided in this file.
+ * Sphinxbase defines several level of logging messages - INFO, WARNING, ERROR, FATAL. By
+ * default output goes to standard error output.
+ *
+ * Logging is implemented through macros. They take same arguments as printf: format string and 
+ * values. By default source file name and source line are prepended to the message. Log output 
+ * could be redirected to any file using err_set_logfp() and err_set_logfile() functions. To disable 
+ * logging in your application, call err_set_logfp(NULL).
+ *
+ * It's possible to log multiline info messages, to do that you need to start message with
+ * E_INFO and output other lines with E_INFOCONT.
  */
 
-/* 01.18.01 RAH, allow for C++ compiles */
 #ifdef __cplusplus
 extern "C" {
 #endif
