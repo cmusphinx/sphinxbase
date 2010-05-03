@@ -110,6 +110,17 @@ static const arg_t defn[] = {
   { NULL, 0, NULL, NULL }
 };
 
+static void
+usagemsg(char *pgm)
+{
+    E_INFO("Usage: %s -i <input.lm> \\\n", pgm);
+    E_INFOCONT("\t[-ifmt txt] [-ofmt dmp]\n");
+    E_INFOCONT("\t-o <output.lm.DMP>\n");
+
+    exit(0);
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -121,6 +132,10 @@ main(int argc, char *argv[])
 
 	if ((config = cmd_ln_parse_r(NULL, defn, argc, argv, TRUE)) == NULL)
 		return 1;
+		
+	if (cmd_ln_boolean_r(config, "-help")) {
+	    usagemsg(argv[0]);
+	}
 
         err_set_debug_level(cmd_ln_int32_r(config, "-debug"));
 
@@ -129,7 +144,13 @@ main(int argc, char *argv[])
 	     (cmd_ln_float64_r(config, "-logbase"), 0, 0)) == NULL) {
 		E_FATAL("Failed to initialize log math\n");
 	}
-
+	
+	if (cmd_ln_str_r(config, "-i") == NULL || cmd_ln_str_r(config, "-i") == NULL) {
+            E_ERROR("Please specify both input and output models\n");
+            goto error_out;
+        }
+	    
+	
 	/* Load the input language model. */
         if (cmd_ln_str_r(config, "-ifmt")) {
             if ((itype = ngram_str_to_type(cmd_ln_str_r(config, "-ifmt")))
