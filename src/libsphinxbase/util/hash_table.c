@@ -591,8 +591,10 @@ hash_table_display(hash_table_t * h, int32 showdisplay)
             E_INFOCONT("|key:");
             if (showdisplay)
                 E_INFOCONT("%s", e->key);
+            else
+                E_INFOCONT("%p", e->key);
 
-            E_INFOCONT("|len:%d|val=%d|->", e->len, e->val);
+            E_INFOCONT("|len:%d|val=%p|->", e->len, e->val);
             if (e->next == NULL) {
                 E_INFOCONT("NULL\n");
             }
@@ -603,7 +605,7 @@ hash_table_display(hash_table_t * h, int32 showdisplay)
                 if (showdisplay)
                     E_INFOCONT("%s", e->key);
 
-                E_INFOCONT("|len:%d|val=%d|->", e->len, e->val);
+                E_INFOCONT("|len:%d|val=%p|->", e->len, e->val);
                 if (e->next == NULL) {
                     E_INFOCONT("NULL\n");
                 }

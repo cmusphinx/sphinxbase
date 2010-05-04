@@ -147,14 +147,15 @@ fsg_model_trans_add(fsg_model_t * fsg,
 
     /* Add it to the list of transitions and update the hash table */
     gl = glist_add_ptr(gl, (void *)link);
-    hash_table_replace_bkey(fsg->trans[from].trans, (char const *)&link->to_state,
+    hash_table_replace_bkey(fsg->trans[from].trans,
+                            (char const *)&link->to_state,
                             sizeof(link->to_state), gl);
 }
 
 int32
 fsg_model_tag_trans_add(fsg_model_t * fsg, int32 from, int32 to, int32 logp, int32 wid)
 {
-    fsg_link_t *link;
+    fsg_link_t *link, *link2;
 
     /* Check for transition probability */
     if (logp > 0) {
@@ -187,9 +188,12 @@ fsg_model_tag_trans_add(fsg_model_t * fsg, int32 from, int32 to, int32 logp, int
     link->logs2prob = logp;
     link->wid = -1;
 
-    hash_table_enter_bkey(fsg->trans[from].null_trans,
-                          (char const *)&link->to_state,
-                          sizeof(link->to_state), link);
+    link2 = (fsg_link_t *)
+        hash_table_enter_bkey(fsg->trans[from].null_trans,
+                              (char const *)&link->to_state,
+                              sizeof(link->to_state), link);
+    assert(link == link2);
+
     return 1;
 }
 
@@ -309,11 +313,11 @@ fsg_model_arcs(fsg_model_t *fsg, int32 i)
 fsg_link_t *
 fsg_arciter_get(fsg_arciter_t *itor)
 {
-    /* Iterate over null arcs first, there shouldn't be too many of them. */
-    if (itor->null_itor)
-        return (fsg_link_t *)hash_entry_val(itor->null_itor->ent);
-    else if (itor->gn)
+    /* Iterate over non-null arcs first. */
+    if (itor->gn)
         return (fsg_link_t *)gnode_ptr(itor->gn);
+    else if (itor->null_itor)
+        return (fsg_link_t *)hash_entry_val(itor->null_itor->ent);
     else
         return NULL;
 }
@@ -321,31 +325,24 @@ fsg_arciter_get(fsg_arciter_t *itor)
 fsg_arciter_t *
 fsg_arciter_next(fsg_arciter_t *itor)
 {
-    /* Iterate over null arcs first, there shouldn't be too many of them. */
-    if (itor->null_itor) {
-        itor->null_itor = hash_table_iter_next(itor->null_itor);
-        /* Move to non-null arcs. */
-        if (itor->null_itor == NULL) {
-            /* Unless of course there aren't any. */
-            if (itor->itor == NULL)
+    /* Iterate over non-null arcs first. */
+    if (itor->gn) {
+        itor->gn = gnode_next(itor->gn);
+        /* Move to the next destination arc. */
+        if (itor->gn == NULL) {
+            itor->itor = hash_table_iter_next(itor->itor);
+            if (itor->itor != NULL)
+                itor->gn = hash_entry_val(itor->itor->ent);
+            else if (itor->null_itor == NULL)
                 goto stop_iteration;
-            itor->gn = hash_entry_val(itor->itor->ent);
         }
     }
     else {
-        /* This shouldn't happen, because the only place we ever move
-         * itor->gn forward is below. */
-        assert(itor->gn != NULL);
-        itor->gn = gnode_next(itor->gn);
-        if (itor->gn == NULL) {
-            itor->itor = hash_table_iter_next(itor->itor);
-            if (itor->itor == NULL)
-                goto stop_iteration;
-            itor->gn = hash_entry_val(itor->itor->ent);
-            /* This is unlikely, but we need to account for it. */
-            if (itor->gn == NULL)
-                goto stop_iteration;
-        }
+        if (itor->null_itor == NULL)
+            goto stop_iteration;
+        itor->null_itor = hash_table_iter_next(itor->null_itor);
+        if (itor->null_itor == NULL)
+            goto stop_iteration;
     }
     return itor;
 stop_iteration:
@@ -464,19 +461,10 @@ fsg_model_add_alt(fsg_model_t * fsg, char const *baseword,
     ntrans = 0;
     for (i = 0; i < fsg->n_state; ++i) {
         for (j = 0; j < fsg->n_state; ++j) {
-            glist_t trans;
+            glist_t trans, oldtrans;
             gnode_t *gn;
-            /* We need to pass an allocated pointer as the key to
-             * hash_table_enter/hash_table_replace, so borrow one from
-             * a link somewhere. */
-            int32 *key = NULL;
 
-            trans = fsg_model_trans(fsg, i, j);
-            if (trans) {
-                fsg_link_t *fl = gnode_ptr(trans);
-                key = &fl->to_state;
-                assert(*key == j);
-            }
+            oldtrans = trans = fsg_model_trans(fsg, i, j);
             for (gn = trans; gn; gn = gnode_next(gn)) {
                 fsg_link_t *fl = gnode_ptr(gn);
                 if (fl->wid == basewid) {
@@ -488,19 +476,21 @@ fsg_model_add_alt(fsg_model_t * fsg, char const *baseword,
                     link->to_state = j;
                     link->logs2prob = fl->logs2prob; /* FIXME!!!??? */
                     link->wid = altwid;
-                    if (key == NULL) {
-                        key = &link->to_state;
-                        assert(*key == j);
-                    }
 
                     trans =
                         glist_add_ptr(trans, (void *) link);
                     ++ntrans;
                 }
             }
-            if (key)
-                hash_table_replace_bkey(fsg->trans[i].trans, (char const *)key,
-                                        sizeof(*key), trans);
+            if (trans != NULL && trans != oldtrans) {
+                fsg_link_t *fl = gnode_ptr(trans);
+                glist_t trans2;
+                trans2 =
+                    hash_table_replace_bkey(fsg->trans[i].trans,
+                                            (char const *)&fl->to_state,
+                                            sizeof(fl->to_state), trans);
+                assert(trans2 == oldtrans);
+            }
         }
     }
 
@@ -795,35 +785,23 @@ fsg_model_free(fsg_model_t * fsg)
 void
 fsg_model_write(fsg_model_t * fsg, FILE * fp)
 {
-    int32 i, j;
-    gnode_t *gn;
-    fsg_link_t *tl;
-
+    int32 i;
+    
     fprintf(fp, "%s %s\n", FSG_MODEL_BEGIN_DECL, fsg->name ? fsg->name : "");
     fprintf(fp, "%s %d\n", FSG_MODEL_NUM_STATES_DECL, fsg->n_state);
     fprintf(fp, "%s %d\n", FSG_MODEL_START_STATE_DECL, fsg->start_state);
     fprintf(fp, "%s %d\n", FSG_MODEL_FINAL_STATE_DECL, fsg->final_state);
 
     for (i = 0; i < fsg->n_state; i++) {
-        for (j = 0; j < fsg->n_state; j++) {
-            /* Print non-null transitions */
-            for (gn = fsg_model_trans(fsg, i, j); gn; gn = gnode_next(gn)) {
-                tl = (fsg_link_t *) gnode_ptr(gn);
+        fsg_arciter_t *itor;
 
-                fprintf(fp, "%s %d %d %f %s\n", FSG_MODEL_TRANSITION_DECL,
-                        tl->from_state, tl->to_state,
-                        logmath_exp(fsg->lmath, (int32)(tl->logs2prob / fsg->lw)),
-                        (tl->wid < 0) ? "" : fsg_model_word_str(fsg, tl->wid));
-            }
+        for (itor = fsg_model_arcs(fsg, i); itor; itor = fsg_arciter_next(itor)) {
+            fsg_link_t *tl = fsg_arciter_get(itor);
 
-            /* Print null transitions */
-            tl = fsg_model_null_trans(fsg, i, j);
-            if (tl) {
-                fprintf(fp, "%s %d %d %f\n",
-                        FSG_MODEL_TRANSITION_DECL,
-                        tl->from_state, tl->to_state,
-                        logmath_exp(fsg->lmath, (int32)(tl->logs2prob / fsg->lw)));
-            }
+            fprintf(fp, "%s %d %d %f %s\n", FSG_MODEL_TRANSITION_DECL,
+                    tl->from_state, tl->to_state,
+                    logmath_exp(fsg->lmath, (int32)(tl->logs2prob / fsg->lw)),
+                    (tl->wid < 0) ? "" : fsg_model_word_str(fsg, tl->wid));
         }
     }
 
@@ -854,29 +832,15 @@ fsg_model_writefile(fsg_model_t *fsg, char const *file)
 static void
 fsg_model_write_fsm_trans(fsg_model_t *fsg, int i, FILE *fp)
 {
-    int j;
+    fsg_arciter_t *itor;
 
-    for (j = 0; j < fsg->n_state; j++) {
-        gnode_t *gn;
-        fsg_link_t *tl;
-
-        /* Print non-null transitions */
-        for (gn = fsg_model_trans(fsg, i, j); gn; gn = gnode_next(gn)) {
-            tl = (fsg_link_t *) gnode_ptr(gn);
-
-            fprintf(fp, "%d %d %s %f\n",
-                    tl->from_state, tl->to_state,
-                    (tl->wid < 0) ? "<eps>" : fsg_model_word_str(fsg, tl->wid),
-                    -logmath_log_to_ln(fsg->lmath, tl->logs2prob / fsg->lw));
-        }
-
-        /* Print null transitions */
-        tl = fsg_model_null_trans(fsg, i, j);
-        if (tl) {
-            fprintf(fp, "%d %d <eps> %f\n",
-                    tl->from_state, tl->to_state,
-                    -logmath_log_to_ln(fsg->lmath, tl->logs2prob / fsg->lw));
-        }
+    for (itor = fsg_model_arcs(fsg, i); itor;
+         itor = fsg_arciter_next(itor)) {
+        fsg_link_t *tl = fsg_arciter_get(itor);
+        fprintf(fp, "%d %d %s %f\n",
+                tl->from_state, tl->to_state,
+                (tl->wid < 0) ? "<eps>" : fsg_model_word_str(fsg, tl->wid),
+                -logmath_log_to_ln(fsg->lmath, tl->logs2prob / fsg->lw));
     }
 }
 
