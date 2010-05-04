@@ -56,6 +56,7 @@
 #include <glist.h>
 #include <logmath.h>
 #include <bitvec.h>
+#include <hash_table.h>
 #include <listelem_alloc.h>
 #include <sphinxbase_export.h>
 
@@ -75,6 +76,16 @@ typedef struct fsg_link_s {
 #define fsg_link_wid(l)		((l)->wid)
 #define fsg_link_logs2prob(l)	((l)->logs2prob)
 
+/**
+ * Adjacency list for a state in an FSG.
+ *
+ * Actually we use hash tables so that random access is a bit faster.
+ * Plus it allows us to make the lookup code a bit less ugly.
+ */
+typedef struct trans_list_s {
+    hash_table_t *null_trans; /* Null transitions keyed by state. */
+    hash_table_t *trans;      /* Lists of non-null transitions keyed by state. */
+} trans_list_t;
 
 /**
  * Word level FSG definition.
@@ -97,13 +108,7 @@ typedef struct fsg_model_s {
     int32 final_state;	/**< Must be in the range [0..n_state-1] */
     float32 lw;		/**< Language weight that's been applied to transition
 			   logprobs */
-    glist_t **trans;	/**< trans[i][j] = glist of non-epsilon transitions or
-			   links (fsg_link_t *) from state i to state j,
-			   if any; NULL if none. */
-    fsg_link_t ***null_trans; /**< null_trans[i][j] = epsilon or null link
-                                 from state i to j, if any; NULL if none.
-                                 (At most one null transition between two
-                                 given states.) */
+    trans_list_t *trans; /**< Transitions out of each state, if any. */
     listelem_alloc_t *link_alloc; /**< Allocator for FSG links. */
 } fsg_model_t;
 
@@ -114,8 +119,6 @@ typedef struct fsg_model_s {
 #define fsg_model_final_state(f)	((f)->final_state)
 #define fsg_model_log(f,p)		logmath_log((f)->lmath, p)
 #define fsg_model_lw(f)			((f)->lw)
-#define fsg_model_trans(f,i,j)		((f)->trans[i][j])
-#define fsg_model_null_trans(f,i,j)	((f)->null_trans[i][j])
 #define fsg_model_n_word(f)		((f)->n_word)
 #define fsg_model_word_str(f,wid)       (wid == -1 ? "(NULL)" : (f)->vocab[wid])
 
@@ -270,6 +273,18 @@ int32 fsg_model_tag_trans_add(fsg_model_t * fsg, int32 from, int32 to,
  */
 SPHINXBASE_EXPORT
 glist_t fsg_model_null_trans_closure(fsg_model_t * fsg, glist_t nulls);
+
+/**
+ * Get the list of transitions (if any) from state i to j.
+ */
+SPHINXBASE_EXPORT
+glist_t fsg_model_trans(fsg_model_t *fsg, int32 i, int32 j);
+
+/**
+ * Get the null transition (if any) from state i to j.
+ */
+SPHINXBASE_EXPORT
+fsg_link_t *fsg_model_null_trans(fsg_model_t *fsg, int32 i, int32 j);
 
 /**
  * Add silence word transitions to each state in given FSG.

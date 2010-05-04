@@ -126,6 +126,7 @@ listelem_alloc_free(listelem_alloc_t *list)
     for (gn = list->blocks; gn; gn = gnode_next(gn))
 	ckd_free(gnode_ptr(gn));
     glist_free(list->blocks);
+    glist_free(list->blocksize);
     ckd_free(list);
 }
 
