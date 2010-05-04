@@ -54,6 +54,25 @@
 
 #include "fsg_model.h"
 
+/**
+ * Adjacency list (opaque) for a state in an FSG.
+ *
+ * Actually we use hash tables so that random access is a bit faster.
+ * Plus it allows us to make the lookup code a bit less ugly.
+ */
+
+struct trans_list_s {
+    hash_table_t *null_trans; /* Null transitions keyed by state. */
+    hash_table_t *trans;      /* Lists of non-null transitions keyed by state. */
+};
+
+/**
+ * Implementation of arc iterator.
+ */
+struct fsg_arciter_s {
+    hash_iter_t *itor, *null_itor;
+    gnode_t *gn;
+};
 
 #define FSG_MODEL_BEGIN_DECL		"FSG_BEGIN"
 #define FSG_MODEL_END_DECL		"FSG_END"
@@ -268,6 +287,81 @@ fsg_model_null_trans(fsg_model_t *fsg, int32 i, int32 j)
                                sizeof(j), &val) < 0)
         return NULL;
     return (fsg_link_t *)val;
+}
+
+fsg_arciter_t *
+fsg_model_arcs(fsg_model_t *fsg, int32 i)
+{
+    fsg_arciter_t *itor;
+
+    if (fsg->trans[i].trans == NULL && fsg->trans[i].null_trans == NULL)
+        return NULL;
+    itor = ckd_calloc(1, sizeof(*itor));
+    if (fsg->trans[i].null_trans)
+        itor->null_itor = hash_table_iter(fsg->trans[i].null_trans);
+    if (fsg->trans[i].trans)
+        itor->itor = hash_table_iter(fsg->trans[i].trans);
+    if (itor->itor != NULL)
+        itor->gn = hash_entry_val(itor->itor->ent);
+    return itor;
+}
+
+fsg_link_t *
+fsg_arciter_get(fsg_arciter_t *itor)
+{
+    /* Iterate over null arcs first, there shouldn't be too many of them. */
+    if (itor->null_itor)
+        return (fsg_link_t *)hash_entry_val(itor->null_itor->ent);
+    else if (itor->gn)
+        return (fsg_link_t *)gnode_ptr(itor->gn);
+    else
+        return NULL;
+}
+
+fsg_arciter_t *
+fsg_arciter_next(fsg_arciter_t *itor)
+{
+    /* Iterate over null arcs first, there shouldn't be too many of them. */
+    if (itor->null_itor) {
+        itor->null_itor = hash_table_iter_next(itor->null_itor);
+        /* Move to non-null arcs. */
+        if (itor->null_itor == NULL) {
+            /* Unless of course there aren't any. */
+            if (itor->itor == NULL)
+                goto stop_iteration;
+            itor->gn = hash_entry_val(itor->itor->ent);
+        }
+    }
+    else {
+        /* This shouldn't happen, because the only place we ever move
+         * itor->gn forward is below. */
+        assert(itor->gn != NULL);
+        itor->gn = gnode_next(itor->gn);
+        if (itor->gn == NULL) {
+            itor->itor = hash_table_iter_next(itor->itor);
+            if (itor->itor == NULL)
+                goto stop_iteration;
+            itor->gn = hash_entry_val(itor->itor->ent);
+            /* This is unlikely, but we need to account for it. */
+            if (itor->gn == NULL)
+                goto stop_iteration;
+        }
+    }
+    return itor;
+stop_iteration:
+    fsg_arciter_free(itor);
+    return NULL;
+
+}
+
+void
+fsg_arciter_free(fsg_arciter_t *itor)
+{
+    if (itor == NULL)
+        return;
+    hash_table_iter_free(itor->null_itor);
+    hash_table_iter_free(itor->itor);
+    ckd_free(itor);
 }
 
 int

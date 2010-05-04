@@ -77,15 +77,9 @@ typedef struct fsg_link_s {
 #define fsg_link_logs2prob(l)	((l)->logs2prob)
 
 /**
- * Adjacency list for a state in an FSG.
- *
- * Actually we use hash tables so that random access is a bit faster.
- * Plus it allows us to make the lookup code a bit less ugly.
+ * Adjacency list (opaque) for a state in an FSG.
  */
-typedef struct trans_list_s {
-    hash_table_t *null_trans; /* Null transitions keyed by state. */
-    hash_table_t *trans;      /* Lists of non-null transitions keyed by state. */
-} trans_list_t;
+typedef struct trans_list_s trans_list_t;
 
 /**
  * Word level FSG definition.
@@ -121,6 +115,11 @@ typedef struct fsg_model_s {
 #define fsg_model_lw(f)			((f)->lw)
 #define fsg_model_n_word(f)		((f)->n_word)
 #define fsg_model_word_str(f,wid)       (wid == -1 ? "(NULL)" : (f)->vocab[wid])
+
+/**
+ * Iterator over arcs.
+ */
+typedef struct fsg_arciter_s fsg_arciter_t;
 
 /**
  * Have silence transitions been added?
@@ -280,6 +279,29 @@ glist_t fsg_model_null_trans_closure(fsg_model_t * fsg, glist_t nulls);
 SPHINXBASE_EXPORT
 glist_t fsg_model_trans(fsg_model_t *fsg, int32 i, int32 j);
 
+/**
+ * Get an iterator over the outgoing transitions from state i.
+ */
+SPHINXBASE_EXPORT
+fsg_arciter_t *fsg_model_arcs(fsg_model_t *fsg, int32 i);
+
+/**
+ * Get the current arc from the arc iterator.
+ */
+SPHINXBASE_EXPORT
+fsg_link_t *fsg_arciter_get(fsg_arciter_t *itor);
+
+/**
+ * Move the arc iterator forward.
+ */
+SPHINXBASE_EXPORT
+fsg_arciter_t *fsg_arciter_next(fsg_arciter_t *itor);
+
+/**
+ * Free the arc iterator (early termination)
+ */
+SPHINXBASE_EXPORT
+void fsg_arciter_free(fsg_arciter_t *itor);
 /**
  * Get the null transition (if any) from state i to j.
  */
