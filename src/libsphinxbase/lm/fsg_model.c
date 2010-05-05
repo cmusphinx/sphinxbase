@@ -437,7 +437,7 @@ int
 fsg_model_add_alt(fsg_model_t * fsg, char const *baseword,
                   char const *altword)
 {
-    int i, j, basewid, altwid;
+    int i, basewid, altwid;
     int ntrans;
 
     /* FIXME: This will get slow, eventually... */
@@ -460,11 +460,15 @@ fsg_model_add_alt(fsg_model_t * fsg, char const *baseword,
     /* FIXME: This will also get slow, eventually... */
     ntrans = 0;
     for (i = 0; i < fsg->n_state; ++i) {
-        for (j = 0; j < fsg->n_state; ++j) {
-            glist_t trans, oldtrans;
+        hash_iter_t *itor;
+        if (fsg->trans[i].trans == NULL)
+            continue;
+        for (itor = hash_table_iter(fsg->trans[i].trans); itor;
+             itor = hash_table_iter_next(itor)) {
+            glist_t trans;
             gnode_t *gn;
 
-            oldtrans = trans = fsg_model_trans(fsg, i, j);
+            trans = hash_entry_val(itor->ent);
             for (gn = trans; gn; gn = gnode_next(gn)) {
                 fsg_link_t *fl = gnode_ptr(gn);
                 if (fl->wid == basewid) {
@@ -472,8 +476,8 @@ fsg_model_add_alt(fsg_model_t * fsg, char const *baseword,
 
                     /* Create transition object */
                     link = listelem_malloc(fsg->link_alloc);
-                    link->from_state = i;
-                    link->to_state = j;
+                    link->from_state = fl->from_state;
+                    link->to_state = fl->to_state;
                     link->logs2prob = fl->logs2prob; /* FIXME!!!??? */
                     link->wid = altwid;
 
@@ -482,15 +486,7 @@ fsg_model_add_alt(fsg_model_t * fsg, char const *baseword,
                     ++ntrans;
                 }
             }
-            if (trans != NULL && trans != oldtrans) {
-                fsg_link_t *fl = gnode_ptr(trans);
-                glist_t trans2;
-                trans2 =
-                    hash_table_replace_bkey(fsg->trans[i].trans,
-                                            (char const *)&fl->to_state,
-                                            sizeof(fl->to_state), trans);
-                assert(trans2 == oldtrans);
-            }
+            hash_entry_val(itor->ent) = trans;
         }
     }
 
