@@ -296,7 +296,7 @@ _E__fatal_sys_error(char const *fmt, ...)
         vfprintf(logfp, fmt, pvar);
         va_end(pvar);
 
-        fprintf(logfp, "; %s\n", strerror(local_errno));
+        fprintf(logfp, ": %s\n", strerror(local_errno));
         fflush(logfp);
     }
 
