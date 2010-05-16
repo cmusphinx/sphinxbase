@@ -73,12 +73,12 @@ feat_read_lda(feat_t *feat, const char *ldafile, int32 dim)
     }
 
     if ((fh = fopen(ldafile, "rb")) == NULL) {
-        E_ERROR_SYSTEM("fopen(%s, rb) failed", ldafile);
+        E_ERROR_SYSTEM("Failed to open transform file '%s' for reading: %s\n", ldafile, strerror(errno));
         return -1;
     }
 
     if (bio_readhdr(fh, &argname, &argval, &byteswap) < 0) {
-        E_ERROR("bio_readhdr(%s) failed\n", ldafile);
+        E_ERROR("Failed to read header from transform file '%s'\n", ldafile);
         fclose(fh);
         return -1;
     }

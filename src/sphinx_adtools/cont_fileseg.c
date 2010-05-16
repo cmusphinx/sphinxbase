@@ -353,7 +353,7 @@ main(int32 argc, char **argv)
     }
 
     if ((infp = fopen(infile, "rb")) == NULL)
-        E_FATAL("fopen(%s,rb) failed\n", infile);
+        E_FATAL("Failed to open '%s' for reading: %s\n", infile, strerror(errno));
 
     /*
      * Associate continuous listening module with opened input file and read function.
@@ -381,8 +381,8 @@ main(int32 argc, char **argv)
     /* Enable writing raw input to output by the cont module if specified */
     if (copyfile) {
         if ((rawfp = fopen(copyfile, "wb")) == NULL)
-            E_ERROR("fopen(%s,wb) failed; not dumping raw file\n",
-                    copyfile);
+            E_ERROR("Failed to open raw output file '%s' for writing: %s\n",
+                    copyfile, strerror(errno));
         else
             cont_ad_set_rawfp(cont, rawfp);
     }
@@ -513,7 +513,7 @@ main(int32 argc, char **argv)
                 else
                     strcpy(segfile, NULL_DEVICE);
                 if ((fp = fopen(segfile, "wb")) == NULL)
-                    E_FATAL("fopen(%s,wb) failed\n", segfile);
+                    E_FATAL("Failed to open segmentation file '%s' for writing: %s\n", segfile, strerror(errno));
 
                 starttime = cont->read_ts - k;
                 uttlen = 0;

@@ -384,7 +384,7 @@ feat_s2mfc_read(char *file, int32 win,
     /* Find filesize; HACK!! To get around intermittent NFS failures, use stat_retry */
     if ((stat_retry(file, &statbuf) < 0)
         || ((fp = fopen(file, "rb")) == NULL)) {
-        E_ERROR("stat_retry/fopen(%s) failed\n", file);
+        E_ERROR("Failed to open file '%s' for reading: %s\n", file, strerror(errno));
         return -1;
     }
 

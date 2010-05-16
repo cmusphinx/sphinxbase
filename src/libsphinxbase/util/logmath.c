@@ -173,7 +173,7 @@ logmath_read(const char *file_name)
 
     E_INFO("Reading log table file '%s'\n", file_name);
     if ((fp = fopen(file_name, "rb")) == NULL) {
-        E_ERROR("fopen(%s,rb) failed\n", file_name);
+        E_ERROR("Failed to open log table file '%s' for reading: %s\n", file_name, strerror(errno));
         return NULL;
     }
 
@@ -282,7 +282,7 @@ logmath_write(logmath_t *lmath, const char *file_name)
 
     E_INFO("Writing log table file '%s'\n", file_name);
     if ((fp = fopen(file_name, "wb")) == NULL) {
-        E_ERROR("fopen(%s,wb) failed\n", file_name);
+        E_ERROR("Failed to open logtable file '%s' for writing: %s\n", file_name, strerror(errno));
         return -1;
     }
 

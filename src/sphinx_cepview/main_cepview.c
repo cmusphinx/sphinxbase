@@ -244,7 +244,7 @@ read_cep(char const *file, float ***cep, int *numframes, int cepsize)
     }
 
     if ((fp = fopen(file, "rb")) == NULL) {
-        printf("fopen(%s, rb) failed\n", file);
+        printf("Failed to open '%s' for reading: %s\n", file, strerror(errno));
         return IO_ERR;
     }
 

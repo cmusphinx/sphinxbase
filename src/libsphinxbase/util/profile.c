@@ -302,7 +302,7 @@ host_endian(void)
     file = "/tmp/__EnDiAn_TeSt__";
 
     if ((fp = fopen(file, "wb")) == NULL) {
-        E_ERROR("fopen(%s,wb) failed\n", file);
+        E_ERROR("Failed to open file '%s' for writing: %s\n", file, strerror(errno));
         return -1;
     }
 
@@ -310,7 +310,7 @@ host_endian(void)
 
     k = (int32) BYTE_ORDER_MAGIC;
     if (fwrite(&k, sizeof(int32), 1, fp) != 1) {
-        E_ERROR("fwrite(%s) failed\n", file);
+        E_ERROR("Failed to write to file '%s'\n", file);
         fclose(fp);
         unlink(file);
         return -1;
@@ -318,12 +318,12 @@ host_endian(void)
 
     fclose(fp);
     if ((fp = fopen(file, "rb")) == NULL) {
-        E_ERROR("fopen(%s,rb) failed\n", file);
+        E_ERROR("Failed to open file '%s' for reading: %s\n", file, strerror(errno));
         unlink(file);
         return -1;
     }
     if (fread(buf, 1, sizeof(int32), fp) != sizeof(int32)) {
-        E_ERROR("fread(%s) failed\n", file);
+        E_ERROR("Failed to read from file '%s'\n", file);
         fclose(fp);
         unlink(file);
         return -1;
