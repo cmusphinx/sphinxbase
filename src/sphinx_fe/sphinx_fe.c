@@ -44,6 +44,10 @@
 #include <config.h>
 #endif
 
+#ifdef HAVE_SNDFILE_H
+#include <sndfile.h>
+#endif
+
 #include "fe.h"
 #include "strfuncs.h"
 #include "pio.h"
@@ -83,6 +87,9 @@ struct sphinx_wave2feat_s {
     int veclen;       /**< Length of each output vector. */
     int in_veclen;    /**< Length of each input vector (for cep<->spec). */
     int byteswap;     /**< Whether byteswapping is necessary. */
+#ifdef HAVE_SNDFILE_H
+    SNDFILE *insfh;   /**< Input sndfile handle. */
+#endif
     output_type_t const *ot;/**< Output type object. */
 };
 
@@ -277,6 +284,82 @@ detect_sphinx_mfc(sphinx_wave2feat_t *wtf, char const *infile)
     return TRUE;
 }
 
+#ifdef HAVE_SNDFILE_H
+/**
+ * Detect a file supported by libsndfile and parse its header if detected.
+ *
+ * @return TRUE if it's a supported file, FALSE if not, -1 if an error occurred.
+ */
+static int
+detect_sndfile(sphinx_wave2feat_t *wtf, char const *infile)
+{
+    SNDFILE *sf;
+    SF_INFO sfinfo;
+
+    memset(&sfinfo, 0, sizeof(sfinfo));
+    if ((sf = sf_open(infile, SFM_READ, &sfinfo)) == NULL) {
+        E_ERROR_SYSTEM("Failed to open %s", infile);
+        return -1;
+    }
+
+    /* Get relevant information. */
+    cmd_ln_set_int32_r(wtf->config, "-nchans", sfinfo.channels);
+    cmd_ln_set_float32_r(wtf->config, "-samprate", sfinfo.samplerate);
+    wtf->infile = ckd_salloc(infile);
+    wtf->insfh = sf;
+    wtf->infh = NULL;
+
+    return TRUE;
+}
+
+/**
+ * Process PCM audio from a libsndfile file.  FIXME: looks a lot like
+ * decode_pcm!  Also needs stereo support (as does decode_pcm).
+ */
+static int
+decode_sndfile(sphinx_wave2feat_t *wtf)
+{
+    size_t nsamp;
+    int32 nfr;
+    int nfloat, n;
+
+    fe_start_utt(wtf->fe);
+    nfloat = 0;
+    while ((nsamp = sf_read_short(wtf->insfh,
+                                  wtf->audio,
+                                  wtf->blocksize)) != 0) {
+        int16 const *inspeech;
+        size_t nvec;
+
+        E_INFO("Read %lu samples from sndfile\n", nsamp);
+        inspeech = wtf->audio;
+        nvec = wtf->featsize;
+        /* Consume all samples. */
+        while (nsamp) {
+            nfr = nvec;
+            fe_process_frames(wtf->fe, &inspeech, &nsamp, wtf->feat, &nfr);
+            if (nfr) {
+                if ((n = (*wtf->ot->output_frames)(wtf, wtf->feat, nfr)) < 0)
+                    return -1;
+                nfloat += n;
+            }
+        }
+        inspeech = wtf->audio;
+    }
+    /* Now process any leftover audio frames. */
+    fe_end_utt(wtf->fe, wtf->feat[0], &nfr);
+    if (nfr) {
+        if ((n = (*wtf->ot->output_frames)(wtf, wtf->feat, nfr)) < 0)
+            return -1;
+        nfloat += n;
+    }
+
+    sf_close(wtf->insfh);
+    wtf->insfh = NULL;
+    return nfloat;
+}
+#endif /* HAVE_SNDFILE_H */
+
 /**
  * Process PCM audio from a filehandle.  Assume that wtf->infh is
  * positioned just after the file header.
@@ -380,7 +463,7 @@ decode_sphinx_mfc(sphinx_wave2feat_t *wtf)
 static const audio_type_t types[] = {
     { "-mswav", &detect_riff, &decode_pcm },
     { "-nist", &detect_nist, &decode_pcm },
-#ifdef HAVE_SNDFILE
+#ifdef HAVE_SNDFILE_H
     { "-sndfile", &detect_sndfile, &decode_sndfile },
 #endif
     { "-raw", &detect_raw, &decode_pcm }
