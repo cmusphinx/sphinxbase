@@ -331,7 +331,6 @@ decode_sndfile(sphinx_wave2feat_t *wtf)
         int16 const *inspeech;
         size_t nvec;
 
-        E_INFO("Read %lu samples from sndfile\n", nsamp);
         inspeech = wtf->audio;
         nvec = wtf->featsize;
         /* Consume all samples. */
