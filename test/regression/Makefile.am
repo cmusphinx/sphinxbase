@@ -26,6 +26,7 @@ CLEANFILES = test*.err test*.out		\
 	test-sphinx_fe.cepview			\
 	test-sphinx_pitch.f0			\
 	chan3.sph.mfc				\
+	chan3.2chan.wav.mfc			\
 	chan3.wav.mfc				\
 	chan3.raw.mfc
 

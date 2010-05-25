@@ -27,6 +27,10 @@ if ! cmp chan3.wav.mfc chan3.raw.mfc; then
     fail "WAV and RAW compare"
 fi
 
+if ! cmp chan3.2chan.wav.mfc chan3.wav.mfc; then
+    fail "WAV2 and WAV compare"
+fi
+
 if ! cmp chan3.raw.mfc chan3.sph.mfc; then
     fail "SPH and RAW compare"
 fi

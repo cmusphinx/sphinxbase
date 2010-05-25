@@ -188,7 +188,7 @@ detect_nist(sphinx_wave2feat_t *wtf, char const *infile)
             cmd_ln_set_float32_r(wtf->config, "-samprate", atof_c(words[2]));
         }
         if (0 == strcmp(words[0], "channel_count")) {
-            cmd_ln_set_float32_r(wtf->config, "-nchans", atoi(words[2]));
+            cmd_ln_set_int32_r(wtf->config, "-nchans", atoi(words[2]));
         }
         if (0 == strcmp(words[0], "sample_byte_format")) {
             cmd_ln_set_str_r(wtf->config, "-input_endian",
@@ -284,6 +284,27 @@ detect_sphinx_mfc(sphinx_wave2feat_t *wtf, char const *infile)
     return TRUE;
 }
 
+int
+mixnpick_channels(int16 *buf, int32 nsamp, int32 nchans, int32 whichchan)
+{
+    int i, j;
+
+    if (whichchan > 0) {
+        for (i = whichchan - 1; i < nsamp; i += nchans)
+            buf[i/nchans] = buf[i];
+    }
+    else {
+        for (i = 0; i < nsamp; i += nchans) {
+            float64 tmp = 0.0;
+            for (j = 0; j < nchans && i + j < nsamp; ++j) {
+                tmp += buf[i + j];
+            }
+            buf[i/nchans] = (int16)(tmp / nchans);
+        }
+    }
+    return i/nchans;
+}
+
 #ifdef HAVE_SNDFILE_H
 /**
  * Detect a file supported by libsndfile and parse its header if detected.
@@ -297,11 +318,11 @@ detect_sndfile(sphinx_wave2feat_t *wtf, char const *infile)
     SF_INFO sfinfo;
 
     memset(&sfinfo, 0, sizeof(sfinfo));
+    /* We let other detectors catch I/O errors, since there is
+       no way to tell them from format errors when opening :( */
     if ((sf = sf_open(infile, SFM_READ, &sfinfo)) == NULL) {
-        E_ERROR_SYSTEM("Failed to open %s", infile);
-        return -1;
+        return FALSE;
     }
-
     /* Get relevant information. */
     cmd_ln_set_int32_r(wtf->config, "-nchans", sfinfo.channels);
     cmd_ln_set_float32_r(wtf->config, "-samprate", sfinfo.samplerate);
@@ -320,9 +341,11 @@ static int
 decode_sndfile(sphinx_wave2feat_t *wtf)
 {
     size_t nsamp;
-    int32 nfr;
+    int32 nfr, nchans, whichchan;
     int nfloat, n;
 
+    nchans = cmd_ln_int32_r(wtf->config, "-nchans");
+    whichchan = cmd_ln_int32_r(wtf->config, "-whichchan");
     fe_start_utt(wtf->fe);
     nfloat = 0;
     while ((nsamp = sf_read_short(wtf->insfh,
@@ -330,6 +353,10 @@ decode_sndfile(sphinx_wave2feat_t *wtf)
                                   wtf->blocksize)) != 0) {
         int16 const *inspeech;
         size_t nvec;
+
+        /* Mix or pick channels. */
+        if (nchans > 1)
+            nsamp = mixnpick_channels(wtf->audio, nsamp, nchans, whichchan);
 
         inspeech = wtf->audio;
         nvec = wtf->featsize;
@@ -367,9 +394,11 @@ static int
 decode_pcm(sphinx_wave2feat_t *wtf)
 {
     size_t nsamp;
-    int32 nfr;
+    int32 nfr, nchans, whichchan;
     int nfloat, n;
 
+    nchans = cmd_ln_int32_r(wtf->config, "-nchans");
+    whichchan = cmd_ln_int32_r(wtf->config, "-whichchan");
     fe_start_utt(wtf->fe);
     nfloat = 0;
     while ((nsamp = fread(wtf->audio, 2, wtf->blocksize, wtf->infh)) != 0) {
@@ -381,6 +410,10 @@ decode_pcm(sphinx_wave2feat_t *wtf)
             for (n = 0; n < nsamp; ++n)
                 SWAP_INT16(wtf->audio + n);
         }
+
+        /* Mix or pick channels. */
+        if (nchans > 1)
+            nsamp = mixnpick_channels(wtf->audio, nsamp, nchans, whichchan);
             
         inspeech = wtf->audio;
         nvec = wtf->featsize;
@@ -462,9 +495,6 @@ decode_sphinx_mfc(sphinx_wave2feat_t *wtf)
 static const audio_type_t types[] = {
     { "-mswav", &detect_riff, &decode_pcm },
     { "-nist", &detect_nist, &decode_pcm },
-#ifdef HAVE_SNDFILE_H
-    { "-sndfile", &detect_sndfile, &decode_sndfile },
-#endif
     { "-raw", &detect_raw, &decode_pcm }
 };
 static const int ntypes = sizeof(types)/sizeof(types[0]);
@@ -751,7 +781,7 @@ int
 sphinx_wave2feat_convert_file(sphinx_wave2feat_t *wtf,
                               char const *infile, char const *outfile)
 {
-    int minfft, nfft, nfloat, veclen;
+    int nchans, minfft, nfft, nfloat, veclen;
     audio_type_t const *atype;
     int fshift, fsize;
 
@@ -785,15 +815,19 @@ sphinx_wave2feat_convert_file(sphinx_wave2feat_t *wtf,
 
     /* Set up the input and output buffers. */
     fe_get_input_size(wtf->fe, &fshift, &fsize);
-    /* Want to get at least a whole frame plus shift in here. */
-    wtf->blocksize = cmd_ln_int32_r(wtf->config, "-blocksize");
-    if (wtf->blocksize < fsize + fshift) {
+    /* Want to get at least a whole frame plus shift in here.  Also we
+       will either pick or mix multiple channels so we need to read
+       them all at once. */
+    nchans = cmd_ln_int32_r(wtf->config, "-nchans");
+    wtf->blocksize = cmd_ln_int32_r(wtf->config, "-blocksize") * nchans;
+    if (wtf->blocksize < (fsize + fshift) * nchans) {
         E_INFO("Block size of %d too small, increasing to %d\n",
-               wtf->blocksize, fsize + fshift);
-        wtf->blocksize = fsize + fshift;
+               wtf->blocksize,
+               (fsize + fshift) * nchans);
+        wtf->blocksize = (fsize + fshift) * nchans;
     }
     wtf->audio = ckd_calloc(wtf->blocksize, sizeof(*wtf->audio));
-    wtf->featsize = (wtf->blocksize - fsize) / fshift;
+    wtf->featsize = (wtf->blocksize / nchans - fsize) / fshift;
 
     /* Use the maximum of the input and output frame sizes to allocate this. */
     veclen = wtf->veclen;

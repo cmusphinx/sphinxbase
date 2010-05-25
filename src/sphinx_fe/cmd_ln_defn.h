@@ -184,8 +184,8 @@ static arg_t defn[] = {
   
   { "-whichchan",
     ARG_INT32,
-    "1",
-    "Channel to process" },
+    "0",
+    "Channel to process (numbered from 1), or 0 to mix all channels" },
   
   { "-ofmt",
     ARG_STRING,
