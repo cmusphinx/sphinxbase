@@ -493,6 +493,9 @@ decode_sphinx_mfc(sphinx_wave2feat_t *wtf)
 }
 
 static const audio_type_t types[] = {
+#ifdef HAVE_SNDFILE_H
+    { "-sndfile", &detect_sndfile, &decode_sndfile },
+#endif
     { "-mswav", &detect_riff, &decode_pcm },
     { "-nist", &detect_nist, &decode_pcm },
     { "-raw", &detect_raw, &decode_pcm }
