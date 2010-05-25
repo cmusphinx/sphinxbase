@@ -245,10 +245,10 @@ dnl Check for libsndfile
 dnl
 if test "x$HAVE_PKGCONFIG" = "xyes"; then
    PKG_CHECK_MODULES(SNDFILE,sndfile)
-   LIBS="$LIBS $SNDFILE_LIBS"
-   CPPFLAGS="$CPPFLAGS $SNDFILE_CFLAGS"
    AC_CHECK_HEADERS([sndfile.h])
 fi
+AC_SUBST(SNDFILE_LIBS)
+AC_SUBST(SNDFILE_CFLAGS)
 
 AC_CONFIG_FILES([
 sphinxbase.pc
