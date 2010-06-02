@@ -52,6 +52,7 @@ tag      \{(\\.|[^\}]+)*\}
 weight   \/[0-9]*(\.[0-9]+)?\/
 token    [^ \t\n;=|*+<>()\[\]{}*/]+
 qstring  \"(\\.|[^"]+)*\"
+bom      [\xEF][\xBB][\xBF]
 
 %%
 
@@ -61,7 +62,7 @@ qstring  \"(\\.|[^"]+)*\"
 <COMMENT>\*\/ { BEGIN(INITIAL); }
 <COMMENT>. ;               /* Ignore stuff in comment mode */
 
-<INITIAL>#JSGF return HEADER;
+<INITIAL>{bom}?#JSGF return HEADER;
 <INITIAL>grammar return GRAMMAR;
 <INITIAL>import return IMPORT;
 <INITIAL>public return PUBLIC;
