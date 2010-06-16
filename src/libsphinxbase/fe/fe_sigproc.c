@@ -57,6 +57,7 @@
 #include "fe_internal.h"
 #include "fe_warp.h"
 #include "genrand.h"
+#include "libutil.h"
 #include "err.h"
 
 /* Use extra precision for cosines, Hamming window, pre-emphasis
