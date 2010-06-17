@@ -219,7 +219,7 @@ mmio_file_read(const char *filename)
     }
     ptr = mmap(NULL, buf.st_size, PROT_READ, MAP_SHARED, fd, 0);
     if (ptr == (void *)-1) {
-        E_ERROR("Failed to mmap %d bytes", buf.st_size);
+        E_ERROR_SYSTEM("Failed to mmap %lld bytes", (unsigned long long)buf.st_size);
         return NULL;
     }
     close(fd);
