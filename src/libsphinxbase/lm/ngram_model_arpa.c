@@ -73,7 +73,7 @@ ReadNgramCounts(lineiter_t **li, int32 * n_ug, int32 * n_bg, int32 * n_tg)
         *li = lineiter_next(*li);
     }
     if (*li == NULL || strcmp((*li)->buf, "\\data\\") != 0) {
-        E_ERROR("No \\data\\ mark in LM file\n");
+        E_INFO("No \\data\\ mark in LM file\n");
         return -1;
     }
 
