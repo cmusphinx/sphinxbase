@@ -12,20 +12,17 @@ libsphinxad_la_SOURCES = cont_ad_base.c
 
 EXTRA_libsphinxad_la_SOURCES = ad_base.c \
 	ad_oss.c \
-	ad_oss_bsd.c \
-	ad_alsa.c \
-	ad_sunos.c \
-	audio_utils_sunos.c
+	ad_alsa.c
 
 EXTRA_DIST = ad_s60.cpp \
 	play_win32.c \
 	rec_win32.c
-
-noinst_HEADERS = audio_utils_sunos.h
 
 libsphinxad_la_DEPENDENCIES = @ad_files@
 
 libsphinxad_la_LIBADD = @ad_files@ @ad_libs@ \
 	$(top_builddir)/src/libsphinxbase/libsphinxbase.la
 
-INCLUDES = -I$(top_srcdir)/include -I$(top_builddir)/include
+INCLUDES = -I$(top_srcdir)/include/sphinxbase \
+	-I$(top_srcdir)/include \
+	-I$(top_builddir)/include
