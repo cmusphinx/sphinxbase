@@ -40,14 +40,15 @@
  *
  * Author: A cast of thousands, probably.
  */
-#include "lm3g_model.h"
-#include "listelem_alloc.h"
-#include "ckd_alloc.h"
-#include "err.h"
-
 #include <string.h>
 #include <assert.h>
 #include <limits.h>
+
+#include "sphinxbase/listelem_alloc.h"
+#include "sphinxbase/ckd_alloc.h"
+#include "sphinxbase/err.h"
+
+#include "lm3g_model.h"
 
 void
 lm3g_tginfo_free(ngram_model_t *base, lm3g_model_t *lm3g)

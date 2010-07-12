@@ -42,8 +42,8 @@
 #include <config.h>
 #endif
 
-#include <fe.h>
-#include <fixpoint.h>
+#include "sphinxbase/fe.h"
+#include "sphinxbase/fixpoint.h"
 
 #ifdef __cplusplus
 extern "C" {

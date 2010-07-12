@@ -254,6 +254,7 @@ AC_CONFIG_FILES([
 sphinxbase.pc
 Makefile
 include/Makefile
+include/sphinxbase/Makefile
 python/Makefile
 python/setup.py
 src/Makefile

@@ -45,9 +45,10 @@
 #include <config.h>
 #endif
 
-#include "prim_type.h"
+#include "sphinxbase/prim_type.h"
+#include "sphinxbase/fixpoint.h"
+
 #include "fe_internal.h"
-#include "fixpoint.h"
 
 /* Table of log2(x/64)*(1<<DEFAULT_RADIX) */
 /* perl -e 'for (0..63) {my $x = 1 + $_/64; print "\t(uint32)(", log($x)/log(2), "*(1<<DEFAULT_RADIX)),\n"}' */

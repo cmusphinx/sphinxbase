@@ -3,7 +3,7 @@
 
 /* Slightly modified to use Sphinx types and remove explicit inline. */
 
-#include "prim_type.h"
+#include "sphinxbase/prim_type.h"
 
 #define UTF8_ACCEPT 0
 #define UTF8_REJECT 1

@@ -126,16 +126,16 @@
 #pragma warning (disable: 4244 4996)
 #endif
 
-#include "fe.h"
-#include "feat.h"
-#include "bio.h"
-#include "pio.h"
-#include "cmn.h"
-#include "agc.h"
-#include "err.h"
-#include "ckd_alloc.h"
-#include "prim_type.h"
-#include "glist.h"
+#include "sphinxbase/fe.h"
+#include "sphinxbase/feat.h"
+#include "sphinxbase/bio.h"
+#include "sphinxbase/pio.h"
+#include "sphinxbase/cmn.h"
+#include "sphinxbase/agc.h"
+#include "sphinxbase/err.h"
+#include "sphinxbase/ckd_alloc.h"
+#include "sphinxbase/prim_type.h"
+#include "sphinxbase/glist.h"
 
 #define FEAT_VERSION	"1.0"
 #define FEAT_DCEP_WIN		2

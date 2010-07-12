@@ -47,8 +47,8 @@
 #include <windows.h>
 #include <assert.h>
 
-#include "err.h"
-#include "ckd_alloc.h"
+#include "sphinxbase/err.h"
+#include "sphinxbase/ckd_alloc.h"
 
 int cst_verrmsg(const char *fmt, va_list args)
 {

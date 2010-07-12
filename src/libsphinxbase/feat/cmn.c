@@ -102,9 +102,9 @@
 #pragma warning (disable: 4244)
 #endif
 
-#include "ckd_alloc.h"
-#include "err.h"
-#include "cmn.h"
+#include "sphinxbase/ckd_alloc.h"
+#include "sphinxbase/err.h"
+#include "sphinxbase/cmn.h"
 
 /* NOTE!  These must match the enum in cmn.h */
 const char *cmn_type_str[] = {

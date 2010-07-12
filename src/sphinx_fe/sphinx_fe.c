@@ -48,14 +48,14 @@
 #include <sndfile.h>
 #endif
 
-#include "fe.h"
-#include "strfuncs.h"
-#include "pio.h"
-#include "filename.h"
-#include "cmd_ln.h"
-#include "err.h"
-#include "ckd_alloc.h"
-#include "byteorder.h"
+#include <sphinxbase/fe.h>
+#include <sphinxbase/strfuncs.h>
+#include <sphinxbase/pio.h>
+#include <sphinxbase/filename.h>
+#include <sphinxbase/cmd_ln.h>
+#include <sphinxbase/err.h>
+#include <sphinxbase/ckd_alloc.h>
+#include <sphinxbase/byteorder.h>
 
 #include "sphinx_wave2feat.h"
 #include "cmd_ln_defn.h"

@@ -44,7 +44,8 @@ EXTRA_DIST = \
 	string_wce.c \
 	errno.c
 
-INCLUDES = -I$(top_srcdir)/include \
+INCLUDES = -I$(top_srcdir)/include/sphinxbase \
+	   -I$(top_srcdir)/include \
            -I$(top_builddir)/include 
 
 LIBOBJS = @LIBOBJS@

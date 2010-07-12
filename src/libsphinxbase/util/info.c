@@ -44,12 +44,12 @@
  *
  */
 
-#include "info.h"
-#include "err.h"
-
 #if !(defined(_WIN32) || defined(_WIN32_WCE))
 #include <unistd.h>
 #endif
+
+#include "sphinxbase/info.h"
+#include "sphinxbase/err.h"
 
 void
 print_appl_info(char *appl_name)

@@ -40,16 +40,17 @@
  * Author: David Huggins-Daines <dhuggins@cs.cmu.edu>
  */
 
-#include "ckd_alloc.h"
-#include "ngram_model_arpa.h"
-#include "err.h"
-#include "pio.h"
-#include "listelem_alloc.h"
-#include "strfuncs.h"
-
+#include "sphinxbase/ckd_alloc.h"
 #include <string.h>
 #include <limits.h>
 #include <assert.h>
+
+#include "sphinxbase/err.h"
+#include "sphinxbase/pio.h"
+#include "sphinxbase/listelem_alloc.h"
+#include "sphinxbase/strfuncs.h"
+
+#include "ngram_model_arpa.h"
 
 static ngram_funcs_t ngram_model_arpa_funcs;
 

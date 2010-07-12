@@ -40,22 +40,25 @@
  * Author: David Huggins-Daines, much code taken from sphinx3/src/libs3decoder/liblm
  */
 
-#include "config.h"
-#include "ngram_model.h"
-#include "ngram_model_internal.h"
-#include "ckd_alloc.h"
-#include "filename.h"
-#include "pio.h"
-#include "err.h"
-#include "logmath.h"
-#include "strfuncs.h"
-#include "case.h"
+#include <config.h>
 
 #include <string.h>
 #include <assert.h>
+
 #ifdef HAVE_ICONV
 #include <iconv.h>
 #endif 
+
+#include "sphinxbase/ngram_model.h"
+#include "sphinxbase/ckd_alloc.h"
+#include "sphinxbase/filename.h"
+#include "sphinxbase/pio.h"
+#include "sphinxbase/err.h"
+#include "sphinxbase/logmath.h"
+#include "sphinxbase/strfuncs.h"
+#include "sphinxbase/case.h"
+
+#include "ngram_model_internal.h"
 
 ngram_file_type_t
 ngram_file_name_to_type(const char *file_name)

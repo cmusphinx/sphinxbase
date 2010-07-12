@@ -49,14 +49,15 @@
 #include <config.h>
 #endif
 
-#include "prim_type.h"
-#include "byteorder.h"
-#include "fixpoint.h"
+#include "sphinxbase/prim_type.h"
+#include "sphinxbase/byteorder.h"
+#include "sphinxbase/fixpoint.h"
+#include "sphinxbase/genrand.h"
+#include "sphinxbase/err.h"
+#include "sphinxbase/cmd_ln.h"
+#include "sphinxbase/ckd_alloc.h"
+
 #include "fe_internal.h"
-#include "genrand.h"
-#include "err.h"
-#include "cmd_ln.h"
-#include "ckd_alloc.h"
 #include "fe_warp.h"
 
 static const arg_t fe_args[] = {

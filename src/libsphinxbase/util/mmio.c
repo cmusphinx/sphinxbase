@@ -44,11 +44,6 @@
  * 
  *********************************************************************/
 
-#include "prim_type.h"
-#include "err.h"
-#include "mmio.h"
-#include "ckd_alloc.h"
-
 #include <string.h>
 #include <stdlib.h>
 
@@ -69,6 +64,11 @@
 # include <sys/file.h>
 # include <sys/mman.h>
 #endif /* !_WIN32 */
+
+#include "sphinxbase/prim_type.h"
+#include "sphinxbase/err.h"
+#include "sphinxbase/mmio.h"
+#include "sphinxbase/ckd_alloc.h"
 
 /** Silvio Moioli: slightly updated */
 #if defined(_WIN32_WCE) || defined(GNUWINCE)

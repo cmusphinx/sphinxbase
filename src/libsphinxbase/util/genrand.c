@@ -115,7 +115,7 @@
 
 #include <stdio.h>
 
-#include "genrand.h"
+#include "sphinxbase/genrand.h"
 
 /* Period parameters */
 #define N 624

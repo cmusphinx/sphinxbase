@@ -35,15 +35,15 @@
  *
  */
 
-#include "huff_code.h"
-#include "ckd_alloc.h"
-#include "hash_table.h"
-#include "byteorder.h"
-#include "heap.h"
-#include "pio.h"
-#include "err.h"
-
 #include <string.h>
+
+#include "sphinxbase/huff_code.h"
+#include "sphinxbase/ckd_alloc.h"
+#include "sphinxbase/hash_table.h"
+#include "sphinxbase/byteorder.h"
+#include "sphinxbase/heap.h"
+#include "sphinxbase/pio.h"
+#include "sphinxbase/err.h"
 
 typedef struct huff_node_s {
     int nbits;

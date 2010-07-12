@@ -38,10 +38,10 @@
 #include <string.h>
 #include <assert.h>
 
-#include "ckd_alloc.h"
-#include "strfuncs.h"
-#include "hash_table.h"
-#include "err.h"
+#include "sphinxbase/ckd_alloc.h"
+#include "sphinxbase/strfuncs.h"
+#include "sphinxbase/hash_table.h"
+#include "sphinxbase/err.h"
 
 #include "jsgf_internal.h"
 #include "jsgf_parser.h"

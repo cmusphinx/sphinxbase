@@ -40,18 +40,19 @@
  * Author: David Huggins-Daines <dhuggins@cs.cmu.edu>
  */
 
-#include "ckd_alloc.h"
-#include "ngram_model_dmp.h"
-#include "pio.h"
-#include "err.h"
-#include "byteorder.h"
-#include "listelem_alloc.h"
-
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
+
+#include "sphinxbase/ckd_alloc.h"
+#include "sphinxbase/pio.h"
+#include "sphinxbase/err.h"
+#include "sphinxbase/byteorder.h"
+#include "sphinxbase/listelem_alloc.h"
+
+#include "ngram_model_dmp.h"
 
 static const char darpa_hdr[] = "Darpa Trigram LM";
 static ngram_funcs_t ngram_model_dmp_funcs;

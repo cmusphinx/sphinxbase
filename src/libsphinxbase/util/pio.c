@@ -51,11 +51,11 @@
 #endif
 #include <assert.h>
 
-#include "pio.h"
-#include "filename.h"
-#include "err.h"
-#include "strfuncs.h"
-#include "ckd_alloc.h"
+#include "sphinxbase/pio.h"
+#include "sphinxbase/filename.h"
+#include "sphinxbase/err.h"
+#include "sphinxbase/strfuncs.h"
+#include "sphinxbase/ckd_alloc.h"
 
 #ifndef EXEEXT
 #define EXEEXT ""

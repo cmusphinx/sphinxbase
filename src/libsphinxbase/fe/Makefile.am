@@ -17,7 +17,8 @@ noinst_HEADERS =				\
 	fe_warp_inverse_linear.h		\
 	fe_warp_piecewise_linear.h
 
-INCLUDES = -I$(top_srcdir)/include \
+INCLUDES = -I$(top_srcdir)/include/sphinxbase \
+	   -I$(top_srcdir)/include \
            -I$(top_builddir)/include 
 
 LIBOBJS = @LIBOBJS@

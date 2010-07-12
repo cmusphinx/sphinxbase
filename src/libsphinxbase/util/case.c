@@ -61,10 +61,11 @@
  */
 
 
-#include "case.h"
 #include <stdlib.h>
 #include <assert.h>
-#include <err.h>
+
+#include "sphinxbase/case.h"
+#include "sphinxbase/err.h"
 
 
 void

@@ -3,7 +3,7 @@ check_PROGRAMS = displayhash deletehash test_hash_iter
 noinst_HEADERS = test_macros.h
 
 INCLUDES = \
-        -I$(top_srcdir)/include \
+        -I$(top_srcdir)/include/sphinxbase \
         -I$(top_builddir)/include
 
 LDADD = ${top_builddir}/src/libsphinxbase/libsphinxbase.la

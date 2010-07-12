@@ -49,10 +49,10 @@
 #include <assert.h>
 #include <math.h>
 
-#include <prim_type.h>
-#include <ad.h>
-#include <cont_ad.h>
-#include <err.h>
+#include <sphinxbase/prim_type.h>
+#include <sphinxbase/ad.h>
+#include <sphinxbase/cont_ad.h>
+#include <sphinxbase/err.h>
 
 /*
  * Segment raw A/D input data into utterances whenever silence region of given

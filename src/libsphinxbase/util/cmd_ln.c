@@ -75,12 +75,12 @@
 #include <unistd.h>
 #endif
 
-#include "cmd_ln.h"
-#include "err.h"
-#include "ckd_alloc.h"
-#include "hash_table.h"
-#include "case.h"
-#include "strfuncs.h"
+#include "sphinxbase/cmd_ln.h"
+#include "sphinxbase/err.h"
+#include "sphinxbase/ckd_alloc.h"
+#include "sphinxbase/hash_table.h"
+#include "sphinxbase/case.h"
+#include "sphinxbase/strfuncs.h"
 
 typedef struct cmd_ln_val_s {
     anytype_t val;

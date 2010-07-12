@@ -38,9 +38,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <hash_table.h>
-#include <ckd_alloc.h>
-#include <err.h>
+#include <sphinxbase/hash_table.h>
+#include <sphinxbase/ckd_alloc.h>
+#include <sphinxbase/err.h>
 
 #include "jsgf_internal.h"
 #include "jsgf_parser.h"

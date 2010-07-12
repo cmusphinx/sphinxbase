@@ -49,16 +49,17 @@
 #pragma warning (disable: 4244)
 #endif
 
-#include "prim_type.h"
-#include "ckd_alloc.h"
-#include "byteorder.h"
-#include "fixpoint.h"
-#include "fe.h"
+#include "sphinxbase/prim_type.h"
+#include "sphinxbase/ckd_alloc.h"
+#include "sphinxbase/byteorder.h"
+#include "sphinxbase/fixpoint.h"
+#include "sphinxbase/fe.h"
+#include "sphinxbase/genrand.h"
+#include "sphinxbase/libutil.h"
+#include "sphinxbase/err.h"
+
 #include "fe_internal.h"
 #include "fe_warp.h"
-#include "genrand.h"
-#include "libutil.h"
-#include "err.h"
 
 /* Use extra precision for cosines, Hamming window, pre-emphasis
  * coefficient, twiddle factors. */

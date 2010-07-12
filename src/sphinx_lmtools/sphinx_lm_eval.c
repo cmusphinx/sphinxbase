@@ -38,13 +38,13 @@
  * \file sphinx_lm_eval.c
  * Language model evaluation tool.
  */
-#include <logmath.h>
-#include <ngram_model.h>
-#include <cmd_ln.h>
-#include <ckd_alloc.h>
-#include <err.h>
-#include <pio.h>
-#include <strfuncs.h>
+#include <sphinxbase/logmath.h>
+#include <sphinxbase/ngram_model.h>
+#include <sphinxbase/cmd_ln.h>
+#include <sphinxbase/ckd_alloc.h>
+#include <sphinxbase/err.h>
+#include <sphinxbase/pio.h>
+#include <sphinxbase/strfuncs.h>
 
 #include <stdio.h>
 #include <string.h>

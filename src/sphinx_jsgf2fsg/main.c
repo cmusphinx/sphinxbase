@@ -35,13 +35,13 @@
  *
  */
 
-#include <hash_table.h>
-#include <fsg_model.h>
-#include <jsgf.h>
-#include <err.h>
-
 #include <string.h>
-#include <strfuncs.h>
+
+#include <sphinxbase/hash_table.h>
+#include <sphinxbase/fsg_model.h>
+#include <sphinxbase/jsgf.h>
+#include <sphinxbase/err.h>
+#include <sphinxbase/strfuncs.h>
 
 static fsg_model_t *
 get_fsg(jsgf_t *grammar, const char *name)

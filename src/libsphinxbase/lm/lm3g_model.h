@@ -44,7 +44,7 @@
 #ifndef __NGRAM_MODEL_LM3G_H__
 #define __NGRAM_MODEL_LM3G_H__
 
-#include <listelem_alloc.h>
+#include "sphinxbase/listelem_alloc.h"
 
 #include "ngram_model_internal.h"
 

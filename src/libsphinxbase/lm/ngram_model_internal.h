@@ -43,8 +43,8 @@
 #ifndef __NGRAM_MODEL_INTERNAL_H__
 #define __NGRAM_MODEL_INTERNAL_H__
 
-#include "ngram_model.h"
-#include "hash_table.h"
+#include "sphinxbase/ngram_model.h"
+#include "sphinxbase/hash_table.h"
 
 /**
  * Common implementation of ngram_model_t.

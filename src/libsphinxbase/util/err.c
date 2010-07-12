@@ -39,14 +39,15 @@
  * @brief Somewhat antiquated logging and error interface.
  */
 
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
 
-#include "err.h"
-#include "config.h"
+#include "sphinxbase/err.h"
 
 #ifdef SPHINX_DEBUG
 static int sphinx_debug_level;

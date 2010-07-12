@@ -39,15 +39,15 @@
  * @author David Huggins-Daines <dhuggins@cs.cmu.edu>
  */
 
-#include "ngram_model_set.h"
-
-#include <err.h>
-#include <ckd_alloc.h>
-#include <strfuncs.h>
-#include <filename.h>
-
 #include <string.h>
 #include <stdlib.h>
+
+#include "sphinxbase/err.h"
+#include "sphinxbase/ckd_alloc.h"
+#include "sphinxbase/strfuncs.h"
+#include "sphinxbase/filename.h"
+
+#include "ngram_model_set.h"
 
 static ngram_funcs_t ngram_model_set_funcs;
 

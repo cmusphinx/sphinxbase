@@ -47,9 +47,9 @@
 #include "fe_warp_inverse_linear.h"
 #include "fe_warp_affine.h"
 #include "fe_warp_piecewise_linear.h"
-
 #include "fe_warp.h"
-#include "err.h"
+
+#include "sphinxbase/err.h"
 
 #include <stdio.h>
 #include <string.h>

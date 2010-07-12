@@ -63,7 +63,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include "filename.h"
+#include "sphinxbase/filename.h"
 
 #ifdef _MSC_VER
 #pragma warning (disable: 4996)

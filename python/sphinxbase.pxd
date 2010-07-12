@@ -20,7 +20,7 @@ cdef extern from "Python.h":
     void PyMem_Free(void *p)
     object PyString_FromStringAndSize(char *v, Py_ssize_t len)
 
-cdef extern from "logmath.h":
+cdef extern from "sphinxbase/logmath.h":
     ctypedef struct logmath_t
     logmath_t *logmath_init(float64 base, int shift, int use_table)
     logmath_t *logmath_retain(logmath_t *lmath)
@@ -39,7 +39,7 @@ cdef extern from "logmath.h":
 
     int logmath_get_zero(logmath_t *lmath)
 
-cdef extern from "cmd_ln.h":
+cdef extern from "sphinxbase/cmd_ln.h":
     ctypedef struct cmd_ln_t
     ctypedef struct arg_t
     cmd_ln_t *cmd_ln_parse_r(cmd_ln_t *inout_cmdln, arg_t * defn,
@@ -50,15 +50,15 @@ cdef extern from "cmd_ln.h":
     int cmd_ln_boolean_r(cmd_ln_t *cmdln, char *key)
     char *cmd_ln_str_r(cmd_ln_t *cmdln, char *key)
 
-cdef extern from "ckd_alloc.h":
+cdef extern from "sphinxbase/ckd_alloc.h":
     void *ckd_calloc(int n, int size)
     char *ckd_salloc(char *str)
     void ckd_free(void *ptr)
 
-cdef extern from "fsg_model.h":
+cdef extern from "sphinxbase/fsg_model.h":
     ctypedef struct fsg_model_t
 
-cdef extern from "ngram_model.h":
+cdef extern from "sphinxbase/ngram_model.h":
     ctypedef enum ngram_file_type_t:
         NGRAM_AUTO
         NGRAM_ARPA
@@ -101,7 +101,7 @@ cdef extern from "ngram_model.h":
     ngram_iter_t *ngram_iter_successors(ngram_iter_t *itor)
     void ngram_iter_free(ngram_iter_t *itor)
 
-cdef extern from "huff_code.h":
+cdef extern from "sphinxbase/huff_code.h":
     ctypedef struct huff_code_t
     huff_code_t *huff_code_build_int(int *values, int *frequencies, int nvals)
     huff_code_t *huff_code_build_str(char **values, int *frequencies, int nvals)

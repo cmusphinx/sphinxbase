@@ -81,9 +81,9 @@
 #pragma warning (disable: 4996)
 #endif
 
-#include "profile.h"
-#include "err.h"
-#include "ckd_alloc.h"
+#include "sphinxbase/profile.h"
+#include "sphinxbase/err.h"
+#include "sphinxbase/ckd_alloc.h"
 
 /* Silvio Moioli: updated to use Unicode */
 #ifdef _WIN32_WCE

@@ -41,10 +41,10 @@
 #include "config.h"
 #endif
 
-#include "clapack_lite.h"
-#include "matrix.h"
-#include "err.h"
-#include "ckd_alloc.h"
+#include "sphinxbase/clapack_lite.h"
+#include "sphinxbase/matrix.h"
+#include "sphinxbase/err.h"
+#include "sphinxbase/ckd_alloc.h"
 
 #ifndef WITH_LAPACK
 float64

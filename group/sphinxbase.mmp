@@ -11,7 +11,7 @@ TARGET		  sphinxbase.dll
 TARGETTYPE	  DLL
 UID 0x1000008d 0xe000acd4
 
-USERINCLUDE	 ..\include ..\include\s60
+USERINCLUDE	 ..\include\sphinxbase ..\include\s60
 SYSTEMINCLUDE   \epoc32\include \epoc32\include\stdapis \epoc32\include\stdapis\sys \epoc32\include\mmf\server
 
 

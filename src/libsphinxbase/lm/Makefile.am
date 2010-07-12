@@ -26,7 +26,8 @@ noinst_HEADERS = ngram_model_internal.h		\
 	jsgf_scanner.h				\
 	jsgf_parser.h
 
-INCLUDES = -I$(top_srcdir)/include \
+INCLUDES = -I$(top_srcdir)/include/sphinxbase \
+	   -I$(top_srcdir)/include \
            -I$(top_builddir)/include 
 
 # Nobody has the version of Flex needed to regenerate the scanner, so

@@ -38,13 +38,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <cmd_ln.h>
-#include <yin.h>
-#include <ckd_alloc.h>
-#include <byteorder.h>
-#include <strfuncs.h>
-#include <err.h>
-#include <pio.h>
+#include <sphinxbase/cmd_ln.h>
+#include <sphinxbase/yin.h>
+#include <sphinxbase/ckd_alloc.h>
+#include <sphinxbase/byteorder.h>
+#include <sphinxbase/strfuncs.h>
+#include <sphinxbase/err.h>
+#include <sphinxbase/pio.h>
 
 #ifndef WORDS_BIGENDIAN
 #define WORDS_BIGENDIAN 0
