@@ -4,6 +4,7 @@ dnl try not to hurt yourself ;)
 AC_INIT([sphinxbase], 0.6.99)
 AC_CONFIG_HEADERS([include/config.h include/sphinx_config.h])
 AM_INIT_AUTOMAKE([no-define])
+AC_CONFIG_MACRO_DIR([m4])
 
 CFLAGS=${CFLAGS:--g -O2 -Wall}
 
