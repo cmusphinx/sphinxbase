@@ -134,7 +134,8 @@ fixlog2(uint32 x)
   __asm__("cntlzw %0, %1\n": "=r"(y):"r"(x));
     x <<= y;
     y = 31 - y;
-#elif defined __ARM_ARCH_5__ || defined __ARM_ARCH_5T__ || defined __ARM_ARCH_5TE__
+#elif ((defined(__ARM_ARCH_5__) || defined(__ARM_ARCH_5T__) || \
+        defined(__ARM_ARCH_5TE__)) && !defined(__thumb__))
   __asm__("clz %0, %1\n": "=r"(y):"r"(x));
     x <<= y;
     y = 31 - y;
