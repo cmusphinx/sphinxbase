@@ -380,7 +380,7 @@ extract_pitch(const char *in, const char *out)
 
     if (out) {
         if ((outfh = fopen(out, "w")) == NULL) {
-            E_ERROR_SYSTEM("Failed to open %s for writing", outfh);
+            E_ERROR_SYSTEM("Failed to open %s for writing", out);
             goto error_out;
         }
     }
@@ -388,7 +388,7 @@ extract_pitch(const char *in, const char *out)
         outfh = stdout;
     }
     if ((infh = fopen(in, "rb")) == NULL) {
-        E_ERROR_SYSTEM("Failed to open %s for reading", infh);
+        E_ERROR_SYSTEM("Failed to open %s for reading", in);
         goto error_out;
     }
 
