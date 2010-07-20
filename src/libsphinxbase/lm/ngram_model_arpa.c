@@ -113,8 +113,7 @@ ReadNgramCounts(lineiter_t **li, int32 * n_ug, int32 * n_bg, int32 * n_tg)
         return -1;
     }
 
-    /* Check counts;  NOTE: #trigrams *CAN* be 0 */
-    if ((*n_ug <= 0) || (*n_bg <= 0) || (*n_tg < 0)) {
+    if ((*n_ug <= 0) || (*n_bg < 0) || (*n_tg < 0)) {
         E_ERROR("Bad or missing ngram count\n");
         return -1;
     }
@@ -142,7 +141,8 @@ ReadUnigrams(lineiter_t **li, ngram_model_arpa_t * model)
         int n;
 
         string_trim((*li)->buf, STRING_BOTH);
-        if (strcmp((*li)->buf, "\\2-grams:") == 0)
+        if (strcmp((*li)->buf, "\\2-grams:") == 0
+            || strcmp((*li)->buf, "\\end\\") == 0)
             break;
 
         if ((n = str2words((*li)->buf, wptr, 3)) < 2) {
@@ -519,18 +519,20 @@ ngram_model_arpa_read(cmd_ln_t *config,
     if (base->n_counts[2] > 0)
         init_sorted_list(&model->sorted_bo_wt2);
 
-    if (ReadBigrams(&li, model) == -1) {
-        fclose_comp(fp, is_pipe);
-        ngram_model_free(base);
-        return NULL;
-    }
+    if (base->n_counts[1] > 0) {
+        if (ReadBigrams(&li, model) == -1) {
+            fclose_comp(fp, is_pipe);
+            ngram_model_free(base);
+            return NULL;
+        }
 
-    base->n_counts[1] = FIRST_BG(model, base->n_counts[0]);
-    model->lm3g.n_prob2 = model->sorted_prob2.free;
-    model->lm3g.prob2 = vals_in_sorted_list(&model->sorted_prob2);
-    free_sorted_list(&model->sorted_prob2);
-    E_INFO("%8d = #bigrams created\n", base->n_counts[1]);
-    E_INFO("%8d = #prob2 entries\n", model->lm3g.n_prob2);
+        base->n_counts[1] = FIRST_BG(model, base->n_counts[0]);
+        model->lm3g.n_prob2 = model->sorted_prob2.free;
+        model->lm3g.prob2 = vals_in_sorted_list(&model->sorted_prob2);
+        free_sorted_list(&model->sorted_prob2);
+        E_INFO("%8d = #bigrams created\n", base->n_counts[1]);
+        E_INFO("%8d = #prob2 entries\n", model->lm3g.n_prob2);
+    }
 
     if (base->n_counts[2] > 0) {
         /* Create trigram bo-wts array */

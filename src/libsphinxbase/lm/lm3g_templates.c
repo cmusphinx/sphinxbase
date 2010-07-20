@@ -73,7 +73,7 @@ lm3g_bg_score(NGRAM_MODEL_TYPE *model,
     int32 i, n, b, score;
     bigram_t *bg;
 
-    if (lw1 < 0) {
+    if (lw1 < 0 || model->base.n < 2) {
         *n_used = 1;
         return model->lm3g.unigrams[lw2].prob1.l;
     }
