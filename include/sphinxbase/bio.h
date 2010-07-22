@@ -68,6 +68,7 @@
 #define _S3_BIO_H_
 
 #include <stdio.h>
+#include <stdarg.h>
 
 /* Win32/WinCE DLL gunk */
 #include <sphinxbase/sphinxbase_export.h>
@@ -136,6 +137,9 @@ int32 bio_writehdr_version (FILE *fp,  /**< Output: File to write */
 			    char *version /**< Input: A string of version */
 	);
 
+
+SPHINXBASE_EXPORT
+int32 bio_writehdr(FILE *fp, ...);
 
 /**
  * Free name and value strings previously allocated and returned by bio_readhdr.

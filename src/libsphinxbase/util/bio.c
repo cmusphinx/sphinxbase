@@ -122,6 +122,8 @@ bio_hdrarg_free(char **argname, char **argval)
 {
     int32 i;
 
+    if (argname == NULL)
+        return;
     for (i = 0; argname[i]; i++) {
         ckd_free(argname[i]);
         ckd_free(argval[i]);
@@ -150,6 +152,38 @@ bio_writehdr_version(FILE * fp, char *version)
 
 
 int32
+bio_writehdr(FILE *fp, ...)
+{
+    char const *key;
+    va_list args;
+    uint32 b;
+
+    fprintf(fp, "s3\n");
+    va_start(args, fp);
+    while ((key = va_arg(args, char const *)) != NULL) {
+        char const *val = va_arg(args, char const *);
+        if (val == NULL) {
+            E_ERROR("Wrong number of arguments\n");
+            va_end(args);
+            return -1;
+        }
+        fprintf(fp, "%s %s\n", key, val);
+    }
+    va_end(args);
+
+    fprintf(fp, "endhdr\n");
+    fflush(fp);
+
+    b = (uint32) BYTE_ORDER_MAGIC;
+    if (fwrite(&b, sizeof(uint32), 1, fp) != 1)
+        return -1;
+    fflush(fp);
+
+    return 0;
+}
+
+
+int32
 bio_readhdr(FILE * fp, char ***argname, char ***argval, int32 * swap)
 {
     __BIGSTACKVARIABLE__ char line[16384], word[4096];
@@ -160,40 +194,52 @@ bio_readhdr(FILE * fp, char ***argname, char ***argval, int32 * swap)
     *argval = (char **) ckd_calloc(BIO_HDRARG_MAX, sizeof(char *));
 
     lineno = 0;
-    if (fgets(line, sizeof(line), fp) == NULL)
-        E_FATAL("Premature EOF, line %d\n", lineno);
+    if (fgets(line, sizeof(line), fp) == NULL){
+        E_ERROR("Premature EOF, line %d\n", lineno);
+        goto error_out;
+    }
     lineno++;
 
     if ((line[0] == 's') && (line[1] == '3') && (line[2] == '\n')) {
         /* New format (post Dec-1996, including checksums); read argument-value pairs */
         for (i = 0;;) {
-            if (fgets(line, sizeof(line), fp) == NULL)
-                E_FATAL("Premature EOF, line %d\n", lineno);
+            if (fgets(line, sizeof(line), fp) == NULL) {
+                E_ERROR("Premature EOF, line %d\n", lineno);
+                goto error_out;
+            }
             lineno++;
 
-            if (sscanf(line, "%s%n", word, &l) != 1)
-                E_FATAL("Header format error, line %d\n", lineno);
+            if (sscanf(line, "%s%n", word, &l) != 1) {
+                E_ERROR("Header format error, line %d\n", lineno);
+                goto error_out;
+            }
             if (strcmp(word, "endhdr") == 0)
                 break;
             if (word[0] == '#') /* Skip comments */
                 continue;
 
-            if (i >= BIO_HDRARG_MAX)
-                E_FATAL
+            if (i >= BIO_HDRARG_MAX) {
+                E_ERROR
                     ("Max arg-value limit(%d) exceeded; increase BIO_HDRARG_MAX\n",
                      BIO_HDRARG_MAX);
+                goto error_out;
+            }
 
             (*argname)[i] = ckd_salloc(word);
-            if (sscanf(line + l, "%s", word) != 1)      /* Multi-word values not allowed */
-                E_FATAL("Header format error, line %d\n", lineno);
+            if (sscanf(line + l, "%s", word) != 1) {      /* Multi-word values not allowed */
+                E_ERROR("Header format error, line %d\n", lineno);
+                goto error_out;
+            }
             (*argval)[i] = ckd_salloc(word);
             i++;
         }
     }
     else {
         /* Old format (without checksums); the first entry must be the version# */
-        if (sscanf(line, "%s", word) != 1)
-            E_FATAL("Header format error, line %d\n", lineno);
+        if (sscanf(line, "%s", word) != 1) {
+            E_ERROR("Header format error, line %d\n", lineno);
+            goto error_out;
+        }
 
         (*argname)[0] = ckd_salloc("version");
         (*argval)[0] = ckd_salloc(word);
@@ -203,10 +249,16 @@ bio_readhdr(FILE * fp, char ***argname, char ***argval, int32 * swap)
     }
     (*argname)[i] = NULL;
 
-    if ((*swap = swap_check(fp)) < 0)
-        E_FATAL("swap_check failed\n");
+    if ((*swap = swap_check(fp)) < 0) {
+        E_ERROR("swap_check failed\n");
+        goto error_out;
+    }
 
     return 0;
+error_out:
+    bio_hdrarg_free(*argname, *argval);
+    *argname = *argval = NULL;
+    return -1;
 }
 
 
