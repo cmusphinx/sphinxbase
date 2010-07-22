@@ -161,7 +161,7 @@ lm3g_add_ug(ngram_model_t *base,
     lm3g->unigrams[wid].prob1.l = score;
     /* This unigram by definition doesn't participate in any bigrams,
      * so its backoff weight and bigram pointer are both undefined. */
-    lm3g->unigrams[wid].bo_wt1.l = logmath_get_zero(base->lmath);
+    lm3g->unigrams[wid].bo_wt1.l = 0;
     lm3g->unigrams[wid].bigrams = 0;
     /* Finally, increase the unigram count */
     ++base->n_counts[0];
