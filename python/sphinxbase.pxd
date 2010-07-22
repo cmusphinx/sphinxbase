@@ -64,6 +64,9 @@ cdef extern from "sphinxbase/ngram_model.h":
         NGRAM_ARPA
         NGRAM_DMP
         NGRAM_DMP32
+    ctypedef enum ngram_case_t:
+        NGRAM_UPPER
+        NGRAM_LOWER
     ctypedef struct ngram_model_t
     ngram_model_t *ngram_model_read(cmd_ln_t *config,
                                     char *file_name,
@@ -75,6 +78,11 @@ cdef extern from "sphinxbase/ngram_model.h":
     ngram_model_t *ngram_model_retain(ngram_model_t *model)
     int ngram_model_free(ngram_model_t *model)
 
+    int ngram_model_recode(ngram_model_t *model, char *frum, char *too)
+    int ngram_model_casefold(ngram_model_t *model, ngram_case_t kase)
+    int ngram_model_write(ngram_model_t *model, char *file_name,
+                          ngram_file_type_t format)
+
     int ngram_model_apply_weights(ngram_model_t *model,
                                   float32 lw, float32 wip, float32 uw)
     float32 ngram_model_get_weights(ngram_model_t *model, int32 *out_log_wip,
@@ -82,11 +90,16 @@ cdef extern from "sphinxbase/ngram_model.h":
 
     int32 ngram_wid(ngram_model_t *model, char *word)
     char *ngram_word(ngram_model_t *model, int32 wid)
+    int32 ngram_unknown_wid(ngram_model_t *model)
+    int32 ngram_zero(ngram_model_t *model)
 
     int32 ngram_ng_score(ngram_model_t *model, int32 wid,
                          int32 *history, int32 n_hist, int32 *n_used)
     int32 ngram_ng_prob(ngram_model_t *model, int32 wid,
                         int32 *history, int32 n_hist, int32 *n_used)
+
+    int32 ngram_model_add_word(ngram_model_t *model,
+                               char *word, float32 weight)
 
     int32 ngram_model_get_size(ngram_model_t *model)
     int32 *ngram_model_get_counts(ngram_model_t *model)
