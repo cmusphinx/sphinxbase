@@ -43,7 +43,7 @@
 #include "sphinxbase/ckd_alloc.h"
 #include "sphinxbase/fixpoint.h"
 
-#include "yin.h"
+#include "sphinxbase/yin.h"
 
 #include <stdio.h>
 
