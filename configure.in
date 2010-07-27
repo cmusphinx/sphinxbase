@@ -245,7 +245,7 @@ dnl
 dnl Check for libsndfile
 dnl
 if test "x$HAVE_PKGCONFIG" = "xyes"; then
-   PKG_CHECK_MODULES(SNDFILE,sndfile)
+   PKG_CHECK_MODULES(SNDFILE,sndfile,,[])
    AC_CHECK_HEADERS([sndfile.h])
 fi
 AC_SUBST(SNDFILE_LIBS)
