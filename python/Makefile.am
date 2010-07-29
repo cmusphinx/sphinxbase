@@ -1,5 +1,8 @@
 EXTRA_DIST = sphinxbase.c \
-	sphinxbase.pyx
+	sphinxbase.pyx \
+	setup_win32.py \
+	sb_test.py \
+	hufftest2.py
 
 pkginclude_HEADERS = sphinxbase.pxd
 
@@ -14,12 +17,13 @@ install-exec-local: pymod-build-stamp
 	$(PYTHON) setup.py install --prefix $(DESTDIR)$(prefix) $(SETUPTOOLS_CRAP)
 
 uninstall-local:
-	$(PYTHON) setup.py bogus_uninstall --prefix $(DESTDIR)$(prefix) $(SETUPTOOLS_CRAP)
+	$(PYTHON) setup.py bogus_uninstall --prefix $(DESTDIR)$(prefix)
 
 clean-local:
 	$(PYTHON) setup.py clean --all
 # This is dumb, but distutils is completely incapable of VPATH building
 	test -z "$(VPATH)" || $(RM) sphinxbase.c
+	$(RM) -r *.egg-info
 	$(RM) pymod-build-stamp filelist.txt
 
 pymod-build-stamp: $(srcdir)/sphinxbase.c

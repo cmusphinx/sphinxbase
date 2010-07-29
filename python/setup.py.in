@@ -24,7 +24,10 @@ class bogus_uninstall(distutils.command.install.install):
         dirs = {}
         for f in self.get_outputs():
             dirs[os.path.dirname(f)] = 1
-            print "Trying to remove", f
+            if os.path.isdir(f):
+		dirs[f] = 1
+		continue
+            print "Trying to remove file", f
             try:
                 os.unlink(f)
             except:
@@ -33,8 +36,12 @@ class bogus_uninstall(distutils.command.install.install):
         # This is really not guaranteed to work!!!
         for d in dirs:
             while d != self.prefix:
-                print "Trying to remove", d
+                print "Trying to remove dir", d
                 try:
+		    if d.endswith(".egg-info"):
+			files=[os.path.join(d,f) for f in os.listdir(d)]
+			print "Trying to remove:", " ".join(files)
+			for f in files: os.unlink(f)
                     os.rmdir(d)
                 except:
                     pass
