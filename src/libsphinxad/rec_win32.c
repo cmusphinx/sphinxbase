@@ -61,8 +61,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "prim_type.h"
-#include "ad.h"
+#include "sphinxbase/prim_type.h"
+#include "sphinxbase/ad.h"
 
 
 #define DEFAULT_N_WI_BUF	32      /* #Recording bufs */

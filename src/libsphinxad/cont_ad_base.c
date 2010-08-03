@@ -165,10 +165,10 @@
 #pragma warning (disable: 4305)
 #endif
 
-#include "prim_type.h"
-#include "ad.h"
-#include "cont_ad.h"
-#include "err.h"
+#include "sphinxbase/prim_type.h"
+#include "sphinxbase/ad.h"
+#include "sphinxbase/cont_ad.h"
+#include "sphinxbase/err.h"
 
 
 #ifndef _ABS

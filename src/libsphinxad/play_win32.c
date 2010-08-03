@@ -55,8 +55,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "prim_type.h"
-#include "ad.h"
+#include "sphinxbase/prim_type.h"
+#include "sphinxbase/ad.h"
 
 
 #define WO_BUFSIZE	3200    /* Samples/buf */
