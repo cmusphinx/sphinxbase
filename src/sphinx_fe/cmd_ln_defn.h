@@ -155,6 +155,11 @@ static arg_t defn[] = {
     "yes",
     "Create missing subdirectories in output directory" },
 
+  { "-sph2pipe",
+    ARG_BOOLEAN,
+    "no",
+    "Input is NIST sphere (possibly with Shorten), use sph2pipe to convert" },
+
   { "-nist",
     ARG_BOOLEAN,
     "no",

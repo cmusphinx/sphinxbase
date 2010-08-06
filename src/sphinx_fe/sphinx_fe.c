@@ -144,13 +144,8 @@ detect_riff(sphinx_wave2feat_t *wtf, char const *infile)
     return TRUE;
 }
 
-/**
- * Detect NIST file and parse its header if detected.
- *
- * @return TRUE if it's a NIST file, FALSE if not, -1 if an error occurred.
- */
 static int
-detect_nist(sphinx_wave2feat_t *wtf, char const *infile)
+open_nist_file(sphinx_wave2feat_t *wtf, char const *infile, FILE **out_fh)
 {
     char nist[7];
     lineiter_t *li;
@@ -194,10 +189,63 @@ detect_nist(sphinx_wave2feat_t *wtf, char const *infile)
             cmd_ln_set_str_r(wtf->config, "-input_endian",
                              (0 == strcmp(words[2], "10")) ? "big" : "little");
         }
-        /* FIMXE: Warn about shorten-compressed data. */
         ckd_free(words);
     }
+
     fseek(fh, 1024, SEEK_SET);
+    if (out_fh)
+        *out_fh = fh;
+    else
+        fclose(fh);
+    return TRUE;
+}
+
+#ifdef HAVE_POPEN
+static int
+detect_sph2pipe(sphinx_wave2feat_t *wtf, char const *infile)
+{
+    FILE *fh;
+    char *cmdline;
+    int rv;
+
+    /* Determine if it's NIST file and get parameters. */
+    if ((rv = open_nist_file(wtf, infile, NULL)) != TRUE)
+        return rv;
+
+    /* Now popen it with sph2pipe. */
+    cmdline = string_join("sph2pipe -f raw '", infile, "'", NULL);
+    if ((fh = popen(cmdline, "r")) == NULL) {
+        E_ERROR_SYSTEM("Failed to popen(\"sph2pipe -f raw '%s'\")", infile);
+        ckd_free(cmdline);
+        return -1;
+    }
+
+    wtf->infile = ckd_salloc(infile);
+    wtf->infh = fh;
+    return TRUE;
+}
+#else /* !HAVE_POPEN */
+static int
+detect_sph2pipe(sphinx_wave2feat_t *wtf, char const *infile)
+{
+    E_ERROR("popen() not available, cannot run sph2pipe\n");
+    return -1;
+}
+#endif /* !HAVE_POPEN */
+
+/**
+ * Detect NIST file and parse its header if detected.
+ *
+ * @return TRUE if it's a NIST file, FALSE if not, -1 if an error occurred.
+ */
+static int
+detect_nist(sphinx_wave2feat_t *wtf, char const *infile)
+{
+    FILE *fh;
+    int rv;
+
+    if ((rv = open_nist_file(wtf, infile, &fh)) != TRUE)
+        return rv;
     wtf->infile = ckd_salloc(infile);
     wtf->infh = fh;
     return TRUE;
@@ -437,7 +485,8 @@ decode_pcm(sphinx_wave2feat_t *wtf)
         nfloat += n;
     }
 
-    fclose(wtf->infh);
+    if (fclose(wtf->infh) == EOF)
+        E_ERROR_SYSTEM("Failed to close input file");
     wtf->infh = NULL;
     return nfloat;
 }
@@ -487,7 +536,8 @@ decode_sphinx_mfc(sphinx_wave2feat_t *wtf)
         nfloat += n;
     }
 
-    fclose(wtf->infh);
+    if (fclose(wtf->infh) == EOF)
+        E_ERROR_SYSTEM("Failed to close input file");
     wtf->infh = NULL;
     return nfloat;
 }
@@ -498,7 +548,8 @@ static const audio_type_t types[] = {
 #endif
     { "-mswav", &detect_riff, &decode_pcm },
     { "-nist", &detect_nist, &decode_pcm },
-    { "-raw", &detect_raw, &decode_pcm }
+    { "-raw", &detect_raw, &decode_pcm },
+    { "-sph2pipe", &detect_sph2pipe, &decode_pcm }
 };
 static const int ntypes = sizeof(types)/sizeof(types[0]);
 static const audio_type_t mfcc_type = {
@@ -713,10 +764,14 @@ sphinx_wave2feat_free(sphinx_wave2feat_t *wtf)
     ckd_free_2d(wtf->feat);
     ckd_free(wtf->infile);
     ckd_free(wtf->outfile);
-    if (wtf->infh)
-        fclose(wtf->infh);
-    if (wtf->outfh)
-        fclose(wtf->outfh);
+    if (wtf->infh) {
+        if (fclose(wtf->infh) == EOF)
+            E_ERROR_SYSTEM("Failed to close input file");
+    }
+    if (wtf->outfh) {
+        if (fclose(wtf->outfh) == EOF)
+            E_ERROR_SYSTEM("Failed to close output file");
+    }
     cmd_ln_free_r(wtf->config);
     fe_free(wtf->fe);
     ckd_free(wtf);
@@ -863,7 +918,8 @@ sphinx_wave2feat_convert_file(sphinx_wave2feat_t *wtf,
             goto error_out;
         }
     }
-    fclose(wtf->outfh);
+    if (fclose(wtf->outfh) == EOF)
+        E_ERROR_SYSTEM("Failed to close output file");
     wtf->outfh = NULL;
 
     return 0;
@@ -956,7 +1012,8 @@ run_control_file(sphinx_wave2feat_t *wtf, char const *ctlfile)
         ckd_free(outfile);
         if (rv != 0) {
             lineiter_free(li);
-            fclose(ctlfh);
+            if (fclose(ctlfh) == EOF)
+                E_ERROR_SYSTEM("Failed to close control file");
             return rv;
         }
     }
