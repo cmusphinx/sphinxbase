@@ -56,6 +56,7 @@
 #include <sphinxbase/err.h>
 #include <sphinxbase/ckd_alloc.h>
 #include <sphinxbase/byteorder.h>
+#include <sphinxbase/hash_table.h>
 
 #include "sphinx_wave2feat.h"
 #include "cmd_ln_defn.h"
@@ -138,6 +139,8 @@ detect_riff(sphinx_wave2feat_t *wtf, char const *infile)
     /* Get relevant information. */
     cmd_ln_set_int32_r(wtf->config, "-nchans", hdr.numchannels);
     cmd_ln_set_float32_r(wtf->config, "-samprate", hdr.SamplingFreq);
+    if (wtf->infile)
+        ckd_free(wtf->infile);
     wtf->infile = ckd_salloc(infile);
     wtf->infh = fh;
 
@@ -172,8 +175,10 @@ open_nist_file(sphinx_wave2feat_t *wtf, char const *infile, FILE **out_fh)
         int nword;
 
         string_trim(li->buf, STRING_BOTH);
-        if (strlen(li->buf) == 0)
+        if (strlen(li->buf) == 0) {
+            lineiter_free(li);
             break;
+        }
         nword = str2words(li->buf, NULL, 0);
         if (nword != 3)
             continue;
@@ -220,6 +225,8 @@ detect_sph2pipe(sphinx_wave2feat_t *wtf, char const *infile)
         return -1;
     }
 
+    if (wtf->infile)
+        ckd_free(wtf->infile);
     wtf->infile = ckd_salloc(infile);
     wtf->infh = fh;
     return TRUE;
@@ -246,6 +253,8 @@ detect_nist(sphinx_wave2feat_t *wtf, char const *infile)
 
     if ((rv = open_nist_file(wtf, infile, &fh)) != TRUE)
         return rv;
+    if (wtf->infile)
+        ckd_free(wtf->infile);
     wtf->infile = ckd_salloc(infile);
     wtf->infh = fh;
     return TRUE;
@@ -267,6 +276,8 @@ detect_raw(sphinx_wave2feat_t *wtf, char const *infile)
         E_ERROR_SYSTEM("Failed to open %s", infile);
         return -1;
     }
+    if (wtf->infile)
+        ckd_free(wtf->infile);
     wtf->infile = ckd_salloc(infile);
     wtf->infh = fh;
     return TRUE;
@@ -314,6 +325,8 @@ detect_sphinx_mfc(sphinx_wave2feat_t *wtf, char const *infile)
     }
     
     fseek(fh, 4, SEEK_SET);
+    if (wtf->infile)
+        ckd_free(wtf->infile);
     wtf->infile = ckd_salloc(infile);
     wtf->infh = fh;
     if (cmd_ln_boolean_r(wtf->config, "-spec2cep")) {
@@ -374,6 +387,8 @@ detect_sndfile(sphinx_wave2feat_t *wtf, char const *infile)
     /* Get relevant information. */
     cmd_ln_set_int32_r(wtf->config, "-nchans", sfinfo.channels);
     cmd_ln_set_float32_r(wtf->config, "-samprate", sfinfo.samplerate);
+    if (wtf->infile)
+        ckd_free(wtf->infile);
     wtf->infile = ckd_salloc(infile);
     wtf->insfh = sf;
     wtf->infh = NULL;
@@ -967,9 +982,11 @@ build_filenames(cmd_ln_t *config, char const *basename,
 static int
 run_control_file(sphinx_wave2feat_t *wtf, char const *ctlfile)
 {
+    hash_table_t *files;
+    hash_iter_t *itor;
     lineiter_t *li;
     FILE *ctlfh;
-    int nskip, runlen, npart;
+    int nskip, runlen, npart, rv = 0;
 
     if ((ctlfh = fopen(ctlfile, "r")) == NULL) {
         E_ERROR_SYSTEM("Failed to open control file %s", ctlfile);
@@ -979,9 +996,9 @@ run_control_file(sphinx_wave2feat_t *wtf, char const *ctlfile)
     runlen = cmd_ln_int32_r(wtf->config, "-runlen");
     if ((npart = cmd_ln_int32_r(wtf->config, "-npart"))) {
         /* Count lines in the file. */
-        int nlines, partlen, part;
+        int partlen, part, nlines = 0;
         part = cmd_ln_int32_r(wtf->config, "-part");
-        for (nlines = 0, li = lineiter_start(ctlfh); li; li = lineiter_next(li))
+        for (li = lineiter_start(ctlfh); li; li = lineiter_next(li))
             ++nlines;
         fseek(ctlfh, 0, SEEK_SET);
         partlen = nlines / npart;
@@ -991,33 +1008,48 @@ run_control_file(sphinx_wave2feat_t *wtf, char const *ctlfile)
         else
             runlen = partlen;
     }
-    if (runlen != -1)
+    if (runlen != -1){
         E_INFO("Processing %d utterances at position %d\n", runlen, nskip);
-    else
+        files = hash_table_new(runlen, HASH_CASE_YES);
+    }
+    else {
         E_INFO("Processing all remaining utterances at position %d\n", nskip);
+        files = hash_table_new(1000, HASH_CASE_YES);
+    }
     for (li = lineiter_start(ctlfh); li; li = lineiter_next(li)) {
-        char *infile, *outfile;
-        int rv;
+        char *c, *infile, *outfile;
 
         if (nskip-- > 0)
             continue;
-        if (runlen == 0)
+        if (runlen == 0) {
+            lineiter_free(li);
             break;
+        }
         --runlen;
 
         string_trim(li->buf, STRING_BOTH);
+        /* Extract the file ID from the control line. */
+        if ((c = strchr(li->buf, ' ')) != NULL)
+            *c = '\0';
         build_filenames(wtf->config, li->buf, &infile, &outfile);
+        if (hash_table_lookup(files, infile, NULL) == 0)
+            continue;
         rv = sphinx_wave2feat_convert_file(wtf, infile, outfile);
-        ckd_free(infile);
-        ckd_free(outfile);
+        hash_table_enter(files, infile, outfile);
         if (rv != 0) {
             lineiter_free(li);
             if (fclose(ctlfh) == EOF)
                 E_ERROR_SYSTEM("Failed to close control file");
-            return rv;
+            break;
         }
     }
-    return 0;
+    for (itor = hash_table_iter(files); itor;
+         itor = hash_table_iter_next(itor)) {
+        ckd_free((void *)hash_entry_key(itor->ent));
+        ckd_free(hash_entry_val(itor->ent));
+    }
+    hash_table_free(files);
+    return rv;
 }
 
 int
