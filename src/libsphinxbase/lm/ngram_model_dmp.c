@@ -612,7 +612,8 @@ ngram_model_dmp_build(ngram_model_t *base)
     if (seg != (bgcount - 1) >> LOG_BG_SEG_SZ)
         model->lm3g.tseg_base[seg] = tgcount;
     model->lm3g.unigrams[i].bigrams = bgcount;
-    bgptr->trigrams = tgcount - model->lm3g.tseg_base[seg];
+    if (newbase->n > 2)
+        bgptr->trigrams = tgcount - model->lm3g.tseg_base[seg];
 
     /* Now create probability tables. */
     model->lm3g.n_prob2 = sorted_prob2.free;
