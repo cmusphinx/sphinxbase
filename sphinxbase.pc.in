@@ -10,4 +10,4 @@ Version: @VERSION@
 URL: http://www.cmusphinx.org/
 Libs: -L${libdir} -lsphinxbase -lsphinxad
 Libs.private: ${libs}
-Cflags: -I${includedir}
+Cflags: -I${includedir} -I${includedir}/sphinxbase
