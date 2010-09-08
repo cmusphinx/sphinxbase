@@ -1,8 +1,5 @@
 SUBDIRS = sphinxbase
 
-pkginclude_HEADERS =				\
-	sphinx_config.h
-
 EXTRA_DIST = \
 	wince/sphinx_config.h \
 	wince/config.h \
