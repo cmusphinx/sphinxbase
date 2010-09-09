@@ -125,7 +125,9 @@ feat_read_lda(feat_t *feat, const char *ldafile, int32 dim)
 #endif
 
     /* Note that SphinxTrain stores the eigenvectors as row vectors. */
-    assert(n == feat->stream_len[0]);
+    if (n != feat->stream_len[0])
+	E_FATAL("LDA matrix dimension %d doesn't match feature stream size %d\n", n, feat->stream_len[0]);
+    
     /* Override dim from file if it is 0 or greater than m. */
     if (dim > m || dim <= 0) {
         dim = m;
