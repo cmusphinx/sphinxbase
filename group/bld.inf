@@ -12,4 +12,4 @@ PRJ_PLATFORMS
 DEFAULT
 
 PRJ_MMPFILES
-sphinxbase_s60.mmp
+sphinxbase.mmp

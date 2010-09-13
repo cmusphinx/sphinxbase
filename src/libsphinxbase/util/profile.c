@@ -180,7 +180,7 @@ ptmr_start(ptmr_t * tm)
 #if (! defined(_WIN32)) || defined(GNUWINCE) || defined(__SYMBIAN32__)
     struct timeval e_start;     /* Elapsed time */
 
-#if (! _HPUX_SOURCE)
+#if (! defined(_HPUX_SOURCE))  && (! defined(__SYMBIAN32__))
     struct rusage start;        /* CPU time */
 
     /* Unix but not HPUX */
@@ -216,7 +216,7 @@ ptmr_stop(ptmr_t * tm)
 #if (! defined(_WIN32)) || defined(GNUWINCE) || defined(__SYMBIAN32__)
     struct timeval e_stop;      /* Elapsed time */
 
-#if (! _HPUX_SOURCE)
+#if (! defined(_HPUX_SOURCE))  && (! defined(__SYMBIAN32__))
     struct rusage stop;         /* CPU time */
 
     /* Unix but not HPUX */
