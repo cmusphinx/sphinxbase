@@ -176,7 +176,7 @@ fclose_comp(FILE * fp, int32 ispipe)
 {
     if (ispipe) {
 #ifdef HAVE_POPEN
-#if defined(_WIN32)
+#if defined(_WIN32) && (!defined(__SYMBIAN32__))
         _pclose(fp);
 #else
         pclose(fp);

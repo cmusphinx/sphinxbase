@@ -47,23 +47,25 @@
 #include <string.h>
 #include <stdlib.h>
 
-#if (defined(_WIN32) || defined(GNUWINCE)) && !defined(__SYMBIAN32__)
-# ifdef GNUWINCE
+#ifdef GNUWINCE
 #  include <sys/wcebase.h>
 #  include <sys/wcetypes.h>
 #  include <sys/wcememory.h>
 #  include <sys/wcefile.h>
-# else /* !GNUWINCE */
+#elif defined(_WIN32)
 #  include <windows.h>
-# endif /* !GNUWINCE */
 #elif defined(__ADSPBLACKFIN__) && !defined(__linux__)
-#else /* !_WIN32 */
 # include <unistd.h>
 # include <fcntl.h>
 # include <sys/stat.h>
 # include <sys/file.h>
 # include <sys/mman.h>
-#endif /* !_WIN32 */
+#elif !defined(__SYMBIAN32__)
+# include <unistd.h>
+# include <fcntl.h>
+# include <sys/stat.h>
+# include <sys/mman.h>
+#endif
 
 #include "sphinxbase/prim_type.h"
 #include "sphinxbase/err.h"
