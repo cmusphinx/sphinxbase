@@ -48,22 +48,22 @@
 #include <stdlib.h>
 
 #ifdef GNUWINCE
-#  include <sys/wcebase.h>
-#  include <sys/wcetypes.h>
-#  include <sys/wcememory.h>
-#  include <sys/wcefile.h>
+# include <sys/wcebase.h>
+# include <sys/wcetypes.h>
+# include <sys/wcememory.h>
+# include <sys/wcefile.h>
+#elif defined(__SYMBIAN32__) /* SYMBIAN32 must be before WIN32 since Symbian SDK defines WIN32 as well */
+# include <unistd.h>
+# include <fcntl.h>
+# include <sys/stat.h>
+# include <sys/mman.h>
 #elif defined(_WIN32)
-#  include <windows.h>
-#elif defined(__ADSPBLACKFIN__) && !defined(__linux__)
+# include <windows.h>
+#elif defined(__ADSPBLACKFIN__) || defined(__linux__)
 # include <unistd.h>
 # include <fcntl.h>
 # include <sys/stat.h>
 # include <sys/file.h>
-# include <sys/mman.h>
-#elif !defined(__SYMBIAN32__)
-# include <unistd.h>
-# include <fcntl.h>
-# include <sys/stat.h>
 # include <sys/mman.h>
 #endif
 
