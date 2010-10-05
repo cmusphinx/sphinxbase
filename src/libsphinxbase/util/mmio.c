@@ -59,7 +59,7 @@
 # include <sys/mman.h>
 #elif defined(_WIN32)
 # include <windows.h>
-#elif defined(__ADSPBLACKFIN__) || defined(__linux__)
+#else
 # include <unistd.h>
 # include <fcntl.h>
 # include <sys/stat.h>
