@@ -110,13 +110,20 @@ static const arg_t defn[] = {
     "1.0",
     "Unigram probability weight (interpolated with uniform distribution)"},
 
+  { "-verbose",
+    ARG_BOOLEAN,
+    "no",
+    "Print details of perplexity calculation" },
+
   /* FIXME: Support -lmstartsym, -lmendsym, -lmctlfn, -ctl_lm */
   { NULL, 0, NULL, NULL }
 };
 
+static int verbose;
+
 static int
 calc_entropy(ngram_model_t *lm, char **words, int32 n,
-	     int32 *out_n_ccs, int32 *out_n_oovs)
+	     int32 *out_n_ccs, int32 *out_n_oovs, int32 *out_lm_score)
 {
 	int32 *wids;
 	int32 startwid;
@@ -155,6 +162,17 @@ calc_entropy(ngram_model_t *lm, char **words, int32 n,
 		prob = ngram_ng_score(lm,
 				      wids[i], wids + i + 1,
 				      n - i - 1, &n_used);
+                if (verbose) {
+                    int m;
+                    printf("log P(%s|", ngram_word(lm, wids[i]));
+                    m = i + ngram_model_get_size(lm) - 1;
+                    if (m >= n)
+                        m = n - 1;
+                    while (m > i) {
+                        printf("%s ", ngram_word(lm, wids[m--]));
+                    }
+                    printf(") = %d\n", prob);
+                }
 		ch -= prob;
 	}
 
@@ -165,6 +183,8 @@ calc_entropy(ngram_model_t *lm, char **words, int32 n,
         n -= (nccs + noovs);
         if (n <= 0)
             return 0;
+        if (out_lm_score)
+            *out_lm_score = -ch;
 	return ch / n;
 }
 
@@ -173,7 +193,7 @@ evaluate_file(ngram_model_t *lm, logmath_t *lmath, const char *lsnfn)
 {
 	FILE *fh;
         lineiter_t *litor;
-	int32 nccs, noovs, nwords;
+	int32 nccs, noovs, nwords, lscr;
 	float64 ch, log_to_log2;;
 
 	if ((fh = fopen(lsnfn, "r")) == NULL)
@@ -186,7 +206,7 @@ evaluate_file(ngram_model_t *lm, logmath_t *lmath, const char *lsnfn)
 	ch = 0.0;
         for (litor = lineiter_start(fh); litor; litor = lineiter_next(litor)) {
 		char **words;
-		int32 n, tmp_ch, tmp_noovs, tmp_nccs;
+		int32 n, tmp_ch, tmp_noovs, tmp_nccs, tmp_lscr;
 
 		n = str2words(litor->buf, NULL, 0);
 		if (n < 0)
@@ -201,11 +221,13 @@ evaluate_file(ngram_model_t *lm, logmath_t *lmath, const char *lsnfn)
 		    && words[n-1][strlen(words[n-1])-1] == ')')
 			n = n - 1;
 
-		tmp_ch = calc_entropy(lm, words, n, &tmp_nccs, &tmp_noovs);
+		tmp_ch = calc_entropy(lm, words, n, &tmp_nccs,
+                                      &tmp_noovs, &tmp_lscr);
 
 		ch += (float64) tmp_ch * (n - tmp_nccs - tmp_noovs) * log_to_log2;
 		nccs += tmp_nccs;
 		noovs += tmp_noovs;
+                lscr += tmp_lscr;
 		nwords += n;
 		
 		ckd_free(words);
@@ -216,6 +238,7 @@ evaluate_file(ngram_model_t *lm, logmath_t *lmath, const char *lsnfn)
 
 	/* Calculate perplexity pplx = exp CH */
 	printf("perplexity: %f\n", pow(2.0, ch));
+        printf("lm score: %d\n", lscr);
 
 	/* Report OOVs and CCs */
 	printf("%d words evaluated\n", nwords);
@@ -228,7 +251,7 @@ evaluate_string(ngram_model_t *lm, logmath_t *lmath, const char *text)
 {
 	char *textfoo;
 	char **words;
-	int32 n, ch, noovs, nccs;
+	int32 n, ch, noovs, nccs, lscr;
 
 	/* Split it into an array of strings. */
 	textfoo = ckd_salloc(text);
@@ -240,7 +263,7 @@ evaluate_string(ngram_model_t *lm, logmath_t *lmath, const char *text)
 	words = ckd_calloc(n, sizeof(*words));
 	str2words(textfoo, words, n);
 
-	ch = calc_entropy(lm, words, n, &nccs, &noovs);
+	ch = calc_entropy(lm, words, n, &nccs, &noovs, &lscr);
 
 	printf("input: %s\n", text);
 	printf("cross-entropy: %f bits\n",
@@ -248,6 +271,7 @@ evaluate_string(ngram_model_t *lm, logmath_t *lmath, const char *text)
 
 	/* Calculate perplexity pplx = exp CH */
 	printf("perplexity: %f\n", logmath_exp(lmath, ch));
+        printf("lm score: %d\n", lscr);
 
 	/* Report OOVs and CCs */
 	printf("%d words evaluated\n", n);
@@ -268,6 +292,8 @@ main(int argc, char *argv[])
 
 	if ((config = cmd_ln_parse_r(NULL, defn, argc, argv, TRUE)) == NULL)
 		return 1;
+
+        verbose = cmd_ln_boolean_r(config, "-verbose");
 
 	/* Create log math object. */
 	if ((lmath = logmath_init

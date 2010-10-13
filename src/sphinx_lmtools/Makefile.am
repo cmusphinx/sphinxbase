@@ -1,4 +1,4 @@
-bin_PROGRAMS = sphinx_lm_eval sphinx_lm_convert
+bin_PROGRAMS = sphinx_lm_eval sphinx_lm_convert sphinx_lm_prune
 
 bin_SCRIPTS = sphinx_lm_sort
 EXTRA_DIST = sphinx_lm_sort
