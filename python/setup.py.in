@@ -5,6 +5,7 @@ except:
 
 import distutils.command.install
 import os
+import sys
 
 class bogus_uninstall(distutils.command.install.install):
     """
@@ -47,6 +48,10 @@ class bogus_uninstall(distutils.command.install.install):
                     pass
                 d = os.path.dirname(d)
 
+libraries = ['sphinxbase']
+if sys.platform == "cygwin":
+      libraries.append("iconv")
+
 setup(name = 'SphinxBase',
       version = '@VERSION@',
       author = 'David Huggins-Daines',
@@ -57,7 +62,7 @@ setup(name = 'SphinxBase',
       ext_modules = [
         Extension('sphinxbase',
                    sources=['sphinxbase.c'],
-                   libraries=['sphinxbase'],
+                   libraries=libraries,
                    include_dirs=['@top_builddir@/include',
                                  '@top_srcdir@/include'],
                    library_dirs=['@top_builddir@/src/libsphinxbase/.libs'])
