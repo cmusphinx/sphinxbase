@@ -295,7 +295,12 @@ void CHelperThreadHost::InitializeL(){
  */
 void CHelperThreadHost::DestroyL(){
     iTemporaryBuffer.Close();
+#if defined(__WINSCW__)
+    iStream->Stop();
+    CMdaAudioInputStream::Delete(iStream);
+#else
     delete iStream;
+#endif
 }
 
 /*
