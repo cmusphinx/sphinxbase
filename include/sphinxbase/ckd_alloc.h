@@ -178,6 +178,21 @@ void *__ckd_calloc_3d__(size_t d1, size_t d2, size_t d3,	/* In: #elems in the di
                         const char *caller_file, int caller_line);	/* In */
 
 /**
+ * Allocate a 34D array and return ptr to it.
+ * The data area is allocated in one block so it can also be treated as a 1-D array.
+ */
+
+void ****
+__ckd_calloc_4d__(size_t d1,
+		size_t d2,		
+		size_t d3,		
+		size_t d4,		
+		size_t elem_size,
+		char *caller_file,
+		int caller_line);
+
+
+/**
  * Overlay a 3-D array over a previously allocated storage area.
  **/
 SPHINXBASE_EXPORT
@@ -212,12 +227,16 @@ void ckd_free(void *ptr);
 SPHINXBASE_EXPORT
 void ckd_free_2d(void *ptr);
 
-
 /** 
  * Free a 3-D array (ptr) previously allocated by ckd_calloc_3d 
  */
 SPHINXBASE_EXPORT
 void ckd_free_3d(void *ptr);
+
+/** 
+ * Free a 4-D array (ptr) previously allocated by ckd_calloc_4d 
+ */
+void ckd_free_4d(void *ptr);
 
 /**
  * Macros to simplify the use of above functions.
@@ -258,6 +277,11 @@ void ckd_free_3d(void *ptr);
 #define ckd_calloc_3d(d1,d2,d3,sz) __ckd_calloc_3d__((d1),(d2),(d3),(sz),__FILE__,__LINE__)
 
 /**
+ * Macro for __ckd_calloc_4d__
+ */
+#define ckd_calloc_4d(d1, d2, d3, d4, s)  __ckd_calloc_4d__((d1), (d2), (d3), (d4), (s), __FILE__, __LINE__)
+
+/**
  * Macro for __ckd_alloc_2d_ptr__
  */
 
@@ -278,6 +302,7 @@ void ckd_free_3d(void *ptr);
  * Free only the pointer arrays allocated with ckd_alloc_3d_ptr().
  */
 #define ckd_free_3d_ptr(bf) ckd_free_2d(bf)
+
 
 #ifdef __cplusplus
 }

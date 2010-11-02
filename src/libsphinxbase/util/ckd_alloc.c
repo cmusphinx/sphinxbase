@@ -302,6 +302,76 @@ ckd_free_3d(void *inptr)
     ckd_free(ptr);
 }
 
+
+void ****
+__ckd_calloc_4d__(size_t d1,
+		  size_t d2,
+		  size_t d3,
+		  size_t d4,
+		  size_t elem_size,
+		  char *file,
+		  int line)
+{
+    void *store;
+    void **tmp1;
+    void ***tmp2;
+    void ****out;
+    size_t i, j;
+
+    store = calloc(d1 * d2 * d3 * d4, elem_size);
+    if (store == NULL) {
+	E_FATAL("ckd_calloc_4d failed for caller at %s(%d) at %s(%d)\n",
+		file, line, __FILE__, __LINE__);
+    }
+    
+    tmp1 = calloc(d1 * d2 * d3, sizeof(void *));
+    if (tmp1 == NULL) {
+	E_FATAL("ckd_calloc_4d failed for caller at %s(%d) at %s(%d)\n",
+		file, line, __FILE__, __LINE__);
+    }
+
+    tmp2 = ckd_calloc(d1 * d2, sizeof(void **));
+    if (tmp2 == NULL) {
+	E_FATAL("ckd_calloc_4d failed for caller at %s(%d) at %s(%d)\n",
+		file, line, __FILE__, __LINE__);
+    }
+
+    out = ckd_calloc(d1, sizeof(void ***));
+    if (out == NULL) {
+	E_FATAL("ckd_calloc_4d failed for caller at %s(%d) at %s(%d)\n",
+		file, line, __FILE__, __LINE__);
+    }
+    
+    for (i = 0, j = 0; i < d1*d2*d3; i++, j += d4) {
+	tmp1[i] = &((char *)store)[j*elem_size];
+    }
+
+    for (i = 0, j = 0; i < d1*d2; i++, j += d3) {
+	tmp2[i] = &tmp1[j];
+    }
+
+    for (i = 0, j = 0; i < d1; i++, j += d2) {
+	out[i] = &tmp2[j];
+    }
+
+    return out;
+}
+
+void
+ckd_free_4d(void *inptr)
+{
+    void ****ptr = (void ****)inptr;
+    if (ptr == NULL)
+	return;
+    /* free the underlying store */
+    ckd_free(ptr[0][0][0]);
+
+    /* free the access overhead */
+    ckd_free(ptr[0][0]);
+    ckd_free(ptr[0]);
+    ckd_free(ptr);
+}
+
 /* Layers a 3d array access structure over a preallocated storage area */
 void *
 __ckd_alloc_3d_ptr(size_t d1,
