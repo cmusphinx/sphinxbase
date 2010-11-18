@@ -29,6 +29,8 @@ EXTRA_DIST = 100.arpa.gz \
 	100_2.arpa.gz \
 	100_2.arpa.DMP \
 	turtle.lm \
-	turtle.lm.DMP
+	turtle.lm.DMP \
+	turtle.ug.lm \
+	turtle.ug.lm.DMP
 
 CLEANFILES = 100.tmp.arpa 100.tmp.DMP

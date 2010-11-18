@@ -34,6 +34,14 @@ test_lm_vals(ngram_model_t *model)
 	return 0;
 }
 
+static int
+test_lm_ug_vals(ngram_model_t *model)
+{
+	TEST_ASSERT(model);
+	TEST_EQUAL(ngram_score(model, "BACKWARD", NULL), -53008);
+	return 0;
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -56,6 +64,15 @@ main(int argc, char *argv[])
 	TEST_EQUAL(1, ngram_model_free(model));
 	TEST_EQUAL(ngram_score(model, "daines", "huggins", "david", NULL), -9452);
 	TEST_EQUAL(0, ngram_model_free(model));
+
+	/* Read a language model */
+	model = ngram_model_read(NULL, LMDIR "/turtle.ug.lm", NGRAM_ARPA, lmath);
+	test_lm_ug_vals(model);
+
+	/* Read a language model */
+	model = ngram_model_read(NULL, LMDIR "/turtle.ug.lm.DMP", NGRAM_DMP, lmath);
+	test_lm_ug_vals(model);
+
 	logmath_free(lmath);
 
 	return 0;

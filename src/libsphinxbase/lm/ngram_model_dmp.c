@@ -263,31 +263,33 @@ ngram_model_dmp_read(cmd_ln_t *config,
             }
         }
     }
-
-    /* read bigrams */
-    if (do_mmap) {
-        model->lm3g.bigrams = (bigram_t *) (map_base + offset);
-        offset += (n_bigram + 1) * sizeof(bigram_t);
+    
+    if (n_bigram > 0) {
+        /* read bigrams */
+	if (do_mmap) {
+    	    model->lm3g.bigrams = (bigram_t *) (map_base + offset);
+    	    offset += (n_bigram + 1) * sizeof(bigram_t);
+	}
+	else {
+    	    model->lm3g.bigrams =
+        	ckd_calloc(n_bigram + 1, sizeof(bigram_t));
+    	    if (fread(model->lm3g.bigrams, sizeof(bigram_t), n_bigram + 1, fp)
+        	!= (size_t) n_bigram + 1) {
+    		E_ERROR("fread(bigrams) failed\n");
+        	goto error_out;
+    	    }
+    	    if (do_swap) {
+        	for (i = 0, bgptr = model->lm3g.bigrams; i <= n_bigram;
+            	     i++, bgptr++) {
+            	    SWAP_INT16(&bgptr->wid);
+            	    SWAP_INT16(&bgptr->prob2);
+            	    SWAP_INT16(&bgptr->bo_wt2);
+            	    SWAP_INT16(&bgptr->trigrams);
+        	}
+    	    }
+	}
+	E_INFO("%8d = LM.bigrams(+trailer) read\n", n_bigram);
     }
-    else {
-        model->lm3g.bigrams =
-            ckd_calloc(n_bigram + 1, sizeof(bigram_t));
-        if (fread(model->lm3g.bigrams, sizeof(bigram_t), n_bigram + 1, fp)
-            != (size_t) n_bigram + 1) {
-            E_ERROR("fread(bigrams) failed\n");
-            goto error_out;
-        }
-        if (do_swap) {
-            for (i = 0, bgptr = model->lm3g.bigrams; i <= n_bigram;
-                 i++, bgptr++) {
-                SWAP_INT16(&bgptr->wid);
-                SWAP_INT16(&bgptr->prob2);
-                SWAP_INT16(&bgptr->bo_wt2);
-                SWAP_INT16(&bgptr->trigrams);
-            }
-        }
-    }
-    E_INFO("%8d = LM.bigrams(+trailer) read\n", n_bigram);
 
     /* read trigrams */
     if (n_trigram > 0) {
@@ -318,25 +320,27 @@ ngram_model_dmp_read(cmd_ln_t *config,
         model->lm3g.le = listelem_alloc_init(sizeof(tginfo_t));
     }
 
-    /* read n_prob2 and prob2 array (in memory) */
-    if (do_mmap)
-        fseek(fp, offset, SEEK_SET);
-    if (fread(&k, sizeof(k), 1, fp) != 1)
-        goto error_out;
-    if (do_swap) SWAP_INT32(&k);
-    model->lm3g.n_prob2 = k;
-    model->lm3g.prob2 = ckd_calloc(k, sizeof(*model->lm3g.prob2));
-    if (fread(model->lm3g.prob2, sizeof(*model->lm3g.prob2), k, fp) != (size_t) k) {
-        E_ERROR("fread(prob2) failed\n");
-        goto error_out;
+    if (n_bigram > 0) {
+        /* read n_prob2 and prob2 array (in memory) */
+	if (do_mmap)
+    	    fseek(fp, offset, SEEK_SET);
+        if (fread(&k, sizeof(k), 1, fp) != 1)
+	    goto error_out;
+        if (do_swap) SWAP_INT32(&k);
+	model->lm3g.n_prob2 = k;
+        model->lm3g.prob2 = ckd_calloc(k, sizeof(*model->lm3g.prob2));
+	if (fread(model->lm3g.prob2, sizeof(*model->lm3g.prob2), k, fp) != (size_t) k) {
+    	    E_ERROR("fread(prob2) failed\n");
+    	    goto error_out;
+	}
+	for (i = 0; i < k; i++) {
+    	    if (do_swap)
+        	SWAP_INT32(&model->lm3g.prob2[i].l);
+    	    /* Convert values to log. */
+    	    model->lm3g.prob2[i].l = logmath_log10_to_log(lmath, model->lm3g.prob2[i].f);
+	}
+	E_INFO("%8d = LM.prob2 entries read\n", k);
     }
-    for (i = 0; i < k; i++) {
-        if (do_swap)
-            SWAP_INT32(&model->lm3g.prob2[i].l);
-        /* Convert values to log. */
-        model->lm3g.prob2[i].l = logmath_log10_to_log(lmath, model->lm3g.prob2[i].f);
-    }
-    E_INFO("%8d = LM.prob2 entries read\n", k);
 
     /* read n_bo_wt2 and bo_wt2 array (in memory) */
     if (base->n > 2) {
@@ -361,20 +365,20 @@ ngram_model_dmp_read(cmd_ln_t *config,
     /* read n_prob3 and prob3 array (in memory) */
     if (base->n > 2) {
         if (fread(&k, sizeof(k), 1, fp) != 1)
-            goto error_out;
-        if (do_swap) SWAP_INT32(&k);
-        model->lm3g.n_prob3 = k;
-        model->lm3g.prob3 = ckd_calloc(k, sizeof(*model->lm3g.prob3));
-        if (fread(model->lm3g.prob3, sizeof(*model->lm3g.prob3), k, fp) != (size_t) k) {
-            E_ERROR("fread(prob3) failed\n");
-            goto error_out;
-        }
-        for (i = 0; i < k; i++) {
-            if (do_swap)
+		goto error_out;
+	if (do_swap) SWAP_INT32(&k);
+    	model->lm3g.n_prob3 = k;
+    	model->lm3g.prob3 = ckd_calloc(k, sizeof(*model->lm3g.prob3));
+    	if (fread(model->lm3g.prob3, sizeof(*model->lm3g.prob3), k, fp) != (size_t) k) {
+    	    E_ERROR("fread(prob3) failed\n");
+    	    goto error_out;
+    	}
+    	for (i = 0; i < k; i++) {
+    	    if (do_swap)
                 SWAP_INT32(&model->lm3g.prob3[i].l);
-            /* Convert values to log. */
-            model->lm3g.prob3[i].l = logmath_log10_to_log(lmath, model->lm3g.prob3[i].f);
-        }
+    	    /* Convert values to log. */
+    	    model->lm3g.prob3[i].l = logmath_log10_to_log(lmath, model->lm3g.prob3[i].f);
+    	}
         E_INFO("%8d = LM.prob3 entries read\n", k);
     }
 
@@ -521,7 +525,10 @@ ngram_model_dmp_build(ngram_model_t *base)
         }
     }
     E_INFO("%8d = #unigrams created\n", newbase->n_counts[0]);
-
+		
+    if (newbase->n < 2) 
+        return model;
+			 
     /* Construct quantized probability table for bigrams and
      * (optionally) trigrams.  Hesitate to use the "sorted list" thing
      * since it isn't so useful, but it's there already. */
@@ -891,13 +898,17 @@ ngram_model_dmp_write(ngram_model_t *base,
     ngram_model_dmp_write_fmtdesc(fh);
     ngram_model_dmp_write_ngram_counts(fh, newbase);
     ngram_model_dmp_write_unigram(fh, newbase);
-    ngram_model_dmp_write_bigram(fh, newbase);
-    ngram_model_dmp_write_trigram(fh, newbase);
-    ngram_model_dmp_write_bgprob(fh, newbase);
-    if (newbase->n > 2) {
-        ngram_model_dmp_write_tgbowt(fh, newbase);
-        ngram_model_dmp_write_tgprob(fh, newbase);
-        ngram_model_dmp_write_tg_segbase(fh, newbase);
+    if (newbase->n > 1) {
+        ngram_model_dmp_write_bigram(fh, newbase);
+	if (newbase->n > 2) {
+	    ngram_model_dmp_write_trigram(fh, newbase);
+	}
+	ngram_model_dmp_write_bgprob(fh, newbase);
+	if (newbase->n > 2) {
+	        ngram_model_dmp_write_tgbowt(fh, newbase);
+	        ngram_model_dmp_write_tgprob(fh, newbase);
+	        ngram_model_dmp_write_tg_segbase(fh, newbase);
+        }
     }
     ngram_model_dmp_write_wordstr(fh, newbase);
     ngram_model_free(newbase);
