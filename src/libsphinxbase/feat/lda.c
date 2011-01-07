@@ -116,6 +116,8 @@ feat_read_lda(feat_t *feat, const char *ldafile, int32 dim)
         }
         feat->lda = (void *)outlda;
     }
+    fclose(fh);
+    
 #ifdef FIXED_POINT
     /* FIXME: This is a fragile hack that depends on mfcc_t and
      * float32 being the same size (which they are, but...) */
