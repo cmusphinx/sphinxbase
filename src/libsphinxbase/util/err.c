@@ -86,7 +86,6 @@ void
 logfp_index_alloc(void)
 {
     pthread_key_create(&logfp_index, NULL);
-    pthread_setspecific(logfp_index, (void *)-1);
 }
 
 FILE *
@@ -96,8 +95,11 @@ err_get_logfp(void)
 
     pthread_once(&logfp_index_once, logfp_index_alloc);
     logfp = (FILE *)pthread_getspecific(logfp_index);
-    if (logfp == (FILE *)-1)
+
+    if (logfp == NULL)
         return stderr;
+    else if (logfp == (FILE*) -1)
+	return NULL;
     else
         return logfp;
 }
@@ -105,6 +107,9 @@ err_get_logfp(void)
 static void
 internal_set_logfp(FILE *fh)
 {
+    if (fh == NULL)
+	fh = (FILE*) -1;
+
     pthread_setspecific(logfp_index, (void *)fh);
 }
 
@@ -117,7 +122,6 @@ void
 logfp_index_alloc(void)
 {
     logfp_index = TlsAlloc();
-    TlsSetValue(logfp_index, (void *)-1);
 }
 
 FILE *
@@ -128,8 +132,11 @@ err_get_logfp(void)
     if (InterlockedExchange(&logfp_index_once, 1) == 0)
         logfp_index_alloc();
     logfp = (FILE *)TlsGetValue(logfp_index);
-    if (logfp == (FILE *)-1)
+
+    if (logfp == NULL)
         return stderr;
+    else if (logfp == (FILE*) -1)
+	return NULL;
     else
         return logfp;
 }
@@ -137,17 +144,22 @@ err_get_logfp(void)
 static void
 internal_set_logfp(FILE *fh)
 {
+    if (fh == NULL)
+	fh = (FILE*) -1;
+
     TlsSetValue(logfp_index, (void *)fh);
 }
 
 #else
-FILE *logfp = (FILE *)-1;
+FILE *logfp = NULL;
 
 FILE *
 err_get_logfp(void)
 {
-    if (logfp == (FILE *)-1)
+    if (logfp == NULL)
         return stderr;
+    else if (logfp == (FILE*) -1)
+	return NULL;
     else
         return logfp;
 }
@@ -155,6 +167,9 @@ err_get_logfp(void)
 static void
 internal_set_logfp(FILE *fh)
 {
+    if (fh == NULL)
+	fh = (FILE*) -1;
+
     logfp = fh;
 }
 
