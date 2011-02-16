@@ -8,11 +8,12 @@ EXTRA_DIST =					\
 	chan3.ctl				\
 	chan3.mfc				\
 	chan3.raw				\
+	chan3.2chan.wav				\
 	chan3.wav				\
 	chan3.sph				\
 	chan3.f0				\
 	tutorial-check.sh			\
-        crontab					\
+	crontab					\
 	polite.gram				\
 	test.gram				\
 	test.command.fsg			\

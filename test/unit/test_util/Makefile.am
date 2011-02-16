@@ -10,6 +10,7 @@ TESTS = $(check_PROGRAMS)
 
 INCLUDES = \
 	-I$(top_srcdir)/include/sphinxbase \
+	-I$(top_srcdir)/include \
 	-I$(top_builddir)/include \
 	-DLMDIR=\"${top_srcdir}/test/unit/test_ngram\"
 

@@ -8,6 +8,7 @@ TESTS = $(check_PROGRAMS)
 
 INCLUDES = \
 	-I$(top_srcdir)/include/sphinxbase \
+	-I$(top_srcdir)/include \
 	-I$(top_builddir)/include \
 	-DTESTDATADIR=\"$(top_srcdir)/test/regression\"
 

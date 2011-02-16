@@ -5,6 +5,7 @@ TESTS = test_ckd_alloc test_ckd_alloc_catch test_ckd_alloc_fail.sh test_ckd_allo
 	test_listelem_alloc
 INCLUDES = \
 	-I$(top_srcdir)/include/sphinxbase \
+	-I$(top_srcdir)/include \
 	-I$(top_builddir)/include \
 	-DTESTDATADIR=\"$(top_srcdir)/test/regression\"
 

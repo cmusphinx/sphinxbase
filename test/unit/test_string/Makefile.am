@@ -2,6 +2,7 @@ check_PROGRAMS = strtest test_atof
 
 INCLUDES = \
 	-I$(top_srcdir)/include/sphinxbase \
+	-I$(top_srcdir)/include \
 	-I$(top_builddir)/include \
 	-DTESTDATADIR=\"$(srcdir)\"
 
