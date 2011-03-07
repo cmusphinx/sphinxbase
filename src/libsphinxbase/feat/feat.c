@@ -882,7 +882,7 @@ feat_init(char const *type, cmn_type_t cmn, int32 varnorm,
         fcb->window_size = 4;
         fcb->compute_feat = feat_s2_4x_cep2feat;
     }
-    else if (strcmp(type, "s3_1x39") == 0) {
+    else if ((strcmp(type, "s3_1x39") == 0) || (strcmp(type, "1s_12c_12d_3p_12dd") == 0)) {
         /* 1-stream cep/dcep/pow/ddcep (Hack!! hardwired constants below) */
         if (cepsize != 13) {
             E_ERROR("s2_4x features require cepsize == 13\n");
@@ -999,6 +999,8 @@ feat_init(char const *type, cmn_type_t cmn, int32 varnorm,
         }
         if (i != fcb->n_stream)
             E_FATAL("Bad feature type argument\n");
+        if (fcb->cepsize != cepsize)
+    	    E_FATAL("Bad feature type argument\n");
 
         /* Input is already the feature stream */
         fcb->compute_feat = feat_copy;
