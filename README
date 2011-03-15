@@ -72,7 +72,7 @@ set:
 
 Windows Installation:
 ^^^^^^^^^^^^^^^^^^^^^
-To compile sphinxbase in Visual Studio 2008 Express (or newer):
+To compile sphinxbase in Visual Studio 2010 Express (or newer):
 1, unzip the file.
 2, rename the directory to sphinxbase
 3, go into the sphinxbase folder and click sphinxbase.sln
