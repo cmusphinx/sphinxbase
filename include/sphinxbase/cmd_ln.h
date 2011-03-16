@@ -116,6 +116,10 @@ typedef struct arg_s {
  * Boolean (true/false) argument (optional).
  */
 #define ARG_BOOLEAN  (1<<4)
+/**
+ * Boolean (true/false) argument (optional).
+ */
+#define ARG_STRING_LIST  (1<<5)
 
 /**
  * Required integer argument.
@@ -278,6 +282,23 @@ anytype_t *cmd_ln_access_r(cmd_ln_t *cmdln, char const *name);
  */
 SPHINXBASE_EXPORT
 char const *cmd_ln_str_r(cmd_ln_t *cmdln, char const *name);
+
+/**
+ * Retrieve an array of strings from a command-line object.
+ *
+ * The command-line object retains ownership of this array, so you
+ * should not attempt to free it manually.
+ *
+ * @param cmdln Command-line object.
+ * @param name the command-line flag to retrieve.
+ * @return the array of strings associated with <tt>name</tt>, or NULL if
+ *         <tt>name</tt> does not exist.  You must use
+ *         cmd_ln_exists_r() to distinguish between cases where a
+ *         value is legitimately NULL and where the corresponding flag
+ *         is unknown.
+ */
+SPHINXBASE_EXPORT
+char const **cmd_ln_str_list_r(cmd_ln_t *cmdln, char const *name);
 
 /**
  * Retrieve an integer from a command-line object.
@@ -466,6 +487,15 @@ cmd_ln_t *cmd_ln_get(void);
  * function cmd_ln_str_r().
  */
 #define cmd_ln_str(name)	cmd_ln_str_r(cmd_ln_get(), name)
+
+/**
+ * Retrieve an array of strings in the global command line.
+ *
+ * @deprecated This is deprecated in favor of the re-entrant API
+ * function cmd_ln_str_list_r().
+ */
+#define cmd_ln_str_list(name)	cmd_ln_str_list_r(cmd_ln_get(), name)
+
 /**
  * Retrieve a 32-bit integer from the global command line.
  *

@@ -240,6 +240,7 @@ arg_dump_r(cmd_ln_t *cmdln, FILE * fp, const arg_t * defn, int32 doc)
     int32 i, l, n;
     int32 namelen, deflen;
     anytype_t *vp;
+    char const **array;
 
     /* No definitions, do nothing. */
     if (defn == NULL)
@@ -306,6 +307,13 @@ arg_dump_r(cmd_ln_t *cmdln, FILE * fp, const arg_t * defn, int32 doc)
                     if (vp->ptr)
                         fprintf(fp, "%s", (char *)vp->ptr);
                     break;
+                case ARG_STRING_LIST:
+            	    array = (char const**)vp->ptr;
+            	    if (array)
+            		for (l = 0; array[l] != 0; l++) {
+            		    fprintf(fp, "%s,", array[l]);
+            		}
+            	    break;
                 case ARG_BOOLEAN:
                 case REQARG_BOOLEAN:
                     fprintf(fp, "%s", vp->i ? "yes" : "no");
@@ -322,6 +330,31 @@ arg_dump_r(cmd_ln_t *cmdln, FILE * fp, const arg_t * defn, int32 doc)
 
     fprintf(fp, "\n");
     fflush(fp);
+}
+
+static char **
+parse_string_list(const char *str)
+{
+    int count, i, j;
+    const char *p;
+    char ** result;
+
+    p = str;
+    count = 1;
+    while (*p) {
+	if (*p == ',')
+	    count++;
+	p++;
+    }
+    result = (char **) ckd_calloc(count, sizeof(char *));
+    p = str;
+    for (i = 0; i < count; i++) {
+	for (j = 0; p[j] != ',' && p[j] != 0; j++);
+	result[i] = ckd_calloc(j, sizeof(char));
+	strncpy( result[i], p, j);
+	p = p + j + 1;
+    }
+    return result;
 }
 
 static cmd_ln_val_t *
@@ -370,6 +403,9 @@ cmd_ln_val_init(int t, const char *str)
         case ARG_STRING:
         case REQARG_STRING:
             val.ptr = ckd_salloc(e_str);
+            break;
+        case ARG_STRING_LIST:
+    	    val.ptr = parse_string_list(e_str);
             break;
         default:
             E_ERROR("Unknown argument type: %d\n", t);
@@ -432,6 +468,14 @@ parse_options(cmd_ln_t *cmdln, const arg_t *defn, int32 argc, char* argv[], int3
 void
 cmd_ln_val_free(cmd_ln_val_t *val)
 {
+    int i;
+    if (val->type & ARG_STRING_LIST) {
+	char const** array = (char const **)val->val.ptr;
+	for (i = 0; array[i] != NULL; i++) {
+	    ckd_free(val->val.ptr);
+	}
+	ckd_free(array);
+    }
     if (val->type & ARG_STRING)
         ckd_free(val->val.ptr);
     ckd_free(val);
@@ -898,6 +942,16 @@ cmd_ln_str_r(cmd_ln_t *cmdln, char const *name)
     if (val == NULL)
         return NULL;
     return (char const *)val->ptr;
+}
+
+char const **
+cmd_ln_str_list_r(cmd_ln_t *cmdln, char const *name)
+{
+    anytype_t *val;
+    val = cmd_ln_access_r(cmdln, name);
+    if (val == NULL)
+        return NULL;
+    return (char const **)val->ptr;
 }
 
 long
