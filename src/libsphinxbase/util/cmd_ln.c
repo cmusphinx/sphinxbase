@@ -346,7 +346,8 @@ parse_string_list(const char *str)
 	    count++;
 	p++;
     }
-    result = (char **) ckd_calloc(count, sizeof(char *));
+    /* Should end with NULL */
+    result = (char **) ckd_calloc(count + 1, sizeof(char *));
     p = str;
     for (i = 0; i < count; i++) {
 	for (j = 0; p[j] != ',' && p[j] != 0; j++);
