@@ -30,9 +30,16 @@ esac
 AC_ISC_POSIX
 AC_PROG_CC
 AC_PROG_CC_STDC
-# Don't even bother until the rest of the world has an up-to-date Flex
-#AM_PROG_LEX
-AC_PROG_YACC
+
+# We don't bother ourselves with flex checks until the rest of the world has an up-to-date Flex
+# We need specific bison extensions, so check for bison
+AC_CHECK_PROG(YACC, bison, [bison -y], no)
+if test "x$YACC" = "xno";
+then
+    AC_MSG_ERROR([You need to install bison])
+fi
+AC_ARG_VAR(YACC,[Bison command])
+
 AC_HEADER_STDC
 AC_C_BIGENDIAN
 AC_TYPE_SIGNAL
