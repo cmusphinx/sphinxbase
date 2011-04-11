@@ -502,3 +502,58 @@ bio_verify_chksum(FILE * fp, int32 byteswap, uint32 chksum)
             ("Checksum error; file-checksum %08x, computed %08x\n",
              file_chksum, chksum);
 }
+
+int16*
+bio_read_wavfile(char const *directory,
+		 char const *filename,
+		 char const *extension,
+		 int32 header,
+		 int32 endian,
+		 int32 *nsamps)
+{
+    FILE *uttfp;
+    char *inputfile;
+    int32 n, l;
+    int16 *data;
+
+    n = strlen(extension);
+    l = strlen(filename);
+    if ((n <= l) && (0 == strcmp(filename + l - n, extension)))
+        extension = "";
+    inputfile = ckd_calloc(strlen(directory) + l + n + 2, 1);
+    if (directory) {
+        sprintf(inputfile, "%s/%s%s", directory, filename, extension);
+    } else {
+        sprintf(inputfile, "%s%s", filename, extension);
+    }
+
+    if ((uttfp = fopen(inputfile, "rb")) == NULL) {
+        E_FATAL("fopen(%s,rb) failed\n", inputfile);
+    }
+    fseek(uttfp, 0, SEEK_END);
+    n = ftell(uttfp);
+    fseek(uttfp, 0, SEEK_SET);
+    if (header > 0) {
+        if (fseek(uttfp, header, SEEK_SET) < 0) {
+            E_ERROR("fseek(%s,%d) failed\n", inputfile, header);
+            fclose(uttfp);
+            ckd_free(inputfile);
+            return NULL;
+        }
+        n -= header;
+    }
+    n /= sizeof(int16);
+    data = ckd_calloc(n, sizeof(*data));
+    if ((l = fread(data, sizeof(int16), n, uttfp)) < n) {
+        E_ERROR_SYSTEM("Failed to read %d samples from %s: %d", n, inputfile, l);
+        ckd_free(data);
+        ckd_free(inputfile);
+        fclose(uttfp);
+        return NULL;
+    }
+    ckd_free(inputfile);
+    fclose(uttfp);
+    if (nsamps) *nsamps = n;
+
+    return data;
+}

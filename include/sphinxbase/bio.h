@@ -245,6 +245,26 @@ void bio_verify_chksum (FILE *fp,	/**< In: File to read */
 			uint32 chksum	/**< In: Value to compare with checksum in file */
 			);
 
+
+/**
+ * Read raw data from the wav file.
+ *
+ * @param directory the folder where the file is located
+ * @param filename the name of the file
+ * @param extension file extension
+ * @param header the size of the header to skip usually 44 bytes.
+ * @param endian Endian of the data
+ * @param nsamps number of samples read
+ * @return pointer to the data
+ */
+int16*
+bio_read_wavfile(char const *directory,
+		 char const *filename,
+		 char const *extension,
+		 int32 header,
+		 int32 endian,
+		 int32 *nsamps);
+
 #ifdef __cplusplus
 }
 #endif
