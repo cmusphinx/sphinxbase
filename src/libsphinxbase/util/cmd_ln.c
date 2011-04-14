@@ -472,10 +472,12 @@ cmd_ln_val_free(cmd_ln_val_t *val)
     int i;
     if (val->type & ARG_STRING_LIST) {
 	char const** array = (char const **)val->val.ptr;
-	for (i = 0; array[i] != NULL; i++) {
-	    ckd_free(val->val.ptr);
+	if (array) {
+	    for (i = 0; array[i] != NULL; i++) {
+		ckd_free(val->val.ptr);
+	    }
+	    ckd_free(array);
 	}
-	ckd_free(array);
     }
     if (val->type & ARG_STRING)
         ckd_free(val->val.ptr);

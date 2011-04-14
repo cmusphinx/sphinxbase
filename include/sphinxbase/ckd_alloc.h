@@ -181,16 +181,14 @@ void *__ckd_calloc_3d__(size_t d1, size_t d2, size_t d3,	/* In: #elems in the di
  * Allocate a 34D array and return ptr to it.
  * The data area is allocated in one block so it can also be treated as a 1-D array.
  */
-
-void ****
-__ckd_calloc_4d__(size_t d1,
-		size_t d2,		
-		size_t d3,		
-		size_t d4,		
-		size_t elem_size,
-		char *caller_file,
-		int caller_line);
-
+SPHINXBASE_EXPORT
+void ****__ckd_calloc_4d__(size_t d1,
+			   size_t d2,
+			   size_t d3,
+			   size_t d4,
+			   size_t elem_size,
+			   char *caller_file,
+			   int caller_line);
 
 /**
  * Overlay a 3-D array over a previously allocated storage area.
@@ -236,6 +234,7 @@ void ckd_free_3d(void *ptr);
 /** 
  * Free a 4-D array (ptr) previously allocated by ckd_calloc_4d 
  */
+SPHINXBASE_EXPORT
 void ckd_free_4d(void *ptr);
 
 /**
