@@ -1130,8 +1130,8 @@ feat_s2mfc_read_norm_pad(feat_t *fcb, char *file, int32 win,
 #endif
 
         /* Normalize */
-        feat_cmn(fcb, mfc + start_pad, n - start_pad - end_pad, 1, 1);
-        feat_agc(fcb, mfc + start_pad, n - start_pad - end_pad, 1, 1);
+        feat_cmn(fcb, mfc + start_pad, n, 1, 1);
+        feat_agc(fcb, mfc + start_pad, n, 1, 1);
 
         /* Replicate start and end frames if necessary. */
         for (i = 0; i < start_pad; ++i)
@@ -1230,7 +1230,7 @@ feat_s2mfc2feat(feat_t * fcb, const char *file, const char *dir, const char *cep
 
     if (feat != NULL) {
         /* Read mfc file including window or padding if necessary. */
-        nfr = feat_s2mfc_read_norm_pad(feat, path, win, sf, ef, &mfc, maxfr, fcb->cepsize);
+        nfr = feat_s2mfc_read_norm_pad(fcb, path, win, sf, ef, &mfc, maxfr, fcb->cepsize);
         ckd_free(path);
         if (nfr < 0) {
             ckd_free_2d((void **) mfc);
