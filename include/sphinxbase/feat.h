@@ -267,29 +267,6 @@ int32 **parse_subvecs(char const *str);
 SPHINXBASE_EXPORT
 void subvecs_free(int32 **subvecs);
 
-/**
- * Read Sphinx-II format mfc file (s2mfc = Sphinx-II format MFC data).
- *
- * @return # frames read (plus padding) if successful, -1 if
- * error (e.g., mfc array too small).  If out_mfc is NULL, no actual
- * reading will be done, and the number of frames (plus padding) that
- * would be read is returned.
- */
-SPHINXBASE_EXPORT
-int32 feat_s2mfc_read(char *file,	/** In: Sphinx-II format MFC file to be read */
-                int32 win,		/** In: Size of dynamic feature window to add to the
-                                            input.  Padding will be added if necessary. */
-		int32 sf, int32 ef,	/** In: Start/end frames (range) to be read from file;
-					    Can use 0,-1 to read entire file.  Note that the
-                                            window will be added on either side of these. */
-		mfcc_t ***out_mfc,	/** Out: 2-D array to be filled with read data;
-					    this will be allocated internally and must be
-                                            freed with ckd_free_2d(). */
-		int32 maxfr,		/** In: Number of frames of mfc array allocated; error if
-					    attempt to read more than this amount.  Pass -1
-                                            to read as many frames as available. */
-		int32 cepsize		/** In: Length of each MFC vector. */
-    );
 
 /**
  * Allocate an array to hold several frames worth of feature vectors.  The returned value
