@@ -351,7 +351,7 @@ parse_string_list(const char *str)
     p = str;
     for (i = 0; i < count; i++) {
 	for (j = 0; p[j] != ',' && p[j] != 0; j++);
-	result[i] = ckd_calloc(j, sizeof(char));
+	result[i] = ckd_calloc(j + 1, sizeof(char));
 	strncpy( result[i], p, j);
 	p = p + j + 1;
     }
