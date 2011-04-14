@@ -1244,7 +1244,7 @@ feat_s2mfc2feat(feat_t * fcb, const char *file, const char *dir, const char *cep
     }
     else {
         /* Just calculate the number of frames we would need. */
-        nfr = feat_s2mfc_read_norm_pad(feat, path, win, sf, ef, NULL, maxfr, fcb->cepsize);
+        nfr = feat_s2mfc_read_norm_pad(fcb, path, win, sf, ef, NULL, maxfr, fcb->cepsize);
         ckd_free(path);
         if (nfr < 0)
             return nfr;
