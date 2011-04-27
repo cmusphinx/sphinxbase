@@ -238,7 +238,8 @@ typedef struct feat_s {
 /**
  * Array with stream/subvector lengths
  */
-#define feat_stream_lengths(f)	((f)->sv_len ? (f)->sv_len : f->stream_len)
+//#define feat_stream_lengths(f)	((f)->sv_len ? (f)->sv_len : f->stream_len)
+#define feat_stream_lengths(f)  ((f)->lda ? (&(f)->out_dim) : (f)->sv_len ? (f)->sv_len : f->stream_len)
 
 /**
  * Parse subvector specification string.
