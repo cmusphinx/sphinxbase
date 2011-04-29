@@ -461,6 +461,10 @@ def bincw(int cw, int nbits):
         cw >>= 1
     return outstr
 
+# FIXME: Due to the style of IO in huff_code API this part of the code
+# is not compatible with Python 3. This needs to be converted to
+# the new Python io module.
+
 cdef class HuffCode:
     """
     Huffman coding class.

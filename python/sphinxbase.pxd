@@ -158,4 +158,4 @@ cdef class NGramIter:
 
 cdef class HuffCode:
     cdef huff_code_t *hc
-    cdef file fh
+    cdef object fh
