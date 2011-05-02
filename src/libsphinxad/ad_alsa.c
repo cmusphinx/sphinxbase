@@ -370,8 +370,10 @@ ad_read(ad_rec_t * handle, int16 * buf, int32 max)
 {
     int32 length, err;
 
-    if (!handle->recording)
+    if (!handle->recording) {
+	fprintf(stderr, "Recording is stopped, start recording with ad_start_rec\n");
 	return AD_EOF;
+    }
 
     length = snd_pcm_readi(handle->dspH, buf, max);
     if (length == -EAGAIN) {
