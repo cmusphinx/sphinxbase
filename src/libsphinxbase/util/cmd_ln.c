@@ -553,19 +553,7 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
     int32 i, j, n, argstart;
     hash_table_t *defidx = NULL;
     cmd_ln_t *cmdln;
-
-    /* Echo command line */
-#ifndef _WIN32_WCE
-    E_INFO("Parsing command line:\n");
-    for (i = 0; i < argc; i++) {
-        if (argv[i][0] == '-')
-            E_INFOCONT("\\\n\t");
-        E_INFOCONT("%s ", argv[i]);
-    }
-    E_INFOCONT("\n\n");
-    fflush(stderr);
-#endif
-
+    
     /* Construct command-line object */
     if (inout_cmdln == NULL) {
         cmdln = ckd_calloc(1, sizeof(*cmdln));
@@ -684,16 +672,36 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
     }
 
     if (strict && argc == 1) {
-        E_ERROR("No arguments given, exiting\n");
+        E_ERROR("No arguments given, available options are:\n");
         cmd_ln_print_help_r(cmdln, stderr, defn);
-        goto error;
+        if (defidx)
+	    hash_table_free(defidx);
+        if (inout_cmdln == NULL)
+	    cmd_ln_free_r(cmdln);
+        return NULL;
     }
 
 #ifndef _WIN32_WCE
+    /* Set up logging. We need to do this earlier because we want to dump
+     * the information to the configured log, not to the stderr. */
+    if (cmd_ln_exists_r(cmdln, "-logfn") && cmd_ln_str_r(cmdln, "-logfn"))
+        err_set_logfile(cmd_ln_str_r(cmdln, "-logfn"));
+
+    /* Echo command line */
+    E_INFO("Parsing command line:\n");
+    for (i = 0; i < argc; i++) {
+        if (argv[i][0] == '-')
+            E_INFOCONT("\\\n\t");
+        E_INFOCONT("%s ", argv[i]);
+    }
+    E_INFOCONT("\n\n");
+    fflush(stderr);
+
     /* Print configuration */
     E_INFOCONT("Current configuration:\n");
     arg_dump_r(cmdln, err_get_logfp(), defn, 0);
 #endif
+
     hash_table_free(defidx);
     return cmdln;
 
@@ -702,7 +710,7 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
         hash_table_free(defidx);
     if (inout_cmdln == NULL)
         cmd_ln_free_r(cmdln);
-    E_ERROR("cmd_ln_parse_r failed\n");
+    E_ERROR("Failed to parse argument list\n");
     return NULL;
 }
 
