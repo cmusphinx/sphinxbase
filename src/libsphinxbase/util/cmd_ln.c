@@ -710,7 +710,7 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
         hash_table_free(defidx);
     if (inout_cmdln == NULL)
         cmd_ln_free_r(cmdln);
-    E_ERROR("Failed to parse argument list\n");
+    E_ERROR("Failed to parse arguments list\n");
     return NULL;
 }
 
@@ -759,7 +759,7 @@ cmd_ln_parse(const arg_t * defn, int32 argc, char *argv[], int strict)
     cmdln = cmd_ln_parse_r(global_cmdln, defn, argc, argv, strict);
     if (cmdln == NULL) {
         /* Old, bogus behaviour... */
-        E_ERROR("cmd_ln_parse failed, forced exit\n");
+        E_ERROR("Failed to parse arguments list, forced exit\n");
         exit(-1);
     }
     /* Initialize global_cmdln if not present. */
