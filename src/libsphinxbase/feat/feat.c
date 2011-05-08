@@ -521,19 +521,6 @@ feat_s3_cep(feat_t * fcb, mfcc_t ** mfc, mfcc_t ** feat)
 }
 
 static void
-feat_s3_cepwin(feat_t * fcb, mfcc_t ** mfc, mfcc_t ** feat)
-{
-    assert(fcb);
-    assert(feat_n_stream(fcb) == 1);
-
-    /* CEP */
-    memcpy(feat[0], mfc[ -feat_window_size(fcb)], 
-           (1 + 2 * feat_window_size (fcb)) * feat_cepsize(fcb) * sizeof(mfcc_t));
-}
-
-
-
-static void
 feat_s3_cep_dcep(feat_t * fcb, mfcc_t ** mfc, mfcc_t ** feat)
 {
     mfcc_t *f;
@@ -784,7 +771,7 @@ feat_init(char const *type, cmn_type_t cmn, int32 varnorm,
         fcb->stream_len = (int32 *) ckd_calloc(1, sizeof(int32));
         fcb->stream_len[0] = feat_cepsize(fcb) * (2 * fcb->window_size + 1);
         fcb->out_dim = fcb->stream_len[0];
-        fcb->compute_feat = feat_s3_cepwin;
+        fcb->compute_feat = feat_copy;
     }
     else {
         int32 i, l, k;
