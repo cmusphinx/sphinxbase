@@ -374,7 +374,7 @@ ReadTrigrams(lineiter_t **li, ngram_model_arpa_t * model)
                 if (prev_seg >= 0) {
                     tgoff = tgcount - model->lm3g.tseg_base[prev_seg];
                     if (tgoff > 65535) {
-                        E_ERROR("Offset from tseg_base > 65535\n");
+                        E_ERROR("Size of trigram segment is bigger than 65535, such a big language models are not supported, use smaller vocabulary\n");
                         return -1;
                     }
                 }
@@ -393,7 +393,7 @@ ReadTrigrams(lineiter_t **li, ngram_model_arpa_t * model)
 
                 tgoff = tgcount - model->lm3g.tseg_base[prev_seg];
                 if (tgoff > 65535) {
-                    E_ERROR("Offset from tseg_base > 65535\n");
+                    E_ERROR("Size of trigram segment is bigger than 65535, such a big language models are not supported, use smaller vocabulary\n");
                     return -1;
                 }
 
@@ -424,7 +424,7 @@ ReadTrigrams(lineiter_t **li, ngram_model_arpa_t * model)
         if ((prev_bg & (BG_SEG_SZ - 1)) == 0)
             model->lm3g.tseg_base[prev_bg >> LOG_BG_SEG_SZ] = tgcount;
         if ((tgcount - model->lm3g.tseg_base[prev_bg >> LOG_BG_SEG_SZ]) > 65535) {
-            E_ERROR("Offset from tseg_base > 65535\n");
+            E_ERROR("Size of trigram segment is bigger than 65535, such a big language models are not supported, use smaller vocabulary\n");
             return -1;
         }
         model->lm3g.bigrams[prev_bg].trigrams =

@@ -173,7 +173,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
             if (k == 0)
                 break;
             if (fread(str, 1, k, fp) != (size_t) k) {
-                E_ERROR("fread(word) failed\n");
+                E_ERROR("Failed to read word\n");
                 goto error_out;
             }
         }
@@ -216,12 +216,12 @@ ngram_model_dmp_read(cmd_ln_t *config,
     for (i = 0; i <= n_unigram; ++i) {
         /* Skip over the mapping ID, we don't care about it. */
         if (fread(ugptr, sizeof(int32), 1, fp) != 1) {
-            E_ERROR("fread(mapid[%d]) failed\n", i);
+            E_ERROR("Failed to read maping id %d\n", i);
             goto error_out;
         }
         /* Read the actual unigram structure. */
         if (fread(ugptr, sizeof(unigram_t), 1, fp) != 1)  {
-            E_ERROR("fread(unigrams) failed\n");
+            E_ERROR("Failed to read unigrams data\n");
             ngram_model_free(base);
             fclose_comp(fp, is_pipe);
             return NULL;
@@ -250,7 +250,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
 
         /* Check for improper word alignment. */
         if (offset & 0x3) {
-            E_WARN("-mmap specified, but tseg_base is not word-aligned.  Will not memory-map.\n");
+            E_WARN("-mmap specified, but trigram index is not word-aligned.  Will not memory-map.\n");
             do_mmap = FALSE;
         }
         else {
@@ -275,7 +275,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
         	ckd_calloc(n_bigram + 1, sizeof(bigram_t));
     	    if (fread(model->lm3g.bigrams, sizeof(bigram_t), n_bigram + 1, fp)
         	!= (size_t) n_bigram + 1) {
-    		E_ERROR("fread(bigrams) failed\n");
+    		E_ERROR("Failed to read bigrams data\n");
         	goto error_out;
     	    }
     	    if (do_swap) {
@@ -303,7 +303,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
             if (fread
                 (model->lm3g.trigrams, sizeof(trigram_t), n_trigram, fp)
                 != (size_t) n_trigram) {
-                E_ERROR("fread(trigrams) failed\n");
+                E_ERROR("Failed to read trigrams data\n");
                 goto error_out;
             }
             if (do_swap) {
@@ -350,7 +350,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
         model->lm3g.n_bo_wt2 = k;
         model->lm3g.bo_wt2 = ckd_calloc(k, sizeof(*model->lm3g.bo_wt2));
         if (fread(model->lm3g.bo_wt2, sizeof(*model->lm3g.bo_wt2), k, fp) != (size_t) k) {
-            E_ERROR("fread(bo_wt2) failed\n");
+            E_ERROR("Failed to read backoff weights\n");
             goto error_out;
         }
         for (i = 0; i < k; i++) {
@@ -370,7 +370,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
     	model->lm3g.n_prob3 = k;
     	model->lm3g.prob3 = ckd_calloc(k, sizeof(*model->lm3g.prob3));
     	if (fread(model->lm3g.prob3, sizeof(*model->lm3g.prob3), k, fp) != (size_t) k) {
-    	    E_ERROR("fread(prob3) failed\n");
+    	    E_ERROR("Failed to read trigram probability\n");
     	    goto error_out;
     	}
     	for (i = 0; i < k; i++) {
@@ -400,7 +400,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
             model->lm3g.tseg_base = ckd_calloc(k, sizeof(int32));
             if (fread(model->lm3g.tseg_base, sizeof(int32), k, fp) !=
                 (size_t) k) {
-                E_ERROR("fread(tseg_base) failed\n");
+                E_ERROR("Failed to read trigram index\n");
                 goto error_out;
             }
             if (do_swap)
@@ -424,7 +424,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
         if (do_swap) SWAP_INT32(&k);
         tmp_word_str = ckd_calloc(k, 1);
         if (fread(tmp_word_str, 1, k, fp) != (size_t) k) {
-            E_ERROR("fread(word-string) failed\n");
+            E_ERROR("Failed to read words\n");
             goto error_out;
         }
     }
