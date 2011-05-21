@@ -257,13 +257,13 @@ void bio_verify_chksum (FILE *fp,	/**< In: File to read */
  * @param nsamps number of samples read
  * @return pointer to the data
  */
-int16*
-bio_read_wavfile(char const *directory,
-		 char const *filename,
-		 char const *extension,
-		 int32 header,
-		 int32 endian,
-		 int32 *nsamps);
+SPHINXBASE_EXPORT
+int16* bio_read_wavfile(char const *directory,
+			char const *filename,
+			char const *extension,
+			int32 header,
+			int32 endian,
+			int32 *nsamps);
 
 #ifdef __cplusplus
 }
