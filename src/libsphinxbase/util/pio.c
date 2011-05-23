@@ -263,7 +263,16 @@ lineiter_start(FILE *fh)
     li->len = 0;
     li->fh = fh;
 
-    return lineiter_next(li);
+    li = lineiter_next(li);
+    
+    /* Strip the UTF-8 BOM */
+    
+    if (0 == strncmp(li->buf, "\xef\xbb\xbf", 3)) {
+	memmove(li->buf, li->buf + 3, strlen(li->buf + 1));
+	li->len -= 3;
+    }
+    
+    return li;
 }
 
 lineiter_t *
