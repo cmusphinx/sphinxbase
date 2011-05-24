@@ -43,6 +43,51 @@
 #include <sphinxbase/err.h>
 #include <sphinxbase/strfuncs.h>
 
+static const arg_t defn[] = {
+  { "-help",
+    ARG_BOOLEAN,
+    "no",
+    "Shows the usage of the tool"},
+
+  { "-jsgf",
+    REQARG_STRING,
+    NULL,
+    "Input grammar in jsgf format (required)"},
+
+  { "-rule",
+    ARG_STRING,
+    NULL,
+    "Root rule name (optional)"},
+
+  { "-fsg",
+    REQARG_STRING,
+    NULL,
+    "Output grammar in fsg/fsm format (required)"},
+
+  { "-fsm",
+    ARG_BOOLEAN,
+    "no",
+    "Output FSM"},
+
+  { "-compile",
+    ARG_BOOLEAN,
+    "no",
+    "Compute grammar closure to speedup loading"},
+
+  { NULL, 0, NULL, NULL }
+};
+
+
+static void
+usagemsg(char *pgm)
+{
+    E_INFO("Usage: %s -jsgf <input.jsgf> -rule <rule name>\\\n", pgm);
+    E_INFOCONT("\t[-fsm yes/no] [-compile yes/no]\n");
+    E_INFOCONT("\t-fsg <output.fsg>\n");
+
+    exit(0);
+}
+
 static fsg_model_t *
 get_fsg(jsgf_t *grammar, const char *name)
 {
@@ -73,33 +118,36 @@ main(int argc, char *argv[])
 {
     jsgf_t *jsgf;
     fsg_model_t *fsg;
-    int fsm = 0;
-    char *outfile = NULL;
-    char *symfile = NULL;
-
-    if (argc > 1 && 0 == strcmp(argv[1], "-fsm")) {
-        fsm = 1;
-        ++argv;
+    const char *outfile = NULL;
+    cmd_ln_t *config;
+        
+    if ((config = cmd_ln_parse_r(NULL, defn, argc, argv, TRUE)) == NULL)
+	return 1;
+		
+    if (cmd_ln_boolean_r(config, "-help")) {
+        usagemsg(argv[0]);
     }
 
-    jsgf = jsgf_parse_file(argc > 1 ? argv[1] : NULL, NULL);
+    jsgf = jsgf_parse_file(cmd_ln_str_r(config, "-jsgf"), NULL);
     if (jsgf == NULL) {
         return 1;
     }
-    fsg = get_fsg(jsgf, argc > 2 ? argv[2] : NULL);
 
-    if (argc > 3)
-        outfile = argv[3];
-    if (argc > 4)
-        symfile = argv[4];
+    fsg = get_fsg(jsgf, cmd_ln_str_r(config, "-rule") ? cmd_ln_str_r(config, "-rule") : NULL);
+    
+    if (cmd_ln_boolean_r(config, "-compile")) {
+	fsg_model_null_trans_closure(fsg, NULL);
+    }
 
-    if (fsm) {
+    outfile = cmd_ln_str_r(config, "-fsg");
+    
+    if (cmd_ln_boolean_r(config, "-fsm")) {
         if (outfile)
             fsg_model_writefile_fsm(fsg, outfile);
         else
             fsg_model_write_fsm(fsg, stdout);
-        if (symfile)
-            fsg_model_writefile_symtab(fsg, symfile);
+        if (outfile)
+            fsg_model_writefile_symtab(fsg, outfile);
     }
     else {
         if (outfile)
@@ -114,7 +162,6 @@ main(int argc, char *argv[])
 }
 
 
-/** Silvio Moioli: Windows CE/Mobile entry point added. */
 #if defined(_WIN32_WCE)
 #pragma comment(linker,"/entry:mainWCRTStartup")
 #include <windows.h>
