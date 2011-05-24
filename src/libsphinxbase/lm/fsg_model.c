@@ -39,7 +39,7 @@
 #include <windows.h>
 #else
 #include <time.h>
-#endif /* _WIN32_WCE */
+#endif                          /* _WIN32_WCE */
 #include <stdio.h>
 #include <string.h>
 #include <assert.h>
@@ -61,8 +61,8 @@
  */
 
 struct trans_list_s {
-    hash_table_t *null_trans; /* Null transitions keyed by state. */
-    hash_table_t *trans;      /* Lists of non-null transitions keyed by state. */
+    hash_table_t *null_trans;   /* Null transitions keyed by state. */
+    hash_table_t *trans;        /* Lists of non-null transitions keyed by state. */
 };
 
 /**
@@ -101,11 +101,11 @@ nextline_str2words(FILE * fp, int32 * lineno,
         (*lineno)++;
 
         if ((*lineptr)[0] == FSG_MODEL_COMMENT_CHAR)
-            continue; /* Skip comment lines */
-        
+            continue;           /* Skip comment lines */
+
         n = str2words(*lineptr, NULL, 0);
         if (n == 0)
-            continue; /* Skip blank lines */
+            continue;           /* Skip blank lines */
 
         /* Abuse of realloc(), but this doesn't have to be fast. */
         if (*wordptr == NULL)
@@ -145,14 +145,15 @@ fsg_model_trans_add(fsg_model_t * fsg,
     link->wid = wid;
 
     /* Add it to the list of transitions and update the hash table */
-    gl = glist_add_ptr(gl, (void *)link);
+    gl = glist_add_ptr(gl, (void *) link);
     hash_table_replace_bkey(fsg->trans[from].trans,
-                            (char const *)&link->to_state,
+                            (char const *) &link->to_state,
                             sizeof(link->to_state), gl);
 }
 
 int32
-fsg_model_tag_trans_add(fsg_model_t * fsg, int32 from, int32 to, int32 logp, int32 wid)
+fsg_model_tag_trans_add(fsg_model_t * fsg, int32 from, int32 to,
+                        int32 logp, int32 wid)
 {
     fsg_link_t *link, *link2;
 
@@ -189,7 +190,7 @@ fsg_model_tag_trans_add(fsg_model_t * fsg, int32 from, int32 to, int32 logp, int
 
     link2 = (fsg_link_t *)
         hash_table_enter_bkey(fsg->trans[from].null_trans,
-                              (char const *)&link->to_state,
+                              (char const *) &link->to_state,
                               sizeof(link->to_state), link);
     assert(link == link2);
 
@@ -197,7 +198,8 @@ fsg_model_tag_trans_add(fsg_model_t * fsg, int32 from, int32 to, int32 logp, int
 }
 
 int32
-fsg_model_null_trans_add(fsg_model_t * fsg, int32 from, int32 to, int32 logp)
+fsg_model_null_trans_add(fsg_model_t * fsg, int32 from, int32 to,
+                         int32 logp)
 {
     return fsg_model_tag_trans_add(fsg, from, to, logp, -1);
 }
@@ -205,7 +207,7 @@ fsg_model_null_trans_add(fsg_model_t * fsg, int32 from, int32 to, int32 logp)
 glist_t
 fsg_model_null_trans_closure(fsg_model_t * fsg, glist_t nulls)
 {
-    gnode_t *gn1, *gn2;
+    gnode_t *gn1;
     int updated;
     fsg_link_t *tl1, *tl2;
     int32 k, n;
@@ -215,7 +217,7 @@ fsg_model_null_trans_closure(fsg_model_t * fsg, glist_t nulls)
     if (nulls == NULL) {
         fsg_link_t *null;
         int i, j;
-        
+
         for (i = 0; i < fsg->n_state; ++i) {
             for (j = 0; j < fsg->n_state; ++j) {
                 if ((null = fsg_model_null_trans(fsg, i, j)))
@@ -233,28 +235,34 @@ fsg_model_null_trans_closure(fsg_model_t * fsg, glist_t nulls)
         updated = FALSE;
 
         for (gn1 = nulls; gn1; gn1 = gnode_next(gn1)) {
+            hash_iter_t *itor;
+
             tl1 = (fsg_link_t *) gnode_ptr(gn1);
             assert(tl1->wid < 0);
 
-            for (gn2 = nulls; gn2; gn2 = gnode_next(gn2)) {
-                tl2 = (fsg_link_t *) gnode_ptr(gn2);
+            int state = tl1->to_state;
 
-                if (tl1->to_state == tl2->from_state) {
-                    k = fsg_model_null_trans_add(fsg,
-                                                tl1->from_state,
-                                                tl2->to_state,
-                                                tl1->logs2prob +
-                                                tl2->logs2prob);
-                    if (k >= 0) {
-                        updated = TRUE;
-                        if (k > 0) {
-                            nulls =
-                                glist_add_ptr(nulls, (void *)
+            if (fsg->trans[state].null_trans == NULL)
+                continue;
+
+            for (itor = hash_table_iter(fsg->trans[state].null_trans);
+                 itor; itor = hash_table_iter_next(itor)) {
+
+                tl2 = (fsg_link_t *) hash_entry_val(itor->ent);
+
+                k = fsg_model_null_trans_add(fsg,
+                                             tl1->from_state,
+                                             tl2->to_state,
+                                             tl1->logs2prob +
+                                             tl2->logs2prob);
+                if (k >= 0) {
+                    updated = TRUE;
+                    if (k > 0) {
+                        nulls = glist_add_ptr(nulls, (void *)
                                               fsg_model_null_trans
                                               (fsg, tl1->from_state,
                                                tl2->to_state));
-                            n++;
-                        }
+                        n++;
                     }
                 }
             }
@@ -267,33 +275,33 @@ fsg_model_null_trans_closure(fsg_model_t * fsg, glist_t nulls)
 }
 
 glist_t
-fsg_model_trans(fsg_model_t *fsg, int32 i, int32 j)
+fsg_model_trans(fsg_model_t * fsg, int32 i, int32 j)
 {
     void *val;
 
     if (fsg->trans[i].trans == NULL)
         return NULL;
-    if (hash_table_lookup_bkey(fsg->trans[i].trans, (char const *)&j,
+    if (hash_table_lookup_bkey(fsg->trans[i].trans, (char const *) &j,
                                sizeof(j), &val) < 0)
         return NULL;
-    return (glist_t)val;
+    return (glist_t) val;
 }
 
 fsg_link_t *
-fsg_model_null_trans(fsg_model_t *fsg, int32 i, int32 j)
+fsg_model_null_trans(fsg_model_t * fsg, int32 i, int32 j)
 {
     void *val;
 
     if (fsg->trans[i].null_trans == NULL)
         return NULL;
-    if (hash_table_lookup_bkey(fsg->trans[i].null_trans, (char const *)&j,
+    if (hash_table_lookup_bkey(fsg->trans[i].null_trans, (char const *) &j,
                                sizeof(j), &val) < 0)
         return NULL;
-    return (fsg_link_t *)val;
+    return (fsg_link_t *) val;
 }
 
 fsg_arciter_t *
-fsg_model_arcs(fsg_model_t *fsg, int32 i)
+fsg_model_arcs(fsg_model_t * fsg, int32 i)
 {
     fsg_arciter_t *itor;
 
@@ -310,19 +318,19 @@ fsg_model_arcs(fsg_model_t *fsg, int32 i)
 }
 
 fsg_link_t *
-fsg_arciter_get(fsg_arciter_t *itor)
+fsg_arciter_get(fsg_arciter_t * itor)
 {
     /* Iterate over non-null arcs first. */
     if (itor->gn)
-        return (fsg_link_t *)gnode_ptr(itor->gn);
+        return (fsg_link_t *) gnode_ptr(itor->gn);
     else if (itor->null_itor)
-        return (fsg_link_t *)hash_entry_val(itor->null_itor->ent);
+        return (fsg_link_t *) hash_entry_val(itor->null_itor->ent);
     else
         return NULL;
 }
 
 fsg_arciter_t *
-fsg_arciter_next(fsg_arciter_t *itor)
+fsg_arciter_next(fsg_arciter_t * itor)
 {
     /* Iterate over non-null arcs first. */
     if (itor->gn) {
@@ -344,14 +352,14 @@ fsg_arciter_next(fsg_arciter_t *itor)
             goto stop_iteration;
     }
     return itor;
-stop_iteration:
+  stop_iteration:
     fsg_arciter_free(itor);
     return NULL;
 
 }
 
 void
-fsg_arciter_free(fsg_arciter_t *itor)
+fsg_arciter_free(fsg_arciter_t * itor)
 {
     if (itor == NULL)
         return;
@@ -361,7 +369,7 @@ fsg_arciter_free(fsg_arciter_t *itor)
 }
 
 int
-fsg_model_word_id(fsg_model_t *fsg, char const *word)
+fsg_model_word_id(fsg_model_t * fsg, char const *word)
 {
     int wid;
 
@@ -377,7 +385,7 @@ fsg_model_word_id(fsg_model_t *fsg, char const *word)
 }
 
 int
-fsg_model_word_add(fsg_model_t *fsg, char const *word)
+fsg_model_word_add(fsg_model_t * fsg, char const *word)
 {
     int wid;
 
@@ -389,11 +397,14 @@ fsg_model_word_add(fsg_model_t *fsg, char const *word)
         if (fsg->n_word == fsg->n_word_alloc) {
             fsg->n_word_alloc += 10;
             fsg->vocab = ckd_realloc(fsg->vocab,
-                                     fsg->n_word_alloc * sizeof(*fsg->vocab));
+                                     fsg->n_word_alloc *
+                                     sizeof(*fsg->vocab));
             if (fsg->silwords)
-                fsg->silwords = bitvec_realloc(fsg->silwords, fsg->n_word_alloc);
+                fsg->silwords =
+                    bitvec_realloc(fsg->silwords, fsg->n_word_alloc);
             if (fsg->altwords)
-                fsg->altwords = bitvec_realloc(fsg->altwords, fsg->n_word_alloc);
+                fsg->altwords =
+                    bitvec_realloc(fsg->altwords, fsg->n_word_alloc);
         }
         ++fsg->n_word;
         fsg->vocab[wid] = ckd_salloc(word);
@@ -452,8 +463,8 @@ fsg_model_add_alt(fsg_model_t * fsg, char const *baseword,
         fsg->altwords = bitvec_alloc(fsg->n_word_alloc);
     bitvec_set(fsg->altwords, altwid);
 
-    E_DEBUG(2,("Adding alternate word transitions (%s,%s) to FSG\n",
-               baseword, altword));
+    E_DEBUG(2, ("Adding alternate word transitions (%s,%s) to FSG\n",
+                baseword, altword));
 
     /* Look for all transitions involving baseword and duplicate them. */
     /* FIXME: This will also get slow, eventually... */
@@ -477,11 +488,10 @@ fsg_model_add_alt(fsg_model_t * fsg, char const *baseword,
                     link = listelem_malloc(fsg->link_alloc);
                     link->from_state = fl->from_state;
                     link->to_state = fl->to_state;
-                    link->logs2prob = fl->logs2prob; /* FIXME!!!??? */
+                    link->logs2prob = fl->logs2prob;    /* FIXME!!!??? */
                     link->wid = altwid;
 
-                    trans =
-                        glist_add_ptr(trans, (void *) link);
+                    trans = glist_add_ptr(trans, (void *) link);
                     ++ntrans;
                 }
             }
@@ -489,13 +499,14 @@ fsg_model_add_alt(fsg_model_t * fsg, char const *baseword,
         }
     }
 
-    E_DEBUG(2,("Added %d alternate word transitions\n", ntrans));
+    E_DEBUG(2, ("Added %d alternate word transitions\n", ntrans));
     return ntrans;
 }
 
 
 fsg_model_t *
-fsg_model_init(char const *name, logmath_t *lmath, float32 lw, int32 n_state)
+fsg_model_init(char const *name, logmath_t * lmath, float32 lw,
+               int32 n_state)
 {
     fsg_model_t *fsg;
 
@@ -514,7 +525,7 @@ fsg_model_init(char const *name, logmath_t *lmath, float32 lw, int32 n_state)
 }
 
 fsg_model_t *
-fsg_model_read(FILE * fp, logmath_t *lmath, float32 lw)
+fsg_model_read(FILE * fp, logmath_t * lmath, float32 lw)
 {
     fsg_model_t *fsg;
     hash_table_t *vocab;
@@ -559,8 +570,9 @@ fsg_model_read(FILE * fp, logmath_t *lmath, float32 lw)
      */
     if (n == 2) {
         fsgname = ckd_salloc(wordptr[1]);
-    } else {
-        E_WARN ("FSG name is missing\n");
+    }
+    else {
+        E_WARN("FSG name is missing\n");
         fsgname = ckd_salloc("unknown");
     }
 
@@ -656,11 +668,13 @@ fsg_model_read(FILE * fp, logmath_t *lmath, float32 lw)
             goto parse_error;
         }
 
-        tprob = (int32)(logmath_log(lmath, p) * fsg->lw);
+        tprob = (int32) (logmath_log(lmath, p) * fsg->lw);
         /* Add word to "dictionary". */
         if (n > 4) {
             if (hash_table_lookup_int32(vocab, wordptr[4], &wid) < 0) {
-                (void)hash_table_enter_int32(vocab, ckd_salloc(wordptr[4]), lastwid);
+                (void) hash_table_enter_int32(vocab,
+                                              ckd_salloc(wordptr[4]),
+                                              lastwid);
                 wid = lastwid;
                 ++lastwid;
             }
@@ -670,7 +684,8 @@ fsg_model_read(FILE * fp, logmath_t *lmath, float32 lw)
         else {
             if (fsg_model_null_trans_add(fsg, i, j, tprob) == 1) {
                 ++n_null_trans;
-                nulls = glist_add_ptr(nulls, fsg_model_null_trans(fsg, i, j));
+                nulls =
+                    glist_add_ptr(nulls, fsg_model_null_trans(fsg, i, j));
             }
         }
     }
@@ -684,12 +699,13 @@ fsg_model_read(FILE * fp, logmath_t *lmath, float32 lw)
 
     /* Now create a string table from the "dictionary" */
     fsg->n_word = hash_table_inuse(vocab);
-    fsg->n_word_alloc = fsg->n_word + 10; /* Pad it a bit. */
+    fsg->n_word_alloc = fsg->n_word + 10;       /* Pad it a bit. */
     fsg->vocab = ckd_calloc(fsg->n_word_alloc, sizeof(*fsg->vocab));
-    for (itor = hash_table_iter(vocab); itor; itor = hash_table_iter_next(itor)) {
+    for (itor = hash_table_iter(vocab); itor;
+         itor = hash_table_iter_next(itor)) {
         char const *word = hash_entry_key(itor->ent);
-        int32 wid = (int32)(long)hash_entry_val(itor->ent);
-        fsg->vocab[wid] = (char *)word;
+        int32 wid = (int32) (long) hash_entry_val(itor->ent);
+        fsg->vocab[wid] = (char *) word;
     }
     hash_table_free(vocab);
     ckd_free(lineptr);
@@ -698,8 +714,9 @@ fsg_model_read(FILE * fp, logmath_t *lmath, float32 lw)
     return fsg;
 
   parse_error:
-    for (itor = hash_table_iter(vocab); itor; itor = hash_table_iter_next(itor))
-        ckd_free((char *)hash_entry_key(itor->ent));
+    for (itor = hash_table_iter(vocab); itor;
+         itor = hash_table_iter_next(itor))
+        ckd_free((char *) hash_entry_key(itor->ent));
     glist_free(nulls);
     hash_table_free(vocab);
     ckd_free(fsgname);
@@ -711,13 +728,14 @@ fsg_model_read(FILE * fp, logmath_t *lmath, float32 lw)
 
 
 fsg_model_t *
-fsg_model_readfile(const char *file, logmath_t *lmath, float32 lw)
+fsg_model_readfile(const char *file, logmath_t * lmath, float32 lw)
 {
     FILE *fp;
     fsg_model_t *fsg;
 
     if ((fp = fopen(file, "r")) == NULL) {
-        E_ERROR("Failed to open FSG file '%s' for reading: %s\n", file, strerror(errno));
+        E_ERROR("Failed to open FSG file '%s' for reading: %s\n", file,
+                strerror(errno));
         return NULL;
     }
     fsg = fsg_model_read(fp, lmath, lw);
@@ -726,14 +744,14 @@ fsg_model_readfile(const char *file, logmath_t *lmath, float32 lw)
 }
 
 fsg_model_t *
-fsg_model_retain(fsg_model_t *fsg)
+fsg_model_retain(fsg_model_t * fsg)
 {
     ++fsg->refcount;
     return fsg;
 }
 
 static void
-trans_list_free(fsg_model_t *fsg, int32 i)
+trans_list_free(fsg_model_t * fsg, int32 i)
 {
     hash_iter_t *itor;
 
@@ -743,7 +761,7 @@ trans_list_free(fsg_model_t *fsg, int32 i)
     if (fsg->trans[i].trans) {
         for (itor = hash_table_iter(fsg->trans[i].trans);
              itor; itor = hash_table_iter_next(itor)) {
-            glist_t gl = (glist_t)hash_entry_val(itor->ent);
+            glist_t gl = (glist_t) hash_entry_val(itor->ent);
             glist_free(gl);
         }
     }
@@ -781,8 +799,9 @@ void
 fsg_model_write(fsg_model_t * fsg, FILE * fp)
 {
     int32 i;
-    
-    fprintf(fp, "%s %s\n", FSG_MODEL_BEGIN_DECL, fsg->name ? fsg->name : "");
+
+    fprintf(fp, "%s %s\n", FSG_MODEL_BEGIN_DECL,
+            fsg->name ? fsg->name : "");
     fprintf(fp, "%s %d\n", FSG_MODEL_NUM_STATES_DECL, fsg->n_state);
     fprintf(fp, "%s %d\n", FSG_MODEL_START_STATE_DECL, fsg->start_state);
     fprintf(fp, "%s %d\n", FSG_MODEL_FINAL_STATE_DECL, fsg->final_state);
@@ -790,12 +809,14 @@ fsg_model_write(fsg_model_t * fsg, FILE * fp)
     for (i = 0; i < fsg->n_state; i++) {
         fsg_arciter_t *itor;
 
-        for (itor = fsg_model_arcs(fsg, i); itor; itor = fsg_arciter_next(itor)) {
+        for (itor = fsg_model_arcs(fsg, i); itor;
+             itor = fsg_arciter_next(itor)) {
             fsg_link_t *tl = fsg_arciter_get(itor);
 
             fprintf(fp, "%s %d %d %f %s\n", FSG_MODEL_TRANSITION_DECL,
                     tl->from_state, tl->to_state,
-                    logmath_exp(fsg->lmath, (int32)(tl->logs2prob / fsg->lw)),
+                    logmath_exp(fsg->lmath,
+                                (int32) (tl->logs2prob / fsg->lw)),
                     (tl->wid < 0) ? "" : fsg_model_word_str(fsg, tl->wid));
         }
     }
@@ -806,7 +827,7 @@ fsg_model_write(fsg_model_t * fsg, FILE * fp)
 }
 
 void
-fsg_model_writefile(fsg_model_t *fsg, char const *file)
+fsg_model_writefile(fsg_model_t * fsg, char const *file)
 {
     FILE *fp;
 
@@ -815,7 +836,8 @@ fsg_model_writefile(fsg_model_t *fsg, char const *file)
     E_INFO("Writing FSG file '%s'\n", file);
 
     if ((fp = fopen(file, "w")) == NULL) {
-        E_ERROR("Failed to open FSG file '%s' for reading: %s\n", file, strerror(errno));
+        E_ERROR("Failed to open FSG file '%s' for reading: %s\n", file,
+                strerror(errno));
         return;
     }
 
@@ -825,7 +847,7 @@ fsg_model_writefile(fsg_model_t *fsg, char const *file)
 }
 
 static void
-fsg_model_write_fsm_trans(fsg_model_t *fsg, int i, FILE *fp)
+fsg_model_write_fsm_trans(fsg_model_t * fsg, int i, FILE * fp)
 {
     fsg_arciter_t *itor;
 
@@ -861,7 +883,7 @@ fsg_model_write_fsm(fsg_model_t * fsg, FILE * fp)
 }
 
 void
-fsg_model_writefile_fsm(fsg_model_t *fsg, char const *file)
+fsg_model_writefile_fsm(fsg_model_t * fsg, char const *file)
 {
     FILE *fp;
 
@@ -870,7 +892,8 @@ fsg_model_writefile_fsm(fsg_model_t *fsg, char const *file)
     E_INFO("Writing FSM file '%s'\n", file);
 
     if ((fp = fopen(file, "w")) == NULL) {
-        E_ERROR("Failed to open fsm file '%s' for writing: %s\n", file, strerror(errno));
+        E_ERROR("Failed to open fsm file '%s' for writing: %s\n", file,
+                strerror(errno));
         return;
     }
 
@@ -880,7 +903,7 @@ fsg_model_writefile_fsm(fsg_model_t *fsg, char const *file)
 }
 
 void
-fsg_model_write_symtab(fsg_model_t *fsg, FILE *file)
+fsg_model_write_symtab(fsg_model_t * fsg, FILE * file)
 {
     int i;
 
@@ -892,7 +915,7 @@ fsg_model_write_symtab(fsg_model_t *fsg, FILE *file)
 }
 
 void
-fsg_model_writefile_symtab(fsg_model_t *fsg, char const *file)
+fsg_model_writefile_symtab(fsg_model_t * fsg, char const *file)
 {
     FILE *fp;
 
@@ -901,7 +924,8 @@ fsg_model_writefile_symtab(fsg_model_t *fsg, char const *file)
     E_INFO("Writing FSM symbol table '%s'\n", file);
 
     if ((fp = fopen(file, "w")) == NULL) {
-        E_ERROR("Failed to open symbol table '%s' for writing: %s\n", file, strerror(errno));
+        E_ERROR("Failed to open symbol table '%s' for writing: %s\n", file,
+                strerror(errno));
         return;
     }
 
