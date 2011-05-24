@@ -60,14 +60,19 @@ static const arg_t defn[] = {
     "Root rule name (optional)"},
 
   { "-fsg",
-    REQARG_STRING,
+    ARG_STRING,
     NULL,
-    "Output grammar in fsg/fsm format (required)"},
+    "Output grammar in fsg format"},
 
   { "-fsm",
-    ARG_BOOLEAN,
-    "no",
-    "Output FSM"},
+    ARG_STRING,
+    NULL,
+    "Output grammar in FSM format"},
+
+  { "-symtab",
+    ARG_STRING,
+    NULL,
+    "Output symtab for grammar in FSM format"},
 
   { "-compile",
     ARG_BOOLEAN,
@@ -118,7 +123,6 @@ main(int argc, char *argv[])
 {
     jsgf_t *jsgf;
     fsg_model_t *fsg;
-    const char *outfile = NULL;
     cmd_ln_t *config;
         
     if ((config = cmd_ln_parse_r(NULL, defn, argc, argv, TRUE)) == NULL)
@@ -139,17 +143,19 @@ main(int argc, char *argv[])
 	fsg_model_null_trans_closure(fsg, NULL);
     }
 
-    outfile = cmd_ln_str_r(config, "-fsg");
     
-    if (cmd_ln_boolean_r(config, "-fsm")) {
+    if (cmd_ln_str_r(config, "-fsm")) {
+	const char* outfile = cmd_ln_str_r(config, "-fsm");
+	const char* symfile = cmd_ln_str_r(config, "-symtab");
         if (outfile)
             fsg_model_writefile_fsm(fsg, outfile);
         else
             fsg_model_write_fsm(fsg, stdout);
-        if (outfile)
-            fsg_model_writefile_symtab(fsg, outfile);
+        if (symfile)
+            fsg_model_writefile_symtab(fsg, symfile);
     }
     else {
+        const char *outfile = cmd_ln_str_r(config, "-fsg");
         if (outfile)
             fsg_model_writefile(fsg, outfile);
         else

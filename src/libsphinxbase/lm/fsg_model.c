@@ -240,12 +240,10 @@ fsg_model_null_trans_closure(fsg_model_t * fsg, glist_t nulls)
             tl1 = (fsg_link_t *) gnode_ptr(gn1);
             assert(tl1->wid < 0);
 
-            int state = tl1->to_state;
-
-            if (fsg->trans[state].null_trans == NULL)
+            if (fsg->trans[tl1->to_state].null_trans == NULL)
                 continue;
 
-            for (itor = hash_table_iter(fsg->trans[state].null_trans);
+            for (itor = hash_table_iter(fsg->trans[tl1->to_state].null_trans);
                  itor; itor = hash_table_iter_next(itor)) {
 
                 tl2 = (fsg_link_t *) hash_entry_val(itor->ent);
@@ -268,7 +266,7 @@ fsg_model_null_trans_closure(fsg_model_t * fsg, glist_t nulls)
             }
         }
     } while (updated);
-
+    
     E_INFO("%d null transitions added\n", n);
 
     return nulls;
@@ -693,9 +691,6 @@ fsg_model_read(FILE * fp, logmath_t * lmath, float32 lw)
     E_INFO("FSG: %d states, %d unique words, %d transitions (%d null)\n",
            fsg->n_state, hash_table_inuse(vocab), n_trans, n_null_trans);
 
-    /* Do transitive closure on null transitions */
-    nulls = fsg_model_null_trans_closure(fsg, nulls);
-    glist_free(nulls);
 
     /* Now create a string table from the "dictionary" */
     fsg->n_word = hash_table_inuse(vocab);
@@ -708,6 +703,11 @@ fsg_model_read(FILE * fp, logmath_t * lmath, float32 lw)
         fsg->vocab[wid] = (char *) word;
     }
     hash_table_free(vocab);
+
+    /* Do transitive closure on null transitions */
+    nulls = fsg_model_null_trans_closure(fsg, nulls);
+    glist_free(nulls);
+
     ckd_free(lineptr);
     ckd_free(wordptr);
 
