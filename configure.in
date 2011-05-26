@@ -156,18 +156,25 @@ dnl determine audio type or use none if none supported on this platform
 dnl
 case $host in
 	*-*-linux*|*-*-uclinux*|*-*-freebsd*|*-*-netbsd*|*-*-openbsd*)
-		# Check for ALSA, fall back to OSS
+		# Check for PulseAudio, then fallback ALSA, then fall back to OSS
+		AC_CHECK_HEADER(pulse/pulseaudio.h,[
+			AC_DEFINE(AD_BACKEND_PULSEAUDIO, [],
+				 [Use PulseAudio library for sound I/O])
+			ad_files="ad_pulse.lo"
+			ad_backend="AD_BACKEND_PULSEAUDIO"
+			AC_CHECK_LIB(pulse-simple, pa_simple_new)],[
 		AC_CHECK_HEADER(alsa/asoundlib.h,[
 			AC_DEFINE(AD_BACKEND_ALSA, [],
 				 [Use ALSA library for sound I/O])
 			ad_files="ad_alsa.lo"
 			ad_backend="AD_BACKEND_ALSA"
 			AC_CHECK_LIB(asound, snd_pcm_open)],[
-			AC_DEFINE(AD_BACKEND_OSS, [],
+		AC_DEFINE(AD_BACKEND_OSS, [],
 				 [Use OSS for sound I/O])
 			ad_files="ad_oss.lo"
 			ad_backend="AD_BACKEND_OSS"
 			])
+		])
 		;;
 	*-*-*cygwin*|*-*-*mingw*)
 		ad_files="play_win32.lo rec_win32.lo"

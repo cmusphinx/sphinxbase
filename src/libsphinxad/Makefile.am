@@ -12,7 +12,8 @@ libsphinxad_la_SOURCES = cont_ad_base.c
 
 EXTRA_libsphinxad_la_SOURCES = ad_base.c \
 	ad_oss.c \
-	ad_alsa.c
+	ad_alsa.c \
+	ad_pulse.c
 
 EXTRA_DIST = ad_s60.cpp \
 	play_win32.c \

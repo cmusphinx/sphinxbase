@@ -111,6 +111,9 @@
 #elif (defined(WIN32) && !defined(GNUWINCE)) || defined(_WIN32_WCE)
 #include <windows.h>
 #include <mmsystem.h>
+#elif defined(AD_BACKEND_PULSEAUDIO)
+#include <pulse/pulseaudio.h>
+#include <pulse/simple.h>
 #elif defined(AD_BACKEND_ALSA)
 #include <alsa/asoundlib.h>
 #endif
@@ -183,8 +186,6 @@ typedef struct ad_rec_s {
 /** \struct ad_rec_t
  *  \brief Audio recording structure. 
  */
-
-/* Added by jd5q+@andrew.cmu.edu, 10/3/1997: */
 typedef struct {
     int32 dspFD;	/* Audio device descriptor */
     int32 recording;
@@ -192,11 +193,12 @@ typedef struct {
     int32 bps;		/* Bytes/sample */
 } ad_rec_t;
 
-#elif defined(AD_BACKEND_ESD)
+#elif defined(AD_BACKEND_PULSEAUDIO)
 
 #define DEFAULT_DEVICE NULL
+
 typedef struct {
-    int32 fd;
+    pa_simple* pa;
     int32 recording;
     int32 sps;
     int32 bps;
