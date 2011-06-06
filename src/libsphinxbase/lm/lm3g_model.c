@@ -210,7 +210,6 @@ int32
 sorted_id(sorted_list_t * l, int32 *val)
 {
     int32 i = 0;
-    int k = 0;
 
     for (;;) {
         if (*val == l->list[i].val.l)
