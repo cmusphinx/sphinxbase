@@ -59,18 +59,18 @@ typedef union {
 /**
  * Bigram probs and bo-wts, and trigram probs are kept in separate
  * tables rather than within the bigram_t and trigram_t structures.
- * These tables hold unique prob and bo-wt values, and can be < 64K
- * long.  The following tree structure is used to construct these
- * tables of unique values.  Whenever a new value is read from the LM
- * file, the sorted tree structure is searched to see if the value
- * already exists, and inserted if not found.
+ * These tables hold unique prob and bo-wt values. The following tree
+ * structure is used to construct these tables of unique values.  
+ * Whenever a new value is read from the LM file, the sorted tree 
+ * structure is searched to see if the value already exists, and 
+ * inserted if not found.
  */
 typedef struct sorted_entry_s {
     lmprob_t val;               /**< value being kept in this node */
-    uint16 lower;               /**< index of another entry.  All descendants down
+    uint32 lower;               /**< index of another entry.  All descendants down
                                    this path have their val < this node's val.
                                    0 => no son exists (0 is root index) */
-    uint16 higher;              /**< index of another entry.  All descendants down
+    uint32 higher;              /**< index of another entry.  All descendants down
                                    this path have their val > this node's val
                                    0 => no son exists (0 is root index) */
 } sorted_entry_t;
@@ -82,9 +82,8 @@ typedef struct sorted_entry_s {
 typedef struct {
     sorted_entry_t *list;
     int32 free;                 /**< first free element in list */
+    int32 size;
 } sorted_list_t;
-
-#define MAX_SORTED_ENTRIES	65534
 
 /**
  * Unigram structure (common among all lm3g implementations)

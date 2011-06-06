@@ -175,16 +175,17 @@ lm3g_add_ug(ngram_model_t *base,
     return score;
 }
 
+#define INITIAL_SORTED_ENTRIES	MAX_UINT16
+
 void
 init_sorted_list(sorted_list_t * l)
 {
-    /* FIXME FIXME FIXME: Fixed size array!??! */
-    l->list = ckd_calloc(MAX_SORTED_ENTRIES,
-                         sizeof(sorted_entry_t));
+    l->list = ckd_calloc(INITIAL_SORTED_ENTRIES, sizeof(sorted_entry_t));
     l->list[0].val.l = INT_MIN;
     l->list[0].lower = 0;
     l->list[0].higher = 0;
     l->free = 1;
+    l->size = INITIAL_SORTED_ENTRIES;
 }
 
 void
@@ -209,17 +210,20 @@ int32
 sorted_id(sorted_list_t * l, int32 *val)
 {
     int32 i = 0;
+    int k = 0;
 
     for (;;) {
         if (*val == l->list[i].val.l)
             return (i);
         if (*val < l->list[i].val.l) {
             if (l->list[i].lower == 0) {
-                if (l->free >= MAX_SORTED_ENTRIES) {
-                    /* Make the best of a bad situation. */
-                    E_WARN("sorted list overflow (%d => %d)\n",
-                           *val, l->list[i].val.l);
-                    return i;
+
+                if (l->free >= l->size) {
+            	    int newsize = l->size + INITIAL_SORTED_ENTRIES;
+            	    l->list = ckd_realloc(l->list, sizeof(sorted_entry_t) * newsize);
+            	    memset(l->list + l->size, 
+            	           0, INITIAL_SORTED_ENTRIES * sizeof(sorted_entry_t));
+            	    l->size = newsize;
                 }
 
                 l->list[i].lower = l->free;
@@ -233,11 +237,13 @@ sorted_id(sorted_list_t * l, int32 *val)
         }
         else {
             if (l->list[i].higher == 0) {
-                if (l->free >= MAX_SORTED_ENTRIES) {
-                    /* Make the best of a bad situation. */
-                    E_WARN("sorted list overflow (%d => %d)\n",
-                           *val, l->list[i].val);
-                    return i;
+
+                if (l->free >= l->size) {
+            	    int newsize = l->size + INITIAL_SORTED_ENTRIES;
+            	    l->list = ckd_realloc(l->list, sizeof(sorted_entry_t) * newsize);
+            	    memset(l->list + l->size, 
+            	           0, INITIAL_SORTED_ENTRIES * sizeof(sorted_entry_t));
+            	    l->size = newsize;
                 }
 
                 l->list[i].higher = l->free;
@@ -251,4 +257,3 @@ sorted_id(sorted_list_t * l, int32 *val)
         }
     }
 }
-
