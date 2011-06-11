@@ -3,6 +3,9 @@
 /* Use ALSA library for sound I/O */
 #undef AD_BACKEND_ALSA
 
+/* Use ALSA library for sound I/O */
+#undef AD_BACKEND_PULSEAUDIO
+
 /* Use IRIX interface for sound I/O */
 #undef AD_BACKEND_IRIX
 
