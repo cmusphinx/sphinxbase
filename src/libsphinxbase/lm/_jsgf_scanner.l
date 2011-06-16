@@ -42,7 +42,7 @@
 
 %}
 
-%option 8bit reentrant bison-bridge noyywrap
+%option 8bit reentrant bison-bridge noyywrap yylineno
 %option header-file="jsgf_scanner.h"
 %s COMMENT
 

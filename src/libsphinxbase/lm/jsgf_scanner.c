@@ -174,7 +174,20 @@ typedef struct yy_buffer_state *YY_BUFFER_STATE;
 #define EOB_ACT_END_OF_FILE 1
 #define EOB_ACT_LAST_MATCH 2
 
-    #define YY_LESS_LINENO(n)
+    /* Note: We specifically omit the test for yy_rule_can_match_eol because it requires
+     *       access to the local variable yy_act. Since yyless() is a macro, it would break
+     *       existing scanners that call yyless() from OUTSIDE yylex. 
+     *       One obvious solution it to make yy_act a global. I tried that, and saw
+     *       a 5% performance hit in a non-yylineno scanner, because yy_act is
+     *       normally declared as a register variable-- so it is not worth it.
+     */
+    #define  YY_LESS_LINENO(n) \
+            do { \
+                int yyl;\
+                for ( yyl = n; yyl < yyleng; ++yyl )\
+                    if ( yytext[yyl] == '\n' )\
+                        --yylineno;\
+            }while(0)
     
 /* Return all but the first "n" matched characters back to the input stream. */
 #define yyless(n) \
@@ -496,6 +509,11 @@ static yyconst flex_int16_t yy_chk[232] =
        76
     } ;
 
+/* Table of booleans, true if rule could match eol. */
+static yyconst flex_int32_t yy_rule_can_match_eol[17] =
+    {   0,
+1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0,     };
+
 /* The intent behind this definition is that it'll catch
  * any uses of REJECT which flex missed.
  */
@@ -547,7 +565,7 @@ static yyconst flex_int16_t yy_chk[232] =
 #include "jsgf_parser.h"
 
 
-#line 551 "jsgf_scanner.c"
+#line 569 "jsgf_scanner.c"
 
 #define INITIAL 0
 #define COMMENT 1
@@ -784,7 +802,7 @@ YY_DECL
 #line 57 "_jsgf_scanner.l"
 
 
-#line 788 "jsgf_scanner.c"
+#line 806 "jsgf_scanner.c"
 
     yylval = yylval_param;
 
@@ -857,6 +875,18 @@ yy_find_action:
 			}
 
 		YY_DO_BEFORE_ACTION;
+
+		if ( yy_act != YY_END_OF_BUFFER && yy_rule_can_match_eol[yy_act] )
+			{
+			int yyl;
+			for ( yyl = 0; yyl < yyleng; ++yyl )
+				if ( yytext[yyl] == '\n' )
+					   
+    do{ yylineno++;
+        yycolumn=0;
+    }while(0)
+;
+			}
 
 do_action:	/* This label is used only to access EOF actions. */
 
@@ -954,7 +984,7 @@ YY_RULE_SETUP
 #line 78 "_jsgf_scanner.l"
 ECHO;
 	YY_BREAK
-#line 958 "jsgf_scanner.c"
+#line 988 "jsgf_scanner.c"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(COMMENT):
 	yyterminate();
@@ -1320,6 +1350,10 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 
 	*--yy_cp = (char) c;
 
+    if ( c == '\n' ){
+        --yylineno;
+    }
+
 	yyg->yytext_ptr = yy_bp;
 	yyg->yy_hold_char = *yy_cp;
 	yyg->yy_c_buf_p = yy_cp;
@@ -1395,6 +1429,13 @@ static int yy_get_next_buffer (yyscan_t yyscanner)
 	c = *(unsigned char *) yyg->yy_c_buf_p;	/* cast for 8-bit char's */
 	*yyg->yy_c_buf_p = '\0';	/* preserve yytext */
 	yyg->yy_hold_char = *++yyg->yy_c_buf_p;
+
+	if ( c == '\n' )
+		   
+    do{ yylineno++;
+        yycolumn=0;
+    }while(0)
+;
 
 	return c;
 }

@@ -70,6 +70,8 @@
 /* Line 189 of yacc.c  */
 #line 37 "jsgf_parser.y"
 
+#define YYERROR_VERBOSE
+
 #include <stdio.h>
 #include <string.h>
 
@@ -91,7 +93,7 @@ void yyerror(yyscan_t lex, jsgf_t *jsgf, const char *s);
 
 
 /* Line 189 of yacc.c  */
-#line 95 "jsgf_parser.c"
+#line 97 "jsgf_parser.c"
 
 /* Enabling traces.  */
 #ifndef YYDEBUG
@@ -146,7 +148,7 @@ typedef union YYSTYPE
 {
 
 /* Line 214 of yacc.c  */
-#line 63 "jsgf_parser.y"
+#line 65 "jsgf_parser.y"
 
        char *name;
        float weight;
@@ -157,7 +159,7 @@ typedef union YYSTYPE
 
 
 /* Line 214 of yacc.c  */
-#line 161 "jsgf_parser.c"
+#line 163 "jsgf_parser.c"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
@@ -169,7 +171,7 @@ typedef union YYSTYPE
 
 
 /* Line 264 of yacc.c  */
-#line 173 "jsgf_parser.c"
+#line 175 "jsgf_parser.c"
 
 #ifdef short
 # undef short
@@ -464,10 +466,10 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    80,    80,    81,    82,    85,    88,    89,    90,    91,
-      95,    98,    99,   102,   105,   106,   109,   110,   113,   114,
-     119,   121,   125,   126,   130,   131,   134,   137,   140,   141,
-     142,   143,   144,   145
+       0,    82,    82,    83,    84,    87,    90,    91,    92,    93,
+      97,   100,   101,   104,   107,   108,   111,   112,   115,   116,
+     121,   123,   127,   128,   132,   133,   136,   139,   142,   143,
+     144,   145,   146,   147
 };
 #endif
 
@@ -1414,28 +1416,28 @@ yyreduce:
         case 5:
 
 /* Line 1455 of yacc.c  */
-#line 85 "jsgf_parser.y"
+#line 87 "jsgf_parser.y"
     { jsgf->name = (yyvsp[(2) - (2)].name); }
     break;
 
   case 7:
 
 /* Line 1455 of yacc.c  */
-#line 89 "jsgf_parser.y"
+#line 91 "jsgf_parser.y"
     { jsgf->version = (yyvsp[(2) - (3)].name); }
     break;
 
   case 8:
 
 /* Line 1455 of yacc.c  */
-#line 90 "jsgf_parser.y"
+#line 92 "jsgf_parser.y"
     { jsgf->version = (yyvsp[(2) - (4)].name); jsgf->charset = (yyvsp[(3) - (4)].name); }
     break;
 
   case 9:
 
 /* Line 1455 of yacc.c  */
-#line 91 "jsgf_parser.y"
+#line 93 "jsgf_parser.y"
     { jsgf->version = (yyvsp[(2) - (5)].name); jsgf->charset = (yyvsp[(3) - (5)].name);
 					 jsgf->locale = (yyvsp[(4) - (5)].name); }
     break;
@@ -1443,42 +1445,42 @@ yyreduce:
   case 10:
 
 /* Line 1455 of yacc.c  */
-#line 95 "jsgf_parser.y"
+#line 97 "jsgf_parser.y"
     { (yyval.name) = (yyvsp[(2) - (3)].name); }
     break;
 
   case 13:
 
 /* Line 1455 of yacc.c  */
-#line 102 "jsgf_parser.y"
+#line 104 "jsgf_parser.y"
     { jsgf_import_rule(jsgf, (yyvsp[(2) - (3)].name)); ckd_free((yyvsp[(2) - (3)].name)); }
     break;
 
   case 16:
 
 /* Line 1455 of yacc.c  */
-#line 109 "jsgf_parser.y"
+#line 111 "jsgf_parser.y"
     { jsgf_define_rule(jsgf, (yyvsp[(1) - (4)].name), (yyvsp[(3) - (4)].rhs), 0); ckd_free((yyvsp[(1) - (4)].name)); }
     break;
 
   case 17:
 
 /* Line 1455 of yacc.c  */
-#line 110 "jsgf_parser.y"
+#line 112 "jsgf_parser.y"
     { jsgf_define_rule(jsgf, (yyvsp[(2) - (5)].name), (yyvsp[(4) - (5)].rhs), 1); ckd_free((yyvsp[(2) - (5)].name)); }
     break;
 
   case 18:
 
 /* Line 1455 of yacc.c  */
-#line 113 "jsgf_parser.y"
+#line 115 "jsgf_parser.y"
     { (yyval.rhs) = (yyvsp[(1) - (1)].rhs); (yyval.rhs)->atoms = glist_reverse((yyval.rhs)->atoms); }
     break;
 
   case 19:
 
 /* Line 1455 of yacc.c  */
-#line 114 "jsgf_parser.y"
+#line 116 "jsgf_parser.y"
     { (yyval.rhs) = (yyvsp[(3) - (3)].rhs);
                                               (yyval.rhs)->atoms = glist_reverse((yyval.rhs)->atoms);
                                               (yyval.rhs)->alt = (yyvsp[(1) - (3)].rhs); }
@@ -1487,7 +1489,7 @@ yyreduce:
   case 20:
 
 /* Line 1455 of yacc.c  */
-#line 119 "jsgf_parser.y"
+#line 121 "jsgf_parser.y"
     { (yyval.rhs) = ckd_calloc(1, sizeof(*(yyval.rhs)));
 				   (yyval.rhs)->atoms = glist_add_ptr((yyval.rhs)->atoms, (yyvsp[(1) - (1)].atom)); }
     break;
@@ -1495,7 +1497,7 @@ yyreduce:
   case 21:
 
 /* Line 1455 of yacc.c  */
-#line 121 "jsgf_parser.y"
+#line 123 "jsgf_parser.y"
     { (yyval.rhs) = (yyvsp[(1) - (2)].rhs);
 					    (yyval.rhs)->atoms = glist_add_ptr((yyval.rhs)->atoms, (yyvsp[(2) - (2)].atom)); }
     break;
@@ -1503,7 +1505,7 @@ yyreduce:
   case 23:
 
 /* Line 1455 of yacc.c  */
-#line 126 "jsgf_parser.y"
+#line 128 "jsgf_parser.y"
     { (yyval.atom) = (yyvsp[(1) - (2)].atom);
 				 (yyval.atom)->tags = glist_add_ptr((yyval.atom)->tags, (yyvsp[(2) - (2)].name)); }
     break;
@@ -1511,70 +1513,70 @@ yyreduce:
   case 25:
 
 /* Line 1455 of yacc.c  */
-#line 131 "jsgf_parser.y"
+#line 133 "jsgf_parser.y"
     { (yyval.atom) = (yyvsp[(2) - (2)].atom); (yyval.atom)->weight = (yyvsp[(1) - (2)].weight); }
     break;
 
   case 26:
 
 /* Line 1455 of yacc.c  */
-#line 134 "jsgf_parser.y"
+#line 136 "jsgf_parser.y"
     { (yyval.rule) = jsgf_define_rule(jsgf, NULL, (yyvsp[(2) - (3)].rhs), 0); }
     break;
 
   case 27:
 
 /* Line 1455 of yacc.c  */
-#line 137 "jsgf_parser.y"
+#line 139 "jsgf_parser.y"
     { (yyval.rule) = jsgf_optional_new(jsgf, (yyvsp[(2) - (3)].rhs)); }
     break;
 
   case 28:
 
 /* Line 1455 of yacc.c  */
-#line 140 "jsgf_parser.y"
+#line 142 "jsgf_parser.y"
     { (yyval.atom) = jsgf_atom_new((yyvsp[(1) - (1)].name), 1.0); ckd_free((yyvsp[(1) - (1)].name)); }
     break;
 
   case 29:
 
 /* Line 1455 of yacc.c  */
-#line 141 "jsgf_parser.y"
+#line 143 "jsgf_parser.y"
     { (yyval.atom) = jsgf_atom_new((yyvsp[(1) - (1)].name), 1.0); ckd_free((yyvsp[(1) - (1)].name)); }
     break;
 
   case 30:
 
 /* Line 1455 of yacc.c  */
-#line 142 "jsgf_parser.y"
+#line 144 "jsgf_parser.y"
     { (yyval.atom) = jsgf_atom_new((yyvsp[(1) - (1)].rule)->name, 1.0); }
     break;
 
   case 31:
 
 /* Line 1455 of yacc.c  */
-#line 143 "jsgf_parser.y"
+#line 145 "jsgf_parser.y"
     { (yyval.atom) = jsgf_atom_new((yyvsp[(1) - (1)].rule)->name, 1.0); }
     break;
 
   case 32:
 
 /* Line 1455 of yacc.c  */
-#line 144 "jsgf_parser.y"
+#line 146 "jsgf_parser.y"
     { (yyval.atom) = jsgf_kleene_new(jsgf, (yyvsp[(1) - (2)].atom), 0); }
     break;
 
   case 33:
 
 /* Line 1455 of yacc.c  */
-#line 145 "jsgf_parser.y"
+#line 147 "jsgf_parser.y"
     { (yyval.atom) = jsgf_kleene_new(jsgf, (yyvsp[(1) - (2)].atom), 1); }
     break;
 
 
 
 /* Line 1455 of yacc.c  */
-#line 1578 "jsgf_parser.c"
+#line 1580 "jsgf_parser.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1786,12 +1788,12 @@ yyreturn:
 
 
 /* Line 1675 of yacc.c  */
-#line 148 "jsgf_parser.y"
+#line 150 "jsgf_parser.y"
 
 
 void
 yyerror(yyscan_t lex, jsgf_t *jsgf, const char *s)
 {
-    fprintf(stderr, "ERROR: %s\n", s);
+    E_ERROR("%s at line %d current token '%s'\n", s, yyget_lineno(lex), yyget_text(lex));
 }
 

@@ -710,8 +710,7 @@ jsgf_parse_file(const char *filename, jsgf_t *parent)
     else {
         in = fopen(filename, "r");
         if (in == NULL) {
-            fprintf(stderr, "Failed to open %s for parsing: %s\n",
-                    filename, strerror(errno));
+            E_ERROR_SYSTEM("Failed to open %s for parsing: %s");
             return NULL;
         }
         yyset_in(in, yyscanner);
@@ -720,8 +719,7 @@ jsgf_parse_file(const char *filename, jsgf_t *parent)
     jsgf = jsgf_grammar_new(parent);
     yyrv = yyparse(yyscanner, jsgf);
     if (yyrv != 0) {
-        fprintf(stderr, "JSGF parse of %s failed\n",
-                filename ? filename : "(stdin)");
+        E_ERROR("Failed to parse JSGF grammar from '%s'\n", filename ? filename : "(stdin)");
         jsgf_grammar_free(jsgf);
         yylex_destroy(yyscanner);
         return NULL;
