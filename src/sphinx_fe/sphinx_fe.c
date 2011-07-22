@@ -63,7 +63,7 @@
 
 typedef struct audio_type_s {
     char const *name;
-    int (*detect)(sphinx_wave2feat_t *wtf, char const *infile);
+    int (*detect)(sphinx_wave2feat_t *wtf);
     int (*decode)(sphinx_wave2feat_t *wtf);
 } audio_type_t;
 
@@ -116,13 +116,13 @@ typedef struct RIFFHeader{
  * @return TRUE if it's a RIFF file, FALSE if not, -1 if an error occurred.
  */
 static int
-detect_riff(sphinx_wave2feat_t *wtf, char const *infile)
+detect_riff(sphinx_wave2feat_t *wtf)
 {
     FILE *fh;
     MSWAV_hdr hdr;
 
-    if ((fh = fopen(infile, "rb")) == NULL) {
-        E_ERROR_SYSTEM("Failed to open %s", infile);
+    if ((fh = fopen(wtf->infile, "rb")) == NULL) {
+        E_ERROR_SYSTEM("Failed to open %s", wtf->infile);
         return -1;
     }
     if (fread(&hdr, sizeof(hdr), 1, fh) != 1) {
@@ -139,9 +139,6 @@ detect_riff(sphinx_wave2feat_t *wtf, char const *infile)
     /* Get relevant information. */
     cmd_ln_set_int32_r(wtf->config, "-nchans", hdr.numchannels);
     cmd_ln_set_float32_r(wtf->config, "-samprate", hdr.SamplingFreq);
-    if (wtf->infile)
-        ckd_free(wtf->infile);
-    wtf->infile = ckd_salloc(infile);
     wtf->infh = fh;
 
     return TRUE;
@@ -207,33 +204,30 @@ open_nist_file(sphinx_wave2feat_t *wtf, char const *infile, FILE **out_fh)
 
 #ifdef HAVE_POPEN
 static int
-detect_sph2pipe(sphinx_wave2feat_t *wtf, char const *infile)
+detect_sph2pipe(sphinx_wave2feat_t *wtf)
 {
     FILE *fh;
     char *cmdline;
     int rv;
 
     /* Determine if it's NIST file and get parameters. */
-    if ((rv = open_nist_file(wtf, infile, NULL)) != TRUE)
+    if ((rv = open_nist_file(wtf, wtf->infile, NULL)) != TRUE)
         return rv;
 
     /* Now popen it with sph2pipe. */
-    cmdline = string_join("sph2pipe -f raw '", infile, "'", NULL);
+    cmdline = string_join("sph2pipe -f raw '", wtf->infile, "'", NULL);
     if ((fh = popen(cmdline, "r")) == NULL) {
-        E_ERROR_SYSTEM("Failed to popen(\"sph2pipe -f raw '%s'\")", infile);
+        E_ERROR_SYSTEM("Failed to popen(\"sph2pipe -f raw '%s'\")", wtf->infile);
         ckd_free(cmdline);
         return -1;
     }
 
-    if (wtf->infile)
-        ckd_free(wtf->infile);
-    wtf->infile = ckd_salloc(infile);
     wtf->infh = fh;
     return TRUE;
 }
 #else /* !HAVE_POPEN */
 static int
-detect_sph2pipe(sphinx_wave2feat_t *wtf, char const *infile)
+detect_sph2pipe(sphinx_wave2feat_t *wtf)
 {
     E_ERROR("popen() not available, cannot run sph2pipe\n");
     return -1;
@@ -246,17 +240,15 @@ detect_sph2pipe(sphinx_wave2feat_t *wtf, char const *infile)
  * @return TRUE if it's a NIST file, FALSE if not, -1 if an error occurred.
  */
 static int
-detect_nist(sphinx_wave2feat_t *wtf, char const *infile)
+detect_nist(sphinx_wave2feat_t *wtf)
 {
     FILE *fh;
     int rv;
 
-    if ((rv = open_nist_file(wtf, infile, &fh)) != TRUE)
+    if ((rv = open_nist_file(wtf, wtf->infile, &fh)) != TRUE)
         return rv;
-    if (wtf->infile)
-        ckd_free(wtf->infile);
-    wtf->infile = ckd_salloc(infile);
     wtf->infh = fh;
+
     return TRUE;
 }
 
@@ -268,17 +260,14 @@ detect_nist(sphinx_wave2feat_t *wtf, char const *infile)
  * @return TRUE, or -1 on error.
  */
 static int
-detect_raw(sphinx_wave2feat_t *wtf, char const *infile)
+detect_raw(sphinx_wave2feat_t *wtf)
 {
     FILE *fh;
 
-    if ((fh = fopen(infile, "rb")) == NULL) {
-        E_ERROR_SYSTEM("Failed to open %s", infile);
+    if ((fh = fopen(wtf->infile, "rb")) == NULL) {
+        E_ERROR_SYSTEM("Failed to open %s", wtf->infile);
         return -1;
     }
-    if (wtf->infile)
-        ckd_free(wtf->infile);
-    wtf->infile = ckd_salloc(infile);
     wtf->infh = fh;
     return TRUE;
 }
@@ -290,18 +279,18 @@ detect_raw(sphinx_wave2feat_t *wtf, char const *infile)
  * @return TRUE, or -1 on error.
  */
 static int
-detect_sphinx_mfc(sphinx_wave2feat_t *wtf, char const *infile)
+detect_sphinx_mfc(sphinx_wave2feat_t *wtf)
 {
     FILE *fh;
     int32 len;
     long flen;
 
-    if ((fh = fopen(infile, "rb")) == NULL) {
-        E_ERROR_SYSTEM("Failed to open %s", infile);
+    if ((fh = fopen(wtf->infile, "rb")) == NULL) {
+        E_ERROR_SYSTEM("Failed to open %s", wtf->infile);
         return -1;
     }
     if (fread(&len, 4, 1, fh) != 1) {
-        E_ERROR_SYSTEM("Failed to read header from %s\n", infile);
+        E_ERROR_SYSTEM("Failed to read header from %s\n", wtf->infile);
         return -1;
     }
     fseek(fh, 0, SEEK_END);
@@ -325,9 +314,6 @@ detect_sphinx_mfc(sphinx_wave2feat_t *wtf, char const *infile)
     }
     
     fseek(fh, 4, SEEK_SET);
-    if (wtf->infile)
-        ckd_free(wtf->infile);
-    wtf->infile = ckd_salloc(infile);
     wtf->infh = fh;
     if (cmd_ln_boolean_r(wtf->config, "-spec2cep")) {
         wtf->in_veclen = cmd_ln_int32_r(wtf->config, "-nfilt");
@@ -373,7 +359,7 @@ mixnpick_channels(int16 *buf, int32 nsamp, int32 nchans, int32 whichchan)
  * @return TRUE if it's a supported file, FALSE if not, -1 if an error occurred.
  */
 static int
-detect_sndfile(sphinx_wave2feat_t *wtf, char const *infile)
+detect_sndfile(sphinx_wave2feat_t *wtf)
 {
     SNDFILE *sf;
     SF_INFO sfinfo;
@@ -381,15 +367,12 @@ detect_sndfile(sphinx_wave2feat_t *wtf, char const *infile)
     memset(&sfinfo, 0, sizeof(sfinfo));
     /* We let other detectors catch I/O errors, since there is
        no way to tell them from format errors when opening :( */
-    if ((sf = sf_open(infile, SFM_READ, &sfinfo)) == NULL) {
+    if ((sf = sf_open(wtf->infile, SFM_READ, &sfinfo)) == NULL) {
         return FALSE;
     }
     /* Get relevant information. */
     cmd_ln_set_int32_r(wtf->config, "-nchans", sfinfo.channels);
     cmd_ln_set_float32_r(wtf->config, "-samprate", sfinfo.samplerate);
-    if (wtf->infile)
-        ckd_free(wtf->infile);
-    wtf->infile = ckd_salloc(infile);
     wtf->insfh = sf;
     wtf->infh = NULL;
 
@@ -775,10 +758,14 @@ sphinx_wave2feat_free(sphinx_wave2feat_t *wtf)
     if (--wtf->refcount > 0)
         return wtf->refcount;
 
-    ckd_free(wtf->audio);
-    ckd_free_2d(wtf->feat);
-    ckd_free(wtf->infile);
-    ckd_free(wtf->outfile);
+    if (wtf->audio)
+	ckd_free(wtf->audio);
+    if (wtf->feat)
+	ckd_free_2d(wtf->feat);
+    if (wtf->infile)
+        ckd_free(wtf->infile);
+    if (wtf->outfile)
+	ckd_free(wtf->outfile);
     if (wtf->infh) {
         if (fclose(wtf->infh) == EOF)
             E_ERROR_SYSTEM("Failed to close input file");
@@ -802,7 +789,7 @@ sphinx_wave2feat_retain(sphinx_wave2feat_t *wtf)
 }
 
 static audio_type_t const *
-detect_audio_type(sphinx_wave2feat_t *wtf, char const *infile)
+detect_audio_type(sphinx_wave2feat_t *wtf)
 {
     audio_type_t const *atype;
     int i;
@@ -810,7 +797,7 @@ detect_audio_type(sphinx_wave2feat_t *wtf, char const *infile)
     /* Special case audio type for Sphinx MFCC inputs. */
     if (cmd_ln_boolean_r(wtf->config, "-spec2cep")
         || cmd_ln_boolean_r(wtf->config, "-cep2spec")) {
-        int rv = mfcc_type.detect(wtf, infile);
+        int rv = mfcc_type.detect(wtf);
         if (rv == -1)
             goto error_out;
         return &mfcc_type;
@@ -821,7 +808,7 @@ detect_audio_type(sphinx_wave2feat_t *wtf, char const *infile)
         int rv;
         atype = &types[i];
         if (cmd_ln_boolean_r(wtf->config, atype->name)) {
-            rv = (*atype->detect)(wtf, infile);
+            rv = (*atype->detect)(wtf);
             if (rv == -1)
                 goto error_out;
             else if (rv == TRUE)
@@ -833,7 +820,7 @@ detect_audio_type(sphinx_wave2feat_t *wtf, char const *infile)
         for (i = 0; i < ntypes; ++i) {
             int rv;
             atype = &types[i];
-            rv = (*atype->detect)(wtf, infile);
+            rv = (*atype->detect)(wtf);
             if (rv == -1)
                 goto error_out;
             else if (rv == TRUE)
@@ -861,8 +848,10 @@ sphinx_wave2feat_convert_file(sphinx_wave2feat_t *wtf,
     if (cmd_ln_boolean_r(wtf->config, "-verbose"))
         E_INFO("Converting %s to %s\n", infile, outfile);
 
+    wtf->infile = ckd_salloc(infile);
+
     /* Detect input file type. */
-    if ((atype = detect_audio_type(wtf, infile)) == NULL)
+    if ((atype = detect_audio_type(wtf)) == NULL)
         return -1;
 
     /* Determine whether to byteswap input. */
@@ -905,6 +894,7 @@ sphinx_wave2feat_convert_file(sphinx_wave2feat_t *wtf,
     /* Use the maximum of the input and output frame sizes to allocate this. */
     veclen = wtf->veclen;
     if (wtf->in_veclen > veclen) veclen = wtf->in_veclen;
+    
     wtf->feat = ckd_calloc_2d(wtf->featsize, veclen, sizeof(**wtf->feat));
 
     /* Let's go! */
@@ -920,8 +910,10 @@ sphinx_wave2feat_convert_file(sphinx_wave2feat_t *wtf,
     }
     wtf->outfile = ckd_salloc(outfile);
 
-    if ((nfloat = (*atype->decode)(wtf)) < 0)
-        return -1;
+    if ((nfloat = (*atype->decode)(wtf)) < 0) {
+    	E_ERROR("Failed to convert");
+    	goto error_out;
+    }
 
     if (wtf->ot->output_header) {
         if (fseek(wtf->outfh, 0, SEEK_SET) < 0) {
@@ -933,16 +925,50 @@ sphinx_wave2feat_convert_file(sphinx_wave2feat_t *wtf,
             goto error_out;
         }
     }
-    if (fclose(wtf->outfh) == EOF)
-        E_ERROR_SYSTEM("Failed to close output file");
+    
+
+    if (wtf->audio)
+	ckd_free(wtf->audio);
+    if (wtf->feat)
+	ckd_free_2d(wtf->feat);
+    if (wtf->infile)
+        ckd_free(wtf->infile);
+    if (wtf->outfile)
+	ckd_free(wtf->outfile);
+
+    wtf->audio = NULL;
+    wtf->infile = NULL;
+    wtf->feat = NULL;
+    wtf->outfile = NULL;
+
+    if (wtf->outfh)
+	if (fclose(wtf->outfh) == EOF)
+    	    E_ERROR_SYSTEM("Failed to close output file");
     wtf->outfh = NULL;
 
     return 0;
+
 error_out:
-    if (wtf->outfh) {
-        fclose(wtf->outfh);
-        wtf->outfh = NULL;
-    }
+
+    if (wtf->audio)
+	ckd_free(wtf->audio);
+    if (wtf->feat)
+	ckd_free_2d(wtf->feat);
+    if (wtf->infile)
+        ckd_free(wtf->infile);
+    if (wtf->outfile)
+	ckd_free(wtf->outfile);
+
+    wtf->audio = NULL;
+    wtf->infile = NULL;
+    wtf->feat = NULL;
+    wtf->outfile = NULL;
+
+    if (wtf->outfh)
+	if (fclose(wtf->outfh) == EOF)
+    	    E_ERROR_SYSTEM("Failed to close output file");
+    wtf->outfh = NULL;
+
     return -1;
 }
 
@@ -1038,8 +1064,6 @@ run_control_file(sphinx_wave2feat_t *wtf, char const *ctlfile)
         hash_table_enter(files, infile, outfile);
         if (rv != 0) {
             lineiter_free(li);
-            if (fclose(ctlfh) == EOF)
-                E_ERROR_SYSTEM("Failed to close control file");
             break;
         }
     }
@@ -1049,6 +1073,9 @@ run_control_file(sphinx_wave2feat_t *wtf, char const *ctlfile)
         ckd_free(hash_entry_val(itor->ent));
     }
     hash_table_free(files);
+
+    if (fclose(ctlfh) == EOF)
+        E_ERROR_SYSTEM("Failed to close control file");
     return rv;
 }
 
