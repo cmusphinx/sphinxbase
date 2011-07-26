@@ -300,6 +300,7 @@ test/unit/test_matrix/Makefile
 test/unit/test_feat/Makefile
 test/unit/test_fe/Makefile
 test/unit/test_logmath/Makefile
+test/unit/test_lineiter/Makefile
 test/unit/test_ngram/Makefile
 test/unit/test_fsg/Makefile
 test/unit/test_thread/Makefile

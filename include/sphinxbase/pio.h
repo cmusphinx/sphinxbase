@@ -179,6 +179,8 @@ typedef struct lineiter_t {
 	size_t bsiz;
 	size_t len;
 	FILE *fh;
+	int32 clean;
+	int32 lineno;
 } lineiter_t;
 
 /**
@@ -186,6 +188,12 @@ typedef struct lineiter_t {
  */
 SPHINXBASE_EXPORT
 lineiter_t *lineiter_start(FILE *fh);
+
+/**
+ * Start reading lines from a file, skip comments and trim lines.
+ */
+SPHINXBASE_EXPORT
+lineiter_t *lineiter_start_clean(FILE *fh);
 
 /**
  * Move to the next line in the file.
@@ -198,6 +206,12 @@ lineiter_t *lineiter_next(lineiter_t *li);
  */
 SPHINXBASE_EXPORT
 void lineiter_free(lineiter_t *li);
+
+/**
+ * Returns current line number.
+ */
+SPHINXBASE_EXPORT
+int lineiter_lineno(lineiter_t *li);
 
 
 #ifdef _WIN32_WCE

@@ -16,6 +16,7 @@ SUBDIRS=test_ad					\
 	$(maybe_lapack)				\
 	test_fe					\
 	test_feat				\
+	test_lineiter				\
 	test_logmath				\
 	test_ngram				\
 	test_fsg				\

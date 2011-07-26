@@ -267,7 +267,7 @@ lineiter_start(FILE *fh)
     
     /* Strip the UTF-8 BOM */
     
-    if (0 == strncmp(li->buf, "\xef\xbb\xbf", 3)) {
+    if (li && 0 == strncmp(li->buf, "\xef\xbb\xbf", 3)) {
 	memmove(li->buf, li->buf + 3, strlen(li->buf + 1));
 	li->len -= 3;
     }
@@ -276,8 +276,33 @@ lineiter_start(FILE *fh)
 }
 
 lineiter_t *
-lineiter_next(lineiter_t *li)
+lineiter_start_clean(FILE *fh)
 {
+    lineiter_t *li;
+    
+    li = lineiter_start(fh);
+    
+    if (li == NULL)
+	return li;
+    
+    li->clean = TRUE;
+    
+    if (li->buf && li->buf[0] == '#') {
+	li = lineiter_next(li);
+    } else {
+	string_trim(li->buf, STRING_BOTH);
+    }
+    
+    return li;
+}
+
+
+static lineiter_t *
+lineiter_next_plain(lineiter_t *li)
+{
+    /* We are reading the next line */
+    li->lineno++;
+    
     /* Read a line and check for EOF. */
     if (fgets(li->buf, li->bsiz, li->fh) == NULL) {
         lineiter_free(li);
@@ -306,6 +331,27 @@ lineiter_next(lineiter_t *li)
 
     /* Shouldn't get here. */
     return li;
+}
+
+
+lineiter_t *
+lineiter_next(lineiter_t *li)
+{
+    if (!li->clean)
+	return lineiter_next_plain(li);
+    
+    for (li = lineiter_next_plain(li); li; li = lineiter_next_plain(li)) {
+	if (li->buf && li->buf[0] != '#') {
+	    li->buf = string_trim(li->buf, STRING_BOTH);
+	    break;
+	}
+    }
+    return li;
+}
+
+int lineiter_lineno(lineiter_t *li)
+{
+    return li->lineno;
 }
 
 void
@@ -345,7 +391,6 @@ fread_line(FILE *stream, size_t *out_len)
     if (out_len) *out_len = outptr - output;
     return output;
 }
-
 
 #define FREAD_RETRY_COUNT	60
 
