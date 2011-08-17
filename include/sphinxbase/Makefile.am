@@ -24,7 +24,6 @@ pkginclude_HEADERS =				\
 	huff_code.h				\
 	info.h					\
 	jsgf.h					\
-	libutil.h				\
 	listelem_alloc.h			\
 	logmath.h				\
 	matrix.h				\

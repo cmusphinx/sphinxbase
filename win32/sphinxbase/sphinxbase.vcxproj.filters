@@ -298,9 +298,6 @@
     <ClInclude Include="..\..\src\libsphinxbase\lm\jsgf_scanner.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\libutil.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\listelem_alloc.h">
       <Filter>Header Files</Filter>
     </ClInclude>

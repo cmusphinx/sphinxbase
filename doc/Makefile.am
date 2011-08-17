@@ -35,7 +35,6 @@ headers =						\
 	$(top_srcdir)/include/sphinxbase/heap.h			\
 	$(top_srcdir)/include/sphinxbase/info.h			\
 	$(top_srcdir)/include/sphinxbase/jsgf.h			\
-	$(top_srcdir)/include/sphinxbase/libutil.h			\
 	$(top_srcdir)/include/sphinxbase/listelem_alloc.h		\
 	$(top_srcdir)/include/sphinxbase/logmath.h			\
 	$(top_srcdir)/include/sphinxbase/matrix.h			\

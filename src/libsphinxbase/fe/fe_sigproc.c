@@ -55,7 +55,6 @@
 #include "sphinxbase/fixpoint.h"
 #include "sphinxbase/fe.h"
 #include "sphinxbase/genrand.h"
-#include "sphinxbase/libutil.h"
 #include "sphinxbase/err.h"
 
 #include "fe_internal.h"

@@ -419,7 +419,6 @@
     <ClInclude Include="..\..\src\libsphinxbase\lm\jsgf_internal.h" />
     <ClInclude Include="..\..\src\libsphinxbase\lm\jsgf_parser.h" />
     <ClInclude Include="..\..\src\libsphinxbase\lm\jsgf_scanner.h" />
-    <ClInclude Include="..\..\include\libutil.h" />
     <ClInclude Include="..\..\include\listelem_alloc.h" />
     <ClInclude Include="..\..\src\libsphinxbase\lm\lm3g_model.h" />
     <ClInclude Include="..\..\include\logmath.h" />
