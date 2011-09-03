@@ -259,7 +259,7 @@ fe_log_add(fixed32 x, fixed32 y)
         d = (y - x) >> (DEFAULT_RADIX - 8);
         r = y;
     }
-    if (d > fe_logadd_table_size)
+    if (d > fe_logadd_table_size - 1)
         return r;
     else {
         r += ((fixed32)fe_logadd_table[d] << (DEFAULT_RADIX - 8));
