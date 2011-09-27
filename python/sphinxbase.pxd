@@ -12,6 +12,11 @@ ctypedef float float32
 ctypedef int int32
 ctypedef double float64
 
+cdef extern from *:
+     ctypedef int* const_int_ptr "const int*"
+     ctypedef int32* const_int32_ptr "const int32*"
+     ctypedef char* const_char_ptr "const char*"
+
 # Get Python stuff to access stdio
 cdef extern from "Python.h":
     ctypedef struct FILE
@@ -102,7 +107,7 @@ cdef extern from "sphinxbase/ngram_model.h":
                                char *word, float32 weight)
 
     int32 ngram_model_get_size(ngram_model_t *model)
-    int32 *ngram_model_get_counts(ngram_model_t *model)
+    const_int32_ptr ngram_model_get_counts(ngram_model_t *model)
     ctypedef struct ngram_iter_t
     ngram_iter_t *ngram_ng_iter(ngram_model_t *model, int32 wid,
                                 int32 *history, int32 n_hist)
@@ -128,10 +133,10 @@ cdef extern from "sphinxbase/huff_code.h":
     int huff_code_encode_int(huff_code_t *hc, int sym, unsigned int *outcw)
     int huff_code_encode_str(huff_code_t *hc, char *sym, unsigned int *outcw)
     int huff_code_decode_int(huff_code_t *hc, int *outval,
-                             char **inout_data, size_t *inout_dlen,
+                             char** inout_data, size_t *inout_dlen,
                              int *inout_offset)
-    char *huff_code_decode_str(huff_code_t *hc,
-                               char **inout_data, size_t *inout_dlen,
+    const_char_ptr huff_code_decode_str(huff_code_t *hc,
+                               char** inout_data, size_t *inout_dlen,
                                int *inout_offset)
 
 # Extension classes

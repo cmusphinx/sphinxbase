@@ -205,7 +205,7 @@ cdef class NGramModel:
         @return: Counts of 1, 2, ..., N grams
         @rtype: tuple(int)
         """
-        cdef int *counts
+        cdef const_int_ptr counts
         counts = ngram_model_get_counts(self.lm)
         return tuple([counts[i] for i in range(ngram_model_get_size(self.lm))])
 
@@ -406,7 +406,7 @@ cdef class NGramIter:
 
     cdef set_iter(NGramIter self, ngram_iter_t *itor):
         cdef int32 prob, bowt
-        cdef int32 *wids
+        cdef const_int32_ptr wids
 
         if itor == NULL:
             raise StopIteration
@@ -606,8 +606,8 @@ cdef class HuffCode:
         byte (i.e. 8 minutes the number of remaining bits)
         """
         cdef int offset
-        cdef char *dptr
-        cdef char *strval
+        cdef const_char_ptr dptr
+        cdef const_char_ptr strval
         cdef size_t dlen
 
         dlen = len(data)
@@ -641,7 +641,7 @@ cdef class HuffCode:
             huff_code_encode_str(self.hc, strsym, NULL)
 
     def decode_from_file(self):
-        cdef char *sym
+        cdef const_char_ptr sym
         if self.fh == None:
             raise RuntimeError, "No file is attached"
         sym = huff_code_decode_str(self.hc, NULL, NULL, NULL)
