@@ -157,11 +157,11 @@ typedef struct feat_s {
     char *name;		/**< Printable name for this feature type */
     int32 cepsize;	/**< Size of input speech vector (typically, a cepstrum vector) */
     int32 n_stream;	/**< Number of feature streams; e.g., 4 in Sphinx-II */
-    int32 *stream_len;	/**< Vector length of each feature stream */
+    uint32 *stream_len;	/**< Vector length of each feature stream */
     int32 window_size;	/**< Number of extra frames around given input frame needed to compute
                            corresponding output feature (so total = window_size*2 + 1) */
     int32 n_sv;         /**< Number of subvectors */
-    int32 *sv_len;      /**< Vector length of each subvector */
+    uint32 *sv_len;      /**< Vector length of each subvector */
     int32 **subvecs;    /**< Subvector specification (or NULL for none) */
     mfcc_t *sv_buf;      /**< Temporary copy buffer for subvector projection */
     int32 sv_dim;       /**< Total dimensionality of subvector (length of sv_buf) */
