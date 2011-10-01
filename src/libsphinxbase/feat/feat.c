@@ -697,7 +697,7 @@ feat_init(char const *type, cmn_type_t cmn, int32 varnorm,
         }
         fcb->cepsize = 13;
         fcb->n_stream = 4;
-        fcb->stream_len = (int32 *) ckd_calloc(4, sizeof(int32));
+        fcb->stream_len = (uint32 *) ckd_calloc(4, sizeof(uint32));
         fcb->stream_len[0] = 12;
         fcb->stream_len[1] = 24;
         fcb->stream_len[2] = 3;
@@ -715,7 +715,7 @@ feat_init(char const *type, cmn_type_t cmn, int32 varnorm,
         }
         fcb->cepsize = 13;
         fcb->n_stream = 1;
-        fcb->stream_len = (int32 *) ckd_calloc(1, sizeof(int32));
+        fcb->stream_len = (uint32 *) ckd_calloc(1, sizeof(uint32));
         fcb->stream_len[0] = 39;
         fcb->out_dim = 39;
         fcb->window_size = 3;
@@ -724,7 +724,7 @@ feat_init(char const *type, cmn_type_t cmn, int32 varnorm,
     else if (strncmp(type, "1s_c_d_dd", 9) == 0) {
         fcb->cepsize = cepsize;
         fcb->n_stream = 1;
-        fcb->stream_len = (int32 *) ckd_calloc(1, sizeof(int32));
+        fcb->stream_len = (uint32 *) ckd_calloc(1, sizeof(uint32));
         fcb->stream_len[0] = cepsize * 3;
         fcb->out_dim = cepsize * 3;
         fcb->window_size = FEAT_DCEP_WIN + 1; /* ddcep needs the extra 1 */
@@ -733,7 +733,7 @@ feat_init(char const *type, cmn_type_t cmn, int32 varnorm,
     else if (strncmp(type, "1s_c_d_ld_dd", 12) == 0) {
         fcb->cepsize = cepsize;
         fcb->n_stream = 1;
-        fcb->stream_len = (int32 *) ckd_calloc(1, sizeof(int32));
+        fcb->stream_len = (uint32 *) ckd_calloc(1, sizeof(uint32));
         fcb->stream_len[0] = cepsize * 4;
         fcb->out_dim = cepsize * 4;
         fcb->window_size = FEAT_DCEP_WIN * 2;
@@ -743,7 +743,7 @@ feat_init(char const *type, cmn_type_t cmn, int32 varnorm,
         /* 1-stream cep/dcep */
         fcb->cepsize = cepsize;
         fcb->n_stream = 1;
-        fcb->stream_len = (int32 *) ckd_calloc(1, sizeof(int32));
+        fcb->stream_len = (uint32 *) ckd_calloc(1, sizeof(uint32));
         fcb->stream_len[0] = feat_cepsize(fcb) * 2;
         fcb->out_dim = fcb->stream_len[0];
         fcb->window_size = 2;
@@ -753,7 +753,7 @@ feat_init(char const *type, cmn_type_t cmn, int32 varnorm,
         /* 1-stream cep */
         fcb->cepsize = cepsize;
         fcb->n_stream = 1;
-        fcb->stream_len = (int32 *) ckd_calloc(1, sizeof(int32));
+        fcb->stream_len = (uint32 *) ckd_calloc(1, sizeof(uint32));
         fcb->stream_len[0] = feat_cepsize(fcb);
         fcb->out_dim = fcb->stream_len[0];
         fcb->window_size = 0;
@@ -768,7 +768,7 @@ feat_init(char const *type, cmn_type_t cmn, int32 varnorm,
 
         fcb->cepsize = cepsize;
         fcb->n_stream = 1;
-        fcb->stream_len = (int32 *) ckd_calloc(1, sizeof(int32));
+        fcb->stream_len = (uint32 *) ckd_calloc(1, sizeof(uint32));
         fcb->stream_len[0] = feat_cepsize(fcb) * (2 * fcb->window_size + 1);
         fcb->out_dim = fcb->stream_len[0];
         fcb->compute_feat = feat_copy;
@@ -800,7 +800,7 @@ feat_init(char const *type, cmn_type_t cmn, int32 varnorm,
         }
         k++;                    /* Presumably there are (#commas+1) streams */
         fcb->n_stream = k;
-        fcb->stream_len = (int32 *) ckd_calloc(k, sizeof(int32));
+        fcb->stream_len = (uint32 *) ckd_calloc(k, sizeof(uint32));
 
         /* Scan individual feature stream lengths */
         strp = mtype;
