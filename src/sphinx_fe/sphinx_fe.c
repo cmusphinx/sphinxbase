@@ -291,6 +291,7 @@ detect_sphinx_mfc(sphinx_wave2feat_t *wtf)
     }
     if (fread(&len, 4, 1, fh) != 1) {
         E_ERROR_SYSTEM("Failed to read header from %s\n", wtf->infile);
+        fclose(fh);
         return -1;
     }
     fseek(fh, 0, SEEK_END);

@@ -2391,3 +2391,7 @@ sb_strtod
 		*se = (char *)s;
 	return sign ? -dval(rv) : dval(rv);
 	}
+
+#ifdef __cplusplus
+}
+#endif
