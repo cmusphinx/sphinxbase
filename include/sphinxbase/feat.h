@@ -230,7 +230,7 @@ typedef struct feat_s {
 /**
  * Dimensionality of stream/subvector i in feature output.
  */
-#define feat_dimension2(f,i)	((f)->sv_len ? (f)->sv_len[i] : f->stream_len[i])
+#define feat_dimension2(f,i)	((f)->lda ? (f)->out_dim : ((f)->sv_len ? (f)->sv_len[i] : f->stream_len[i]))
 /**
  * Total dimensionality of feature output.
  */
@@ -238,7 +238,6 @@ typedef struct feat_s {
 /**
  * Array with stream/subvector lengths
  */
-//#define feat_stream_lengths(f)	((f)->sv_len ? (f)->sv_len : f->stream_len)
 #define feat_stream_lengths(f)  ((f)->lda ? (&(f)->out_dim) : (f)->sv_len ? (f)->sv_len : f->stream_len)
 
 /**
