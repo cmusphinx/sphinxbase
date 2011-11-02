@@ -307,7 +307,7 @@ fe_t *fe_init_auto_r(cmd_ln_t *config);
  *         manually.
  */
 SPHINXBASE_EXPORT
-cmd_ln_t *fe_get_config(fe_t *fe);
+const cmd_ln_t *fe_get_config(fe_t *fe);
 
 /**
  * Start processing an utterance.

@@ -1114,5 +1114,6 @@ main(int argc, char *argv[])
                                            cmd_ln_str_r(config, "-o"));
 
     sphinx_wave2feat_free(wtf);
+    cmd_ln_free_r(config);
     return rv;
 }

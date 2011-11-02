@@ -200,6 +200,7 @@ main(int argc, char *argv[])
 	ckd_free_2d(cepbuf2);
 	fclose(raw);
 	fe_free(fe);
+	cmd_ln_free_r(config);
 
 	return 0;
 }
