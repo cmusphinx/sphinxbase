@@ -108,6 +108,13 @@ cdef extern from "sphinxbase/ngram_model.h":
 
     int32 ngram_model_get_size(ngram_model_t *model)
     const_int32_ptr ngram_model_get_counts(ngram_model_t *model)
+    ngram_model_t *ngram_model_set_select(ngram_model_t *set, 
+                                          char *name)
+    ngram_model_t *ngram_model_set_add(ngram_model_t *set,
+                                       ngram_model_t *model,
+                                       char *name,
+                                       float32 weight,
+                                       int reuse_widmap)
     ctypedef struct ngram_iter_t
     ngram_iter_t *ngram_ng_iter(ngram_model_t *model, int32 wid,
                                 int32 *history, int32 n_hist)

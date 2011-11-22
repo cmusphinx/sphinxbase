@@ -166,6 +166,39 @@ cdef class NGramModel:
         logmath_free(self.lmath)
         self.lmath = lmath
 
+    def set_add(NGramModel self, NGramModel lm, name, float weight=1.0, int reuse_widmap=1):
+        """
+        Adds an language model to the lmset
+
+        @param lm: language model to add
+        @type lm: sphinxbase.NGramModel
+        @param name: name of the language model 
+        @type name: string
+        @param weight: language model weight (defaults to 1.0)
+        @type weight: float
+        @param reuse_widmap: whether to reuse the word ip mapping
+        @type reuse_widmap: int
+
+        @return: the modified lmset or None
+        @rtype: sphinxbase.NGramModel
+        """
+        retVal = ngram_model_set_add(self.lm, lm.lm, name, weight, reuse_widmap)
+        return self if retVal else None
+        
+
+    def set_select(NGramModel self, name):
+        """
+        Instructs the LMSet to switch to the LM specified by the name param
+
+        @param name: the name associated with the language model
+        @type name: string
+        @return: the modified LMSet or None on error
+        @rtype: sphixbase.NGramModel
+        """
+        retVal = ngram_model_set_select(self.lm, name)
+        return self if retVal else None
+    
+
     def __dealloc__(self):
         """
         Destructor for N-Gram model class.
