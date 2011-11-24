@@ -528,14 +528,14 @@ bio_read_wavfile(char const *directory,
     }
 
     if ((uttfp = fopen(inputfile, "rb")) == NULL) {
-        E_FATAL("fopen(%s,rb) failed\n", inputfile);
+        E_FATAL_SYSTEM("Failed to open file '%s' for reading", inputfile);
     }
     fseek(uttfp, 0, SEEK_END);
     n = ftell(uttfp);
     fseek(uttfp, 0, SEEK_SET);
     if (header > 0) {
         if (fseek(uttfp, header, SEEK_SET) < 0) {
-            E_ERROR("fseek(%s,%d) failed\n", inputfile, header);
+            E_ERROR_SYSTEM("Failed to move to an offset %d in a file '%s'", header, inputfile);
             fclose(uttfp);
             ckd_free(inputfile);
             return NULL;

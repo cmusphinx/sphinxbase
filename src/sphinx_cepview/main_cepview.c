@@ -32,41 +32,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * ====================================================================
- *
- * 
- * HISTORY
- * 
- * circa 1994	P J Moreno at Carnegie Mellon
- * 		Created.
- *
- * For history information, please use 'cvs log'
- * $Log$
- * Revision 1.11  2006/02/24  04:06:43  arthchan2003
- * Merged from branch SPHINX3_5_2_RCI_IRII_BRANCH: Changed commands to macro.  Used E_INFO instead of printf in displaying no. of friends
- * 
- *
- * Revision 1.10  2005/08/18 21:18:09  egouvea
- * Added E_INFO displaying information about how many columns are being printed, and how many frames
- *
- * Revision 1.9.4.2  2005/09/07 23:51:05  arthchan2003
- * Fixed keyword expansion problem
- *
- * Revision 1.9.4.1  2005/07/18 23:21:23  arthchan2003
- * Tied command-line arguments with marcos
- *
- * Revision 1.10  2005/08/18 21:18:09  egouvea
- * Added E_INFO displaying information about how many columns are being printed, and how many frames
- *
- * Revision 1.9  2005/06/22 05:38:45  arthchan2003
- * Add
- *
- * Revision 1.2  2005/03/30 00:43:41  archan
- *
- * Add $Log$
- * Revision 1.11  2006/02/24  04:06:43  arthchan2003
- * Merged from branch SPHINX3_5_2_RCI_IRII_BRANCH: Changed commands to macro.  Used E_INFO instead of printf in displaying no. of friends
- * 
- *
  */
 
 #include <stdio.h>
@@ -183,7 +148,7 @@ main(int argc, char *argv[])
         E_FATAL("Input file was not specified with (-f)\n");
     }
     if (read_cep(cepfile, &cep, &noframe, vsize) == IO_ERR)
-        E_FATAL("ERROR opening %s for reading\n", cepfile);
+        E_FATAL_SYSTEM("Failed to open '%s' for reading", cepfile);
 
     z = cep[0];
 
@@ -237,12 +202,12 @@ read_cep(char const *file, float ***cep, int *numframes, int cepsize)
     float32 **mfcbuf;
 
     if (stat_retry(file, &statbuf) < 0) {
-        printf("stat(%s) failed\n", file);
+        E_ERROR_SYSTEM("Failed to get file size '%s'", file);
         return IO_ERR;
     }
 
     if ((fp = fopen(file, "rb")) == NULL) {
-        printf("Failed to open '%s' for reading: %s\n", file, strerror(errno));
+        E_ERROR_SYSTEM("Failed to open '%s' for reading", file);
         return IO_ERR;
     }
 
@@ -259,8 +224,7 @@ read_cep(char const *file, float ***cep, int *numframes, int cepsize)
         SWAP_INT32(&n);
 
         if ((int) (n * sizeof(float) + 4) != statbuf.st_size) {
-            printf
-                ("Header size field: %d(%08x); filesize: %d(%08x)\n",
+    	    E_ERROR("Header size field: %d(%08x); filesize: %d(%08x)\n",
                  n_float, n_float, (int) statbuf.st_size,
                  (int) statbuf.st_size);
             fclose(fp);
@@ -271,7 +235,7 @@ read_cep(char const *file, float ***cep, int *numframes, int cepsize)
         byterev = TRUE;
     }
     if (n_float <= 0) {
-        printf("Header size field: %d\n", n_float);
+        E_ERROR("Header size field: %d\n", n_float);
         fclose(fp);
         return IO_ERR;
     }
@@ -279,7 +243,7 @@ read_cep(char const *file, float ***cep, int *numframes, int cepsize)
     /* n = #frames of input */
     n = n_float / cepsize;
     if (n * cepsize != n_float) {
-        printf("Header size field: %d; not multiple of %d\n",
+        E_ERROR("Header size field: %d; not multiple of %d\n",
                n_float, cepsize);
         fclose(fp);
         return IO_ERR;
@@ -292,7 +256,7 @@ read_cep(char const *file, float ***cep, int *numframes, int cepsize)
     /* Read mfc data and byteswap if necessary */
     n_float = n * cepsize;
     if ((int) fread(mfcbuf[0], sizeof(float), n_float, fp) != n_float) {
-        printf("Error reading mfc data\n");
+        E_ERROR("Error reading mfc data from the file '%s'", file);
         fclose(fp);
         return IO_ERR;
     }

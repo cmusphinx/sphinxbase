@@ -64,6 +64,7 @@ cdef extern from "sphinxbase/fsg_model.h":
     ctypedef struct fsg_model_t
 
 cdef extern from "sphinxbase/ngram_model.h":
+    ctypedef struct ngram_model_t
     ctypedef enum ngram_file_type_t:
         NGRAM_AUTO
         NGRAM_ARPA
@@ -72,7 +73,6 @@ cdef extern from "sphinxbase/ngram_model.h":
     ctypedef enum ngram_case_t:
         NGRAM_UPPER
         NGRAM_LOWER
-    ctypedef struct ngram_model_t
     ngram_model_t *ngram_model_read(cmd_ln_t *config,
                                     char *file_name,
                                     ngram_file_type_t file_type,

@@ -173,13 +173,13 @@ logmath_read(const char *file_name)
 
     E_INFO("Reading log table file '%s'\n", file_name);
     if ((fp = fopen(file_name, "rb")) == NULL) {
-        E_ERROR("Failed to open log table file '%s' for reading: %s\n", file_name, strerror(errno));
+        E_ERROR_SYSTEM("Failed to open log table file '%s' for reading", file_name);
         return NULL;
     }
 
     /* Read header, including argument-value info and 32-bit byteorder magic */
     if (bio_readhdr(fp, &argname, &argval, &byteswap) < 0) {
-        E_ERROR("bio_readhdr(%s) failed\n", file_name);
+        E_ERROR("Failed to read the header from the file '%s'\n", file_name);
         fclose(fp);
         return NULL;
     }
@@ -222,7 +222,7 @@ logmath_read(const char *file_name)
 
     /* #Values to follow */
     if (bio_fread(&lmath->t.table_size, sizeof(int32), 1, fp, byteswap, &chksum) != 1) {
-        E_ERROR("fread(%s) (total #values) failed\n", file_name);
+        E_ERROR("Failed to read values from the file '%s'", file_name);
         goto error_out;
     }
 
@@ -248,8 +248,8 @@ logmath_read(const char *file_name)
         lmath->t.table = ckd_calloc(lmath->t.table_size, lmath->t.width);
         if (bio_fread(lmath->t.table, lmath->t.width, lmath->t.table_size,
                       fp, byteswap, &chksum) != lmath->t.table_size) {
-            E_ERROR("fread(%s) (%d x %d bytes) failed\n",
-                    file_name, lmath->t.table_size, lmath->t.width);
+            E_ERROR("Failed to read data (%d x %d bytes) from the file '%s' failed",
+                    lmath->t.table_size, lmath->t.width, file_name);
             goto error_out;
         }
         if (chksum_present)
@@ -282,7 +282,7 @@ logmath_write(logmath_t *lmath, const char *file_name)
 
     E_INFO("Writing log table file '%s'\n", file_name);
     if ((fp = fopen(file_name, "wb")) == NULL) {
-        E_ERROR("Failed to open logtable file '%s' for writing: %s\n", file_name, strerror(errno));
+        E_ERROR_SYSTEM("Failed to open logtable file '%s' for writing", file_name);
         return -1;
     }
 
@@ -308,18 +308,18 @@ logmath_write(logmath_t *lmath, const char *file_name)
     /* #Values to follow */
     if (bio_fwrite(&lmath->t.table_size, sizeof(uint32),
                    1, fp, 0, &chksum) != 1) {
-        E_ERROR("fwrite(%s) (total #values) failed\n", file_name);
+        E_ERROR("Failed to write data to a file '%s'", file_name);
         goto error_out;
     }
 
     if (bio_fwrite(lmath->t.table, lmath->t.width, lmath->t.table_size,
                    fp, 0, &chksum) != lmath->t.table_size) {
-        E_ERROR("fwrite(%s) (%d x %d bytes) failed\n",
-                file_name, lmath->t.table_size, lmath->t.width);
+        E_ERROR("Failed to write data (%d x %d bytes) to the file '%s'",
+                lmath->t.table_size, lmath->t.width, file_name);
         goto error_out;
     }
     if (bio_fwrite(&chksum, sizeof(uint32), 1, fp, 0, NULL) != 1) {
-        E_ERROR("fwrite(%s) checksum failed\n", file_name);
+        E_ERROR("Failed to write checksum to the file '%s'", file_name);
         goto error_out;
     }
 

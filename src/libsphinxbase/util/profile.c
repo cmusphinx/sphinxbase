@@ -302,7 +302,7 @@ host_endian(void)
     file = "/tmp/__EnDiAn_TeSt__";
 
     if ((fp = fopen(file, "wb")) == NULL) {
-        E_ERROR("Failed to open file '%s' for writing: %s\n", file, strerror(errno));
+        E_ERROR("Failed to open file '%s' for writing", file);
         return -1;
     }
 
@@ -318,7 +318,7 @@ host_endian(void)
 
     fclose(fp);
     if ((fp = fopen(file, "rb")) == NULL) {
-        E_ERROR("Failed to open file '%s' for reading: %s\n", file, strerror(errno));
+        E_ERROR_SYSTEM("Failed to open file '%s' for reading", file);
         unlink(file);
         return -1;
     }

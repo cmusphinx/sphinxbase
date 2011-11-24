@@ -110,7 +110,7 @@ main(int32 argc, char **argv)
         uttno++;
         sprintf(file, "%04d.raw", uttno);
         if ((fp = fopen(file, "wb")) == NULL)
-            E_FATAL("Failed to open '%s' for reading: %s\n", file, strerror(errno));
+            E_FATAL_SYSTEM("Failed to open '%s' for reading", file);
         fwrite(buf, sizeof(int16), k, fp);
         uttlen = k;
         printf("Utterance %04d, logging to %s\n", uttno, file);

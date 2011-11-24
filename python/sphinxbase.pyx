@@ -179,11 +179,11 @@ cdef class NGramModel:
         @param reuse_widmap: whether to reuse the word ip mapping
         @type reuse_widmap: int
 
-        @return: the modified lmset or None
+        @return: the modified lmset
         @rtype: sphinxbase.NGramModel
         """
-        retVal = ngram_model_set_add(self.lm, lm.lm, name, weight, reuse_widmap)
-        return self if retVal else None
+        ngram_model_set_add(self.lm, lm.lm, name, weight, reuse_widmap)
+        return self
         
 
     def set_select(NGramModel self, name):
@@ -192,11 +192,11 @@ cdef class NGramModel:
 
         @param name: the name associated with the language model
         @type name: string
-        @return: the modified LMSet or None on error
+        @return: the modified LMSet
         @rtype: sphixbase.NGramModel
         """
-        retVal = ngram_model_set_select(self.lm, name)
-        return self if retVal else None
+        ngram_model_set_select(self.lm, name)
+        return self
     
 
     def __dealloc__(self):

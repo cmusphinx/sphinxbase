@@ -94,7 +94,7 @@ mmio_file_read(const char *filename)
          CreateFileForMappingW(wfilename, GENERIC_READ, FILE_SHARE_READ,
                                NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
                                NULL)) == INVALID_HANDLE_VALUE) {
-        E_ERROR("Failed to CreateFileForMapping(%s): %08x\n", filename,
+        E_ERROR("Failed to create mapping for the file '%s': %08x\n", filename,
                 GetLastError());
         return NULL;
     }
@@ -140,7 +140,7 @@ mmio_file_read(const char *filename)
     if ((ffm = CreateFile(filename, GENERIC_READ, FILE_SHARE_READ,
                          NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL,
                          NULL)) == INVALID_HANDLE_VALUE) {
-        E_ERROR("Failed to CreateFile(%s): %08x\n",
+        E_ERROR("Failed to create file '%s': %08x\n",
                 filename, GetLastError());
         return NULL;
     }

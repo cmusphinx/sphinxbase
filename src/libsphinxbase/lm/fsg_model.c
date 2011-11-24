@@ -734,8 +734,7 @@ fsg_model_readfile(const char *file, logmath_t * lmath, float32 lw)
     fsg_model_t *fsg;
 
     if ((fp = fopen(file, "r")) == NULL) {
-        E_ERROR("Failed to open FSG file '%s' for reading: %s\n", file,
-                strerror(errno));
+        E_ERROR_SYSTEM("Failed to open FSG file '%s' for reading", file);
         return NULL;
     }
     fsg = fsg_model_read(fp, lmath, lw);
@@ -836,8 +835,7 @@ fsg_model_writefile(fsg_model_t * fsg, char const *file)
     E_INFO("Writing FSG file '%s'\n", file);
 
     if ((fp = fopen(file, "w")) == NULL) {
-        E_ERROR("Failed to open FSG file '%s' for reading: %s\n", file,
-                strerror(errno));
+        E_ERROR_SYSTEM("Failed to open FSG file '%s' for reading", file);
         return;
     }
 
@@ -892,8 +890,7 @@ fsg_model_writefile_fsm(fsg_model_t * fsg, char const *file)
     E_INFO("Writing FSM file '%s'\n", file);
 
     if ((fp = fopen(file, "w")) == NULL) {
-        E_ERROR("Failed to open fsm file '%s' for writing: %s\n", file,
-                strerror(errno));
+        E_ERROR_SYSTEM("Failed to open fsm file '%s' for writing", file);
         return;
     }
 
@@ -924,8 +921,7 @@ fsg_model_writefile_symtab(fsg_model_t * fsg, char const *file)
     E_INFO("Writing FSM symbol table '%s'\n", file);
 
     if ((fp = fopen(file, "w")) == NULL) {
-        E_ERROR("Failed to open symbol table '%s' for writing: %s\n", file,
-                strerror(errno));
+        E_ERROR("Failed to open symbol table '%s' for writing", file);
         return;
     }
 

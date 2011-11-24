@@ -73,7 +73,7 @@ feat_read_lda(feat_t *feat, const char *ldafile, int32 dim)
     }
 
     if ((fh = fopen(ldafile, "rb")) == NULL) {
-        E_ERROR_SYSTEM("Failed to open transform file '%s' for reading: %s\n", ldafile, strerror(errno));
+        E_ERROR_SYSTEM("Failed to open transform file '%s' for reading", ldafile);
         return -1;
     }
 

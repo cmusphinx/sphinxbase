@@ -128,7 +128,7 @@ fopen_comp(const char *file, const char *mode, int32 * ispipe)
                 E_FATAL("Unknown  compression type %d\n", isgz);
             }
             if ((fp = popen(command, mode)) == NULL) {
-                E_ERROR_SYSTEM("popen (%s,%s) failed\n", command, mode);
+                E_ERROR_SYSTEM("Failed to open a pipe for a command '%s' mode '%s'", command, mode);
                 ckd_free(command);
                 return NULL;
             }
@@ -151,14 +151,14 @@ fopen_comp(const char *file, const char *mode, int32 * ispipe)
                 E_FATAL("Unknown compression type %d\n", isgz);
             }
             if ((fp = popen(command, mode)) == NULL) {
-                E_ERROR_SYSTEM("popen (%s,%s) failed\n", command, mode);
+                E_ERROR_SYSTEM("Failed to open a pipe for a command '%s' mode '%s'", command, mode);
                 ckd_free(command);
                 return NULL;
             }
             ckd_free(command);
         }
         else {
-            E_ERROR("fopen_comp not implemented for mode = %s\n", mode);
+            E_ERROR("Compressed file operation for mode %s is not supported", mode);
             return NULL;
         }
 #endif /* HAVE_POPEN */
@@ -501,7 +501,7 @@ stat_retry(const char *file, struct stat * statbuf)
             return 0;
 #endif
         if (i == 0) {
-            E_ERROR_SYSTEM("stat(%s) failed; retrying...\n", file);
+            E_ERROR_SYSTEM("Failed to stat file '%s'; retrying...", file);
         }
 #ifdef HAVE_UNISTD_H
         sleep(1);
