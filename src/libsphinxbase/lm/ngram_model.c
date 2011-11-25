@@ -836,8 +836,8 @@ ngram_model_add_word(ngram_model_t *model,
 
     /* If we add word to unwritable model, we need to make it writable */
     if (!model->writable) {
-	E_WARN("Can't add word '%s' to read-only language model %s. "
-	       "Disable mmap with '-mmap no' to make it writable\n", word, ngram_model_name(model));
+	E_WARN("Can't add word '%s' to read-only language model. "
+	       "Disable mmap with '-mmap no' to make it writable\n", word);
 	return -1;
     }
 
