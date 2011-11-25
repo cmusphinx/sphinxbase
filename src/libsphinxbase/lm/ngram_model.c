@@ -834,6 +834,13 @@ ngram_model_add_word(ngram_model_t *model,
 {
     int32 wid, prob = model->log_zero;
 
+    /* If we add word to unwritable model, we need to make it writable */
+    if (!model->writable) {
+	E_WARN("Can't add word '%s' to read-only language model %s. "
+	       "Disable mmap with '-mmap no' to make it writable\n", word, ngram_model_name(model));
+	return -1;
+    }
+
     wid = ngram_add_word_internal(model, word, -1);
     if (wid == NGRAM_INVALID_WID)
         return wid;
@@ -842,9 +849,7 @@ ngram_model_add_word(ngram_model_t *model,
     if (model->funcs && model->funcs->add_ug)
         prob = (*model->funcs->add_ug)(model, wid, logmath_log(model->lmath, weight));
     if (prob == 0) {
-        if (model->writable)
-            ckd_free(model->word_str[wid]);
-        return -1;
+	return -1;
     }
     return wid;
 }
