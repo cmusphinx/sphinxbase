@@ -156,13 +156,19 @@ dnl determine audio type or use none if none supported on this platform
 dnl
 case $host in
 	*-*-linux*|*-*-uclinux*|*-*-freebsd*|*-*-netbsd*|*-*-openbsd*)
-		# Check for PulseAudio, then fallback ALSA, then fall back to OSS
+		# Check for PulseAudio, JACK, then fallback ALSA, then fall back to OSS
 		AC_CHECK_HEADER(pulse/pulseaudio.h,[
 			AC_DEFINE(AD_BACKEND_PULSEAUDIO, [],
 				 [Use PulseAudio library for sound I/O])
 			ad_files="ad_pulse.lo"
 			ad_backend="AD_BACKEND_PULSEAUDIO"
 			AC_CHECK_LIB(pulse-simple, pa_simple_new)],[
+                AC_CHECK_HEADER(jack/jack.h,[
+                        AC_DEFINE(AD_BACKEND_JACK, [],
+                                 [Use Jack library for sound I/O])
+                        ad_files="ad_jack.lo"
+                        ad_backend="AD_BACKEND_JACK"
+                        AC_CHECK_LIB(jack, jack_connect)],[
 		AC_CHECK_HEADER(alsa/asoundlib.h,[
 			AC_DEFINE(AD_BACKEND_ALSA, [],
 				 [Use ALSA library for sound I/O])
@@ -175,6 +181,7 @@ case $host in
 			ad_backend="AD_BACKEND_OSS"
 			])
 		])
+                ])
 		;;
 	*-*-*cygwin*|*-*-*mingw*)
 		ad_files="play_win32.lo rec_win32.lo"
@@ -261,9 +268,13 @@ dnl
 if test "x$HAVE_PKGCONFIG" = "xyes"; then
    PKG_CHECK_MODULES(SNDFILE,sndfile,,true)
    AC_CHECK_HEADERS([sndfile.h])
+   PKG_CHECK_MODULES(SAMPLERATE,samplerate,,true)
+   AC_CHECK_HEADERS([samplerate.h])
 fi
 AC_SUBST(SNDFILE_LIBS)
 AC_SUBST(SNDFILE_CFLAGS)
+AC_SUBST(SAMPLERATE_LIBS)
+AC_SUBST(SAMPLERATE_CFLAGS)
 
 AC_CONFIG_FILES([
 sphinxbase.pc

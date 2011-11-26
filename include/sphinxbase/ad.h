@@ -111,6 +111,12 @@
 #elif (defined(WIN32) && !defined(GNUWINCE)) || defined(_WIN32_WCE)
 #include <windows.h>
 #include <mmsystem.h>
+#elif defined(AD_BACKEND_JACK)
+#include <jack/jack.h>
+#include <jack/ringbuffer.h>
+#ifdef HAVE_SAMPLERATE_H
+#include <samplerate.h>
+#endif
 #elif defined(AD_BACKEND_PULSEAUDIO)
 #include <pulse/pulseaudio.h>
 #include <pulse/simple.h>
@@ -212,6 +218,23 @@ typedef struct {
     int32 recording;
     int32 sps;
     int32 bps;
+} ad_rec_t;
+
+#elif defined(AD_BACKEND_JACK)
+
+typedef struct {
+    jack_client_t *client;
+    jack_port_t *input_port;
+    jack_port_t *output_port;
+    jack_ringbuffer_t* rbuffer;
+    jack_default_audio_sample_t* sample_buffer;    
+    int32 recording;
+    int32 sps;
+    int32 bps;
+#ifdef HAVE_SAMPLERATE_H
+    SRC_STATE *resample_state;
+    jack_default_audio_sample_t *resample_buffer;
+#endif
 } ad_rec_t;
 
 #elif defined(AD_BACKEND_S60)
