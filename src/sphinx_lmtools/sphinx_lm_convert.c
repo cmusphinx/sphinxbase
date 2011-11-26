@@ -166,6 +166,10 @@ main(int argc, char *argv[])
                                   NGRAM_AUTO, lmath);
 	}
 
+	if (lm == NULL) {
+	    E_FATAL("Failed to read the model from the file '%s'", cmd_ln_str_r(config, "-i"));
+	}
+
         /* Guess or set the output language model type. */
         if (cmd_ln_str_r(config, "-ofmt")) {
             if ((otype = ngram_str_to_type(cmd_ln_str_r(config, "-ofmt")))
