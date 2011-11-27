@@ -11,6 +11,7 @@ main(int argc, char **argv)
 {
     hash_table_t *ht;
     void *val;
+    char *bkey = "key";
 
     if (argc != 2) {
         printf("deletehash <key>\n");
@@ -68,6 +69,26 @@ main(int argc, char **argv)
 
     hash_table_free(ht);
     ht = NULL;
+
+    /* Test bkey */
+    ht = hash_table_new(75, HASH_CASE_YES);
+
+    if (hash_table_enter_bkey(ht, bkey, 3, (void *)1) != (void *)1) {
+        E_FATAL("Insertion of bkey failed\n");
+    }
+    if (hash_table_lookup_bkey(ht, bkey, 3, &val) != 0) {
+        E_FATAL("Lookup failed\n");
+    }
+    if (hash_table_delete_bkey(ht, bkey, 3) == NULL) {
+        E_FATAL("Delete bkey failed\n");
+    }
+    if (hash_table_lookup_bkey(ht, bkey, 3, &val) != -1) {
+        E_FATAL("Second bkey lookup failed\n");
+    }
+    hash_table_empty(ht);
+    hash_table_free(ht);
+    ht = NULL;
+
     return 0;
 }
 

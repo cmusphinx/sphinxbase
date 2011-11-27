@@ -572,6 +572,7 @@ hash_table_delete_bkey(hash_table_t * h, const char *key, size_t len)
 
     str = makekey((uint8 *) key, len, NULL);
     hash = key2hash(h, str);
+    ckd_free(str);
 
     return (delete(h, hash, key, len));
 }
