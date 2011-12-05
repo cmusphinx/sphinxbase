@@ -113,8 +113,11 @@ ad_rec_t *
 ad_open_dev(const char *dev, int32 sps)
 {
     ad_rec_t *handle;
-    int resample_error;
     const char **ports;
+
+#ifdef HAVE_SAMPLERATE_H
+    int resample_error;
+#endif
 
     if (dev == NULL) {
         dev = DEFAULT_DEVICE;
@@ -123,7 +126,7 @@ ad_open_dev(const char *dev, int32 sps)
     printf("Setting default device: %s\n", dev);
 
     if ((handle = (ad_rec_t *) calloc(1, sizeof(ad_rec_t))) == NULL) {
-        fprintf(stderr, "calloc(%u) failed\n", sizeof(ad_rec_t));
+        fprintf(stderr, "calloc(%d) failed\n", (int)sizeof(ad_rec_t));
         abort();
     }
  
@@ -140,7 +143,9 @@ ad_open_dev(const char *dev, int32 sps)
 
     handle->rbuffer = jack_ringbuffer_create(BUFFER_SIZE);
     handle->sample_buffer = malloc(BUFFER_SIZE);
+#ifdef HAVE_SAMPLERATE_H
     handle->resample_buffer = malloc(BUFFER_SIZE);
+#endif
 
     if(handle->rbuffer == NULL) {
         fprintf (stderr, "Failed to create jack ringbuffer\n");
@@ -251,7 +256,9 @@ int32
 ad_close(ad_rec_t * handle)
 {
     free (handle->sample_buffer);
+#ifdef HAVE_SAMPLERATE_H
     free (handle->resample_buffer);
+#endif
     jack_ringbuffer_free (handle->rbuffer); 	
     jack_client_close (handle->client);
     free(handle);
@@ -281,7 +288,9 @@ ad_stop_rec(ad_rec_t * handle)
 int32
 ad_read(ad_rec_t * handle, int16 * buf, int32 max)
 {
-   int resample_error;
+#ifdef HAVE_SAMPLERATE_H
+    int resample_error;
+#endif
 
    if (!handle->recording)
        return AD_EOF;
