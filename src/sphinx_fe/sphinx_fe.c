@@ -145,7 +145,7 @@ detect_riff(sphinx_wave2feat_t *wtf)
 }
 
 static int
-open_nist_file(sphinx_wave2feat_t *wtf, char const *infile, FILE **out_fh)
+open_nist_file(sphinx_wave2feat_t *wtf, char const *infile, FILE **out_fh, int detect_endian)
 {
     char nist[7];
     lineiter_t *li;
@@ -211,7 +211,7 @@ detect_sph2pipe(sphinx_wave2feat_t *wtf)
     int rv;
 
     /* Determine if it's NIST file and get parameters. */
-    if ((rv = open_nist_file(wtf, wtf->infile, NULL)) != TRUE)
+    if ((rv = open_nist_file(wtf, wtf->infile, NULL, FALSE)) != TRUE)
         return rv;
 
     /* Now popen it with sph2pipe. */
@@ -245,7 +245,7 @@ detect_nist(sphinx_wave2feat_t *wtf)
     FILE *fh;
     int rv;
 
-    if ((rv = open_nist_file(wtf, wtf->infile, &fh)) != TRUE)
+    if ((rv = open_nist_file(wtf, wtf->infile, &fh, TRUE)) != TRUE)
         return rv;
     wtf->infh = fh;
 
