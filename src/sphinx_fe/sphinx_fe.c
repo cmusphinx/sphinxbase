@@ -187,7 +187,7 @@ open_nist_file(sphinx_wave2feat_t *wtf, char const *infile, FILE **out_fh, int d
         if (0 == strcmp(words[0], "channel_count")) {
             cmd_ln_set_int32_r(wtf->config, "-nchans", atoi(words[2]));
         }
-        if (0 == strcmp(words[0], "sample_byte_format")) {
+        if (detect_endian && 0 == strcmp(words[0], "sample_byte_format")) {
             cmd_ln_set_str_r(wtf->config, "-input_endian",
                              (0 == strcmp(words[2], "10")) ? "big" : "little");
         }
