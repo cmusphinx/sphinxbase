@@ -385,7 +385,7 @@ fsg_model_word_id(fsg_model_t * fsg, char const *word)
 int
 fsg_model_word_add(fsg_model_t * fsg, char const *word)
 {
-    int wid;
+    int wid, old_size;
 
     /* Search for an existing word matching this. */
     wid = fsg_model_word_id(fsg, word);
@@ -393,16 +393,17 @@ fsg_model_word_add(fsg_model_t * fsg, char const *word)
     if (wid == -1) {
         wid = fsg->n_word;
         if (fsg->n_word == fsg->n_word_alloc) {
+    	    old_size = fsg->n_word_alloc;
             fsg->n_word_alloc += 10;
             fsg->vocab = ckd_realloc(fsg->vocab,
                                      fsg->n_word_alloc *
                                      sizeof(*fsg->vocab));
             if (fsg->silwords)
                 fsg->silwords =
-                    bitvec_realloc(fsg->silwords, fsg->n_word_alloc);
+                    bitvec_realloc(fsg->silwords, old_size, fsg->n_word_alloc);
             if (fsg->altwords)
                 fsg->altwords =
-                    bitvec_realloc(fsg->altwords, fsg->n_word_alloc);
+                    bitvec_realloc(fsg->altwords, old_size, fsg->n_word_alloc);
         }
         ++fsg->n_word;
         fsg->vocab[wid] = ckd_salloc(word);

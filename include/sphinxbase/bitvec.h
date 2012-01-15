@@ -70,15 +70,17 @@ typedef uint32 bitvec_t;
 #define bitvec_size(n)	        (((n)+BITVEC_BITS-1)/BITVEC_BITS)
 
 /**
- * Allocate a bit vector.
+ * Allocate a bit vector, all bits are clear
  */
 #define bitvec_alloc(n)		ckd_calloc(bitvec_size(n), sizeof(bitvec_t))
 
 /**
- * Resize a bit vector.
+ * Resize a bit vector, clear the remaining bits
  */
-#define bitvec_realloc(v,n)	ckd_realloc(v, bitvec_size(n) * sizeof(bitvec_t))
-
+SPHINXBASE_EXPORT
+bitvec_t *bitvec_realloc(bitvec_t *vec,	/* In: Bit vector to search */
+			 size_t old_len, /* In: Old length */
+                         size_t new_len); /* In: New lenght of above bit vector */
 /**
  * Free a bit vector.
  */
