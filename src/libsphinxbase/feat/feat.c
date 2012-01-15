@@ -385,6 +385,35 @@ feat_array_alloc(feat_t * fcb, int32 nfr)
     return feat;
 }
 
+mfcc_t ***
+feat_array_realloc(feat_t *fcb, mfcc_t ***old_feat, int32 ofr, int32 nfr)
+{
+    int32 i, k, cf;
+    mfcc_t*** new_feat;
+
+    assert(fcb);
+    assert(nfr > 0);
+    assert(ofr > 0);
+    assert(feat_dimension(fcb) > 0);
+
+    /* Make sure to use the dimensionality of the features *before*
+       LDA and subvector projection. */
+    k = 0;
+    for (i = 0; i < fcb->n_stream; ++i)
+        k += fcb->stream_len[i];
+    assert(k >= feat_dimension(fcb));
+    assert(k >= fcb->sv_dim);
+    
+    new_feat = feat_array_alloc(fcb, nfr);
+
+    cf = (nfr < ofr) ? nfr : ofr;
+    memcpy(new_feat[0][0], old_feat[0][0], cf * k * sizeof(mfcc_t));
+
+    feat_array_free(old_feat);
+    
+    return new_feat;
+}
+
 void
 feat_array_free(mfcc_t ***feat)
 {

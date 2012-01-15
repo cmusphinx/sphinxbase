@@ -286,8 +286,19 @@ void subvecs_free(int32 **subvecs);
  */
 SPHINXBASE_EXPORT
 mfcc_t ***feat_array_alloc(feat_t *fcb,	/**< In: Descriptor from feat_init(), used
-					   to obtain number of streams and stream sizes */
+					     to obtain number of streams and stream sizes */
                            int32 nfr	/**< In: Number of frames for which to allocate */
+    );
+
+/**
+ * Realloate the array of features. Requires us to know the old size
+ */
+SPHINXBASE_EXPORT
+mfcc_t ***feat_array_realloc(feat_t *fcb, /**< In: Descriptor from feat_init(), used
+					      to obtain number of streams and stream sizes */
+			     mfcc_t ***old_feat, /**< Feature array. Freed */
+                             int32 ofr,	/**< In: Previous number of frames */
+                             int32 nfr	/**< In: Number of frames for which to allocate */
     );
 
 /**
