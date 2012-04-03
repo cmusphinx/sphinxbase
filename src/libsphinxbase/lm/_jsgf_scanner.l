@@ -45,12 +45,14 @@
 %option 8bit reentrant bison-bridge noyywrap yylineno
 %option header-file="jsgf_scanner.h"
 %s COMMENT
+%s DECL
+%s DECLCOMMENT
 
 ws       [ \t\r\n]
 rulename \<[^<>]+\>
 tag      \{(\\.|[^\}]+)*\}
 weight   \/[0-9]*(\.[0-9]+)?(e-)?[0-9]*\/
-token    [^ \t\r\n;=|*+<>()\[\]{}*/]+
+token    [^ \t\r\n=;|*+<>()\[\]{}*/]+
 qstring  \"(\\.|[^"]+)*\"
 bom      [\xEF][\xBB][\xBF]
 
@@ -62,17 +64,24 @@ bom      [\xEF][\xBB][\xBF]
 <COMMENT>\*\/ { BEGIN(INITIAL); }
 <COMMENT>. ;               /* Ignore stuff in comment mode */
 
-<INITIAL>{bom}?#JSGF return HEADER;
-<INITIAL>grammar return GRAMMAR;
-<INITIAL>import return IMPORT;
-<INITIAL>public return PUBLIC;
+<DECL>\/\/.*\n ;               /* single-line comments inside decl */
+<DECL>\/\* { BEGIN(DECLCOMMENT); } /* C-style comments inside decl */
+<DECLCOMMENT>\*\/ { BEGIN(DECL); }
+<DECLCOMMENT>. ;               /* Ignore stuff in comment mode */
 
-<INITIAL>{rulename} { yylval->name = strdup(yytext); return RULENAME; }
-<INITIAL>{tag}      { yylval->name = strdup(yytext); return TAG; }
-<INITIAL>{token}    { yylval->name = strdup(yytext); return TOKEN; }
-<INITIAL>{qstring}  { yylval->name = strdup(yytext); return TOKEN; }
-<INITIAL>{weight}   { yylval->weight = atof_c(yytext+1); return WEIGHT; }
+<INITIAL>{bom}?#JSGF {BEGIN(DECL); return HEADER;}
+<INITIAL>grammar {BEGIN(DECL); return GRAMMAR;}
+<INITIAL>import {BEGIN(DECL); return IMPORT;}
+<INITIAL>public {BEGIN(DECL); return PUBLIC;}
 
-<INITIAL>. return yytext[0];        /* Single-character tokens */
+<INITIAL>{rulename} { BEGIN(DECL); yylval->name = strdup(yytext); return RULENAME; }
+<DECL>{rulename} { yylval->name = strdup(yytext); return RULENAME; }
+
+<DECL>{tag}      { yylval->name = strdup(yytext); return TAG; }
+<DECL>{token}    { yylval->name = strdup(yytext); return TOKEN; }
+<DECL>;          { BEGIN(INITIAL); return yytext[0]; }
+<DECL>{qstring}  { yylval->name = strdup(yytext); return TOKEN; }
+<DECL>{weight}   { yylval->weight = atof_c(yytext+1); return WEIGHT; }
+<DECL>.          return yytext[0];        /* Single-character tokens */
 
 %%

@@ -15,4 +15,4 @@ LDADD = ${top_builddir}/src/libsphinxbase/libsphinxbase.la
 
 noinst_HEADERS = test_macros.h
 
-EXTRA_DIST = goforward.fsg polite.gram
+EXTRA_DIST = goforward.fsg polite.gram public.gram

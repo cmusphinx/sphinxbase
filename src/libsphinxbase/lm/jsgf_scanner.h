@@ -221,6 +221,8 @@ void yyfree (void * ,yyscan_t yyscanner );
 #ifdef YY_HEADER_EXPORT_START_CONDITIONS
 #define INITIAL 0
 #define COMMENT 1
+#define DECL 2
+#define DECLCOMMENT 3
 
 #endif
 
@@ -334,9 +336,9 @@ extern int yylex \
 #undef YY_DECL
 #endif
 
-#line 78 "_jsgf_scanner.l"
+#line 87 "_jsgf_scanner.l"
 
 
-#line 341 "jsgf_scanner.h"
+#line 343 "jsgf_scanner.h"
 #undef yyIN_HEADER
 #endif /* yyHEADER_H */

@@ -29,5 +29,10 @@ main(int argc, char *argv[])
 	fsg_model_free(fsg);
 	logmath_free(lmath);
 
+	/* Test grammar with keywords inside */
+	jsgf = jsgf_parse_file(LMDIR "/public.gram", NULL);
+	TEST_ASSERT(jsgf);
+	jsgf_grammar_free(jsgf);
+
 	return 0;
 }
