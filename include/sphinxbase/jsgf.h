@@ -84,6 +84,12 @@ SPHINXBASE_EXPORT
 jsgf_t *jsgf_parse_file(const char *filename, jsgf_t *parent);
 
 /**
+ * Get the grammar name from the file.
+ */
+SPHINXBASE_EXPORT
+char const *jsgf_grammar_name(jsgf_t *jsgf);
+
+/**
  * Free a JSGF grammar.
  */
 SPHINXBASE_EXPORT

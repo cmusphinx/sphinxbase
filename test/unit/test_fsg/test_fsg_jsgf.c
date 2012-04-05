@@ -1,5 +1,6 @@
 #include <jsgf.h>
 #include <fsg_model.h>
+#include <string.h>
 
 #include "test_macros.h"
 
@@ -19,6 +20,7 @@ main(int argc, char *argv[])
 	TEST_ASSERT(rule);
 	fsg = jsgf_build_fsg(jsgf, rule, lmath, 7.5);
 	TEST_ASSERT(fsg);
+	TEST_EQUAL_STRING("polite", jsgf_grammar_name(jsgf));
 
 	TEST_ASSERT(fsg_model_add_silence(fsg, "<sil>", -1, 0.3));
 	TEST_ASSERT(fsg_model_add_silence(fsg, "++NOISE++", -1, 0.3));

@@ -231,6 +231,12 @@ extract_grammar_name(char *rule_name)
     return grammar_name;
 }
 
+char const *
+jsgf_grammar_name(jsgf_t *jsgf)
+{
+    return jsgf->name;
+}
+
 static char *
 jsgf_fullname(jsgf_t *jsgf, const char *name)
 {
