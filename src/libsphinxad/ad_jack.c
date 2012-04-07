@@ -64,11 +64,12 @@ process (jack_nframes_t nframes, void *arg)
 {
     ad_rec_t *handle = (ad_rec_t *) arg;
 
-    jack_default_audio_sample_t *in = (jack_default_audio_sample_t *) jack_port_get_buffer (handle->input_port, nframes);
-
     size_t buffer_size = jack_ringbuffer_write_space (handle->rbuffer); 
 
+    jack_default_audio_sample_t *in = (jack_default_audio_sample_t *) jack_port_get_buffer (handle->input_port, nframes);
+    
     if (buffer_size <= 0) {
+        fprintf(stderr, "JACK: buffer is full. Deactivating JACK client.\n");
         return 1;
     }
 
@@ -103,7 +104,7 @@ int
 srate (jack_nframes_t nframes, void *arg)
 
 {
-    printf ("The sample rate is now %u/sec\n", nframes);
+    printf ("JACK: The sample rate is now %u/sec\n", nframes);
     return 0;
 }
 
@@ -115,13 +116,15 @@ ad_open_dev(const char *dev, int32 sps)
 
 #ifdef HAVE_SAMPLERATE_H
     int resample_error;
+    double samplerates_ratio;
+    jack_nframes_t jack_samplerate;
 #endif
 
     if (dev == NULL) {
         dev = DEFAULT_DEVICE;
     }
 
-    printf("Setting default device: %s\n", dev);
+    printf("JACK: Setting default device: %s\n", dev);
 
     if ((handle = (ad_rec_t *) calloc(1, sizeof(ad_rec_t))) == NULL) {
         fprintf(stderr, "calloc(%d) failed\n", (int)sizeof(ad_rec_t));
@@ -139,10 +142,17 @@ ad_open_dev(const char *dev, int32 sps)
 	return NULL;
     }
 
-    handle->rbuffer = jack_ringbuffer_create(BUFFER_SIZE);
-    handle->sample_buffer = malloc(BUFFER_SIZE);
 #ifdef HAVE_SAMPLERATE_H
     handle->resample_buffer = malloc(BUFFER_SIZE);
+
+    jack_samplerate = jack_get_sample_rate(handle->client);
+    samplerates_ratio = (double)((double)jack_samplerate / (double)sps);
+    
+    handle->rbuffer = jack_ringbuffer_create((int)((double)BUFFER_SIZE * samplerates_ratio));
+    handle->sample_buffer = malloc((int)((double)BUFFER_SIZE * samplerates_ratio));
+#else
+    handle->rbuffer = jack_ringbuffer_create(BUFFER_SIZE);
+    handle->sample_buffer = malloc(BUFFER_SIZE);
 #endif
 
     if(handle->rbuffer == NULL) {
@@ -206,13 +216,13 @@ ad_open_dev(const char *dev, int32 sps)
     int i;
     if ((ports = jack_get_ports (handle->client, "system:playback", NULL,
                                JackPortIsPhysical|JackPortIsInput)) == NULL) {
-        printf(stderr, "Cannot find any physical playback ports\n");
+        fprintf(stderr, "Cannot find any physical playback ports\n");
         return NULL;
     }
 
     for (i = 0; ports[i] != NULL; i++) {
         if (jack_connect (handle->client, jack_port_name (handle->output_port), ports[i])) {
-            printf (stderr, "cannot connect output ports\n");
+            fprintf (stderr, "cannot connect output ports\n");
         }
     }
 
@@ -308,7 +318,6 @@ ad_read(ad_rec_t * handle, int16 * buf, int32 max)
 
    // We will try to downsample if jackd is running at a higher sample rate
    jack_nframes_t jack_samplerate = jack_get_sample_rate(handle->client);
-   //printf("jack sample rate : %d  sphinx sample rate %d\n", jack_samplerate, handle->sps);
 
    SRC_DATA data;
 
