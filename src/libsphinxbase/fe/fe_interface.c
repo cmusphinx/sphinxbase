@@ -68,11 +68,19 @@ static const arg_t fe_args[] = {
 int
 fe_parse_general_params(cmd_ln_t *config, fe_t * fe)
 {
-    int j;
+    int j, frate;
 
     fe->config = config;
     fe->sampling_rate = cmd_ln_float32_r(config, "-samprate");
-    fe->frame_rate = (int16)cmd_ln_int32_r(config, "-frate");
+    frate = cmd_ln_int32_r(config, "-frate");
+    if (frate > MAX_INT16 || frate > fe->sampling_rate || frate < 1) {
+        E_ERROR
+            ("Frame rate %d can not be bigger than sample rate %.02f\n",
+             frate, fe->sampling_rate);
+        return -1;
+    }
+
+    fe->frame_rate = (int16)frate;
     if (cmd_ln_boolean_r(config, "-dither")) {
         fe->dither = 1;
         fe->seed = cmd_ln_int32_r(config, "-seed");
@@ -221,6 +229,8 @@ fe_init_auto_r(cmd_ln_t *config)
     fe->frame_size = (int32) (fe->window_length * fe->sampling_rate + 0.5);
     fe->prior = 0;
     fe->frame_counter = 0;
+
+    assert (fe->frame_shift > 1);
 
     if (fe->frame_size > (fe->fft_size)) {
         E_WARN
