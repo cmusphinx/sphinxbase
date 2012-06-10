@@ -716,7 +716,7 @@ jsgf_parse_file(const char *filename, jsgf_t *parent)
     else {
         in = fopen(filename, "r");
         if (in == NULL) {
-            E_ERROR_SYSTEM("Failed to open %s for parsing: %s");
+            E_ERROR_SYSTEM("Failed to open %s for parsing", filename);
             return NULL;
         }
         yyset_in(in, yyscanner);
