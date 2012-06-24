@@ -158,6 +158,15 @@ SPHINXBASE_EXPORT
 fsg_model_t *jsgf_build_fsg_raw(jsgf_t *grammar, jsgf_rule_t *rule,
                                 logmath_t *lmath, float32 lw);
 
+
+/**
+ * Read JSGF from file and return FSG object from it.
+ *
+ * This function looks for a first public rule in jsgf and constructs JSGF from it.
+ */
+SPHINXBASE_EXPORT
+fsg_model_t *jsgf_read_file(const char *file, logmath_t * lmath, float32 lw);
+
 /**
  * Convert a JSGF rule to Sphinx FSG text form.
  *

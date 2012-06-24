@@ -12,8 +12,9 @@ main(int argc, char *argv[])
 	jsgf_t *jsgf;
 	jsgf_rule_t *rule;
 
-	/* Initialize a logmath object to pass to fsg_model_read */
 	lmath = logmath_init(1.0001, 0, 0);
+
+	/* Test loading */
 	jsgf = jsgf_parse_file(LMDIR "/polite.gram", NULL);
 	TEST_ASSERT(jsgf);
 	rule = jsgf_get_rule(jsgf, "<polite.startPolite>");
@@ -29,12 +30,17 @@ main(int argc, char *argv[])
 	jsgf_grammar_free(jsgf);
 	fsg_model_write(fsg, stdout);
 	fsg_model_free(fsg);
-	logmath_free(lmath);
+
+	/* Or do everything at once */
+	fsg = jsgf_read_file(LMDIR "/public.gram", lmath, 1.0);
+	fsg_model_free(fsg);
 
 	/* Test grammar with keywords inside */
 	jsgf = jsgf_parse_file(LMDIR "/public.gram", NULL);
 	TEST_ASSERT(jsgf);
 	jsgf_grammar_free(jsgf);
+
+	logmath_free(lmath);
 
 	return 0;
 }

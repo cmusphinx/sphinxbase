@@ -509,6 +509,37 @@ jsgf_build_fsg_raw(jsgf_t *grammar, jsgf_rule_t *rule,
     return jsgf_build_fsg_internal(grammar, rule, lmath, lw, FALSE);
 }
 
+fsg_model_t *
+jsgf_read_file(const char *file, logmath_t * lmath, float32 lw)
+{
+    fsg_model_t *fsg;
+    jsgf_rule_t *rule;
+    jsgf_t *jsgf;
+    jsgf_rule_iter_t *itor;
+
+    if ((jsgf = jsgf_parse_file(file, NULL)) == NULL) {
+        E_ERROR("Error parsing file: %s\n", file);
+        return NULL;
+    }
+
+    rule = NULL;
+    for (itor = jsgf_rule_iter(jsgf); itor;
+         itor = jsgf_rule_iter_next(itor)) {
+        rule = jsgf_rule_iter_rule(itor);
+        if (jsgf_rule_public(rule)) {
+    	    jsgf_rule_iter_free(itor);
+            break;
+        }
+    }
+    if (rule == NULL) {
+        E_ERROR("No public rules found in %s\n", file);
+        return NULL;
+    }
+    fsg = jsgf_build_fsg(jsgf, rule, lmath, lw);
+    jsgf_grammar_free(jsgf);
+    return fsg;
+}
+
 int
 jsgf_write_fsg(jsgf_t *grammar, jsgf_rule_t *rule, FILE *outfh)
 {
