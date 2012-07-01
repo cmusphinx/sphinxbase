@@ -372,7 +372,7 @@ void cmd_ln_set_float_r(cmd_ln_t *cmdln, char const *name, double fv);
 /*
  * Compatibility macros
  */
-#define cmd_ln_int32_r(c,n)	cmd_ln_int_r(c,n)
+#define cmd_ln_int32_r(c,n)	(int32)cmd_ln_int_r(c,n)
 #define cmd_ln_float32_r(c,n)	(float32)cmd_ln_float_r(c,n)
 #define cmd_ln_float64_r(c,n)	(float64)cmd_ln_float_r(c,n)
 #define cmd_ln_set_int32_r(c,n,i)   cmd_ln_set_int_r(c,n,i)

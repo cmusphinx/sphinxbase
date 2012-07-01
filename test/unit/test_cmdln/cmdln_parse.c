@@ -11,6 +11,7 @@ const arg_t defs[] = {
     { "-b", ARG_STRING, NULL, "This is the second argument." },
     { "-c", ARG_BOOLEAN, "no", "This is the third argument." },
     { "-d", ARG_FLOAT64, "1e-50", "This is the fourth argument." },
+    { "-l", ARG_STRING_LIST, NULL, "This is the fifth argument." },
     { NULL, 0, NULL, NULL }
 };
 

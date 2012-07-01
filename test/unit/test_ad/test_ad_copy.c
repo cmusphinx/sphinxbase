@@ -8,6 +8,7 @@
 #include "test_macros.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #ifndef WORDS_BIGENDIAN
 #define WORDS_BIGENDIAN 0
