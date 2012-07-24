@@ -58,8 +58,8 @@ void yyerror(yyscan_t lex, jsgf_t *jsgf, const char *s);
 %}
 
 %pure-parser
-%lex-param { yyscan_t yyscanner }
-%parse-param { yyscan_t yyscanner }
+%lex-param { void* yyscanner }
+%parse-param { void* yyscanner }
 %parse-param { jsgf_t *jsgf }
 
 %union {

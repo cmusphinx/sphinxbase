@@ -47,8 +47,6 @@
 #include "jsgf_parser.h"
 #include "jsgf_scanner.h"
 
-int yyparse (yyscan_t yyscanner, jsgf_t *jsgf);
-
 /**
  * \file jsgf.c
  *
