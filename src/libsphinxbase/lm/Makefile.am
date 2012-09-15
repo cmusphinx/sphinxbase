@@ -1,7 +1,7 @@
 noinst_LTLIBRARIES = libsphinxlm.la
 
 AM_YFLAGS = -d
-BUILT_SOURCES = jsgf_parser.h
+BUILT_SOURCES = jsgf_parser.h jsgf_parser.c
 
 libsphinxlm_la_SOURCES =			\
 	lm3g_model.c				\
@@ -28,7 +28,7 @@ noinst_HEADERS = ngram_model_internal.h		\
 
 INCLUDES = -I$(top_srcdir)/include/sphinxbase \
 	   -I$(top_srcdir)/include \
-           -I$(top_builddir)/include 
+	   -I$(top_builddir)/include
 
 # Nobody has the version of Flex needed to regenerate the scanner, so
 # we can't give it a name that would induce Make to try to build it.
