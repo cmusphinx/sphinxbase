@@ -1058,6 +1058,10 @@ run_control_file(sphinx_wave2feat_t *wtf, char const *ctlfile)
         /* Extract the file ID from the control line. */
         if ((c = strchr(li->buf, ' ')) != NULL)
             *c = '\0';
+        if (strlen(li->buf) == 0) {
+    	    E_WARN("Empty line %d in control file, skipping\n", li->lineno);
+    	    continue;
+        }
         build_filenames(wtf->config, li->buf, &infile, &outfile);
         if (hash_table_lookup(files, infile, NULL) == 0)
             continue;
