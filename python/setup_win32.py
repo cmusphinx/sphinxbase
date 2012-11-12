@@ -16,7 +16,7 @@ setup(name = 'SphinxBase',
         Extension('sphinxbase',
                    sources=['sphinxbase.c'],
                    libraries=['sphinxbase'],
-		   define_macros = [('WIN32', '1')],
+                   define_macros = [('WIN32', '1')],
                    include_dirs=['../include',
                                  '../include/win32'],
                    library_dirs=['../lib/debug'])
