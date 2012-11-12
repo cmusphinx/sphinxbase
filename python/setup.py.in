@@ -26,8 +26,8 @@ class bogus_uninstall(distutils.command.install.install):
         for f in self.get_outputs():
             dirs[os.path.dirname(f)] = 1
             if os.path.isdir(f):
-		dirs[f] = 1
-		continue
+                dirs[f] = 1
+                continue
             print "Trying to remove file", f
             try:
                 os.unlink(f)
@@ -39,10 +39,10 @@ class bogus_uninstall(distutils.command.install.install):
             while d != self.prefix:
                 print "Trying to remove dir", d
                 try:
-		    if d.endswith(".egg-info"):
-			files=[os.path.join(d,f) for f in os.listdir(d)]
-			print "Trying to remove:", " ".join(files)
-			for f in files: os.unlink(f)
+                    if d.endswith(".egg-info"):
+                        files=[os.path.join(d,f) for f in os.listdir(d)]
+                        print "Trying to remove:", " ".join(files)
+                        for f in files: os.unlink(f)
                     os.rmdir(d)
                 except:
                     pass
@@ -68,4 +68,4 @@ setup(name = 'SphinxBase',
                    library_dirs=['@top_builddir@/src/libsphinxbase/.libs'])
         ],
       cmdclass = {'bogus_uninstall' : bogus_uninstall}
-     ) 
+     )
