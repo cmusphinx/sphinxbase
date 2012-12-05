@@ -613,7 +613,7 @@ bit_encode_flush(bit_encode_t *be)
     return 0;
 }
 
-#ifdef HAVE_SYS_STAT_H /* Unix, Cygwin */
+#if defined(HAVE_SYS_STAT_H) && !defined(__MINGW32__) /* Unix, Cygwin, doesn't work on MINGW */
 int
 build_directory(const char *path)
 {
