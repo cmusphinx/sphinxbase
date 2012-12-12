@@ -141,7 +141,7 @@ fixlog2(uint32 x)
     x <<= y;
     y = 31 - y;
 #else
-    for (y = 31; y >= 0; --y) {
+    for (y = 31; y > 0; --y) {
         if (x & 0x80000000)
             break;
         x <<= 1;
