@@ -145,7 +145,7 @@ agc_emax(agc_t *agc, mfcc_t **mfc, int32 n_frame)
 
     if (n_frame <= 0)
         return;
-    for (i = 1; i < n_frame; ++i) {
+    for (i = 0; i < n_frame; ++i) {
         if (mfc[i][0] > agc->obs_max) {
             agc->obs_max = mfc[i][0];
             agc->obs_frame = 1;
