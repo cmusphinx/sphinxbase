@@ -198,7 +198,7 @@ read_cep(char const *file, float ***cep, int *numframes, int cepsize)
     FILE *fp;
     int n_float;
     struct stat statbuf;
-    int i, n, byterev, sf, ef;
+    int i, n, byterev;
     float32 **mfcbuf;
 
     if (stat_retry(file, &statbuf) < 0) {
@@ -248,8 +248,6 @@ read_cep(char const *file, float ***cep, int *numframes, int cepsize)
         fclose(fp);
         return IO_ERR;
     }
-    sf = 0;
-    ef = n;
 
     mfcbuf = (float **) ckd_calloc_2d(n, cepsize, sizeof(float32));
 

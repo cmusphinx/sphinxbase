@@ -95,7 +95,7 @@ ngram_model_dmp_read(cmd_ln_t *config,
     trigram_t *tgptr;
     char *tmp_word_str;
     char *map_base = NULL;
-    size_t offset = 0, filesize;
+    size_t offset = 0;
 
     base = NULL;
     do_mmap = FALSE;
@@ -244,9 +244,6 @@ ngram_model_dmp_read(cmd_ln_t *config,
     /* Now mmap() the file and read in the rest of the (read-only) stuff. */
     if (do_mmap) {
         offset = ftell(fp);
-        fseek(fp, 0, SEEK_END);
-        filesize = ftell(fp);
-        fseek(fp, offset, SEEK_SET);
 
         /* Check for improper word alignment. */
         if (offset & 0x3) {

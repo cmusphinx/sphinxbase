@@ -61,7 +61,7 @@ int32
 feat_read_lda(feat_t *feat, const char *ldafile, int32 dim)
 {
     FILE *fh;
-    int32 byteswap, chksum_present;
+    int32 byteswap;
     uint32 chksum, i, m, n;
     char **argname, **argval;
 
@@ -83,15 +83,11 @@ feat_read_lda(feat_t *feat, const char *ldafile, int32 dim)
         return -1;
     }
 
-    chksum_present = 0;
     for (i = 0; argname[i]; i++) {
         if (strcmp(argname[i], "version") == 0) {
             if (strcmp(argval[i], MATRIX_FILE_VERSION) != 0)
                 E_WARN("%s: Version mismatch: %s, expecting %s\n",
                        ldafile, argval[i], MATRIX_FILE_VERSION);
-        }
-        else if (strcmp(argname[i], "chksum0") == 0) {
-            chksum_present = 1; /* Ignore the associated value */
         }
     }
 
