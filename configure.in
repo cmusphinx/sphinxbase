@@ -1,7 +1,7 @@
 dnl Welcome to the Sphinx automated build system.
 dnl try not to hurt yourself ;)
 
-AC_INIT([sphinxbase], 0.7)
+AC_INIT([sphinxbase], 0.8)
 AC_CONFIG_HEADERS([include/config.h include/sphinx_config.h])
 AM_INIT_AUTOMAKE([no-define])
 AC_CONFIG_MACRO_DIR([m4])
@@ -162,7 +162,9 @@ case $host in
 				 [Use PulseAudio library for sound I/O])
 			ad_files="ad_pulse.lo"
 			ad_backend="AD_BACKEND_PULSEAUDIO"
-			AC_CHECK_LIB(pulse-simple, pa_simple_new)],[
+			AC_CHECK_LIB(pulse-simple, pa_simple_new)
+			AC_CHECK_LIB(pulse, pa_strerror)
+                        ],[
                 AC_CHECK_HEADER(jack/jack.h,[
                         AC_DEFINE(AD_BACKEND_JACK, [],
                                  [Use Jack library for sound I/O])
