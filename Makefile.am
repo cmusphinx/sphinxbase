@@ -13,12 +13,6 @@ EXTRA_DIST = autogen.sh					 	 \
 	win32/sphinx_jsgf2fsg/sphinx_jsgf2fsg.vcxproj	 	 \
 	win32/sphinx_lm_convert/sphinx_lm_convert.vcxproj 	 \
 	win32/sphinx_pitch/sphinx_pitch.vcxproj			 \
-	win32/sphinx_fe/sphinx_fe.vcxproj.user			 \
-	win32/sphinxbase/sphinxbase.vcxproj.user		 \
-	win32/sphinx_cepview/sphinx_cepview.vcxproj.user	 \
-	win32/sphinx_jsgf2fsg/sphinx_jsgf2fsg.vcxproj.user 	 \
-	win32/sphinx_lm_convert/sphinx_lm_convert.vcxproj.user 	 \
-	win32/sphinx_pitch/sphinx_pitch.vcxproj.user		 \
 	win32/sphinx_fe/sphinx_fe.vcxproj.filters		 \
 	win32/sphinxbase/sphinxbase.vcxproj.filters		 \
 	win32/sphinx_cepview/sphinx_cepview.vcxproj.filters	 \
