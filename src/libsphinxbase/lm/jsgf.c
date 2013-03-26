@@ -442,7 +442,7 @@ jsgf_rule_name(jsgf_rule_t *rule)
 int
 jsgf_rule_public(jsgf_rule_t *rule)
 {
-    return rule->public;
+    return rule->is_public;
 }
 
 static fsg_model_t *
@@ -556,7 +556,7 @@ error_out:
     return -1;
 }
 jsgf_rule_t *
-jsgf_define_rule(jsgf_t *jsgf, char *name, jsgf_rhs_t *rhs, int public)
+jsgf_define_rule(jsgf_t *jsgf, char *name, jsgf_rhs_t *rhs, int is_public)
 {
     jsgf_rule_t *rule;
     void *val;
@@ -576,10 +576,10 @@ jsgf_define_rule(jsgf_t *jsgf, char *name, jsgf_rhs_t *rhs, int public)
     rule->refcnt = 1;
     rule->name = ckd_salloc(name);
     rule->rhs = rhs;
-    rule->public = public;
+    rule->is_public = is_public;
 
     E_INFO("Defined rule: %s%s\n",
-           rule->public ? "PUBLIC " : "",
+           rule->is_public ? "PUBLIC " : "",
            rule->name);
     val = hash_table_enter(jsgf->rules, name, rule);
     if (val != (void *)rule) {
@@ -704,7 +704,7 @@ jsgf_import_rule(jsgf_t *jsgf, char *name)
                 rule_matches = !strcmp(rule_name, rule->name);
             }
             ckd_free(rule_name);
-            if (rule->public && rule_matches) {
+            if (rule->is_public && rule_matches) {
                 void *val;
                 char *newname;
 
