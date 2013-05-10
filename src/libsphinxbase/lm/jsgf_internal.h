@@ -42,7 +42,6 @@
  * @file jsgf_internal.h Internal definitions for JSGF grammar compiler
  */
 
-#define YY_NO_UNISTD_H 1
 #include <stdio.h>
 
 #include <sphinxbase/hash_table.h>
