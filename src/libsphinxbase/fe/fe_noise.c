@@ -75,6 +75,7 @@ struct noise_stats_s {
 /* Noise supression constants */
 #define SMOOTH_WINDOW 4
 
+#define LAMBDA_POWER 0.7
 #define LAMBDA_A 0.999
 #define LAMBDA_B 0.5
 #define LAMBDA_T 0.85
@@ -83,10 +84,6 @@ struct noise_stats_s {
 #define LOG_FLOOR 1e-4
 #define MAX_GAIN 20
 
-#define NOISE_ALPHA 0.7
-#define NOISE_BETA 0.96
-#define NOISE_GAMMA 0.998
-#define NOISE_ETA 0.98
 #define EPS 1e-10
 
 static void
@@ -209,8 +206,8 @@ fe_remove_noise(noise_stats_t * noise_stats, powspec_t * mfspec)
     /* Calculate smoothed power */
     for (i = 0; i < num_filts; i++) {
         noise_stats->power[i] =
-            NOISE_ALPHA * noise_stats->power[i] + (1 -
-                                                   NOISE_ALPHA) *
+            LAMBDA_POWER * noise_stats->power[i] + (1 -
+                                                   LAMBDA_POWER) *
             mfspec[i];
     }
 
