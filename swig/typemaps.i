@@ -5,6 +5,7 @@
 #endif
 
 #if SWIGJAVA
+%rename("%(lowercamelcase)s", notregexmatch$name="^[A-Z]") "";
 %include <arrays_java.i>
 #endif
 
