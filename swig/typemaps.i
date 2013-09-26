@@ -1,12 +1,9 @@
 %include <exception.i>
 
 #if SWIGPYTHON
-%include <file.i>
-#endif
-
-#if SWIGJAVA
-%rename("%(lowercamelcase)s", notregexmatch$name="^[A-Z]") "";
-%include <arrays_java.i>
+%include python.i
+#elif SWIGJAVA
+%include java.i
 #endif
 
 // Define typemaps to wrap error codes returned by some functions,
@@ -23,27 +20,6 @@
     SWIG_exception(SWIG_RuntimeError, buf);
   }
 }
-
-// Special typemap for arrays of audio.
-#if SWIGJAVA
-
-%include "arrays_java.i"
-%apply short[] {const int16 *SDATA};
-
-#elif SWIGPYTHON
-
-%typemap(in) \ 
-  (const void *SDATA, size_t NSAMP) = (const char *STRING, size_t LENGTH);
-
-%typemap(check) size_t NSAMP {
-  char buf[64];
-  if ($1 % sizeof(int16)) {
-    sprintf(buf, "block size must be a multiple of %zd", sizeof(int16));
-    SWIG_exception(SWIG_ValueError, buf);
-  }
-}
-#endif
-
 
 // Macro to construct iterable objects.
 %define iterable(TYPE, PREFIX, VALUE_TYPE)
@@ -95,4 +71,3 @@ typedef struct {} TYPE;
   }
 }
 %enddef
-
