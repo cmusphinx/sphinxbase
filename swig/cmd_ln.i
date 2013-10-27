@@ -38,7 +38,7 @@
 %extend Config {
 
     Config() {
-	return NULL;
+      return NULL;
     }
 
     ~Config() {
