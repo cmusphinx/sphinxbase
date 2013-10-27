@@ -95,7 +95,7 @@
     }
 
     NGramModel * add(
-        NGramModel *model, const char *name, float weight, int reuse_widmap) {
+        NGramModel *model, const char *name, float weight, bool reuse_widmap) {
         return ngram_model_set_add($self, model, name, weight, reuse_widmap);
     }
 
