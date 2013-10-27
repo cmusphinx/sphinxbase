@@ -54,7 +54,11 @@ returned in a regular fashion and run-time exception is being thrown in case of
 negative error code."
 %enddef
 
+#if SWIGJAVA
+%module SphinxBase
+#else
 %module(docstring=DOCSTRING) sphinxbase
+#endif
 
 %feature("autodoc", "1");
 
