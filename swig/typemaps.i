@@ -25,8 +25,50 @@
 %define iterable(TYPE, PREFIX, VALUE_TYPE)
 
 #if SWIGJAVA
-%typemap(javainterfaces) TYPE "Iterable<"#TYPE"Iterator>"
-%typemap(javainterfaces) TYPE##Iterator "Iterator<"#VALUE_TYPE">"
+%typemap(javainterfaces) TYPE "Iterable<"#VALUE_TYPE">"
+%typemap(javainterfaces) TYPE##Iterator "java.util.Iterator<"#VALUE_TYPE">"
+
+%javamethodmodifiers TYPE::__iter__ "private";
+
+%typemap(javabody) TYPE %{
+
+  private long swigCPtr;
+  protected boolean swigCMemOwn;
+
+  public $javaclassname(long cPtr, boolean cMemoryOwn) {
+    swigCMemOwn = cMemoryOwn;
+    swigCPtr = cPtr;
+  }
+
+  public static long getCPtr($javaclassname obj) {
+    return (obj == null) ? 0 : obj.swigCPtr;
+  }
+
+  @Override
+  public java.util.Iterator<VALUE_TYPE> iterator() {
+    return iter();
+  }
+%}
+
+%typemap(javabody) TYPE##Iterator %{
+
+  private long swigCPtr;
+  protected boolean swigCMemOwn;
+
+  public $javaclassname(long cPtr, boolean cMemoryOwn) {
+    swigCMemOwn = cMemoryOwn;
+    swigCPtr = cPtr;
+  }
+
+  public static long getCPtr($javaclassname obj) {
+    return (obj == null) ? 0 : obj.swigCPtr;
+  }
+
+  @Override
+  public void remove() {
+    throw new UnsupportedOperationException();
+  }
+%}
 #endif
 
 %inline %{
@@ -42,7 +84,7 @@ typedef struct {} TYPE;
   if (!arg1->ptr) {
 #if SWIGJAVA
     jclass cls = (*jenv)->FindClass(jenv, "java/util/NoSuchElementException");
-    (*jenv)->ThrowNew(jenv, cls, null);
+    (*jenv)->ThrowNew(jenv, cls, NULL);
     return $null;
 #elif SWIGPYTHON
     SWIG_SetErrorObj(PyExc_StopIteration, SWIG_Py_Void());
@@ -50,14 +92,6 @@ typedef struct {} TYPE;
 #endif
   }
 }
-
-#if SWIGJAVA
-%exception TYPE##Iterator::remove {
-  jclass cls =
-    (*jenv)->FindClass(jenv, "java/lang/UnsupportedOperationException");
-  (*jenv)->ThrowNew(jenv, cls, null);
-}
-#endif
 
 %extend TYPE##Iterator {
   TYPE##Iterator(PREFIX##_iter_t *ptr) {
@@ -85,28 +119,13 @@ typedef struct {} TYPE;
   bool hasNext() {
     return $self->ptr != NULL;
   }
-
-  void remove() {
-    // Dummy method, see %exception wrapping above
-  }
 #endif
 }
 
-#if SWIGPYTHON
 %extend TYPE {
   TYPE##Iterator * __iter__() {
     return new_##TYPE##Iterator(PREFIX##_iter($self));
   }
 }
-#elif SWIGJAVA
-
-%extend TYPE {
-  TYPE##Iterator * iterator() {
-    return new_##TYPE##Iterator(PREFIX##_iter($self));
-  }
-}
-#else
-#warning "No wrappings for iterable types will be generated"
-#endif
 
 %enddef
