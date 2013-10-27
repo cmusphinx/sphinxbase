@@ -24,6 +24,11 @@
 // Macro to construct iterable objects.
 %define iterable(TYPE, PREFIX, VALUE_TYPE)
 
+#if SWIGJAVA
+%typemap(javainterfaces) TYPE "Iterable<"#TYPE"Iterator>"
+%typemap(javainterfaces) TYPE##Iterator "Iterator<"#VALUE_TYPE">"
+#endif
+
 %inline %{
 typedef struct {
   PREFIX##_iter_t *ptr;
@@ -32,13 +37,25 @@ typedef struct {
 
 typedef struct {} TYPE;
 
-#if SWIGPYTHON
 %exception TYPE##Iterator##::next() {
   $action
   if (!arg1->ptr) {
-    PyErr_SetString(PyExc_StopIteration, "");
+#if SWIGJAVA
+    jclass cls = (*jenv)->FindClass(jenv, "java/util/NoSuchElementException");
+    (*jenv)->ThrowNew(jenv, cls, null);
+    return $null;
+#elif SWIGPYTHON
+    SWIG_SetErrorObj(PyExc_StopIteration, SWIG_Py_Void());
     SWIG_fail;
+#endif
   }
+}
+
+#if SWIGJAVA
+%exception TYPE##Iterator::remove {
+  jclass cls =
+    (*jenv)->FindClass(jenv, "java/lang/UnsupportedOperationException");
+  (*jenv)->ThrowNew(jenv, cls, null);
 }
 #endif
 
@@ -59,15 +76,37 @@ typedef struct {} TYPE;
       VALUE_TYPE *value = next_##TYPE##Iterator($self->ptr);
       $self->ptr = PREFIX##_iter_next($self->ptr);
       return value;
-    } else {
-      return NULL;
     }
+
+    return NULL;
   }
+
+#if SWIGJAVA
+  bool hasNext() {
+    return $self->ptr != NULL;
+  }
+
+  void remove() {
+    // Dummy method, see %exception wrapping above
+  }
+#endif
 }
 
+#if SWIGPYTHON
 %extend TYPE {
   TYPE##Iterator * __iter__() {
     return new_##TYPE##Iterator(PREFIX##_iter($self));
   }
 }
+#elif SWIGJAVA
+
+%extend TYPE {
+  TYPE##Iterator * iterator() {
+    return new_##TYPE##Iterator(PREFIX##_iter($self));
+  }
+}
+#else
+#warning "No wrappings for iterable types will be generated"
+#endif
+
 %enddef
