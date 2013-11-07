@@ -92,6 +92,7 @@ typedef struct {} FrontEnd;
 typedef struct {} Feature;
 typedef struct {} FsgModel;
 typedef struct {} Jsgf;
+typedef struct {} JsgfRule;
 typedef struct {} NGramModel;
 
 iterable(NGramModelSet, ngram_model_set, NGramModel)

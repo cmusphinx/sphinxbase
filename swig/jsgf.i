@@ -37,23 +37,51 @@
 
 
 %extend Jsgf {
-    Jsgf(const char *path) {
-        return jsgf_parse_file(path, NULL);
-    }
+#if SWIGJAVA
+  %rename(name) getName
+#endif
 
-    ~Jsgf() {
-        jsgf_grammar_free($self);
-    }
+  Jsgf(const char *path) {
+    return jsgf_parse_file(path, NULL);
+  }
 
-    const char * name() {
-        return jsgf_grammar_name($self);
-    }
+  ~Jsgf() {
+    jsgf_grammar_free($self);
+  }
 
-    JsgfRule * get_rule(const char *name) {
-        return jsgf_get_rule($self, name);
-    }
+  const char * name() {
+    return jsgf_grammar_name($self);
+  }
 
-    FsgModel * build_fsg(JsgfRule *rule, LogMath *logmath, float lw) {
-        return jsgf_build_fsg($self, rule, logmath, lw);
-    }
+  JsgfRule * get_rule(const char *name) {
+    return jsgf_get_rule($self, name);
+  }
+
+  FsgModel * build_fsg(JsgfRule *rule, LogMath *logmath, float lw) {
+    return jsgf_build_fsg($self, rule, logmath, lw);
+  }
+}
+
+%extend JsgfRule {
+#if SWIGJAVA
+  %rename(getName) name;
+  %rename(isPublic) public;
+
+  %javamethodmodifiers JsgfRule "private";
+#endif
+
+  JsgfRule() {
+    return NULL;
+  }
+
+  ~JsgfRule() {
+  }
+
+  const char * name() {
+    return jsgf_rule_name($self);
+  }
+
+  bool public() {
+    return jsgf_rule_public($self);
+  }
 }
