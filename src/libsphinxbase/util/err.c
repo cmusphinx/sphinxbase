@@ -68,6 +68,10 @@ static void* err_user_data;
 void
 err_msg(err_lvl_t lvl, const char *path, long ln, const char *fmt, ...)
 {
+    static const char *err_prefix[ERR_MAX] = {
+        "DEBUG", "INFO", "INFOCONT", "WARN", "ERROR", "FATAL"
+    };
+
     char msg[1024];
     char *fname;
     va_list ap;
@@ -81,10 +85,12 @@ err_msg(err_lvl_t lvl, const char *path, long ln, const char *fmt, ...)
 
     if (path) {
         fname = strdup(path);
-        if (lvl == ERR_INFO)
-            err_cb(err_user_data, lvl, "%s(%ld): %s", basename(fname), ln, msg);
+        if (lvl == ERR_INFOCONT)
+    	    err_cb(err_user_data, lvl, "%s(%ld): %s", basename(fname), ln, msg);
+        else if (lvl == ERR_INFO)
+            err_cb(err_user_data, lvl, "%s: %s(%ld): %s", err_prefix[lvl], basename(fname), ln, msg);
         else
-    	    err_cb(err_user_data, lvl, "\"%s\", line %ld: %s", basename(fname), ln, msg);
+    	    err_cb(err_user_data, lvl, "%s: \"%s\", line %ld: %s", err_prefix[lvl], basename(fname), ln, msg);
         free(fname);
     } else {
         err_cb(err_user_data, lvl, "%s", msg);
@@ -124,16 +130,12 @@ err_wince_cb(void *user_data, err_lvl_t lvl, const char *fmt, ...)
 void
 err_logfp_cb(void *user_data, err_lvl_t lvl, const char *fmt, ...)
 {
-    static const char *err_prefix[ERR_MAX] = {
-        "DEBUG", "INFO", "WARN", "ERROR", "FATAL"
-    };
 
     FILE *fp = err_get_logfp();
     if (!fp)
         return;
     
     va_list ap;
-    fprintf(fp, "%s: ", err_prefix[lvl]);
     va_start(ap, fmt);
     vfprintf(fp, fmt, ap);
     va_end(ap);

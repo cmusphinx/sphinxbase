@@ -129,14 +129,14 @@ extern "C" {
 #define E_INFO(...)      err_msg(ERR_INFO, FILELINE, __VA_ARGS__)
 
 /**
- * Print logging information without header, to standard error stream
+ * Continue printing the information to standard error stream
  */
-#define E_INFOCONT(...)  err_msg(ERR_INFO, NULL, 0, __VA_ARGS__)
+#define E_INFOCONT(...)  err_msg(ERR_INFOCONT, NULL, 0, __VA_ARGS__)
 
 /**
  * Print logging information without filename.
  */
-#define E_INFO_NOFN      E_INFOCONT
+#define E_INFO_NOFN(...)  err_msg(ERR_INFO, NULL, 0, __VA_ARGS__)
 
 /**
  * Print debugging information to standard error stream.
@@ -163,6 +163,7 @@ extern "C" {
 typedef enum err_e {
 #ifdef __ANDROID__
     ERR_DEBUG = ANDROID_LOG_DEBUG,
+    ERR_INFOCONT = ANDROID_LOG_INFO,
     ERR_INFO = ANDROID_LOG_INFO,
     ERR_WARN = ANDROID_LOG_WARN,
     ERR_ERROR = ANDROID_LOG_ERROR,
@@ -170,6 +171,7 @@ typedef enum err_e {
 #else
     ERR_DEBUG,
     ERR_INFO,
+    ERR_INFOCONT,
     ERR_WARN,
     ERR_ERROR,
     ERR_FATAL,

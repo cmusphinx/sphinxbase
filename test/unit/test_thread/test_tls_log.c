@@ -20,14 +20,9 @@ static pthread_key_t logfp_index;
 void
 err_threaded_cb(void * user_data, err_lvl_t level, const char *fmt, ...)
 {
-    static const char *err_prefix[ERR_MAX] = {
-        "DEBUG", "INFO", "WARN", "ERROR", "FATAL"
-    };
-    
     FILE* logfp = (FILE *)pthread_getspecific(logfp_index);
 
     va_list ap;
-    fprintf(logfp, "%s: ", err_prefix[level]);
     va_start(ap, fmt);
     vfprintf(logfp, fmt, ap);
     va_end(ap);
@@ -110,7 +105,7 @@ main(int argc, char *argv[])
         while (fgets(line, sizeof(line), logfh)) {
             string_trim(line, STRING_BOTH);
             printf("%s: |%s|\n", logfile, line);
-            TEST_EQUAL(0, strcmp(line, "INFO: test_tls_log.c(66): nfr = 1436"));
+            TEST_EQUAL(0, strcmp(line, "INFO: test_tls_log.c(61): nfr = 1436"));
         }
         fclose(logfh);
     }
