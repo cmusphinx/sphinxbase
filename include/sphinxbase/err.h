@@ -90,27 +90,27 @@ extern "C" {
 /**
  * Print error text; Call perror(""); exit(errno);
  */
-#define E_FATAL_SYSTEM(fmt, ...)                                     \
-    do {                                                             \
-        local_errno = errno;                                         \
-        err_fmt = (char *) malloc(strlen("%s: ") + strlen(fmt) + 1); \
-        strcat(strcpy(err_fmt, "%s: "), fmt);                        \
-        err_msg(ERR_FATAL, FILELINE, err_fmt,                        \
-                strerror(local_errno), ##__VA_ARGS__);               \
-        free(err_fmt);                                               \
-        exit(local_errno);                                           \
+#define E_FATAL_SYSTEM(fmt, ...)                                           \
+    do {                                                                   \
+        int local_errno = errno;                                           \
+        char *err_fmt = (char *) malloc(strlen("%s: ") + strlen(fmt) + 1); \
+        strcat(strcpy(err_fmt, "%s: "), fmt);                              \
+        err_msg(ERR_FATAL, FILELINE, err_fmt,                              \
+                strerror(local_errno), ##__VA_ARGS__);                     \
+        free(err_fmt);                                                     \
+        exit(local_errno);                                                 \
     } while (0)
 
 /**
  * Print error text; Call perror("");
  */
-#define E_ERROR_SYSTEM(fmt, ...)                                     \
-    do {                                                             \
-        local_errno = errno;                                         \
-        err_fmt = (char *) malloc(strlen("%s: ") + strlen(fmt) + 1); \
-        strcat(strcpy(err_fmt, "%s: "), fmt);                        \
-        err_msg(ERR_FATAL, FILELINE, err_fmt,                        \
-                strerror(local_errno), ##__VA_ARGS__);               \
+#define E_ERROR_SYSTEM(fmt, ...)                                           \
+    do {                                                                   \
+        int local_errno = errno;                                           \
+        char *err_fmt = (char *) malloc(strlen("%s: ") + strlen(fmt) + 1); \
+        strcat(strcpy(err_fmt, "%s: "), fmt);                              \
+        err_msg(ERR_FATAL, FILELINE, err_fmt,                              \
+                strerror(local_errno), ##__VA_ARGS__);                     \
     } while (0)
 
 /**
@@ -163,18 +163,18 @@ extern "C" {
 
 typedef enum err_e {
 #ifdef __ANDROID__
-  ERR_DEBUG = ANDROID_LOG_DEBUG,
-  ERR_INFO = ANDROID_LOG_INFO,
-  ERR_WARN = ANDROID_LOG_WARN,
-  ERR_ERROR = ANDROID_LOG_ERROR,
-  ERR_FATAL = ANDROID_LOG_ERROR
+    ERR_DEBUG = ANDROID_LOG_DEBUG,
+    ERR_INFO = ANDROID_LOG_INFO,
+    ERR_WARN = ANDROID_LOG_WARN,
+    ERR_ERROR = ANDROID_LOG_ERROR,
+    ERR_FATAL = ANDROID_LOG_ERROR
 #else
-  ERR_DEBUG,
-  ERR_INFO,
-  ERR_WARN,
-  ERR_ERROR,
-  ERR_FATAL,
-  ERR_MAX
+    ERR_DEBUG,
+    ERR_INFO,
+    ERR_WARN,
+    ERR_ERROR,
+    ERR_FATAL,
+    ERR_MAX
 #endif
 } err_lvl_t;
 
@@ -217,10 +217,6 @@ int err_set_debug_level(int level);
  */
 SPHINXBASE_EXPORT
 int err_get_debug_level(void);
-
-static int local_errno;
-
-static char *err_fmt;
 
 #ifdef __cplusplus
 }
