@@ -90,27 +90,27 @@ extern "C" {
 /**
  * Print error text; Call perror(""); exit(errno);
  */
-#define E_FATAL_SYSTEM(fmt, ...)                                 \
-    do {                                                         \
-        local_errno = errno;                                     \
-        err_fmt = (char *) malloc(strlen("%s: ") + strlen(fmt)); \
-        strcat(strcpy(err_fmt, "%s: "), fmt);                    \
-        err_msg(ERR_FATAL, FILELINE, err_fmt,                    \
-                   strerror(local_errno), ##__VA_ARGS__);        \
-        free(err_fmt);                                           \
-        exit(local_errno);                                       \
+#define E_FATAL_SYSTEM(fmt, ...)                                     \
+    do {                                                             \
+        local_errno = errno;                                         \
+        err_fmt = (char *) malloc(strlen("%s: ") + strlen(fmt) + 1); \
+        strcat(strcpy(err_fmt, "%s: "), fmt);                        \
+        err_msg(ERR_FATAL, FILELINE, err_fmt,                        \
+                strerror(local_errno), ##__VA_ARGS__);               \
+        free(err_fmt);                                               \
+        exit(local_errno);                                           \
     } while (0)
 
 /**
  * Print error text; Call perror("");
  */
-#define E_ERROR_SYSTEM(fmt, ...)                                 \
-    do {                                                         \
-        local_errno = errno;                                     \
-        err_fmt = (char *) malloc(strlen(fmt) + strlen("%s: ")); \
-        strcat(strcpy(err_fmt, "%s: "), fmt);                    \
-        err_msg(ERR_FATAL, FILELINE, err_fmt,                    \
-                   strerror(local_errno), ##__VA_ARGS__);        \
+#define E_ERROR_SYSTEM(fmt, ...)                                     \
+    do {                                                             \
+        local_errno = errno;                                         \
+        err_fmt = (char *) malloc(strlen("%s: ") + strlen(fmt) + 1); \
+        strcat(strcpy(err_fmt, "%s: "), fmt);                        \
+        err_msg(ERR_FATAL, FILELINE, err_fmt,                        \
+                strerror(local_errno), ##__VA_ARGS__);               \
     } while (0)
 
 /**
