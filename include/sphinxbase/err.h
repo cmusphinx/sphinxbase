@@ -184,7 +184,7 @@ typedef void (*err_cb_f)(err_lvl_t, const char *, ...);
  * Sets function to output error messages
  */
 SPHINXBASE_EXPORT void
-err_callback(err_cb_f callback);
+err_set_callback(err_cb_f callback);
 
 SPHINXBASE_EXPORT void
 err_msg(err_lvl_t lvl, const char *path, long ln, const char *fmt, ...);

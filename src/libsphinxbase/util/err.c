@@ -175,7 +175,7 @@ err_get_debug_level(void)
 }
 
 void
-err_callback(err_cb_f cb)
+err_set_callback(err_cb_f cb)
 {
     err_cb = cb;
 }
