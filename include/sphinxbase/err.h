@@ -150,11 +150,11 @@ extern "C" {
  */
 #ifdef SPHINX_DEBUG
 #define E_DEBUG(level, ...) \
-        if (err_get_debug_level() >= level) \
-            err_msg(ERR_DEBUG, FILELINE, __VA_ARGS__)
+    if (err_get_debug_level() >= level) \
+        err_msg(ERR_DEBUG, FILELINE, __VA_ARGS__)
 #define E_DEBUGCONT(level, ...) \
-        if (err_get_debug_level() >= level) \
-            err_msg(ERR_DEBUG, NULL, 0, __VA_ARGS__)
+    if (err_get_debug_level() >= level) \
+        err_msg(ERR_DEBUG, NULL, 0, __VA_ARGS__)
 #else
 #define E_DEBUG(level,x)
 #define E_DEBUGCONT(level,x)

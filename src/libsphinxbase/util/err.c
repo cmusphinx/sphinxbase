@@ -163,15 +163,15 @@ err_get_logfp(void)
 int
 err_set_debug_level(int level)
 {
-  int prev = sphinx_debug_level;
-  sphinx_debug_level = level;
-  return prev;
+    int prev = sphinx_debug_level;
+    sphinx_debug_level = level;
+    return prev;
 }
 
 int
 err_get_debug_level(void)
 {
-  return sphinx_debug_level;
+    return sphinx_debug_level;
 }
 
 void
