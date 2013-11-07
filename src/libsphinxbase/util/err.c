@@ -50,13 +50,17 @@
 
 #include "sphinxbase/err.h"
 
+static int logfp_set;
+static FILE* logfp;
+
 static int sphinx_debug_level;
+
 #if   defined __ANDROID__
 static err_cb_f err_cb = err_logcat_cb;
 #elif defined _WIN32_WCE
 static err_cb_f err_cb = err_wince_cb;
 #else
-static err_cb_f err_cb = err_stderr_cb;
+static err_cb_f err_cb = err_logfp_cb;
 #endif
 
 void
@@ -113,20 +117,48 @@ err_wince_cb(err_lvl_t lvl, const char *fmt, ...)
 }
 #else
 void
-err_stderr_cb(err_lvl_t lvl, const char *fmt, ...)
+err_logfp_cb(err_lvl_t lvl, const char *fmt, ...)
 {
     static const char *err_prefix[ERR_MAX] = {
         "DEBUG", "INFO", "WARN", "ERROR", "FATAL"
     };
 
     va_list ap;
+    FILE *logfp = err_get_logfp();
 
-    fprintf(stderr, "%s: ", err_prefix[lvl]);
+    if (!logfp)
+        return;
+
+    fprintf(logfp, "%s: ", err_prefix[lvl]);
     va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
+    vfprintf(logfp, fmt, ap);
     va_end(ap);
 }
 #endif
+
+FILE *
+err_set_logfile(const char *path)
+{
+    return err_set_logfp(fopen(path, "a"));
+}
+
+FILE *
+err_set_logfp(FILE *stream)
+{
+    logfp = stream;
+    return logfp;
+}
+
+FILE *
+err_get_logfp(void)
+{
+    if (!logfp_set) {
+        logfp = stderr;
+        logfp_set = 1;
+    }
+
+    return logfp;
+}
 
 int
 err_set_debug_level(int level)

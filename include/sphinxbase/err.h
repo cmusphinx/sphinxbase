@@ -197,8 +197,17 @@ SPHINXBASE_EXPORT void
 err_wince_cb(err_lvl_t level, const char *fmt, ...);
 #else
 SPHINXBASE_EXPORT void
-err_stderr_cb(err_lvl_t level, const char *fmt, ...);
+err_logfp_cb(err_lvl_t level, const char *fmt, ...);
 #endif
+
+SPHINXBASE_EXPORT FILE *
+err_set_logfile(const char *path);
+
+SPHINXBASE_EXPORT FILE *
+err_set_logfp(FILE *stream);
+
+SPHINXBASE_EXPORT FILE *
+err_get_logfp(void);
 
 /**
  * Set debugging verbosity level.

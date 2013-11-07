@@ -392,10 +392,11 @@ int cmd_ln_exists_r(cmd_ln_t *cmdln, char const *name);
  * Print a help message listing the valid argument names, and the associated
  * attributes as given in defn.
  *
+ * @param fp   output stream
  * @param defn Array of argument name definitions.
  */
 SPHINXBASE_EXPORT
-void cmd_ln_print_help_r (cmd_ln_t *cmdln, const arg_t *defn);
+void cmd_ln_print_help_r (cmd_ln_t *cmdln, FILE *fp, const arg_t *defn);
 
 /**
  * Non-reentrant version of cmd_ln_parse().
@@ -567,7 +568,7 @@ cmd_ln_t *cmd_ln_get(void);
  * @deprecated This is deprecated in favor of the re-entrant API
  * function cmd_ln_print_help_r().
  */
-#define cmd_ln_print_help(d) cmd_ln_print_help_r(cmd_ln_get(),d)
+#define cmd_ln_print_help(f,d) cmd_ln_print_help_r(cmd_ln_get(),f,d)
 
 /**
  * Free the global command line, if any exists.

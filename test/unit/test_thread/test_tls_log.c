@@ -26,7 +26,7 @@ process(sbthread_t *th)
     char outfile[16];
 
     sprintf(outfile, "%03ld.log", (long) sbthread_arg(th));
-    if (NULL == freopen(outfile, "w", stderr))
+    if (NULL == err_set_logfile(outfile))
         return -1;
 
     if ((fe = fe_init_auto_r(sbthread_config(th))) == NULL)

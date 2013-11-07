@@ -96,8 +96,12 @@ struct cmd_ln_s {
 
 /** Global command-line, for non-reentrant API. */
 cmd_ln_t *global_cmdln;
-static void arg_dump_r(cmd_ln_t *cmdln, arg_t const *defn, int32 doc);
-static cmd_ln_t * parse_options(cmd_ln_t *cmdln, const arg_t *defn, int32 argc, char* argv[], int32 strict);
+
+static void
+arg_dump_r(cmd_ln_t *, FILE *, arg_t const *, int32);
+
+static cmd_ln_t *
+parse_options(cmd_ln_t *, const arg_t *, int32, char* [], int32);
 
 /*
  * Find max length of name and default fields in the given defn array.
@@ -234,7 +238,7 @@ arg_resolve_env(const char *str)
 }
 
 static void
-arg_dump_r(cmd_ln_t *cmdln, const arg_t * defn, int32 doc)
+arg_dump_r(cmd_ln_t *cmdln, FILE *fp, const arg_t * defn, int32 doc)
 {
     const arg_t **pos;
     int32 i, l, n;
@@ -252,41 +256,41 @@ arg_dump_r(cmd_ln_t *cmdln, const arg_t * defn, int32 doc)
     namelen = namelen & 0xfffffff8;     /* Previous tab position */
     deflen = deflen & 0xfffffff8;       /* Previous tab position */
 
-    fprintf(stderr, "[NAME]");
+    fprintf(fp, "[NAME]");
     for (l = strlen("[NAME]"); l < namelen; l += 8)
-        fprintf(stderr, "\t");
-    fprintf(stderr, "\t[DEFLT]");
+        fprintf(fp, "\t");
+    fprintf(fp, "\t[DEFLT]");
     for (l = strlen("[DEFLT]"); l < deflen; l += 8)
-        fprintf(stderr, "\t");
+        fprintf(fp, "\t");
 
     if (doc) {
-        fprintf(stderr, "\t[DESCR]\n");
+        fprintf(fp, "\t[DESCR]\n");
     }
     else {
-        fprintf(stderr, "\t[VALUE]\n");
+        fprintf(fp, "\t[VALUE]\n");
     }
 
     /* Print current configuration, sorted by name */
     pos = arg_sort(defn, n);
     for (i = 0; i < n; i++) {
-        fprintf(stderr, "%s", pos[i]->name);
+        fprintf(fp, "%s", pos[i]->name);
         for (l = strlen(pos[i]->name); l < namelen; l += 8)
-            fprintf(stderr, "\t");
+            fprintf(fp, "\t");
 
-        fprintf(stderr, "\t");
+        fprintf(fp, "\t");
         if (pos[i]->deflt) {
-            fprintf(stderr, "%s", pos[i]->deflt);
+            fprintf(fp, "%s", pos[i]->deflt);
             l = strlen(pos[i]->deflt);
         }
         else
             l = 0;
         for (; l < deflen; l += 8)
-            fprintf(stderr, "\t");
+            fprintf(fp, "\t");
 
-        fprintf(stderr, "\t");
+        fprintf(fp, "\t");
         if (doc) {
             if (pos[i]->doc)
-                fprintf(stderr, "%s", pos[i]->doc);
+                fprintf(fp, "%s", pos[i]->doc);
         }
         else {
             vp = cmd_ln_access_r(cmdln, pos[i]->name);
@@ -294,27 +298,27 @@ arg_dump_r(cmd_ln_t *cmdln, const arg_t * defn, int32 doc)
                 switch (pos[i]->type) {
                 case ARG_INTEGER:
                 case REQARG_INTEGER:
-                    fprintf(stderr, "%ld", vp->i);
+                    fprintf(fp, "%ld", vp->i);
                     break;
                 case ARG_FLOATING:
                 case REQARG_FLOATING:
-                    fprintf(stderr, "%e", vp->fl);
+                    fprintf(fp, "%e", vp->fl);
                     break;
                 case ARG_STRING:
                 case REQARG_STRING:
                     if (vp->ptr)
-                        fprintf(stderr, "%s", (char *)vp->ptr);
+                        fprintf(fp, "%s", (char *)vp->ptr);
                     break;
                 case ARG_STRING_LIST:
             	    array = (char const**)vp->ptr;
             	    if (array)
             		for (l = 0; array[l] != 0; l++) {
-            		    fprintf(stderr, "%s,", array[l]);
+            		    fprintf(fp, "%s,", array[l]);
             		}
             	    break;
                 case ARG_BOOLEAN:
                 case REQARG_BOOLEAN:
-                    fprintf(stderr, "%s", vp->i ? "yes" : "no");
+                    fprintf(fp, "%s", vp->i ? "yes" : "no");
                     break;
                 default:
                     E_ERROR("Unknown argument type: %d\n", pos[i]->type);
@@ -322,12 +326,11 @@ arg_dump_r(cmd_ln_t *cmdln, const arg_t * defn, int32 doc)
             }
         }
 
-        fprintf(stderr, "\n");
+        fprintf(fp, "\n");
     }
     ckd_free(pos);
 
-    fprintf(stderr, "\n");
-    fflush(stderr);
+    fprintf(fp, "\n");
 }
 
 static char **
@@ -499,7 +502,7 @@ cmd_ln_appl_enter(int argc, char *argv[],
     str = NULL;
 
     if ((argc == 2) && (strcmp(argv[1], "help") == 0)) {
-        cmd_ln_print_help(defn);
+        cmd_ln_print_help(stderr, defn);
         exit(1);
     }
 
@@ -529,7 +532,7 @@ cmd_ln_appl_enter(int argc, char *argv[],
             E_INFOCONT("\t%s argument-list, or\n", argv[0]);
             E_INFOCONT("\t%s [argument-file] (default file: . %s)\n\n",
                     argv[0], default_argfn);
-            cmd_ln_print_help(defn);
+            cmd_ln_print_help(stderr, defn);
             exit(1);
         }
     }
@@ -609,7 +612,7 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
 
         /* Enter argument value */	
 	if (j + 1 >= argc) {
-            cmd_ln_print_help_r(cmdln, defn);
+            cmd_ln_print_help_r(cmdln, stderr, defn);
             E_ERROR("Argument value for '%s' missing\n", argv[j]);
             goto error;
         }
@@ -618,7 +621,7 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
             val = cmd_ln_val_init(ARG_STRING, argv[j + 1]);
         else {
             if ((val = cmd_ln_val_init(argdef->type, argv[j + 1])) == NULL) {
-                cmd_ln_print_help_r(cmdln, defn);
+                cmd_ln_print_help_r(cmdln, stderr, defn);
                 E_ERROR("Bad argument value for %s: %s\n", argv[j],
                         argv[j + 1]);
                 goto error;
@@ -665,13 +668,13 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
         }
     }
     if (j > 0) {
-        cmd_ln_print_help_r(cmdln, defn);
+        cmd_ln_print_help_r(cmdln, stderr, defn);
         goto error;
     }
 
     if (strict && argc == 1) {
         E_ERROR("No arguments given, available options are:\n");
-        cmd_ln_print_help_r(cmdln, defn);
+        cmd_ln_print_help_r(cmdln, stderr, defn);
         if (defidx)
 	    hash_table_free(defidx);
         if (inout_cmdln == NULL)
@@ -683,8 +686,8 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
     /* Set up logging. We need to do this earlier because we want to dump
      * the information to the configured log, not to the stderr. */
     if (cmd_ln_exists_r(cmdln, "-logfn") && cmd_ln_str_r(cmdln, "-logfn")) {
-        if (NULL == freopen(cmd_ln_str_r(cmdln, "-logfn"), "a", stderr))
-          E_FATAL_SYSTEM("cannot redirect log output");
+        if (NULL == err_set_logfile(cmd_ln_str_r(cmdln, "-logfn")))
+            E_FATAL_SYSTEM("cannot redirect log output");
     }
 
     /* Echo command line */
@@ -695,11 +698,10 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
         E_INFOCONT("%s ", argv[i]);
     }
     E_INFOCONT("\n\n");
-    fflush(stderr);
 
     /* Print configuration */
     E_INFOCONT("Current configuration:\n");
-    arg_dump_r(cmdln, defn, 0);
+    arg_dump_r(cmdln, err_get_logfp(), defn, 0);
 #endif
 
     hash_table_free(defidx);
@@ -916,12 +918,12 @@ cmd_ln_parse_file(const arg_t * defn, const char *filename, int32 strict)
 }
 
 void
-cmd_ln_print_help_r(cmd_ln_t *cmdln, arg_t const* defn)
+cmd_ln_print_help_r(cmd_ln_t *cmdln, FILE *fp, arg_t const* defn)
 {
     if (defn == NULL)
         return;
-    fprintf(stderr, "Arguments list definition:\n");
-    arg_dump_r(cmdln, defn, 1);
+    fprintf(fp, "Arguments list definition:\n");
+    arg_dump_r(cmdln, fp, defn, 1);
 }
 
 int
@@ -1073,3 +1075,5 @@ cmd_ln_free(void)
     cmd_ln_free_r(global_cmdln);
     global_cmdln = NULL;
 }
+
+/* vim: set ts=4 sw=4: */
