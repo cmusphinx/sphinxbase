@@ -338,23 +338,23 @@ parse_string_list(const char *str)
 {
     int count, i, j;
     const char *p;
-    char ** result;
+    char **result;
 
     p = str;
     count = 1;
     while (*p) {
-    if (*p == ',')
-        count++;
-    p++;
+	if (*p == ',')
+    	    count++;
+        p++;
     }
     /* Should end with NULL */
     result = (char **) ckd_calloc(count + 1, sizeof(char *));
     p = str;
     for (i = 0; i < count; i++) {
-    for (j = 0; p[j] != ',' && p[j] != 0; j++);
-    result[i] = ckd_calloc(j + 1, sizeof(char));
-    strncpy( result[i], p, j);
-    p = p + j + 1;
+	for (j = 0; p[j] != ',' && p[j] != 0; j++);
+	result[i] = ckd_calloc(j + 1, sizeof(char));
+        strncpy( result[i], p, j);
+        p = p + j + 1;
     }
     return result;
 }
@@ -688,7 +688,7 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
     /* Set up logging. We need to do this earlier because we want to dump
      * the information to the configured log, not to the stderr. */
     if (cmd_ln_exists_r(cmdln, "-logfn") && cmd_ln_str_r(cmdln, "-logfn")) {
-        if (NULL == err_set_logfile(cmd_ln_str_r(cmdln, "-logfn")))
+        if (err_set_logfile(cmd_ln_str_r(cmdln, "-logfn")) < 0)
             E_FATAL_SYSTEM("cannot redirect log output");
     }
 

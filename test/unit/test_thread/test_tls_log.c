@@ -6,12 +6,32 @@
 #include <ckd_alloc.h>
 #include <err.h>
 
+#include <pthread.h>
+
 #include "test_macros.h"
 
 static const arg_t fe_args[] = {
     waveform_to_cepstral_command_line_macro(),
     { NULL, 0, NULL, NULL }
 };
+
+static pthread_key_t logfp_index;
+
+void
+err_threaded_cb(void * user_data, err_lvl_t level, const char *fmt, ...)
+{
+    static const char *err_prefix[ERR_MAX] = {
+        "DEBUG", "INFO", "WARN", "ERROR", "FATAL"
+    };
+    
+    FILE* logfp = (FILE *)pthread_getspecific(logfp_index);
+
+    va_list ap;
+    fprintf(logfp, "%s: ", err_prefix[level]);
+    va_start(ap, fmt);
+    vfprintf(logfp, fmt, ap);
+    va_end(ap);
+}
 
 static int
 process(sbthread_t *th)
@@ -23,11 +43,13 @@ process(sbthread_t *th)
     fe_t *fe;
     long fsize;
     int32 nfr;
+    
     char outfile[16];
-
+    FILE *logfile;
+    
     sprintf(outfile, "%03ld.log", (long) sbthread_arg(th));
-    if (NULL == err_set_logfile(outfile))
-        return -1;
+    logfile = fopen(outfile, "w");
+    pthread_setspecific(logfp_index, (void *)logfile);
 
     if ((fe = fe_init_auto_r(sbthread_config(th))) == NULL)
         return -1;
@@ -46,6 +68,8 @@ process(sbthread_t *th)
     ckd_free(buf);
     fclose(raw);
     fe_free(fe);
+    
+    fclose(logfile);
 
     return 0;
 }
@@ -56,10 +80,15 @@ main(int argc, char *argv[])
     sbthread_t *threads[10];
     cmd_ln_t *config;
     int i;
-
+    
     E_INFO("Processing chan3.raw in 10 threads\n");
     if ((config = cmd_ln_parse_r(NULL, fe_args, 0, NULL, FALSE)) == NULL)
         return -1;
+
+    err_set_callback(err_threaded_cb, NULL);
+    pthread_key_create(&logfp_index, NULL);
+    pthread_setspecific(logfp_index, (void*)stderr);
+
     for (i = 0; i < 10; ++i) {
         config = cmd_ln_retain(config);
         threads[i] = sbthread_start(config, process, (void *)(long)i);
@@ -81,12 +110,10 @@ main(int argc, char *argv[])
         while (fgets(line, sizeof(line), logfh)) {
             string_trim(line, STRING_BOTH);
             printf("%s: |%s|\n", logfile, line);
-            TEST_EQUAL(0, strcmp(line, "INFO: test_tls_log.c(44): nfr = 1436"));
+            TEST_EQUAL(0, strcmp(line, "INFO: \"test_tls_log.c\", line 66: nfr = 1436"));
         }
         fclose(logfh);
     }
     cmd_ln_free_r(config);
     return 0;
 }
-
-/* vim: set ts=4 sw=4: */

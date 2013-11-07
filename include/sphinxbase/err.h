@@ -160,7 +160,6 @@ extern "C" {
 #define E_DEBUGCONT(level,x)
 #endif
 
-
 typedef enum err_e {
 #ifdef __ANDROID__
     ERR_DEBUG = ANDROID_LOG_DEBUG,
@@ -178,36 +177,60 @@ typedef enum err_e {
 #endif
 } err_lvl_t;
 
-typedef void (*err_cb_f)(err_lvl_t, const char *, ...);
-
-/**
- * Sets function to output error messages
- */
-SPHINXBASE_EXPORT void
-err_set_callback(err_cb_f callback);
-
 SPHINXBASE_EXPORT void
 err_msg(err_lvl_t lvl, const char *path, long ln, const char *fmt, ...);
 
 #if   defined __ANDROID__
 SPHINXBASE_EXPORT void
-err_logcat_cb(err_lvl_t level, const char *fmt, ...);
+err_logcat_cb(void* user_data, err_lvl_t level, const char *fmt, ...);
 #elif defined _WIN32_WCE
 SPHINXBASE_EXPORT void
-err_wince_cb(err_lvl_t level, const char *fmt, ...);
+err_wince_cb(void* user_data, err_lvl_t level, const char *fmt, ...);
 #else
 SPHINXBASE_EXPORT void
-err_logfp_cb(err_lvl_t level, const char *fmt, ...);
+err_logfp_cb(void * user_data, err_lvl_t level, const char *fmt, ...);
 #endif
 
-SPHINXBASE_EXPORT FILE *
-err_set_logfile(const char *path);
 
-SPHINXBASE_EXPORT FILE *
+typedef void (*err_cb_f)(void* user_data, err_lvl_t, const char *, ...);
+
+/**
+ * Sets function to output error messages. Use it to redirect the logging
+ * to your application. By default the handler which dumps messages to
+ * stderr is set.
+ * 
+ * @param - callback to pass messages too.
+ */
+SPHINXBASE_EXPORT void
+err_set_callback(err_cb_f callback, void *user_data);
+
+/**
+ * Direct all logging to a given filehandle if default logfp callback is set.
+ *
+ * @param logfp Filehandle to send log messages to, or NULL to disable logging.
+ */
+SPHINXBASE_EXPORT void
 err_set_logfp(FILE *stream);
 
+/**
+ * Get the current logging filehandle.
+ *
+ * @return Current logging filehandle, NULL if logging is disabled. Initially
+ * it returns stderr
+ */
 SPHINXBASE_EXPORT FILE *
 err_get_logfp(void);
+
+/**
+ * Append all log messages to a given file.
+ *
+ * Previous logging filehandle is closed (unless it was stdout or stderr).
+ *
+ * @param file File path to send log messages to
+ * @return 0 for success, <0 for failure (e.g. if file does not exist)
+ */
+SPHINXBASE_EXPORT int
+err_set_logfile(const char *path);
 
 /**
  * Set debugging verbosity level.
@@ -232,5 +255,3 @@ int err_get_debug_level(void);
 #endif
 
 #endif /* !_ERR_H */
-
-/* vim: set ts=4 sw=4: */

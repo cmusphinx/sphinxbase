@@ -49,9 +49,10 @@
 #include <errno.h>
 
 #include "sphinxbase/err.h"
+#include "sphinxbase/prim_type.h"
 
-static int logfp_set;
-static FILE* logfp;
+static FILE*  logfp = NULL;
+static int    logfp_disabled = FALSE;
 
 static int sphinx_debug_level;
 
@@ -62,6 +63,7 @@ static err_cb_f err_cb = err_wince_cb;
 #else
 static err_cb_f err_cb = err_logfp_cb;
 #endif
+static void* err_user_data;
 
 void
 err_msg(err_lvl_t lvl, const char *path, long ln, const char *fmt, ...)
@@ -79,16 +81,16 @@ err_msg(err_lvl_t lvl, const char *path, long ln, const char *fmt, ...)
 
     if (path) {
         fname = strdup(path);
-        err_cb(lvl, "\"%s\", line %ld: %s", basename(fname), ln, msg);
+        err_cb(err_user_data, lvl, "\"%s\", line %ld: %s", basename(fname), ln, msg);
         free(fname);
     } else {
-        err_cb(lvl, "%s", msg);
+        err_cb(err_user_data, lvl, "%s", msg);
     }
 }
 
 #if   defined __ANDROID__
 void
-err_logcat_cb(err_lvl_t lvl, const char *fmt, ...)
+err_logcat_cb(void *user_data, err_lvl_t lvl, const char *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
@@ -97,7 +99,7 @@ err_logcat_cb(err_lvl_t lvl, const char *fmt, ...)
 }
 #elif defined _WIN32_WCE
 void
-err_wince_cb(err_lvl_t lvl, const char *fmt, ...)
+err_wince_cb(void *user_data, err_lvl_t lvl, const char *fmt, ...)
 {
     char msg[1024];
     WCHAR *wmsg;
@@ -117,45 +119,58 @@ err_wince_cb(err_lvl_t lvl, const char *fmt, ...)
 }
 #else
 void
-err_logfp_cb(err_lvl_t lvl, const char *fmt, ...)
+err_logfp_cb(void *user_data, err_lvl_t lvl, const char *fmt, ...)
 {
     static const char *err_prefix[ERR_MAX] = {
         "DEBUG", "INFO", "WARN", "ERROR", "FATAL"
     };
 
-    va_list ap;
-    FILE *logfp = err_get_logfp();
-
-    if (!logfp)
+    FILE *fp = err_get_logfp();
+    if (!fp)
         return;
-
-    fprintf(logfp, "%s: ", err_prefix[lvl]);
+    
+    va_list ap;
+    fprintf(fp, "%s: ", err_prefix[lvl]);
     va_start(ap, fmt);
-    vfprintf(logfp, fmt, ap);
+    vfprintf(fp, fmt, ap);
     va_end(ap);
 }
 #endif
 
-FILE *
+int
 err_set_logfile(const char *path)
 {
-    return err_set_logfp(fopen(path, "a"));
+    FILE *newfp, *oldfp;
+
+    if ((newfp = fopen(path, "a")) == NULL)
+        return -1;
+    oldfp = err_get_logfp();
+    err_set_logfp(newfp);
+    if (oldfp != NULL && oldfp != stdout && oldfp != stderr)
+        fclose(oldfp);
+    return 0;
 }
 
-FILE *
+void
 err_set_logfp(FILE *stream)
 {
+    if (stream == NULL) {
+	logfp_disabled = TRUE;
+	logfp = NULL;
+	return;
+    }    
+    logfp_disabled = FALSE;
     logfp = stream;
-    return logfp;
+    return;
 }
 
 FILE *
 err_get_logfp(void)
 {
-    if (!logfp_set) {
-        logfp = stderr;
-        logfp_set = 1;
-    }
+    if (logfp_disabled)
+	return NULL;
+    if (logfp == NULL)
+	return stderr;
 
     return logfp;
 }
@@ -175,9 +190,8 @@ err_get_debug_level(void)
 }
 
 void
-err_set_callback(err_cb_f cb)
+err_set_callback(err_cb_f cb, void* user_data)
 {
     err_cb = cb;
+    err_user_data= user_data;
 }
-
-/* vim: set ts=4 sw=4: */
