@@ -54,7 +54,7 @@ main(int argc, char **argv)
 
     /*  hash_table_display(ht,1); */
     if (hash_table_delete(ht, argv[1]) == NULL) {
-        E_INFOCONT("Failed as expected\n");
+        printf("Failed as expected\n");
         return 0;
     }
     else {

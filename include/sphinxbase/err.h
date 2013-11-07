@@ -8,27 +8,27 @@
  * are met:
  *
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer. 
+ *    notice, this list of conditions and the following disclaimer.
  *
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in
  *    the documentation and/or other materials provided with the
  *    distribution.
  *
- * This work was supported in part by funding from the Defense Advanced 
- * Research Projects Agency and the National Science Foundation of the 
+ * This work was supported in part by funding from the Defense Advanced
+ * Research Projects Agency and the National Science Foundation of the
  * United States of America, and the CMU Sphinx Speech Consortium.
  *
- * THIS SOFTWARE IS PROVIDED BY CARNEGIE MELLON UNIVERSITY ``AS IS'' AND 
- * ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, 
+ * THIS SOFTWARE IS PROVIDED BY CARNEGIE MELLON UNIVERSITY ``AS IS'' AND
+ * ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
  * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL CARNEGIE MELLON UNIVERSITY
  * NOR ITS EMPLOYEES BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT 
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, 
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY 
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT 
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE 
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  * ====================================================================
@@ -47,17 +47,21 @@
 /* Win32/WinCE DLL gunk */
 #include <sphinxbase/sphinxbase_export.h>
 
+#ifdef __ANDROID__
+#include <android/log.h>
+#endif
+
 /**
  * @file err.h
- * @brief Implementation of logging routines. 
+ * @brief Implementation of logging routines.
  *
  * Logging, warning, debug and error message output funtionality is provided in this file.
  * Sphinxbase defines several level of logging messages - INFO, WARNING, ERROR, FATAL. By
  * default output goes to standard error output.
  *
- * Logging is implemented through macros. They take same arguments as printf: format string and 
- * values. By default source file name and source line are prepended to the message. Log output 
- * could be redirected to any file using err_set_logfp() and err_set_logfile() functions. To disable 
+ * Logging is implemented through macros. They take same arguments as printf: format string and
+ * values. By default source file name and source line are prepended to the message. Log output
+ * could be redirected to any file using err_set_logfp() and err_set_logfile() functions. To disable
  * logging in your application, call err_set_logfp(NULL).
  *
  * It's possible to log multiline info messages, to do that you need to start message with
@@ -72,101 +76,129 @@ extern "C" {
 }
 #endif
 
-SPHINXBASE_EXPORT
-void _E__pr_header(char const *file, long line, char const *msg);
-SPHINXBASE_EXPORT
-void _E__pr_debug_header(char const *file, long line, int level);
-SPHINXBASE_EXPORT
-void _E__pr_info_header(char const *file, long line, char const *tag);
-SPHINXBASE_EXPORT
-void _E__pr_info_header_wofn(char const *msg);
-SPHINXBASE_EXPORT
-void _E__pr_warn(char const *fmt, ...);
-SPHINXBASE_EXPORT
-void _E__pr_info(char const *fmt, ...);
-SPHINXBASE_EXPORT
-void _E__die_error(char const *fmt, ...);
-SPHINXBASE_EXPORT
-void _E__abort_error(char const *fmt, ...);
-SPHINXBASE_EXPORT
-void _E__sys_error(char const *fmt, ...);
-SPHINXBASE_EXPORT
-void _E__fatal_sys_error(char const *fmt, ...);
+#define FILELINE  __FILE__ , __LINE__
 
 /**
- * Direct all logging to a given filehandle.
- *
- * @param logfp Filehandle to send log messages to, or NULL to disable logging.
- * @return Previous logging filehandle, if any.
+ * Exit with non-zero status after error message
  */
-SPHINXBASE_EXPORT
-FILE *err_set_logfp(FILE *logfp);
+#define E_FATAL(...)                               \
+    do {                                           \
+        err_msg(ERR_FATAL, FILELINE, __VA_ARGS__); \
+        exit(EXIT_FAILURE);                        \
+    } while (0)
 
 /**
- * Get the current logging filehandle.
- * @return Current logging filehandle, NULL if disabled.
+ * Print error text; Call perror(""); exit(errno);
  */
-SPHINXBASE_EXPORT
-FILE * err_get_logfp(void);
-
-
-/**
- * Append all log messages to a given file.
- *
- * Previous logging filehandle is closed (unless it was stdout or stderr).
- *
- * @param file File to send log messages to, or NULL to disable logging.
- * @return 0 for success, <0 for failure (e.g. if file does not exist)
- */
-SPHINXBASE_EXPORT
-int err_set_logfile(char const *file);
+#define E_FATAL_SYSTEM(fmt, ...)                                 \
+    do {                                                         \
+        local_errno = errno;                                     \
+        err_fmt = (char *) malloc(strlen("%s: ") + strlen(fmt)); \
+        strcat(strcpy(err_fmt, "%s: "), fmt);                    \
+        err_msg(ERR_FATAL, FILELINE, err_fmt,                    \
+                   strerror(local_errno), ##__VA_ARGS__);        \
+        free(err_fmt);                                           \
+        exit(local_errno);                                       \
+    } while (0)
 
 /**
- * Exit with non-zero status after error message 
+ * Print error text; Call perror("");
  */
-#define E_FATAL  _E__pr_header(__FILE__, __LINE__, "FATAL_ERROR"),_E__die_error
+#define E_ERROR_SYSTEM(fmt, ...)                                 \
+    do {                                                         \
+        local_errno = errno;                                     \
+        err_fmt = (char *) malloc(strlen(fmt) + strlen("%s: ")); \
+        strcat(strcpy(err_fmt, "%s: "), fmt);                    \
+        err_msg(ERR_FATAL, FILELINE, err_fmt,                    \
+                   strerror(local_errno), ##__VA_ARGS__);        \
+    } while (0)
 
 /**
- * Print error text; Call perror(""); exit(errno); 
+ * Print error message to error log
  */
-#define E_FATAL_SYSTEM	_E__pr_header(__FILE__, __LINE__, "SYSTEM_ERROR"),_E__fatal_sys_error
+#define E_ERROR(...)     err_msg(ERR_ERROR, FILELINE, __VA_ARGS__)
 
 /**
- * Print error text; Call perror(""); 
+ * Print warning message to error log
  */
-#define E_WARN_SYSTEM	_E__pr_header(__FILE__, __LINE__, "SYSTEM_ERROR"),_E__sys_error
-
-/**
- * Print error text; Call perror(""); 
- */
-#define E_ERROR_SYSTEM	_E__pr_header(__FILE__, __LINE__, "SYSTEM_ERROR"),_E__sys_error
+#define E_WARN(...)      err_msg(ERR_WARN, FILELINE, __VA_ARGS__)
 
 /**
  * Print logging information to standard error stream
  */
-#define E_INFO	  _E__pr_info_header(__FILE__, __LINE__, "INFO"),_E__pr_info
+#define E_INFO(...)      err_msg(ERR_INFO, FILELINE, __VA_ARGS__)
 
 /**
  * Print logging information without header, to standard error stream
  */
-
-#define E_INFOCONT	  _E__pr_info
+#define E_INFOCONT(...)  err_msg(ERR_INFO, NULL, 0, __VA_ARGS__)
 
 /**
  * Print logging information without filename.
  */
-#define E_INFO_NOFN _E__pr_info_header_wofn("INFO"),_E__pr_info
-
-
-/**
- * Print warning information to standard error stream
- */
-#define E_WARN	  _E__pr_header(__FILE__, __LINE__, "WARNING"),_E__pr_warn
+#define E_INFO_NOFN      E_INFOCONT
 
 /**
- * Print error message to standard error stream
+ * Print debugging information to standard error stream.
+ *
+ * This will only print a message if:
+ *  1. Debugging is enabled at compile time
+ *  2. The debug level is greater than or equal to \a level
+ *
+ * Note that for portability reasons the format and arguments must be
+ * enclosed in an extra set of parentheses.
  */
-#define E_ERROR	  _E__pr_header(__FILE__, __LINE__, "ERROR"),_E__pr_warn
+#ifdef SPHINX_DEBUG
+#define E_DEBUG(level, ...) \
+        if (err_get_debug_level() >= level) \
+            err_msg(ERR_DEBUG, FILELINE, __VA_ARGS__)
+#define E_DEBUGCONT(level, ...) \
+        if (err_get_debug_level() >= level) \
+            err_msg(ERR_DEBUG, NULL, 0, __VA_ARGS__)
+#else
+#define E_DEBUG(level,x)
+#define E_DEBUGCONT(level,x)
+#endif
+
+
+typedef enum err_e {
+#ifdef __ANDROID__
+  ERR_DEBUG = ANDROID_LOG_DEBUG,
+  ERR_INFO = ANDROID_LOG_INFO,
+  ERR_WARN = ANDROID_LOG_WARN,
+  ERR_ERROR = ANDROID_LOG_ERROR,
+  ERR_FATAL = ANDROID_LOG_ERROR
+#else
+  ERR_DEBUG,
+  ERR_INFO,
+  ERR_WARN,
+  ERR_ERROR,
+  ERR_FATAL,
+  ERR_MAX
+#endif
+} err_lvl_t;
+
+typedef void (*err_cb_f)(err_lvl_t, const char *, ...);
+
+/**
+ * Sets function to output error messages
+ */
+SPHINXBASE_EXPORT void
+err_callback(err_cb_f callback);
+
+SPHINXBASE_EXPORT void
+err_msg(err_lvl_t lvl, const char *path, long ln, const char *fmt, ...);
+
+#if   defined __ANDROID__
+SPHINXBASE_EXPORT void
+err_logcat_cb(err_lvl_t level, const char *fmt, ...);
+#elif defined _WIN32_WCE
+SPHINXBASE_EXPORT void
+err_wince_cb(err_lvl_t level, const char *fmt, ...);
+#else
+SPHINXBASE_EXPORT void
+err_stderr_cb(err_lvl_t level, const char *fmt, ...);
+#endif
 
 /**
  * Set debugging verbosity level.
@@ -186,38 +218,14 @@ int err_set_debug_level(int level);
 SPHINXBASE_EXPORT
 int err_get_debug_level(void);
 
-/**
- * Print debugging information to standard error stream.
- *
- * This will only print a message if:
- *  1. Debugging is enabled at compile time
- *  2. The debug level is greater than or equal to \a level
- *
- * Note that for portability reasons the format and arguments must be
- * enclosed in an extra set of parentheses.
- */
-#ifdef SPHINX_DEBUG
-#define E_DEBUG(level,x) {                              \
-        if (err_get_debug_level() >= level) {           \
-            _E__pr_header(__FILE__, __LINE__, "DEBUG"); \
-            _E__pr_info x;                              \
-        }                                               \
-    }
-#define E_DEBUGCONT(level,x) {                          \
-        if (err_get_debug_level() >= level) {           \
-            _E__pr_info x;                              \
-        }                                               \
-    }
-#else
-#define E_DEBUG(level,x)
-#define E_DEBUGCONT(level,x)
-#endif
+static int local_errno;
+
+static char *err_fmt;
 
 #ifdef __cplusplus
 }
 #endif
 
-
 #endif /* !_ERR_H */
 
-
+/* vim: set ts=4 sw=4: */

@@ -97,13 +97,6 @@ typedef struct {} NGramModel;
 
 iterable(NGramModelSet, ngram_model_set, NGramModel)
 
-#if SWIGJAVA
-%rename(setLogFile) err_set_logfile;
-#elif SWIGPYTHON
-%rename(set_logfile) err_set_logfile;
-#endif
-int err_set_logfile(char const *);
-
 #ifdef HAS_DOC
 %include pydoc.i
 #endif
