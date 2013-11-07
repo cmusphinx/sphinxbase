@@ -84,7 +84,7 @@ extern "C" {
 #define E_FATAL(...)                               \
     do {                                           \
         err_msg(ERR_FATAL, FILELINE, __VA_ARGS__); \
-        exit(EXIT_FAILURE);                        \
+        exit(-1);                                  \
     } while (0)
 
 /**
