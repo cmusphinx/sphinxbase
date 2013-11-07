@@ -38,7 +38,7 @@
 
 %extend Jsgf {
 #if SWIGJAVA
-  %rename(name) getName
+  %rename(name) getName;
 #endif
 
   Jsgf(const char *path) {
