@@ -110,7 +110,7 @@ main(int argc, char *argv[])
         while (fgets(line, sizeof(line), logfh)) {
             string_trim(line, STRING_BOTH);
             printf("%s: |%s|\n", logfile, line);
-            TEST_EQUAL(0, strcmp(line, "INFO: \"test_tls_log.c\", line 66: nfr = 1436"));
+            TEST_EQUAL(0, strcmp(line, "INFO: test_tls_log.c(66): nfr = 1436"));
         }
         fclose(logfh);
     }

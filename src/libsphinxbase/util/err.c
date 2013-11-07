@@ -81,7 +81,10 @@ err_msg(err_lvl_t lvl, const char *path, long ln, const char *fmt, ...)
 
     if (path) {
         fname = strdup(path);
-        err_cb(err_user_data, lvl, "\"%s\", line %ld: %s", basename(fname), ln, msg);
+        if (lvl == ERR_INFO)
+            err_cb(err_user_data, lvl, "%s(%ld): %s", basename(fname), ln, msg);
+        else
+    	    err_cb(err_user_data, lvl, "\"%s\", line %ld: %s", basename(fname), ln, msg);
         free(fname);
     } else {
         err_cb(err_user_data, lvl, "%s", msg);
