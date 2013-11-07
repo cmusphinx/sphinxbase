@@ -338,7 +338,7 @@ parse_string_list(const char *str)
 {
     int count, i, j;
     const char *p;
-    char ** resulpt;
+    char ** result;
 
     p = str;
     count = 1;
