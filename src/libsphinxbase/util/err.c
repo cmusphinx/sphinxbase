@@ -57,6 +57,19 @@ static int    logfp_disabled = FALSE;
 static int sphinx_debug_level;
 
 #if   defined __ANDROID__
+
+#ifdef __ANDROID__
+#include <android/log.h>
+#endif
+
+#if   defined __ANDROID__
+static void
+err_logcat_cb(void* user_data, err_lvl_t level, const char *fmt, ...);
+#elif defined _WIN32_WCE
+static void
+err_wince_cb(void* user_data, err_lvl_t level, const char *fmt, ...);
+#endif
+
 static err_cb_f err_cb = err_logcat_cb;
 #elif defined _WIN32_WCE
 static err_cb_f err_cb = err_wince_cb;
@@ -98,16 +111,19 @@ err_msg(err_lvl_t lvl, const char *path, long ln, const char *fmt, ...)
 }
 
 #if   defined __ANDROID__
-void
+static void
 err_logcat_cb(void *user_data, err_lvl_t lvl, const char *fmt, ...)
 {
+    static const int android_level[ERR_MAX] = {ANDROID_LOG_DEBUG, ANDROID_LOG_INFO,
+         ANDROID_LOG_INFO, ANDROID_LOG_WARN, ANDROID_LOG_ERROR, ANDROID_LOG_ERROR};
+
     va_list ap;
     va_start(ap, fmt);
-    __android_log_vprint(lvl, "cmusphinx", fmt, ap);
+    __android_log_vprint(android_level[lvl], "cmusphinx", fmt, ap);
     va_end(ap);
 }
 #elif defined _WIN32_WCE
-void
+static void
 err_wince_cb(void *user_data, err_lvl_t lvl, const char *fmt, ...)
 {
     char msg[1024];

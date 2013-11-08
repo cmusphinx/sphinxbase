@@ -47,10 +47,6 @@
 /* Win32/WinCE DLL gunk */
 #include <sphinxbase/sphinxbase_export.h>
 
-#ifdef __ANDROID__
-#include <android/log.h>
-#endif
-
 /**
  * @file err.h
  * @brief Implementation of logging routines.
@@ -164,14 +160,6 @@ extern "C" {
 #endif
 
 typedef enum err_e {
-#ifdef __ANDROID__
-    ERR_DEBUG = ANDROID_LOG_DEBUG,
-    ERR_INFOCONT = ANDROID_LOG_INFO,
-    ERR_INFO = ANDROID_LOG_INFO,
-    ERR_WARN = ANDROID_LOG_WARN,
-    ERR_ERROR = ANDROID_LOG_ERROR,
-    ERR_FATAL = ANDROID_LOG_ERROR
-#else
     ERR_DEBUG,
     ERR_INFO,
     ERR_INFOCONT,
@@ -179,23 +167,13 @@ typedef enum err_e {
     ERR_ERROR,
     ERR_FATAL,
     ERR_MAX
-#endif
 } err_lvl_t;
 
 SPHINXBASE_EXPORT void
 err_msg(err_lvl_t lvl, const char *path, long ln, const char *fmt, ...);
 
-#if   defined __ANDROID__
-SPHINXBASE_EXPORT void
-err_logcat_cb(void* user_data, err_lvl_t level, const char *fmt, ...);
-#elif defined _WIN32_WCE
-SPHINXBASE_EXPORT void
-err_wince_cb(void* user_data, err_lvl_t level, const char *fmt, ...);
-#else
 SPHINXBASE_EXPORT void
 err_logfp_cb(void * user_data, err_lvl_t level, const char *fmt, ...);
-#endif
-
 
 typedef void (*err_cb_f)(void* user_data, err_lvl_t, const char *, ...);
 
