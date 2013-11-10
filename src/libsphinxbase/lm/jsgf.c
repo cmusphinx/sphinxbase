@@ -333,9 +333,9 @@ expand_rhs(jsgf_t *grammar, jsgf_rule_t *rule, jsgf_rhs_t *rhs,
             jsgf_rule_stack_t *rule_stack_entry;
 
             /* Special case for <NULL> and <VOID> pseudo-rules             
-	       If this is the only atom in the rhs, and it's the 
-	       first rhs in the rule, then emit a null transition, 
-	       creating an exit state if needed. */
+               If this is the only atom in the rhs, and it's the 
+               first rhs in the rule, then emit a null transition, 
+               creating an exit state if needed. */
             if (0 == strcmp(atom->name, "<NULL>")) {
                 if (gn == rhs->atoms && gnode_next(gn) == NULL) {
                     if (rule_exit == NO_NODE) {
@@ -406,7 +406,6 @@ expand_rhs(jsgf_t *grammar, jsgf_rule_t *rule, jsgf_rhs_t *rhs,
                exit state yet.
                Otherwise, the rhs's exit state becomes the containing
                rule's exit state. */
-
             int exitstate;
             if (gnode_next(gn) == NULL && rule_exit >= 0) {
                 exitstate = rule_exit;
@@ -466,7 +465,7 @@ expand_rule(jsgf_t *grammar, jsgf_rule_t *rule, int rule_entry,
         } else if (lastnode == RECURSIVE_NODE) {
             /* The rhs ended with right-recursion, i.e. a transition to
                an earlier state. Nothing needs to happen at this level. */
-    	    ;
+            ;
         } else if (rule_exit == NO_NODE) {
             /* If this rule doesn't have an exit state yet, use the exit
              state of its first right-hand-side.
@@ -537,6 +536,12 @@ jsgf_build_fsg_internal(jsgf_t *grammar, jsgf_rule_t *rule,
        top-level rule. */
     rule_entry = grammar->nstate++;
     rule_exit = expand_rule(grammar, rule, rule_entry, NO_NODE);
+
+    /* If no exit-state was created, create one. */
+    if (rule_exit == NO_NODE) {
+        rule_exit = grammar->nstate++;
+        jsgf_add_link(grammar, NULL, rule_entry, rule_exit);
+    }
 
     fsg = fsg_model_init(rule->name, lmath, lw, grammar->nstate);
     fsg->start_state = rule_entry;
