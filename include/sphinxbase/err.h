@@ -72,6 +72,8 @@ extern "C" {
 }
 #endif
 
+#define E_SYSCALL(stmt, ...)  if (stmt) E_FATAL_SYSTEM(__VA_ARGS__);
+
 #define FILELINE  __FILE__ , __LINE__
 
 /**
