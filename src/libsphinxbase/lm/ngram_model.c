@@ -798,12 +798,14 @@ ngram_add_word_internal(ngram_model_t *model,
 {
 
     /* Check for hash collisions. */
-    void *val;
-    if (hash_table_lookup(model->wid, word, &val) == 0)
-        return *(int32 *) val;
+    int32 wid;
+    if (hash_table_lookup_int32(model->wid, word, &wid) == 0) {
+        E_WARN("Omit duplicate word '%s'\n", word);
+        return wid;
+    }
 
     /* Take the next available word ID */
-    int32 wid = model->n_words;
+    wid = model->n_words;
     if (classid >= 0) {
         wid = NGRAM_CLASSWID(wid, classid);
     }
