@@ -806,7 +806,7 @@ ngram_add_word_internal(ngram_model_t *model,
     }
     /* Check for hash collisions. */
     if (hash_table_lookup(model->wid, word, &dummy) == 0) {
-        E_ERROR("Duplicate definition of word %s\n", word);
+        E_ERROR("Duplicate definition of word `%s`\n", word);
         return NGRAM_INVALID_WID;
     }
     /* Reallocate word_str if necessary. */
