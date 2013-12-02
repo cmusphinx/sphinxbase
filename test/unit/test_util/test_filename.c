@@ -22,6 +22,8 @@ main(int argc, char *argv[])
     path2basename(testname, testout);
     TEST_EQUAL(0, strcmp("quux.argh", testout));
 
+    TEST_EQUAL(0, strcmp("quux.argh", path_get_basename(testname)));
+
     path2dirname(testname, testout);
     TEST_EQUAL(0, strcmp("/foo/bar/baz", testout));
 

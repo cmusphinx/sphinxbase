@@ -36,27 +36,7 @@
  */
 /*
  * filename.c -- File and path name operations.
- *
- * **********************************************
- * CMU ARPA Speech Project
- *
- * Copyright (c) 1999 Carnegie Mellon University.
- * ALL RIGHTS RESERVED.
- * **********************************************
- * 
- * HISTORY
- * $Log: filename.c,v $
- * Revision 1.5  2005/06/22 03:01:07  arthchan2003
- * Added  keyword
- *
- * Revision 1.3  2005/03/30 01:22:48  archan
- * Fixed mistakes in last updates. Add
- *
- * 
- * 30-Oct-1997	M K Ravishankar (rkm@cs.cmu.edu) at Carnegie Mellon University.
- * 		Started.
  */
-
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -68,7 +48,6 @@
 #ifdef _MSC_VER
 #pragma warning (disable: 4996)
 #endif
-
 
 /* Strip off all leading pathname components */
 void
@@ -83,6 +62,19 @@ path2basename(const char *path, char *base)
     for (i = l - 1; (i >= 0) && !(path[i] == '/'); --i);
 #endif
     strcpy(base, path + i + 1);
+}
+
+const char *
+path_get_basename(const char *path)
+{
+    const char *result;    
+    result = strrchr(path, '\\');
+    if (result == NULL)
+	result = strrchr(path, '/');
+    if (result == NULL)
+	return path;
+    else
+	return result + 1;
 }
 
 /* Return all leading pathname components */

@@ -41,7 +41,6 @@
 
 #include "config.h"
 
-#include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -50,6 +49,7 @@
 
 #include "sphinxbase/err.h"
 #include "sphinxbase/prim_type.h"
+#include "sphinxbase/filename.h"
 
 static FILE*  logfp = NULL;
 static int    logfp_disabled = FALSE;
@@ -97,14 +97,13 @@ err_msg(err_lvl_t lvl, const char *path, long ln, const char *fmt, ...)
     va_end(ap);
 
     if (path) {
-        fname = strdup(path);
+        fname = path_get_basename(path);
         if (lvl == ERR_INFOCONT)
-    	    err_cb(err_user_data, lvl, "%s(%ld): %s", basename(fname), ln, msg);
+    	    err_cb(err_user_data, lvl, "%s(%ld): %s", fname, ln, msg);
         else if (lvl == ERR_INFO)
-            err_cb(err_user_data, lvl, "%s: %s(%ld): %s", err_prefix[lvl], basename(fname), ln, msg);
+            err_cb(err_user_data, lvl, "%s: %s(%ld): %s", err_prefix[lvl], fname, ln, msg);
         else
-    	    err_cb(err_user_data, lvl, "%s: \"%s\", line %ld: %s", err_prefix[lvl], basename(fname), ln, msg);
-        free(fname);
+    	    err_cb(err_user_data, lvl, "%s: \"%s\", line %ld: %s", err_prefix[lvl], fname, ln, msg);
     } else {
         err_cb(err_user_data, lvl, "%s", msg);
     }
@@ -146,12 +145,12 @@ err_wince_cb(void *user_data, err_lvl_t lvl, const char *fmt, ...)
 void
 err_logfp_cb(void *user_data, err_lvl_t lvl, const char *fmt, ...)
 {
-
+    va_list ap;
     FILE *fp = err_get_logfp();
+
     if (!fp)
         return;
     
-    va_list ap;
     va_start(ap, fmt);
     vfprintf(fp, fmt, ap);
     va_end(ap);

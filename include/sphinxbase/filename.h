@@ -84,6 +84,12 @@ SPHINXBASE_EXPORT
 void path2basename(const char *path, char *base);
 
 /**
+ * Returns the last part of the path, without modifying anything in memory.
+ */
+SPHINXBASE_EXPORT
+const char *path_get_basename(const char *path);
+
+/**
  * Strip off filename from the given path and copy the directory name into dir
  * Caller must have allocated dir (hint: it's always shorter than path).
  */
