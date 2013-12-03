@@ -86,7 +86,6 @@ err_msg(err_lvl_t lvl, const char *path, long ln, const char *fmt, ...)
     };
 
     char msg[1024];
-    char *fname;
     va_list ap;
 
     if (!err_cb)
@@ -97,7 +96,7 @@ err_msg(err_lvl_t lvl, const char *path, long ln, const char *fmt, ...)
     va_end(ap);
 
     if (path) {
-        fname = path_get_basename(path);
+        const char *fname = path_get_basename(path);
         if (lvl == ERR_INFOCONT)
     	    err_cb(err_user_data, lvl, "%s(%ld): %s", fname, ln, msg);
         else if (lvl == ERR_INFO)
