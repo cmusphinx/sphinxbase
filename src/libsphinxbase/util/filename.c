@@ -49,21 +49,6 @@
 #pragma warning (disable: 4996)
 #endif
 
-/* Strip off all leading pathname components */
-void
-path2basename(const char *path, char *base)
-{
-    int32 i, l;
-
-    l = strlen(path);
-#if defined(_WIN32) || defined(__CYGWIN__)
-    for (i = l - 1; (i >= 0) && !(path[i] == '/' || path[i] == '\\'); --i);
-#else
-    for (i = l - 1; (i >= 0) && !(path[i] == '/'); --i);
-#endif
-    strcpy(base, path + i + 1);
-}
-
 const char *
 path_get_basename(const char *path)
 {

@@ -77,13 +77,6 @@ extern "C" {
 #endif
 
 /**
- * Strip off leading path components from the given path and copy the base into base.
- * Caller must have allocated base (hint: it's always shorter than path).
- */
-SPHINXBASE_EXPORT
-void path2basename(const char *path, char *base);
-
-/**
  * Returns the last part of the path, without modifying anything in memory.
  */
 SPHINXBASE_EXPORT
