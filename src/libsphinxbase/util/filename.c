@@ -50,16 +50,17 @@
 #endif
 
 const char *
-path_get_basename(const char *path)
+path2basename(const char *path)
 {
-    const char *result;    
+    const char *result;
+
+#if defined(_WIN32) || defined(__CYGWIN__)
     result = strrchr(path, '\\');
-    if (result == NULL)
-	result = strrchr(path, '/');
-    if (result == NULL)
-	return path;
-    else
-	return result + 1;
+#else
+    result = strrchr(path, '/');
+#endif
+
+    return (result == NULL ? path : result + 1);
 }
 
 /* Return all leading pathname components */

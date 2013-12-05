@@ -92,11 +92,11 @@ err_msg(err_lvl_t lvl, const char *path, long ln, const char *fmt, ...)
         return;
 
     va_start(ap, fmt);
-    vsnprintf(msg, sizeof msg, fmt, ap);
+    vsnprintf(msg, sizeof(msg), fmt, ap);
     va_end(ap);
 
     if (path) {
-        const char *fname = path_get_basename(path);
+        const char *fname = path2basename(path);
         if (lvl == ERR_INFOCONT)
     	    err_cb(err_user_data, lvl, "%s(%ld): %s", fname, ln, msg);
         else if (lvl == ERR_INFO)

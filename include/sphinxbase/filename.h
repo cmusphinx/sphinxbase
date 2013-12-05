@@ -80,7 +80,7 @@ extern "C" {
  * Returns the last part of the path, without modifying anything in memory.
  */
 SPHINXBASE_EXPORT
-const char *path_get_basename(const char *path);
+const char *path2basename(const char *path);
 
 /**
  * Strip off filename from the given path and copy the directory name into dir
