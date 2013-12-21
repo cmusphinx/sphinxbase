@@ -53,8 +53,8 @@
  * Windows math.h does not contain M_PI
  */
 #ifndef M_PI
-#define M_PI		3.14159265358979323846  /* pi */
-#endif                          // M_PI
+#define M_PI 3.14159265358979323846
+#endif
 
 #include "sphinxbase/prim_type.h"
 #include "sphinxbase/ckd_alloc.h"

@@ -225,10 +225,10 @@ fe_remove_noise(noise_stats_t * noise_stats, powspec_t * mfspec)
     fe_temp_masking(signal, noise_stats->peak, num_filts);
 
     for (i = 0; i < num_filts; i++) {
-        //zero (or close to it) region should be substituted with floor envelope
+        /* zero (or close to it) region should be substituted with floor envelope */
         if (signal[i] < noise_stats->floor[i])
             signal[i] = noise_stats->floor[i];
-        //non-excitation segment
+        /* non-excitation segment */
         if (signal[i] < EXCITATION_THRESHOLD * noise_stats->noise[i])
             signal[i] = noise_stats->floor[i];
     }
