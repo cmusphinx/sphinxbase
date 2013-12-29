@@ -80,11 +80,7 @@ struct noise_stats_s {
 #define LAMBDA_B 0.5
 #define LAMBDA_T 0.85
 #define MU_T 0.2
-#define EXCITATION_THRESHOLD 2.0
-#define LOG_FLOOR 1e-4
 #define MAX_GAIN 20
-
-#define EPS 1e-10
 
 static void
 fe_low_envelope(powspec_t * buf, powspec_t * floor_buf, int32 num_filt)
@@ -225,17 +221,14 @@ fe_remove_noise(noise_stats_t * noise_stats, powspec_t * mfspec)
     fe_temp_masking(signal, noise_stats->peak, num_filts);
 
     for (i = 0; i < num_filts; i++) {
-        /* zero (or close to it) region should be substituted with floor envelope */
         if (signal[i] < noise_stats->floor[i])
-            signal[i] = noise_stats->floor[i];
-        /* non-excitation segment */
-        if (signal[i] < EXCITATION_THRESHOLD * noise_stats->noise[i])
             signal[i] = noise_stats->floor[i];
     }
 
     for (i = 0; i < num_filts; i++) {
-        gain[i] = signal[i] / (noise_stats->power[i] + EPS);
-        if (gain[i] > MAX_GAIN)
+        if (signal[i] < MAX_GAIN * noise_stats->power[i])
+            gain[i] = signal[i] / noise_stats->power[i];
+        else
             gain[i] = MAX_GAIN;
         if (gain[i] < 1.0 / MAX_GAIN)
             gain[i] = 1.0 / MAX_GAIN;
