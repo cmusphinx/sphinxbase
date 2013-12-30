@@ -51,6 +51,8 @@
 #include <config.h>
 #endif
 
+#include <math.h>
+
 #include "sphinxbase/prim_type.h"
 #include "sphinxbase/ckd_alloc.h"
 
