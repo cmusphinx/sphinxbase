@@ -261,15 +261,6 @@ fe_log_add(fixed32 x, fixed32 y)
 {
     fixed32 d, r;
 
-    if (x < MIN_FIXLOG) {
-	if (y < MIN_FIXLOG)
-	    return MIN_FIXLOG;
-	else
-	    return y;
-    }
-    if (y < MIN_FIXLOG)
-	return x;
-
     if (x > y) {
         d = (x - y) >> (DEFAULT_RADIX - 8);
         r = x;
@@ -278,7 +269,10 @@ fe_log_add(fixed32 x, fixed32 y)
         d = (y - x) >> (DEFAULT_RADIX - 8);
         r = y;
     }
-    if (d > fe_logadd_table_size - 1)
+
+    if (r <= MIN_FIXLOG)
+	return MIN_FIXLOG;
+    else if (d > fe_logadd_table_size - 1)
         return r;
     else {
         r += ((fixed32) fe_logadd_table[d] << (DEFAULT_RADIX - 8));

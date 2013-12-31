@@ -194,18 +194,19 @@ fixlog2(uint32 x)
         return MIN_FIXLOG2;
 
     /* Get the exponent. */
-#if defined(__GNUC__) && defined(__i386__) 
-  __asm__("bsrl %1, %0\n": "=r"(y): "g"(x):"cc");
-    x <<= (31 - y);
+#if ((defined(__ARM_ARCH_5__) || defined(__ARM_ARCH_5T__) || \
+      defined(__ARM_ARCH_5TE__)) && !defined(__thumb__))
+  __asm__("clz %0, %1\n": "=r"(y):"r"(x));
+    x <<= y;
+    y = 31 - y;
 #elif defined(__ppc__)
   __asm__("cntlzw %0, %1\n": "=r"(y):"r"(x));
     x <<= y;
     y = 31 - y;
-#elif ((defined(__ARM_ARCH_5__) || defined(__ARM_ARCH_5T__) || \
-        defined(__ARM_ARCH_5TE__)) && !defined(__thumb__))
-  __asm__("clz %0, %1\n": "=r"(y):"r"(x));
+#elif __GNUC__ >= 4
+    y = __builtin_clz(x);
     x <<= y;
-    y = 31 - y;
+    y = (31 - y);
 #else
     for (y = 31; y > 0; --y) {
         if (x & 0x80000000)
@@ -223,10 +224,6 @@ int
 fixlog(uint32 x)
 {
     int32 y;
-
-    if (x == 0)
-        return MIN_FIXLOG;
-
     y = fixlog2(x);
     return FIXMUL(y, FIXLN_2);
 }
