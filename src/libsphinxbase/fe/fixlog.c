@@ -195,7 +195,7 @@ fixlog2(uint32 x)
 
     /* Get the exponent. */
 #if ((defined(__ARM_ARCH_5__) || defined(__ARM_ARCH_5T__) || \
-      defined(__ARM_ARCH_5TE__)) && !defined(__thumb__))
+      defined(__ARM_ARCH_5TE__) || defined(__ARM_ARCH_7A__)) && !defined(__thumb__))
   __asm__("clz %0, %1\n": "=r"(y):"r"(x));
     x <<= y;
     y = 31 - y;
