@@ -290,7 +290,7 @@ fe_remove_noise(noise_stats_t * noise_stats, powspec_t * mfspec)
     					   noise_stats->comp_lambda_power + mfspec[i]);
 #else
         noise_stats->power[i] =
-            noise_state->lambda_power * noise_stats->power[i] + noise_stats->comp_lambda_power * mfspec[i];
+            noise_stats->lambda_power * noise_stats->power[i] + noise_stats->comp_lambda_power * mfspec[i];
 #endif            
     }
 
