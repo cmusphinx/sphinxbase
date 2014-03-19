@@ -1,5 +1,7 @@
 %include <exception.i>
 
+%apply int {int32};
+
 #if SWIGPYTHON
 %include python.i
 #elif SWIGJAVA

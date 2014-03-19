@@ -1,6 +1,4 @@
 // camelCase method names
-%apply int {int32};
-
 %rename("%(lowercamelcase)s", notregexmatch$name="^[A-Z]") "";
 %include <arrays_java.i>
 
