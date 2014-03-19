@@ -182,6 +182,9 @@
     <ClCompile Include="..\..\src\libsphinxbase\fe\fe_noise.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\libsphinxbase\fe\fe_prespch_buf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\ad.h">
@@ -368,6 +371,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\libsphinxbase\fe\fe_noise.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libsphinxbase\fe\fe_prespch_buf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

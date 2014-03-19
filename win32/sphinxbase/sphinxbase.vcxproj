@@ -149,6 +149,7 @@
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <ClCompile Include="..\..\src\libsphinxbase\fe\fe_noise.c" />
+    <ClCompile Include="..\..\src\libsphinxbase\fe\fe_prespch_buf.c" />
     <ClCompile Include="..\..\src\libsphinxbase\util\bio.c">
       <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -398,6 +399,7 @@
     <ClInclude Include="..\..\include\fe.h" />
     <ClInclude Include="..\..\src\libsphinxbase\fe\fe_internal.h" />
     <ClInclude Include="..\..\src\libsphinxbase\fe\fe_noise.h" />
+    <ClInclude Include="..\..\src\libsphinxbase\fe\fe_prespch_buf.h" />
     <ClInclude Include="..\..\src\libsphinxbase\fe\fe_warp.h" />
     <ClInclude Include="..\..\src\libsphinxbase\fe\fe_warp_affine.h" />
     <ClInclude Include="..\..\src\libsphinxbase\fe\fe_warp_inverse_linear.h" />

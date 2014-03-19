@@ -46,6 +46,7 @@
 #include "sphinxbase/fixpoint.h"
 
 #include "fe_noise.h"
+#include "fe_prespch_buf.h"
 #include "fe_type.h"
 
 #ifdef __cplusplus
@@ -114,10 +115,23 @@ typedef struct ringbuf_s {
 /* sqrt(1/2), also used for unitary DCT-II/DCT-III */
 #define SQRT_HALF FLOAT2MFCC(0.707106781186548)
 
+typedef struct vad_data_s {
+    uint8 global_state;
+    uint8 local_state;
+    uint8 state_changed;
+    uint8 store_pcm;
+    int16 prespch_num;
+    int16 postspch_num;
+    prespch_buf_t* prespch_buf;	
+} vad_data_t;
+
 /** Structure for the front-end computation. */
 struct fe_s {
     cmd_ln_t *config;
     int refcount;
+
+    int16 prespch_len;
+    int16 postspch_len;
 
     float32 sampling_rate;
     int16 frame_rate;
@@ -152,6 +166,9 @@ struct fe_s {
     window_t *hamming_window;
     /* Storage for noise removal  */
     noise_stats_t *noise_stats;
+
+    /* Storage for VAD variables */
+    vad_data_t *vad_data;
 
     /* Temporary buffers for processing. */
     /* FIXME: too many of these. */
@@ -189,7 +206,7 @@ int fe_read_frame(fe_t *fe, int16 const *in, int32 len);
 int fe_shift_frame(fe_t *fe, int16 const *in, int32 len);
 
 /* Process a frame of data into features. */
-int32 fe_write_frame(fe_t *fe, mfcc_t *fea);
+void fe_write_frame(fe_t *fe, mfcc_t *fea);
 
 /* Initialization functions. */
 int32 fe_build_melfilters(melfb_t *MEL_FB);
