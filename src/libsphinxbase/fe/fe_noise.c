@@ -214,7 +214,7 @@ fe_init_noisestats(int num_filters)
     noise_stats->lambda_b = LAMBDA_B;
     noise_stats->comp_lambda_b = 1 - LAMBDA_B;
     noise_stats->lambda_t = LAMBDA_T;
-    noise_stats->mu_t = 1 - LAMBDA_T;
+    noise_stats->mu_t = MU_T;
     noise_stats->max_gain = MAX_GAIN;
     noise_stats->inv_max_gain = 1.0 / MAX_GAIN;
     
@@ -229,7 +229,7 @@ fe_init_noisestats(int num_filters)
     noise_stats->lambda_b = FLOAT2FIX(log(LAMBDA_B));
     noise_stats->comp_lambda_b = FLOAT2FIX(log(1 - LAMBDA_B));
     noise_stats->lambda_t = FLOAT2FIX(log(LAMBDA_T));
-    noise_stats->mu_t = FLOAT2FIX(log(1 - LAMBDA_T));
+    noise_stats->mu_t = FLOAT2FIX(log(MU_T));
     noise_stats->max_gain = FLOAT2FIX(log(MAX_GAIN));
     noise_stats->inv_max_gain = FLOAT2FIX(log(1.0 / MAX_GAIN));
 

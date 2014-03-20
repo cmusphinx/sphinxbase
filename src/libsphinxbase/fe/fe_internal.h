@@ -180,20 +180,6 @@ struct fe_s {
     int16 prior;
 };
 
-#define BB_SAMPLING_RATE 16000
-#define DEFAULT_BB_FFT_SIZE 512
-#define DEFAULT_BB_FRAME_SHIFT 160
-#define DEFAULT_BB_NUM_FILTERS 40
-#define DEFAULT_BB_LOWER_FILT_FREQ 133.33334
-#define DEFAULT_BB_UPPER_FILT_FREQ 6855.4976
-
-#define NB_SAMPLING_RATE 8000
-#define DEFAULT_NB_FFT_SIZE 256
-#define DEFAULT_NB_FRAME_SHIFT 80
-#define DEFAULT_NB_NUM_FILTERS 31
-#define DEFAULT_NB_LOWER_FILT_FREQ 200
-#define DEFAULT_NB_UPPER_FILT_FREQ 3500
-
 void fe_init_dither(int32 seed);
 
 /* Apply 1/2 bit noise to a buffer of audio. */

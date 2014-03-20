@@ -591,7 +591,7 @@ fe_end_utt(fe_t * fe, mfcc_t * cepvector, int32 * nframes)
         fe_read_frame(fe, fe->overflow_samps, fe->num_overflow_samps);
         fe_write_frame(fe, cepvector);
         if (!fe->vad_data->state_changed && fe->vad_data->global_state)
-            *nframes++;
+            *nframes = *nframes + 1;
     }
 
     /* reset overflow buffers... */
