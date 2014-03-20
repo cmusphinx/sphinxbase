@@ -630,17 +630,19 @@ ngram_probv(ngram_model_t *model, const char *word, ...)
 int32
 ngram_prob(ngram_model_t *model, const char *const *words, size_t n)
 {
-    int32 *word_id;
+    int32 *ctx_id;
     int32 nused;
     int32 prob;
+    int32 wid;
     int i;
 
-    word_id = ckd_calloc(n, sizeof(*word_id));
-    for (i = 0; i < n; ++i)
-      word_id[i] = ngram_wid(model, words[i]);
+    ctx_id = ckd_calloc(n - 1, sizeof(*ctx_id));
+    for (i = 1; i < n; ++i)
+      ctx_id[i] = ngram_wid(model, words[i]);
 
-    prob = ngram_ng_prob(model, ngram_wid(model, *words), word_id, n, &nused);
-    ckd_free(word_id);
+    wid = ngram_wid(model, *words);
+    prob = ngram_ng_prob(model, wid, ctx_id, n - 1, &nused);
+    ckd_free(ctx_id);
     
     return prob;
 }
