@@ -93,11 +93,11 @@ typedef struct {} Config;
 typedef struct {} FrontEnd;
 typedef struct {} Feature;
 typedef struct {} FsgModel;
-typedef struct {} Jsgf;
 typedef struct {} JsgfRule;
 typedef struct {} NGramModel;
 
 iterable(NGramModelSet, ngram_model_set, NGramModel)
+iterable(Jsgf, jsgf_rule, JsgfRule)
 
 #ifdef HAS_DOC
 %include pydoc.i
