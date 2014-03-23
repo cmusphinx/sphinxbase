@@ -41,10 +41,6 @@
 
 %extend Config {
 
-    Config() {
-      return NULL;
-    }
-
     ~Config() {
         cmd_ln_free_r($self);
     }

@@ -87,6 +87,8 @@ typedef ngram_model_t NGramModel;
 typedef ngram_model_t NGramModelSet;
 %}
 
+%nodefaultctor Config;
+
 typedef struct {} Config;
 typedef struct {} FrontEnd;
 typedef struct {} Feature;
