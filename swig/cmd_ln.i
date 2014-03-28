@@ -35,10 +35,6 @@
  *
  */
 
-#if SWIGJAVA
-%javamethodmodifiers Config::Config "private";
-#endif
-
 %extend Config {
 
     ~Config() {
