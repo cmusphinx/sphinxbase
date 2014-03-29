@@ -229,9 +229,6 @@
     <ClInclude Include="..\..\include\f2c.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\fe.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\libsphinxbase\fe\fe_internal.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -374,6 +371,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\libsphinxbase\fe\fe_prespch_buf.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\sphinxbase\fe.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

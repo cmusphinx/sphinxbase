@@ -1398,8 +1398,7 @@ fe_write_frame(fe_t * fe, mfcc_t * fea)
 {
     fe_spec_magnitude(fe);
     fe_mel_spec(fe);
-    if (fe->remove_noise)
-        fe->vad_data->local_state = fe_remove_noise(fe->noise_stats, fe->mfspec);
+    fe_track_snr(fe);
     fe_mel_cep(fe, fea);
     fe_lifter(fe, fea);
     fe_vad_hangover(fe, fea);

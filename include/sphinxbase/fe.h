@@ -231,7 +231,12 @@ extern "C" {
     ARG_BOOLEAN, \
     "yes", \
     "Remove noise with spectral subtraction in mel-energies" }, \
-                                                                              \
+                                                                \
+  { "-remove_silence", \
+    ARG_BOOLEAN, \
+    "yes", \
+    "Enables VAD, removes silence frames from processing" }, \
+                                                             \
   { "-verbose", \
     ARG_BOOLEAN, \
     "no", \

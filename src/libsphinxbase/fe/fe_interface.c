@@ -116,6 +116,7 @@ fe_parse_general_params(cmd_ln_t *config, fe_t * fe)
 
     fe->remove_dc = cmd_ln_boolean_r(config, "-remove_dc");
     fe->remove_noise = cmd_ln_boolean_r(config, "-remove_noise");
+    fe->remove_silence = cmd_ln_boolean_r(config, "-remove_silence");
 
     if (0 == strcmp(cmd_ln_str_r(config, "-transform"), "dct"))
         fe->transform = DCT_II;

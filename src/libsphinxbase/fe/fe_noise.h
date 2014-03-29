@@ -60,8 +60,9 @@ void
  fe_free_noisestats(noise_stats_t * noise_stats);
 
 /* Process frame, update noise statistics, 
-   remove noise components, makes and returns local vad decision*/
-uint8
- fe_remove_noise(noise_stats_t * noise_stats, powspec_t * mfspec);
+   remove noise components if needed, 
+   makes local vad decision*/
+void
+ fe_track_snr(fe_t * fe);
 
 #endif                          /* FE_NOISE_H */

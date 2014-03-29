@@ -150,6 +150,7 @@ struct fe_s {
     uint8 dither;
     uint8 transform;
     uint8 remove_noise;
+    uint8 remove_silence;
 
     float32 pre_emphasis_alpha;
     int32 seed;

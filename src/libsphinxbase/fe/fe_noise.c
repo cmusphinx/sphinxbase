@@ -261,20 +261,29 @@ fe_free_noisestats(noise_stats_t * noise_stats)
  * For fixed point we are doing the computation in a fixlog domain,
  * so we have to add many processing cases.
  */
-uint8
-fe_remove_noise(noise_stats_t * noise_stats, powspec_t * mfspec)
+void
+fe_track_snr(fe_t * fe)
 {
     powspec_t *signal;
     powspec_t *gain;
+    noise_stats_t *noise_stats;
+    powspec_t *mfspec;
     int32 i, num_filts;
-    uint8 local_vad_state;
 
     float lrt, snr;
 
+    if (!fe->remove_noise && !fe->remove_silence) {
+        //than nothing to do here,
+        //vad decision is always 1, to process everything
+        fe->vad_data->local_state = 1;
+        return;
+    }
+
+    noise_stats = fe->noise_stats;
+    mfspec = fe->mfspec;
     num_filts = noise_stats->num_filters;
 
     signal = (powspec_t *) ckd_calloc(num_filts, sizeof(powspec_t));
-    gain = (powspec_t *) ckd_calloc(num_filts, sizeof(powspec_t));
 
     if (noise_stats->undefined) {
         for (i = 0; i < num_filts; i++) {
@@ -320,17 +329,24 @@ fe_remove_noise(noise_stats_t * noise_stats, powspec_t * mfspec)
             lrt = snr;
     }
 
-    local_vad_state = lrt > VAD_THRESHOLD;
+    fe->vad_data->local_state = lrt > VAD_THRESHOLD;
 
     fe_low_envelope(noise_stats, signal, noise_stats->floor, num_filts);
 
     fe_temp_masking(noise_stats, signal, noise_stats->peak, num_filts);
+
+    if (!fe->remove_noise) {
+        //no need for further calculations if noise cancellation disabled
+        ckd_free(signal);
+        return;
+    }
 
     for (i = 0; i < num_filts; i++) {
         if (signal[i] < noise_stats->floor[i])
             signal[i] = noise_stats->floor[i];
     }
 
+    gain = (powspec_t *) ckd_calloc(num_filts, sizeof(powspec_t));
 #ifndef FIXED_POINT
     for (i = 0; i < num_filts; i++) {
         if (signal[i] < noise_stats->max_gain * noise_stats->power[i])
@@ -353,8 +369,8 @@ fe_remove_noise(noise_stats_t * noise_stats, powspec_t * mfspec)
     /* Weight smoothing and time frequency normalization */
     fe_weight_smooth(noise_stats, mfspec, gain, num_filts);
 
-    ckd_free(signal);
+    if (!fe->remove_silence)
+        fe->vad_data->local_state = 1;
     ckd_free(gain);
-
-    return local_vad_state;
+    ckd_free(signal);
 }
