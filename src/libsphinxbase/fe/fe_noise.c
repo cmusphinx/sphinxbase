@@ -71,7 +71,7 @@
 #define MAX_GAIN 20
 
 /* VAD constants */
-#define VAD_THRESHOLD 2.6
+#define VAD_THRESHOLD 2.0
 
 struct noise_stats_s {
     /* Smoothed power */
