@@ -244,7 +244,8 @@ fe_init_noisestats(int num_filters)
 void
 fe_reset_noisestats(noise_stats_t * noise_stats)
 {
-    noise_stats->undefined = TRUE;
+    if (noise_stats)
+        noise_stats->undefined = TRUE;
 }
 
 void
@@ -272,7 +273,7 @@ fe_track_snr(fe_t * fe)
 
     float lrt, snr;
 
-    if (!fe->remove_noise && !fe->remove_silence) {
+    if (!(fe->remove_noise || fe->remove_silence)) {
         //than nothing to do here,
         //vad decision is always 1, to process everything
         fe->vad_data->local_state = 1;
@@ -329,7 +330,10 @@ fe_track_snr(fe_t * fe)
             lrt = snr;
     }
 
-    fe->vad_data->local_state = lrt > VAD_THRESHOLD;
+    if (fe->remove_silence)
+        fe->vad_data->local_state = lrt > VAD_THRESHOLD;
+    else
+        fe->vad_data->local_state = 1;
 
     fe_low_envelope(noise_stats, signal, noise_stats->floor, num_filts);
 
@@ -369,8 +373,6 @@ fe_track_snr(fe_t * fe)
     /* Weight smoothing and time frequency normalization */
     fe_weight_smooth(noise_stats, mfspec, gain, num_filts);
 
-    if (!fe->remove_silence)
-        fe->vad_data->local_state = 1;
     ckd_free(gain);
     ckd_free(signal);
 }

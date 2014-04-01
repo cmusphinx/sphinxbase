@@ -264,7 +264,7 @@ fe_init_auto_r(cmd_ln_t *config)
     fe_build_melfilters(fe->mel_fb);
 
     fe_compute_melcosine(fe->mel_fb);
-    if (fe->remove_noise)
+    if (fe->remove_noise || fe->remove_silence)
         fe->noise_stats = fe_init_noisestats(fe->mel_fb->num_filters);
 
     fe->vad_data = (vad_data_t*)ckd_calloc(1, sizeof(*fe->vad_data));
@@ -640,7 +640,7 @@ fe_free(fe_t * fe)
     ckd_free(fe->overflow_samps);
     ckd_free(fe->hamming_window);
 
-    if (fe->remove_noise)
+    if (fe->remove_noise || fe->remove_silence)
         fe_free_noisestats(fe->noise_stats);
 
     fe_free_prespch(fe->vad_data->prespch_buf);
