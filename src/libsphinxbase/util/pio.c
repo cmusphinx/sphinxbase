@@ -427,7 +427,7 @@ fread_retry(void *pointer, int32 size, int32 num_items, FILE * stream)
             --n_retry_rem;
 
             loc += n_items_read * size;
-#ifdef HAVE_UNISTD_H
+#if !defined(_WIN32) && defined(HAVE_UNISTD_H)
             sleep(1);
 #endif
         }

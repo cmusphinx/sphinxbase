@@ -23,7 +23,6 @@ libsphinxutil_la_SOURCES = \
 	hash_table.c \
 	heap.c \
 	huff_code.c \
-	info.c \
 	logmath.c \
 	mmio.c \
 	pio.c \
@@ -31,7 +30,6 @@ libsphinxutil_la_SOURCES = \
 	profile.c \
 	sbthread.c \
 	strfuncs.c \
-	unlimit.c \
 	utf8.c \
 	$(LAPACK_LITE_SRCS)
 

@@ -50,7 +50,6 @@
 #include <sphinxbase/prim_type.h>
 #include <sphinxbase/cmd_ln.h>
 #include <sphinxbase/ckd_alloc.h>
-#include <sphinxbase/info.h>
 #include <sphinxbase/err.h>
 #include <sphinxbase/bio.h>
 #include <sphinxbase/pio.h>
@@ -121,7 +120,6 @@ main(int argc, char *argv[])
     float *z, **cep;
     char const *cepfile;
 
-    print_appl_info(argv[0]);
     cmd_ln_appl_enter(argc, argv, "default.arg", arg);
 
     vsize = cmd_ln_int32("-i");
