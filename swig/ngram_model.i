@@ -37,6 +37,13 @@
 
 
 %extend NGramModel {
+    NGramModel(const char*path) {
+        logmath_t *lmath = logmath_init(1.0001, 0, 0);
+        ngram_model_t * model = ngram_model_read(NULL, path, NGRAM_AUTO, lmath);
+        logmath_free(lmath);
+        return model;
+    }
+
     NGramModel(Config *config, LogMath *logmath, const char *path) {
         return ngram_model_read(config, path, NGRAM_AUTO, logmath);
     }
