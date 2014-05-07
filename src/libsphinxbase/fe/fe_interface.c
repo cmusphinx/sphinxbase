@@ -325,12 +325,11 @@ fe_init_dither(int32 seed)
 static void
 fe_reset_vad_data(vad_data_t * vad_data)
 {
-    vad_data->global_state = 1;
+    vad_data->global_state = 0;
     vad_data->local_state = 0;
     vad_data->state_changed = 0;
     vad_data->prespch_num = 0;
     vad_data->postspch_num = 0;
-    vad_data->frame_idx = 0;
     fe_reset_prespch_cep(vad_data->prespch_buf);
 }
 
@@ -365,8 +364,6 @@ fe_get_input_size(fe_t *fe, int *out_frame_shift,
 uint8
 fe_get_vad_state(fe_t *fe)
 {
-    if (fe->vad_data->frame_idx < fe->postspch_len)
-        return 0;
     return fe->vad_data->global_state;
 }
 
@@ -377,7 +374,7 @@ fe_process_frames(fe_t *fe,
                   mfcc_t **buf_cep,
                   int32 *inout_nframes)
 {
-    int outidx, i, n_overflow, orig_n_overflow;
+    int outidx, n_overflow, orig_n_overflow;
     int16 const *orig_spch;
 
     /* In the special case where there is no output buffer, return the
