@@ -42,6 +42,7 @@
 #include "sphinxbase/strfuncs.h"
 #include "sphinxbase/hash_table.h"
 #include "sphinxbase/err.h"
+#include "sphinxbase/jsgf.h"
 
 #include "jsgf_internal.h"
 #include "jsgf_parser.h"
