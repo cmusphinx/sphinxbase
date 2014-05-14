@@ -41,9 +41,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifndef _WIN32_WCE
 #include <errno.h>
-#endif
 
 /* Win32/WinCE DLL gunk */
 #include <sphinxbase/sphinxbase_export.h>
