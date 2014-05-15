@@ -8,6 +8,7 @@ dist_swig_DATA = \
 	fsg_model.i \
 	java.i \
 	jsgf.i \
+	logmath.i \
 	ngram_model.i \
 	python.i \
 	sphinxbase.i \

@@ -95,6 +95,7 @@ typedef struct {} Feature;
 typedef struct {} FsgModel;
 typedef struct {} JsgfRule;
 typedef struct {} NGramModel;
+typedef struct {} LogMath;
 
 iterable(NGramModelSet, ngram_model_set, NGramModel)
 iterable(Jsgf, jsgf_rule, JsgfRule)
@@ -108,3 +109,4 @@ iterable(Jsgf, jsgf_rule, JsgfRule)
 %include fsg_model.i
 %include jsgf.i
 %include ngram_model.i
+%include logmath.i
