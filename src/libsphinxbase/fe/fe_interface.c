@@ -547,7 +547,6 @@ fe_process_frames_ext(fe_t *fe,
     fe->vad_data->store_pcm = 1;
     *voiced_spch_nsamps = 0;
     fe_reinit_prespch_pcm(fe->vad_data->prespch_buf, *inout_nframes);
-    fe_reinit_prespch_pcm(fe->vad_data->prespch_buf, *inout_nframes);
     proc_result = fe_process_frames(fe, inout_spch, inout_nsamps, buf_cep, inout_nframes);
     if (fe->vad_data->global_state)
         fe_prespch_read_pcm(fe->vad_data->prespch_buf, voiced_spch, voiced_spch_nsamps);
