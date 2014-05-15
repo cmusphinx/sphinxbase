@@ -12,6 +12,7 @@
   }
 }
 
+// Special typemap for string array
 %typemap(in) (size_t n, char **ptr) {
   /* Check if is a list */
   if (PyList_Check($input)) {
