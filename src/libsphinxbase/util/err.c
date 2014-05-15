@@ -50,6 +50,7 @@
 #include "sphinxbase/err.h"
 #include "sphinxbase/prim_type.h"
 #include "sphinxbase/filename.h"
+#include "sphinxbase/ckd_alloc.h"
 
 static FILE*  logfp = NULL;
 static int    logfp_disabled = FALSE;
