@@ -267,7 +267,7 @@ read_cep(char const *file, float ***cep, int *numframes, int cepsize)
     return IO_SUCCESS;
 }
 
-/** Silvio Moioli: Windows CE/Mobile entry point added. */
+/** Windows CE/Mobile entry point added. */
 #if defined(_WIN32_WCE)
 #pragma comment(linker,"/entry:mainWCRTStartup")
 

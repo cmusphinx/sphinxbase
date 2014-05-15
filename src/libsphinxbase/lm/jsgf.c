@@ -100,13 +100,12 @@ jsgf_grammar_new(jsgf_t *parent)
         grammar->rules = hash_table_new(64, 0);
         grammar->imports = hash_table_new(16, 0);
 
-        /* Silvio Moioli: no getenv() in Windows CE */
-        #if !defined(_WIN32_WCE)
+/* No getenv() in Windows CE */
+#if !defined(_WIN32_WCE)
         if ((jsgf_path = getenv("JSGF_PATH")) != NULL) {
             char *word, *c;
 
             /* FIXME: This should be a function in libsphinxbase. */
-            /* FIXME: Also nextword() is totally useless... */
             word = jsgf_path = ckd_salloc(jsgf_path);
             while ((c = strchr(word, ':'))) {
                 *c = '\0';
@@ -120,7 +119,7 @@ jsgf_grammar_new(jsgf_t *parent)
             /* Default to current directory. */
             grammar->searchpath = glist_add_ptr(grammar->searchpath, ckd_salloc("."));
         }
-        #endif 
+#endif 
     }
 
     return grammar;

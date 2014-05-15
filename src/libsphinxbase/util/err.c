@@ -61,6 +61,7 @@ static int sphinx_debug_level;
 static void
 err_logcat_cb(void* user_data, err_lvl_t level, const char *fmt, ...);
 #elif defined(_WIN32_WCE)
+#include <windows.h>
 static void
 err_wince_cb(void* user_data, err_lvl_t level, const char *fmt, ...);
 #endif
@@ -88,7 +89,11 @@ err_msg(err_lvl_t lvl, const char *path, long ln, const char *fmt, ...)
         return;
 
     va_start(ap, fmt);
+#ifdef _WIN32_WCE
+    _vsnprintf(msg, sizeof(msg), fmt, ap);
+#else
     vsnprintf(msg, sizeof(msg), fmt, ap);
+#endif
     va_end(ap);
 
     if (path) {

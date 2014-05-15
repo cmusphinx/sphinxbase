@@ -128,7 +128,7 @@ ckd_fail(char *format, ...)
     va_end(args);
 
     if (jmp_abort)
-        /* Silvio Moioli: abort() doesn't exist in Windows CE */
+        /* abort() doesn't exist in Windows CE */
         #if defined(_WIN32_WCE)
         exit(-1);
         #else
