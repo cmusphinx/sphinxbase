@@ -37,8 +37,7 @@ EXTRA_DIST = \
 	slamch.c \
 	slapack_lite.c \
 	blas_lite.c \
-	f2c_lite.c \
-	errno.c
+	f2c_lite.c
 
 INCLUDES = -I$(top_srcdir)/include/sphinxbase \
 	   -I$(top_srcdir)/include \

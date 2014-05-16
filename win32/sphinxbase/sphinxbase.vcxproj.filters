@@ -47,9 +47,6 @@
     <ClCompile Include="..\..\src\libsphinxbase\util\err.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\libsphinxbase\util\errno.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\libsphinxbase\util\f2c_lite.c">
       <Filter>Source Files</Filter>
     </ClCompile>

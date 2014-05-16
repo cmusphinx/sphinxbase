@@ -63,6 +63,7 @@ static void
 err_logcat_cb(void* user_data, err_lvl_t level, const char *fmt, ...);
 #elif defined(_WIN32_WCE)
 #include <windows.h>
+#define vsnprintf _vsnprintf
 static void
 err_wince_cb(void* user_data, err_lvl_t level, const char *fmt, ...);
 #endif
@@ -90,11 +91,7 @@ err_msg(err_lvl_t lvl, const char *path, long ln, const char *fmt, ...)
         return;
 
     va_start(ap, fmt);
-#ifdef _WIN32_WCE
-    _vsnprintf(msg, sizeof(msg), fmt, ap);
-#else
     vsnprintf(msg, sizeof(msg), fmt, ap);
-#endif
     va_end(ap);
 
     if (path) {
@@ -109,6 +106,85 @@ err_msg(err_lvl_t lvl, const char *path, long ln, const char *fmt, ...)
         err_cb(err_user_data, lvl, "%s", msg);
     }
 }
+
+#ifdef _WIN32_WCE /* No strerror for WinCE, so a separate implementation */
+void
+err_msg_system(err_lvl_t lvl, const char *path, long ln, const char *fmt, ...)
+{
+    static const char *err_prefix[ERR_MAX] = {
+        "DEBUG", "INFO", "INFOCONT", "WARN", "ERROR", "FATAL"
+    };
+
+    char msg[1024];
+    va_list ap;
+    LPVOID error_string;
+    DWORD error;
+
+    if (!err_cb)
+        return;
+
+    error = GetLastError();
+    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | 
+                  FORMAT_MESSAGE_FROM_SYSTEM | 
+                  FORMAT_MESSAGE_IGNORE_INSERTS,
+                  NULL,
+                  error,
+                  0, // Default language
+                  (LPTSTR) &error_string,
+                  0,
+                  NULL);
+
+    va_start(ap, fmt);
+    vsnprintf(msg, sizeof(msg), fmt, ap);
+    va_end(ap);
+
+    if (path) {
+        const char *fname = path2basename(path);
+        if (lvl == ERR_INFOCONT)
+    	    err_cb(err_user_data, lvl, "%s(%ld): %s: %s\n", fname, ln, msg, error_string);
+        else if (lvl == ERR_INFO)
+            err_cb(err_user_data, lvl, "%s: %s(%ld): %s: %s\n", err_prefix[lvl], fname, ln, msg, error_string);
+        else
+    	    err_cb(err_user_data, lvl, "%s: \"%s\", line %ld: %s: %s\n", err_prefix[lvl], fname, ln, msg, error_string);
+    } else {
+        err_cb(err_user_data, lvl, "%s: %s\n", msg, error_string);
+    }
+
+    LocalFree(error_string);
+}
+#else
+void
+err_msg_system(err_lvl_t lvl, const char *path, long ln, const char *fmt, ...)
+{
+    int local_errno = errno;
+    
+    static const char *err_prefix[ERR_MAX] = {
+        "DEBUG", "INFO", "INFOCONT", "WARN", "ERROR", "FATAL"
+    };
+
+    char msg[1024];
+    va_list ap;
+
+    if (!err_cb)
+        return;
+
+    va_start(ap, fmt);
+    vsnprintf(msg, sizeof(msg), fmt, ap);
+    va_end(ap);
+
+    if (path) {
+        const char *fname = path2basename(path);
+        if (lvl == ERR_INFOCONT)
+    	    err_cb(err_user_data, lvl, "%s(%ld): %s: %s\n", fname, ln, msg, strerror(local_errno));
+        else if (lvl == ERR_INFO)
+            err_cb(err_user_data, lvl, "%s: %s(%ld): %s: %s\n", err_prefix[lvl], fname, ln, msg, strerror(local_errno));
+        else
+    	    err_cb(err_user_data, lvl, "%s: \"%s\", line %ld: %s: %s\n", err_prefix[lvl], fname, ln, msg, strerror(local_errno));
+    } else {
+        err_cb(err_user_data, lvl, "%s: %s\n", msg, strerror(local_errno));
+    }
+}
+#endif
 
 #if defined(__ANDROID__)
 static void
