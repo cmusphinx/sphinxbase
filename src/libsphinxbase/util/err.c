@@ -115,10 +115,11 @@ err_msg_system(err_lvl_t lvl, const char *path, long ln, const char *fmt, ...)
         "DEBUG", "INFO", "INFOCONT", "WARN", "ERROR", "FATAL"
     };
 
-    char msg[1024];
     va_list ap;
-    LPVOID error_string;
+    LPVOID error_wstring;
     DWORD error;
+    char msg[1024];
+    char error_string[1024];
 
     if (!err_cb)
         return;
@@ -130,9 +131,11 @@ err_msg_system(err_lvl_t lvl, const char *path, long ln, const char *fmt, ...)
                   NULL,
                   error,
                   0, // Default language
-                  (LPTSTR) &error_string,
+                  (LPTSTR) &error_wstring,
                   0,
                   NULL);
+    ret = wcstombs(error_string, error_wstring, 1023);
+    LocalFree(error_wstring);
 
     va_start(ap, fmt);
     vsnprintf(msg, sizeof(msg), fmt, ap);
@@ -149,8 +152,6 @@ err_msg_system(err_lvl_t lvl, const char *path, long ln, const char *fmt, ...)
     } else {
         err_cb(err_user_data, lvl, "%s: %s\n", msg, error_string);
     }
-
-    LocalFree(error_string);
 }
 #else
 void
