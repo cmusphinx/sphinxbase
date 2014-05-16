@@ -287,7 +287,6 @@ fe_init_auto_r(cmd_ln_t *config)
         fe_print_current(fe);
     }
 
-    /*** Z.A.B. ***/
     /*** Initialize the overflow buffers ***/
     fe_start_utt(fe);
     return fe;
@@ -634,6 +633,7 @@ fe_free(fe_t * fe)
         fe_free_noisestats(fe->noise_stats);
 
     fe_free_prespch(fe->vad_data->prespch_buf);
+    ckd_free(fe->vad_data);
 
     cmd_ln_free_r(fe->config);
     ckd_free(fe);
