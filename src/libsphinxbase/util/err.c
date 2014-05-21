@@ -134,7 +134,7 @@ err_msg_system(err_lvl_t lvl, const char *path, long ln, const char *fmt, ...)
                   (LPTSTR) &error_wstring,
                   0,
                   NULL);
-    ret = wcstombs(error_string, error_wstring, 1023);
+    wcstombs(error_string, error_wstring, 1023);
     LocalFree(error_wstring);
 
     va_start(ap, fmt);
