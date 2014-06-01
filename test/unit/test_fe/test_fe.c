@@ -87,7 +87,7 @@ main(int argc, char *argv[])
     nfr = 5;
     nsamp = 1024;
     TEST_EQUAL(0, fe_start_utt(fe));
-    TEST_ASSERT(fe_process_frames(fe, &inptr, &nsamp, cepbuf2, &nfr) >= 0);
+    TEST_ASSERT(fe_process_frames(fe, &inptr, &nsamp, cepbuf2, &nfr, NULL) >= 0);
     /* First 1024 samples of chan3.raw is silence, nfr is expected to stay 0 */
     printf("nfr %d\n", nfr);
     TEST_EQUAL(nfr, 0);
@@ -125,25 +125,25 @@ main(int argc, char *argv[])
     i = 5;
     nsamp = 256;
     TEST_EQUAL(0, fe_start_utt(fe));
-    TEST_ASSERT(fe_process_frames(fe, &inptr, &nsamp, cptr, &i) >= 0);
+    TEST_ASSERT(fe_process_frames(fe, &inptr, &nsamp, cptr, &i, NULL) >= 0);
     printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, i);
     cptr += i;
     nfr -= i;
     i = nfr;
     nsamp = 256;
-    TEST_ASSERT(fe_process_frames(fe, &inptr, &nsamp, cptr, &i) >= 0);
+    TEST_ASSERT(fe_process_frames(fe, &inptr, &nsamp, cptr, &i, NULL) >= 0);
     printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, i);
     cptr += i;
     nfr -= i;
     i = nfr;
     nsamp = 256;
-    TEST_ASSERT(fe_process_frames(fe, &inptr, &nsamp, cptr, &i) >= 0);
+    TEST_ASSERT(fe_process_frames(fe, &inptr, &nsamp, cptr, &i, NULL) >= 0);
     printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, i);
     cptr += i;
     nfr -= i;
     i = nfr;
     nsamp = 256;
-    TEST_ASSERT(fe_process_frames(fe, &inptr, &nsamp, cptr, &i) >= 0);
+    TEST_ASSERT(fe_process_frames(fe, &inptr, &nsamp, cptr, &i, NULL) >= 0);
     printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, i);
     cptr += i;
     nfr -= i;
