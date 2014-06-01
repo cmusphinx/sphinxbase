@@ -1402,6 +1402,8 @@ fe_write_frame(fe_t * fe, mfcc_t * fea)
     fe_mel_cep(fe, fea);
     fe_lifter(fe, fea);
     fe_vad_hangover(fe, fea, is_speech);
+
+    fe->frame_counter++;
 }
 
 
