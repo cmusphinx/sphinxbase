@@ -270,7 +270,7 @@ fe_init_auto_r(cmd_ln_t *config)
 
     fe->vad_data = (vad_data_t*)ckd_calloc(1, sizeof(*fe->vad_data));
     prespch_frame_len = fe->log_spec != RAW_LOG_SPEC ? fe->num_cepstra : fe->mel_fb->num_filters;
-    fe->vad_data->prespch_buf = fe_init_prespch(fe->prespch_len + 1, prespch_frame_len, fe->frame_shift);
+    fe->vad_data->prespch_buf = fe_prespch_init(fe->prespch_len + 1, prespch_frame_len, fe->frame_shift);
 
     /* Create temporary FFT, spectrum and mel-spectrum buffers. */
     /* FIXME: Gosh there are a lot of these. */
@@ -326,11 +326,10 @@ static void
 fe_reset_vad_data(vad_data_t * vad_data)
 {
     vad_data->global_state = 0;
-    vad_data->local_state = 0;
     vad_data->state_changed = 0;
     vad_data->prespch_num = 0;
     vad_data->postspch_num = 0;
-    fe_reset_prespch_cep(vad_data->prespch_buf);
+    fe_prespch_reset_cep(vad_data->prespch_buf);
 }
 
 int32
@@ -386,6 +385,9 @@ fe_process_frames(fe_t *fe,
             *inout_nframes = 1
                 + ((*inout_nsamps + fe->num_overflow_samps - fe->frame_size)
                    / fe->frame_shift);
+        if (fe->vad_data->global_state)
+    	    *inout_nframes += fe_prespch_ncep(fe->vad_data->prespch_buf);
+    	printf("!!!!! %d %d", *inout_nframes, fe_prespch_ncep(fe->vad_data->prespch_buf));
         return *inout_nframes;
     }
 
@@ -546,7 +548,7 @@ fe_process_frames_ext(fe_t *fe,
 
     fe->vad_data->store_pcm = 1;
     *voiced_spch_nsamps = 0;
-    fe_reinit_prespch_pcm(fe->vad_data->prespch_buf, *inout_nframes);
+    fe_prespch_reinit_pcm(fe->vad_data->prespch_buf, *inout_nframes);
     proc_result = fe_process_frames(fe, inout_spch, inout_nsamps, buf_cep, inout_nframes);
     if (fe->vad_data->global_state)
         fe_prespch_read_pcm(fe->vad_data->prespch_buf, voiced_spch, voiced_spch_nsamps);
@@ -633,7 +635,7 @@ fe_free(fe_t * fe)
     if (fe->remove_noise || fe->remove_silence)
         fe_free_noisestats(fe->noise_stats);
 
-    fe_free_prespch(fe->vad_data->prespch_buf);
+    fe_prespch_free(fe->vad_data->prespch_buf);
     ckd_free(fe->vad_data);
 
     cmd_ln_free_r(fe->config);
