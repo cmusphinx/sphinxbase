@@ -440,7 +440,6 @@ fe_process_frames(fe_t *fe,
         /* Sets the start frame for the returned data so that caller can update timings */
         if (out_frameidx && fe->vad_data->state_changed) {
             *out_frameidx = fe->frame_counter - fe->prespch_len;
-            printf("Returning frame %d\n", *out_frameidx);
         }
     }
 
@@ -484,7 +483,6 @@ fe_process_frames(fe_t *fe,
         /* Sets the start frame for the returned data so that caller can update timings */
         if (out_frameidx) {
             *out_frameidx = fe->frame_counter - fe->prespch_len;
-            printf("Returning frame %d\n", *out_frameidx);
         }
     }
 
