@@ -267,8 +267,7 @@ fe_track_snr(fe_t * fe, int32 *in_speech)
     noise_stats_t *noise_stats;
     powspec_t *mfspec;
     int32 i, num_filts;
-
-    float lrt, snr;
+    powspec_t lrt, snr;
 
     if (!(fe->remove_noise || fe->remove_silence)) {
         *in_speech = TRUE;
@@ -310,7 +309,7 @@ fe_track_snr(fe_t * fe, int32 *in_speech)
     /* Noise estimation and vad decision */
     fe_lower_envelope(noise_stats, noise_stats->power, noise_stats->noise, num_filts);
 
-    lrt = 0.0;
+    lrt = FLOAT2MFCC(-10.0);
     for (i = 0; i < num_filts; i++) {
 #ifndef FIXED_POINT
         signal[i] = noise_stats->power[i] - noise_stats->noise[i];
