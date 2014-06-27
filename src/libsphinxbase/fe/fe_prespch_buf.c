@@ -172,6 +172,8 @@ fe_prespch_reset_pcm(prespch_buf_t * prespch_buf)
 void
 fe_prespch_free(prespch_buf_t * prespch_buf)
 {
+    if (!prespch_buf)
+	return;
     if (prespch_buf->cep_buf)
         ckd_free_2d((void **) prespch_buf->cep_buf);
     if (prespch_buf->pcm_init && prespch_buf->pcm_buf)

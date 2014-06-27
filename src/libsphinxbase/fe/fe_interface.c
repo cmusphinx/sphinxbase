@@ -655,8 +655,10 @@ fe_free(fe_t * fe)
     if (fe->remove_noise || fe->remove_silence)
         fe_free_noisestats(fe->noise_stats);
 
-    fe_prespch_free(fe->vad_data->prespch_buf);
-    ckd_free(fe->vad_data);
+    if (fe->vad_data) {
+        fe_prespch_free(fe->vad_data->prespch_buf);
+	ckd_free(fe->vad_data);
+    }
 
     cmd_ln_free_r(fe->config);
     ckd_free(fe);

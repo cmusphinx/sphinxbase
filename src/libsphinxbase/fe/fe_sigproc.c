@@ -653,8 +653,8 @@ fe_build_melfilters(melfb_t * mel_fb)
                 E_FATAL
                     ("Failed to create filterbank, frequency range does not match. "
                      "Sample rate %f, FFT size %d, lowerf %f < freq %f > upperf %f.\n",
-                     mel_fb->sampling_rate, mel_fb->fft_size, freqs[2], hz,
-                     freqs[0]);
+                     mel_fb->sampling_rate, mel_fb->fft_size, freqs[0], hz,
+                     freqs[2]);
             }
             loslope = (hz - freqs[0]) / (freqs[1] - freqs[0]);
             hislope = (freqs[2] - hz) / (freqs[2] - freqs[1]);
