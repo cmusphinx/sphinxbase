@@ -165,10 +165,16 @@ cmn_prior(cmn_t *cmn, mfcc_t **incep, int32 varnorm, int32 nfr)
         return;
 
     for (i = 0; i < nfr; i++) {
+
+	/* Skip zero energy frames */
+	if (incep[i][0] < 0)
+	    continue;
+
         for (j = 0; j < cmn->veclen; j++) {
             cmn->sum[j] += incep[i][j];
             incep[i][j] -= cmn->cmn_mean[j];
         }
+
         ++cmn->nframe;
     }
 
