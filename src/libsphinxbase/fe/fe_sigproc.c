@@ -558,11 +558,11 @@ fe_build_melfilters(melfb_t * mel_fb)
 
     /* Filter coefficient matrix, in flattened form. */
     mel_fb->spec_start =
-        ckd_malloc(mel_fb->num_filters * sizeof(*mel_fb->spec_start));
+        ckd_calloc(mel_fb->num_filters, sizeof(*mel_fb->spec_start));
     mel_fb->filt_start =
-        ckd_malloc(mel_fb->num_filters * sizeof(*mel_fb->filt_start));
+        ckd_calloc(mel_fb->num_filters, sizeof(*mel_fb->filt_start));
     mel_fb->filt_width =
-        ckd_malloc(mel_fb->num_filters * sizeof(*mel_fb->filt_width));
+        ckd_calloc(mel_fb->num_filters, sizeof(*mel_fb->filt_width));
 
     /* First calculate the widths of each filter. */
     /* Minimum and maximum frequencies in mel scale. */

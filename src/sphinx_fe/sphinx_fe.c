@@ -733,6 +733,10 @@ sphinx_wave2feat_init(cmd_ln_t *config)
     wtf->refcount = 1;
     wtf->config = cmd_ln_retain(config);
     wtf->fe = fe_init_auto_r(wtf->config);
+    if (!wtf->fe) {
+	E_FATAL("Failed to create feature extraction\n");
+    }
+
     wtf->ot = outtypes; /* Default (sphinx) type. */
     for (i = 0; i < nouttypes; ++i) {
         output_type_t const *otype = &outtypes[i];
