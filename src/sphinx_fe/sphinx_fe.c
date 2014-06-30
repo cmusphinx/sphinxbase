@@ -705,7 +705,7 @@ output_frames_text(sphinx_wave2feat_t *wtf, mfcc_t **frames, int nfr)
     fe_mfcc_to_float(wtf->fe, frames, (float32 **)frames, nfr);
     for (i = 0; i < nfr; ++i) {
         for (j = 0; j < wtf->veclen; ++j) {
-            fprintf(wtf->outfh, "%.5g", frames[i][j]);
+            fprintf(wtf->outfh, "%.5g", MFCC2FLOAT(frames[i][j]));
             if (j == wtf->veclen - 1)
                 fprintf(wtf->outfh, "\n");
             else
