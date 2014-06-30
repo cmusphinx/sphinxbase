@@ -574,13 +574,17 @@ fe_process_frames_ext(fe_t *fe,
 {
     int proc_result;
 
-    fe->vad_data->store_pcm = 1;
-    *voiced_spch_nsamps = 0;
-    fe_prespch_reinit_pcm(fe->vad_data->prespch_buf, *inout_nframes);
+    fe_prespch_extend_pcm(fe->vad_data->prespch_buf, *inout_nframes);
+
+    fe->vad_data->store_pcm = TRUE;
     proc_result = fe_process_frames(fe, inout_spch, inout_nsamps, buf_cep, inout_nframes, NULL);
+    fe->vad_data->store_pcm = FALSE;
+
     if (fe->vad_data->global_state)
         fe_prespch_read_pcm(fe->vad_data->prespch_buf, voiced_spch, voiced_spch_nsamps);
-    fe->vad_data->store_pcm = 0;
+    else
+	*voiced_spch_nsamps = 0;
+
     return proc_result;
 }
 

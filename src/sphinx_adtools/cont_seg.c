@@ -276,5 +276,6 @@ main(int argc, char *argv[])
         fclose(infile);
 
     fe_free(fe);
+    cmd_ln_free_r(config);
     return 0;
 }
