@@ -126,7 +126,7 @@ mmio_file_ptr(mmio_file_t *mf)
     return (void *)mf;
 }
 
-#elif defined(WIN32) /* !WINCE */
+#elif defined(_WIN32) /* !WINCE */
 struct mmio_file_s {
 	int dummy;
 };
