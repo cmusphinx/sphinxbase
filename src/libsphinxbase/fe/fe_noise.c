@@ -215,7 +215,7 @@ fe_init_noisestats(int num_filters)
     noise_stats->max_gain = MAX_GAIN;
     noise_stats->inv_max_gain = 1.0 / MAX_GAIN;
     
-    for (i = 0; i < 2 * SMOOTH_WINDOW + 1; i++) {
+    for (i = 1; i < 2 * SMOOTH_WINDOW + 1; i++) {
         noise_stats->smooth_scaling[i] = 1.0 / i;
     }
 #else

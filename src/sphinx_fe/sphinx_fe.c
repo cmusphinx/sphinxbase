@@ -179,7 +179,7 @@ open_nist_file(sphinx_wave2feat_t *wtf, char const *infile, FILE **out_fh, int d
         nword = str2words(li->buf, NULL, 0);
         if (nword != 3)
             continue;
-        words = ckd_calloc(nword, sizeof(*words));
+        words = (char **)ckd_calloc(nword, sizeof(*words));
         str2words(li->buf, words, nword);
         if (0 == strcmp(words[0], "sample_rate")) {
             cmd_ln_set_float32_r(wtf->config, "-samprate", atof_c(words[2]));
@@ -442,7 +442,7 @@ decode_pcm(sphinx_wave2feat_t *wtf)
 {
     size_t nsamp;
     int32 nfr, nchans, whichchan;
-    int nfloat, n;
+    uint32 nfloat, n;
 
     nchans = cmd_ln_int32_r(wtf->config, "-nchans");
     whichchan = cmd_ln_int32_r(wtf->config, "-whichchan");
@@ -729,7 +729,7 @@ sphinx_wave2feat_init(cmd_ln_t *config)
     sphinx_wave2feat_t *wtf;
     int i;
 
-    wtf = ckd_calloc(1, sizeof(*wtf));
+    wtf = (sphinx_wave2feat_t *)ckd_calloc(1, sizeof(*wtf));
     wtf->refcount = 1;
     wtf->config = cmd_ln_retain(config);
     wtf->fe = fe_init_auto_r(wtf->config);
@@ -893,14 +893,14 @@ sphinx_wave2feat_convert_file(sphinx_wave2feat_t *wtf,
                (fsize + fshift) * nchans);
         wtf->blocksize = (fsize + fshift) * nchans;
     }
-    wtf->audio = ckd_calloc(wtf->blocksize, sizeof(*wtf->audio));
+    wtf->audio = (short *)ckd_calloc(wtf->blocksize, sizeof(*wtf->audio));
     wtf->featsize = (wtf->blocksize / nchans - fsize) / fshift;
 
     /* Use the maximum of the input and output frame sizes to allocate this. */
     veclen = wtf->veclen;
     if (wtf->in_veclen > veclen) veclen = wtf->in_veclen;
     
-    wtf->feat = ckd_calloc_2d(wtf->featsize, veclen, sizeof(**wtf->feat));
+    wtf->feat = (mfcc_t**)ckd_calloc_2d(wtf->featsize, veclen, sizeof(**wtf->feat));
 
     /* Let's go! */
     if ((wtf->outfh = fopen(outfile, "wb")) == NULL) {
