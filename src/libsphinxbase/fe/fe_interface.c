@@ -570,14 +570,15 @@ fe_process_frames_ext(fe_t *fe,
                   mfcc_t **buf_cep,
                   int32 *inout_nframes,
                   int16 **voiced_spch,
-                  int32 *voiced_spch_nsamps)
+                  int32 *voiced_spch_nsamps,
+                  int32 *out_frameidx)
 {
     int proc_result;
 
     fe_prespch_extend_pcm(fe->vad_data->prespch_buf, *inout_nframes);
 
     fe->vad_data->store_pcm = TRUE;
-    proc_result = fe_process_frames(fe, inout_spch, inout_nsamps, buf_cep, inout_nframes, NULL);
+    proc_result = fe_process_frames(fe, inout_spch, inout_nsamps, buf_cep, inout_nframes, out_frameidx);
     fe->vad_data->store_pcm = FALSE;
 
     if (fe->vad_data->global_state)

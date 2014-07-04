@@ -436,6 +436,7 @@ int fe_free(fe_t *fe);
  *
  * @param voiced_spch_nsamps Output: shows voiced_spch length
  *
+ * @param out_frameidx Output: index of the utterance start
  */
 SPHINXBASE_EXPORT
 int fe_process_frames_ext(fe_t *fe,
@@ -444,7 +445,8 @@ int fe_process_frames_ext(fe_t *fe,
                       mfcc_t **buf_cep,
                       int32 *inout_nframes,
                       int16 **voiced_spch,
-                      int32 *voiced_spch_nsamps);
+                      int32 *voiced_spch_nsamps,
+                      int32 *out_frameidx);
 
 /** 
  * Process a block of samples.
