@@ -918,7 +918,7 @@ feat_cmn(feat_t *fcb, mfcc_t **mfc, int32 nfr, int32 beginutt, int32 endutt)
 
     if (!(beginutt && endutt)
         && cmn_type != CMN_NONE) /* Only cmn_prior in block computation mode. */
-        cmn_type = CMN_PRIOR;
+        fcb->cmn = cmn_type = CMN_PRIOR;
 
     switch (cmn_type) {
     case CMN_CURRENT:
@@ -1417,6 +1417,13 @@ feat_s2mfc2feat_live(feat_t * fcb, mfcc_t ** uttcep, int32 *inout_ncep,
         feat_subvec_project(fcb, ofeat, nfeatvec);
 
     return nfeatvec;
+}
+
+void 
+feat_update_stats(feat_t *fcb)
+{
+    if (fcb->cmn == CMN_PRIOR)
+        cmn_prior_update(fcb->cmn_struct);
 }
 
 feat_t *
