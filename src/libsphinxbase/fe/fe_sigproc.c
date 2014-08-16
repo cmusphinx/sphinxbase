@@ -71,7 +71,7 @@
  * coefficient, twiddle factors. */
 #ifdef FIXED_POINT
 #define FLOAT2COS(x) FLOAT2FIX_ANY(x,30)
-#define COSMUL(x,y) FIXMUL_ANY(x,y,30)
+#define COSMUL(x,y) FIXMUL_30(x,y)
 #else
 #define FLOAT2COS(x) (x)
 #define COSMUL(x,y) ((x)*(y))
