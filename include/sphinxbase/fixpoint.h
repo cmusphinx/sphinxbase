@@ -77,13 +77,7 @@ typedef int32 fixed32;
  *
  * A veritable multiplicity of implementations exist, starting with
  * the fastest ones...
- *
- * We use different implementation for different precisions
- * to balance between possible ranges and precision. Please also
- * note that FIXMUL_ANY makes sense for radix below 16 and causes
- * overflows otherwise.
  */
-
 
 #if defined(__arm__) && !defined(__thumb__)
 /* 
@@ -92,7 +86,6 @@ typedef int32 fixed32;
  * signal processing code in Thumb mode?!)
  */
 #define FIXMUL(a,b) FIXMUL_ANY(a,b,DEFAULT_RADIX)
-#define FIXMUL_30(a,b) FIXMUL_ANY(a,b,30)
 #define FIXMUL_ANY(a,b,r) ({				\
       int cl, ch, _a = a, _b = b;			\
       __asm__ ("smull %0, %1, %2, %3\n"			\
@@ -105,24 +98,23 @@ typedef int32 fixed32;
 #elif defined(_MSC_VER) || (defined(HAVE_LONG_LONG) && SIZEOF_LONG_LONG == 8) 
 /* Standard systems*/
 #define FIXMUL(a,b) FIXMUL_ANY(a,b,DEFAULT_RADIX)
-#define FIXMUL_30(a,b) FIXMUL_ANY(a,b,30)
 #define FIXMUL_ANY(a,b,radix) ((fixed32)(((int64)(a)*(b))>>(radix)))
 
 #else
 /* Most general case where 'long long' doesn't exist or is slow. */
 #define FIXMUL(a,b) FIXMUL_ANY(a,b,DEFAULT_RADIX)
-#define FIXMUL_30(a,b) \
-	(fixed32)(((((uint32)(a)) & 0xffff)	    \
-		* (((uint32)(b)) & 0xffff) >> 30)       \
-	+ (((((int32)(a)) >> 16) * (((int32)(b)) >> 16)) << 2) \
-	+ ((((((uint32)(a)) & 0xffff) * (((int32)(b)) >> 16)) \
-	+ ((((uint32)(b)) & 0xffff) * (((int32)(a)) >> 16))) >> 14))
-#define FIXMUL_ANY(a,b,radix) \
-	(fixed32)(((((uint32)(a)) & ((1<<(radix))-1))	    \
-		* (((uint32)(b)) & ((1<<(radix))-1)) >> (radix))       \
-	+ (((((int32)(a))>>(radix)) * (((int32)(b))>>(radix))) << (radix)) \
-	+ ((((uint32)(a)) & ((1<<(radix))-1)) * (((int32)(b))>>(radix))) \
-	+ ((((uint32)(b)) & ((1<<(radix))-1)) * (((int32)(a))>>(radix))))
+#define FIXMUL_ANY(a,b,radix) ({ \
+	int32 _ah, _bh; \
+	uint32 _al, _bl, _t, c; \
+	_ah = ((int32)(a)) >> 16; \
+	_bh = ((int32)(b)) >> 16; \
+	_al = ((uint32)(a)) & 0xffff; \
+	_bl = ((uint32)(b)) & 0xffff; \
+	_t = _ah * _bl + _al * _bh; \
+	c = (fixed32)(((_al * _bl) >> (radix)) \
+		      + ((_ah * _bh) << (32 - (radix))) \
+		      + ((radix) > 16 ? (_t >> (radix - 16)) : (_t << (16 - radix)))); \
+	c;})
 #endif
 
 /* Various fixed-point logarithmic functions that we need. */
