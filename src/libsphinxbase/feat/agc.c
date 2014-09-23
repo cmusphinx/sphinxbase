@@ -56,7 +56,7 @@
  * 04-Nov-95	M K Ravishankar (rkm@cs.cmu.edu) at Carnegie Mellon University
  * 		Created.
  */
-
+#include <assert.h>
 #include <string.h>
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -203,6 +203,9 @@ agc_noise(agc_t *agc,
             noise_frames++;
         }
     }
+    
+    assert(noise_frames != 0); /* If (nfr == 0), previous loop won't iterate and noise_frames will be zero when dividing. - HLW */
+    
     noise_level /= noise_frames;
 
     E_INFO("AGC NOISE: max= %6.3f\n", MFCC2FLOAT(noise_level));
