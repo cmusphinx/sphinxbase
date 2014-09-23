@@ -55,8 +55,10 @@
 #include "prim_type.h"
 #include "ad.h"
 
-#define QUIT(x)		{fprintf x; exit(-1);}
-
+ad_rec_s {
+    int32 sps;		/**< Samples/sec */
+    int32 bps;		/**< Bytes/sample */
+};
 
 ad_rec_t *
 ad_open_dev(const char *dev, int32 samples_per_sec)

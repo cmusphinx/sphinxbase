@@ -43,31 +43,7 @@
 
 #include <sphinx_config.h>
 
-#if defined (__CYGWIN__)
-#include <w32api/windows.h>
-#include <w32api/mmsystem.h>
-#elif (defined(_WIN32) && !defined(GNUWINCE)) || defined(_WIN32_WCE)
-#include <windows.h>
-#include <mmsystem.h>
-#elif defined(AD_BACKEND_JACK)
-#include <jack/jack.h>
-#include <jack/ringbuffer.h>
-#ifdef HAVE_SAMPLERATE_H
-#include <samplerate.h>
-#endif
-#elif defined(AD_BACKEND_PULSEAUDIO)
-#include <pulse/pulseaudio.h>
-#include <pulse/simple.h>
-#elif defined(AD_BACKEND_ALSA)
-#include <alsa/asoundlib.h>
-#elif defined(AD_BACKEND_OPENAL)
-#include <al.h>
-#include <alc.h>
-#endif
-
-/* Win32/WinCE DLL gunk */
 #include <sphinxbase/sphinxbase_export.h>
-
 #include <sphinxbase/prim_type.h>
 
 #ifdef __cplusplus
@@ -78,8 +54,8 @@ extern "C" {
 }
 #endif
 
-#define AD_SAMPLE_SIZE		(sizeof(int16))
 #define DEFAULT_SAMPLES_PER_SEC	16000
+#define DEFAULT_DEVICE NULL
 
 /* Return codes */
 #define AD_OK		0
@@ -88,125 +64,7 @@ extern "C" {
 #define AD_ERR_NOT_OPEN	-2
 #define AD_ERR_WAVE	-3
 
-
-#if (defined(_WIN32) || defined(AD_BACKEND_WIN32)) && !defined(GNUWINCE)
-typedef struct {
-    HGLOBAL h_whdr;
-    LPWAVEHDR p_whdr;
-    HGLOBAL h_buf;
-    LPSTR p_buf;
-} ad_wbuf_t;
-#endif
-
-
-/* ------------ RECORDING -------------- */
-
-/*
- * NOTE: ad_rec_t and ad_play_t are READ-ONLY structures for the user.
- */
-
-#if (defined(_WIN32) || defined(AD_BACKEND_WIN32)) && !defined(GNUWINCE)
-
-#define DEFAULT_DEVICE NULL
-
-/**
- * Audio recording structure. 
- */
-typedef struct ad_rec_s {
-    HWAVEIN h_wavein;	/* "HANDLE" to the audio input device */
-    ad_wbuf_t *wi_buf;	/* Recording buffers provided to system */
-    int32 n_buf;	/* #Recording buffers provided to system */
-    int32 opened;	/* Flag; A/D opened for recording */
-    int32 recording;
-    int32 curbuf;	/* Current buffer with data for application */
-    int32 curoff;	/* Start of data for application in curbuf */
-    int32 curlen;	/* #samples of data from curoff in curbuf */
-    int32 lastbuf;	/* Last buffer containing data after recording stopped */
-    int32 sps;		/* Samples/sec */
-    int32 bps;		/* Bytes/sample */
-} ad_rec_t;
-
-#elif defined(AD_BACKEND_OSS)
-
-#define DEFAULT_DEVICE "/dev/dsp"
-
-/** \struct ad_rec_t
- *  \brief Audio recording structure. 
- */
-typedef struct {
-    int32 dspFD;	/* Audio device descriptor */
-    int32 recording;
-    int32 sps;		/* Samples/sec */
-    int32 bps;		/* Bytes/sample */
-} ad_rec_t;
-
-#elif defined(AD_BACKEND_PULSEAUDIO)
-
-#define DEFAULT_DEVICE NULL
-
-typedef struct {
-    pa_simple* pa;
-    int32 recording;
-    int32 sps;
-    int32 bps;
-} ad_rec_t;
-
-#elif defined(AD_BACKEND_ALSA)
-
-#define DEFAULT_DEVICE "default"
-typedef struct {
-    snd_pcm_t *dspH;
-    int32 recording;
-    int32 sps;
-    int32 bps;
-} ad_rec_t;
-
-#elif defined(AD_BACKEND_JACK)
-
-typedef struct {
-    jack_client_t *client;
-    jack_port_t *input_port;
-    jack_port_t *output_port;
-    jack_ringbuffer_t* rbuffer;
-    jack_default_audio_sample_t* sample_buffer;    
-    int32 recording;
-    int32 sps;
-    int32 bps;
-#ifdef HAVE_SAMPLERATE_H
-    SRC_STATE *resample_state;
-    jack_default_audio_sample_t *resample_buffer;
-#endif
-} ad_rec_t;
-
-#elif defined(AD_BACKEND_S60)
-
-typedef struct ad_rec_s {
-    void* recorder;
-    int32 recording;
-    int32 sps;
-    int32 bps;
-} ad_rec_t;
-
-SPHINXBASE_EXPORT
-ad_rec_t *ad_open_sps_bufsize (int32 samples_per_sec, int32 bufsize_msec);
-
-#elif defined(AD_BACKEND_OPENAL)
-
-typedef struct {
-    ALCdevice * device;
-} ad_rec_t;
-
-#else
-
-#define DEFAULT_DEVICE NULL
-typedef struct {
-    int32 sps;		/**< Samples/sec */
-    int32 bps;		/**< Bytes/sample */
-} ad_rec_t;	
-
-
-#endif
-
+typedef struct ad_rec_s ad_rec_t;
 
 /**
  * Open a specific audio device for recording.
@@ -237,16 +95,6 @@ ad_rec_t *ad_open_sps (
  */
 SPHINXBASE_EXPORT
 ad_rec_t *ad_open ( void );
-
-
-#if defined(_WIN32) && !defined(GNUWINCE)
-/*
- * Like ad_open_sps but specifies buffering required within driver.  This function is
- * useful if the default (5000 msec worth) is too small and results in loss of data.
- */
-SPHINXBASE_EXPORT
-ad_rec_t *ad_open_sps_bufsize (int32 samples_per_sec, int32 bufsize_msec);
-#endif
 
 
 /* Start audio recording.  Return value: 0 if successful, <0 otherwise */
