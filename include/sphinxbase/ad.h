@@ -1,6 +1,6 @@
 /* -*- c-basic-offset: 4; indent-tabs-mode: nil -*- */
 /* ====================================================================
- * Copyright (c) 1999-2004 Carnegie Mellon University.  All rights
+ * Copyright (c) 1999-2014 Carnegie Mellon University.  All rights
  * reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,68 +34,6 @@
  * ====================================================================
  *
  */
-/*
- * ad.h -- generic live audio interface for recording and playback
- * 
- * **********************************************
- * CMU ARPA Speech Project
- *
- * Copyright (c) 1996 Carnegie Mellon University.
- * ALL RIGHTS RESERVED.
- * **********************************************
- * 
- * HISTORY
- * 
- * $Log: ad.h,v $
- * Revision 1.8  2005/06/22 08:00:06  arthchan2003
- * Completed all doxygen documentation on file description for libs3decoder/libutil/libs3audio and programs.
- *
- * Revision 1.7  2004/12/14 00:39:49  arthchan2003
- * add <s3types.h> to the code, change some comments to doxygen style
- *
- * Revision 1.6  2004/12/06 11:17:55  arthchan2003
- * Update the copyright information of ad.h, *sigh* start to feel tired of updating documentation system.  Anyone who has time, please take up libs3audio. That is the last place which is undocumented
- *
- * Revision 1.5  2004/07/23 23:44:46  egouvea
- * Changed the cygwin code to use the same audio files as the MS Visual code, removed unused variables from fe_interface.c
- *
- * Revision 1.4  2004/02/29 23:48:31  egouvea
- * Updated configure.in to the recent automake/autoconf, fixed win32
- * references in audio files.
- *
- * Revision 1.3  2002/11/10 19:27:38  egouvea
- * Fixed references to sun's implementation of audio interface,
- * referring to the correct .h file, and replacing sun4 with sunos.
- *
- * Revision 1.2  2001/12/11 04:40:55  lenzo
- * License cleanup.
- *
- * Revision 1.1.1.1  2001/12/03 16:01:45  egouvea
- * Initial import of sphinx3
- *
- * Revision 1.1.1.1  2001/01/17 05:17:14  ricky
- * Initial Import of the s3.3 decoder, has working decodeaudiofile, s3.3_live
- *
- * 
- * 19-Jan-1999	M K Ravishankar (rkm@cs.cmu.edu) at Carnegie Mellon University
- * 		Added AD_ return codes.  Added ad_open_sps_bufsize(), and
- * 		ad_rec_t.n_buf.
- * 
- * 17-Apr-98	M K Ravishankar (rkm@cs.cmu.edu) at Carnegie Mellon University
- * 		Added ad_open_play_sps().
- * 
- * 07-Mar-98	M K Ravishankar (rkm@cs.cmu.edu) at Carnegie Mellon University
- * 		Added ad_open_sps().
- * 
- * 10-Jun-96	M K Ravishankar (rkm@cs.cmu.edu) at Carnegie Mellon University
- * 		Added ad_wbuf_t, ad_rec_t, and ad_play_t types, and augmented all
- * 		recording functions with ad_rec_t, and playback functions with
- * 		ad_play_t.
- * 
- * 06-Jun-96	M K Ravishankar (rkm@cs.cmu.edu) at Carnegie Mellon University
- *		Created.
- */
-
 /** \file ad.h
  * \brief generic live audio interface for recording and playback
  */
@@ -122,6 +60,9 @@
 #include <pulse/simple.h>
 #elif defined(AD_BACKEND_ALSA)
 #include <alsa/asoundlib.h>
+#elif defined(AD_BACKEND_OPENAL)
+#include <al.h>
+#include <alc.h>
 #endif
 
 /* Win32/WinCE DLL gunk */
@@ -249,6 +190,12 @@ typedef struct ad_rec_s {
 SPHINXBASE_EXPORT
 ad_rec_t *ad_open_sps_bufsize (int32 samples_per_sec, int32 bufsize_msec);
 
+#elif defined(AD_BACKEND_OPENAL)
+
+typedef struct {
+    ALCdevice * device;
+} ad_rec_t;
+
 #else
 
 #define DEFAULT_DEVICE NULL
@@ -316,7 +263,6 @@ int32 ad_stop_rec (ad_rec_t *);
 SPHINXBASE_EXPORT
 int32 ad_close (ad_rec_t *);
 
-
 /*
  * Read next block of audio samples while recording; read upto max samples into buf.
  * Return value: # samples actually read (could be 0 since non-blocking); -1 if not
@@ -326,72 +272,8 @@ SPHINXBASE_EXPORT
 int32 ad_read (ad_rec_t *, int16 *buf, int32 max);
 
 
-/* ------ PLAYBACK; SIMILAR TO RECORDING ------- */
-
-#if defined(_WIN32) && !defined(GNUWINCE)
-
-typedef struct {
-    HWAVEOUT h_waveout;	/* "HANDLE" to the audio output device */
-    ad_wbuf_t *wo_buf;	/* Playback buffers given to the system */
-    int32 opened;	/* Flag; A/D opened for playback */
-    int32 playing;
-    char *busy;		/* flags [N_WO_BUF] indicating whether given to system */
-    int32 nxtbuf;	/* Next buffer [0..N_WO_BUF-1] to be used for playback data */
-    int32 sps;		/* Samples/sec */
-    int32 bps;		/* Bytes/sample */
-} ad_play_t;
-
-#else
-
-typedef struct {
-    int32 sps;		/* Samples/sec */
-    int32 bps;		/* Bytes/sample */
-} ad_play_t;	/* Dummy definition for systems without A/D stuff */
-
-#endif
-
-
-SPHINXBASE_EXPORT
-ad_play_t *ad_open_play_sps (int32 samples_per_sec);
-
-SPHINXBASE_EXPORT
-ad_play_t *ad_open_play ( void );
-
-SPHINXBASE_EXPORT
-int32 ad_start_play (ad_play_t *);
-
-SPHINXBASE_EXPORT
-int32 ad_stop_play (ad_play_t *);
-
-SPHINXBASE_EXPORT
-int32 ad_close_play (ad_play_t *);
-
-
-/**
- * Queue a block of audio samples for playback.
- *
- * Write the next block of [len] samples from rawbuf to the A/D device for playback.
- * The device may queue less than len samples, possibly 0, since it is non-blocking.
- * The application should resubmit the remaining data to be played.
- * Return value: # samples accepted for playback; -1 if error.
- */
-SPHINXBASE_EXPORT
-int32 ad_write (ad_play_t *, int16 *buf, int32 len);
-
-
-/* ------ MISCELLANEOUS ------- */
-
-/**
- * Convert mu-law data to int16 linear PCM format.
- */
-SPHINXBASE_EXPORT
-void ad_mu2li (int16 *outbuf,		/* Out: PCM data placed here (allocated by user) */
-	       unsigned char *inbuf,	/* In: Input buffer with mulaw data */
-	       int32 n_samp);		/* In: #Samples in inbuf */
-
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif
