@@ -121,6 +121,7 @@
 #include <errno.h>
 #include <string.h>
 #include <assert.h>
+#include <stdio.h>
 
 #include <sphinxbase/ckd_alloc.h>
 #include <sphinxbase/prim_type.h>
