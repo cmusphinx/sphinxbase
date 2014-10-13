@@ -155,7 +155,7 @@ struct fe_s {
     float32 pre_emphasis_alpha;
     int32 seed;
 
-    int16 frame_counter;
+    int32 frame_counter;
     uint8 start_flag;
     uint8 reserved;
 
