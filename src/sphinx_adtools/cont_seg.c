@@ -74,6 +74,10 @@ static const arg_t cont_args_def[] = {
      ARG_STRING,
      NULL,
      "Name of audio file to use for input."},
+    {"-singlefile",
+     ARG_BOOLEAN,
+     FALSE,
+     "Write a single cleaned file."},
     {NULL, 0, NULL, NULL}
 };
 
@@ -83,6 +87,7 @@ static int (*read_audio) (int16 * buf, int len);
 static ad_rec_t *ad;
 static const char *infile_path;
 static FILE *infile;
+static int32 singlefile;
 
 /* Sleep for specified msec */
 static void
@@ -134,7 +139,7 @@ segment_audio()
     int16 pcm_buf[BLOCKSIZE];
     mfcc_t **cep_buf;
     int16 *voiced_buf;
-    int32 voiced_nsamps, out_frameidx, uttstart;
+    int32 voiced_nsamps, out_frameidx, uttstart = 0;
     char file_name[1024];
     uint8 cur_vad_state, vad_state, writing;
     int uttno, uttlen, sample_rate;
@@ -177,11 +182,18 @@ segment_audio()
             if (!cur_vad_state && vad_state) {
                 /* silence->speech transition, time to start new file */
                 uttno++;
-                sprintf(file_name, "%s%04d.raw", infile_path, uttno);
-                if ((file = fopen(file_name, "wb")) == NULL)
-                    E_FATAL_SYSTEM("Failed to open '%s' for reading",
-                                   file_name);
-                writing = 1;
+                if (!singlefile) {
+                    sprintf(file_name, "%s%04d.raw", infile_path, uttno);
+                    if ((file = fopen(file_name, "wb")) == NULL)
+                          E_FATAL_SYSTEM("Failed to open '%s' for writing",
+                                         file_name);
+                } else {
+                    sprintf(file_name, "%s.raw", infile_path);
+                    if ((file = fopen(file_name, "ab")) == NULL)
+                          E_FATAL_SYSTEM("Failed to open '%s' for writing",
+                                         file_name);
+		}
+		writing = 1;
             }
 
             if (writing && file && voiced_nsamps > 0) {
@@ -243,6 +255,7 @@ main(int argc, char *argv[])
     if (config == NULL)
         return 1;
 
+    singlefile = cmd_ln_boolean_r(config, "-singlefile");
     if ((infile_path = cmd_ln_str_r(config, "-infile")) != NULL) {
         if ((infile = fopen(infile_path, "rb")) == NULL) {
             E_FATAL_SYSTEM("Failed to read audio from '%s'", infile_path);
