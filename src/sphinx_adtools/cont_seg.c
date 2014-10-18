@@ -48,7 +48,12 @@
 #include <string.h>
 #include <assert.h>
 #include <math.h>
+
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#include <windows.h>
+#else
 #include <sys/select.h>
+#endif
 
 #include <sphinxbase/prim_type.h>
 #include <sphinxbase/ad.h>
