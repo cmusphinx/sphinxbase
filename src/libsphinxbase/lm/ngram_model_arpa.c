@@ -515,11 +515,12 @@ ngram_model_arpa_read(cmd_ln_t *config,
     }
     E_INFO("%8d = #unigrams created\n", base->n_counts[0]);
 
-    init_sorted_list(&model->sorted_prob2);
     if (base->n_counts[2] > 0)
         init_sorted_list(&model->sorted_bo_wt2);
 
     if (base->n_counts[1] > 0) {
+        init_sorted_list(&model->sorted_prob2);
+
         if (ReadBigrams(&li, model) == -1) {
             fclose_comp(fp, is_pipe);
             ngram_model_free(base);
