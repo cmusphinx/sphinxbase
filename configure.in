@@ -12,7 +12,8 @@ AC_CANONICAL_HOST
 AC_ISC_POSIX
 AC_PROG_CC
 AC_PROG_CC_STDC
-AC_PROG_LIBTOOL
+
+LT_INIT
 
 # We don't bother ourselves with flex checks until the rest of the world has an up-to-date Flex
 # We need specific bison extensions, so check for bison
