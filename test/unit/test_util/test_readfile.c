@@ -15,7 +15,7 @@
 int
 main(int argc, char *argv[])
 {
-    int nsamps;
+    size_t nsamps;
     int16 *data;
     
     data = bio_read_wavfile(TESTDATADIR, "chan3", ".wav", 44, FALSE, &nsamps);

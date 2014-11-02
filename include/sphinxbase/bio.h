@@ -294,7 +294,7 @@ int16* bio_read_wavfile(char const *directory, /**< In: the folder where the fil
 			char const *extension, /**< In: file extension */
 			int32 header,          /**< In: the size of the header to skip usually 44 bytes */
 			int32 endian,          /**< In: endian of the data */
-			int32 *nsamps          /**< Out: number of samples read */
+			size_t *nsamps         /**< Out: number of samples read */
 			);
 
 #ifdef __cplusplus

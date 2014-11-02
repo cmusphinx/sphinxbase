@@ -594,7 +594,7 @@ bio_read_wavfile(char const *directory,
 		 char const *extension,
 		 int32 header,
 		 int32 endian,
-		 int32 *nsamps)
+		 size_t *nsamps)
 {
     FILE *uttfp;
     char *inputfile;
