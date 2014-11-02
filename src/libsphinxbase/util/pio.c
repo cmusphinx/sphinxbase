@@ -73,7 +73,7 @@ enum {
 static void
 guess_comptype(char const *file, int32 *ispipe, int32 *isgz)
 {
-    int k;
+    size_t k;
 
     k = strlen(file);
     *ispipe = 0;
@@ -206,7 +206,7 @@ fopen_compchk(const char *file, int32 * ispipe)
         return fh;
     else {
         char *tmpfile;
-        int k;
+        size_t k;
 
         /* File doesn't exist; try other compressed/uncompressed form, as appropriate */
         guess_comptype(file, ispipe, &isgz);
@@ -400,8 +400,8 @@ int32
 fread_retry(void *pointer, int32 size, int32 num_items, FILE * stream)
 {
     char *data;
-    uint32 n_items_read;
-    uint32 n_items_rem;
+    size_t n_items_read;
+    size_t n_items_rem;
     uint32 n_retry_rem;
     int32 loc;
 
