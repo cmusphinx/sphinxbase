@@ -241,7 +241,8 @@ static void
 arg_dump_r(cmd_ln_t *cmdln, FILE *fp, const arg_t * defn, int32 doc)
 {
     arg_t const **pos;
-    int32 i, l, n;
+    int32 i, n;
+    size_t l;
     int32 namelen, deflen;
     anytype_t *vp;
     char const **array;

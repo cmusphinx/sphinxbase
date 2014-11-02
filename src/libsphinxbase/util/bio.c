@@ -598,7 +598,7 @@ bio_read_wavfile(char const *directory,
 {
     FILE *uttfp;
     char *inputfile;
-    int32 n, l;
+    size_t n, l;
     int16 *data;
 
     n = strlen(extension);

@@ -803,7 +803,8 @@ feat_init(char const *type, cmn_type_t cmn, int32 varnorm,
         fcb->compute_feat = feat_copy;
     }
     else {
-        int32 i, l, k;
+        int32 i, k, l;
+        size_t len;
         char *strp;
         char *mtype = ckd_salloc(type);
         char *wd = ckd_salloc(type);
@@ -814,9 +815,9 @@ feat_init(char const *type, cmn_type_t cmn, int32 varnorm,
          * concatenated) is also allowed, which can be specified with
          * a colon after the list of feature streams.
          */
-        l = strlen(mtype);
+        len = strlen(mtype);
         k = 0;
-        for (i = 1; i < l - 1; i++) {
+        for (i = 1; i < len - 1; i++) {
             if (mtype[i] == ',') {
                 mtype[i] = ' ';
                 k++;
@@ -1172,7 +1173,7 @@ feat_s2mfc2feat(feat_t * fcb, const char *file, const char *dir, const char *cep
     char *path;
     char *ps = "/";
     int32 win, nfr;
-    int32 file_length, cepext_length, path_length = 0;
+    size_t file_length, cepext_length, path_length = 0;
     mfcc_t **mfc;
 
     if (fcb->cepsize <= 0) {

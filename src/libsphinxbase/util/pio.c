@@ -312,7 +312,7 @@ lineiter_next_plain(lineiter_t *li)
     }
     /* If we managed to read the whole thing, then we are done
      * (this will be by far the most common result). */
-    li->len = strlen(li->buf);
+    li->len = (int32)strlen(li->buf);
     if (li->len < li->bsiz - 1 || li->buf[li->len - 1] == '\n')
         return li;
 

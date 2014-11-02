@@ -175,12 +175,12 @@ char *fread_line(FILE *stream, size_t *out_len);
  * Line iterator for files.
  */
 typedef struct lineiter_t {
-	char *buf;
-	size_t bsiz;
-	size_t len;
-	FILE *fh;
-	int32 clean;
-	int32 lineno;
+    char *buf;
+    FILE *fh;
+    int32 bsiz;
+    int32 len;
+    int32 clean;
+    int32 lineno;
 } lineiter_t;
 
 /**
