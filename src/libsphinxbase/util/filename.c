@@ -67,17 +67,17 @@ path2basename(const char *path)
 void
 path2dirname(const char *path, char *dir)
 {
-    int32 i, l;
+    size_t i, l;
 
     l = strlen(path);
 #if defined(_WIN32) || defined(__CYGWIN__)
-    for (i = l - 1; (i >= 0) && !(path[i] == '/' || path[i] == '\\'); --i);
+    for (i = l - 1; (i > 0) && !(path[i] == '/' || path[i] == '\\'); --i);
 #else
-    for (i = l - 1; (i >= 0) && !(path[i] == '/'); --i);
+    for (i = l - 1; (i > 0) && !(path[i] == '/'); --i);
 #endif
-    if (i <= 0)
+    if (i == 0) {
         dir[0] = '\0';
-    else {
+    } else {
         memcpy(dir, path, i);
         dir[i] = '\0';
     }
@@ -88,13 +88,13 @@ path2dirname(const char *path, char *dir)
 void
 strip_fileext(const char *path, char *root)
 {
-    int32 i, l;
+    size_t i, l;
 
     l = strlen(path);
-    for (i = l - 1; (i >= 0) && (path[i] != '.'); --i);
-    if (i < 0)
+    for (i = l - 1; (i > 0) && (path[i] != '.'); --i);
+    if (i == 0) {
         strcpy(root, path);     /* Didn't find a . */
-    else {
+    } else {
         strncpy(root, path, i);
     }
 }

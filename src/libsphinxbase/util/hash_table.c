@@ -220,9 +220,9 @@ key2hash(hash_table_t * h, const char *key)
 
 
 static char *
-makekey(uint8 * data, int32 len, char *key)
+makekey(uint8 * data, size_t len, char *key)
 {
-    int32 i, j;
+    size_t i, j;
 
     if (!key)
         key = (char *) ckd_calloc(len * 2 + 1, sizeof(char));
@@ -310,7 +310,7 @@ hash_table_lookup(hash_table_t * h, const char *key, void ** val)
 {
     hash_entry_t *entry;
     uint32 hash;
-    int32 len;
+    size_t len;
 
     hash = key2hash(h, key);
     len = strlen(key);
