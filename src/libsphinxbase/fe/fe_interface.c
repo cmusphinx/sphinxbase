@@ -354,7 +354,7 @@ fe_start_utt(fe_t * fe)
 void 
 fe_start_stream(fe_t *fe)
 {
-    fe->frame_counter = 0;
+    fe->sample_counter = 0;
     fe_reset_noisestats(fe->noise_stats);
 }
 
@@ -390,6 +390,7 @@ fe_process_frames(fe_t *fe,
 {
     int outidx, n_overflow, orig_n_overflow;
     int16 const *orig_spch;
+    size_t orig_nsamps;
 
     /* In the special case where there is no output buffer, return the
      * maximum number of frames which would be generated. */
@@ -401,12 +402,12 @@ fe_process_frames(fe_t *fe,
                 + ((*inout_nsamps + fe->num_overflow_samps - fe->frame_size)
                    / fe->frame_shift);
         if (fe->vad_data->global_state)
-    	    *inout_nframes += fe_prespch_ncep(fe->vad_data->prespch_buf);
+            *inout_nframes += fe_prespch_ncep(fe->vad_data->prespch_buf);
         return *inout_nframes;
     }
 
     if (out_frameidx)
-	*out_frameidx = 0;
+        *out_frameidx = 0;
 
     /* Are there not enough samples to make at least 1 frame? */
     if (*inout_nsamps + fe->num_overflow_samps < (size_t)fe->frame_size) {
@@ -447,12 +448,13 @@ fe_process_frames(fe_t *fe,
 
         /* Sets the start frame for the returned data so that caller can update timings */
         if (out_frameidx && fe->vad_data->state_changed) {
-            *out_frameidx = fe->frame_counter - fe->prespch_len;
+            *out_frameidx = fe->sample_counter / fe->frame_shift - fe->prespch_len;
         }
     }
 
     /* Keep track of the original start of the buffer. */
     orig_spch = *inout_spch;
+    orig_nsamps = *inout_nsamps;
     orig_n_overflow = fe->num_overflow_samps;
 
     /* Start processing, taking care of any incoming overflow. */
@@ -490,7 +492,7 @@ fe_process_frames(fe_t *fe,
 
         /* Sets the start frame for the returned data so that caller can update timings */
         if (out_frameidx) {
-            *out_frameidx = fe->frame_counter - fe->prespch_len;
+            *out_frameidx = (fe->sample_counter + orig_nsamps - *inout_nsamps) / fe->frame_shift - fe->prespch_len;
         }
     }
 
@@ -558,8 +560,10 @@ fe_process_frames(fe_t *fe,
         }
     }
 
-    /* Finally update the frame counter with the number of frames we procesed. */
+    /* Finally update the frame counter with the number of frames
+     * and global sample counter with number of samples we procesed*/
     *inout_nframes = outidx; /* FIXME: Not sure why I wrote it this way... */
+    fe->sample_counter += orig_nsamps - *inout_nsamps;
     return 0;
 }
 
