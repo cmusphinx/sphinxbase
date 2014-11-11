@@ -108,6 +108,11 @@ get_fsg(jsgf_t *grammar, const char *name)
         if ((name == NULL && jsgf_rule_public(rule))
             || (name && strlen(rule_name)-2 == strlen(name) &&
                 0 == strncmp(rule_name + 1, name, strlen(rule_name) - 2))) {
+            if (!name) {
+                E_INFO("No -rule was given; grabbing the first public rule: "
+                       "'%s' of the grammar '%s'.\n", 
+                       rule_name, jsgf_grammar_name(grammar));
+            }
             fsg = jsgf_build_fsg_raw(grammar, rule, logmath_retain(lmath), 1.0);
             jsgf_rule_iter_free(itor);
             break;
@@ -124,10 +129,11 @@ main(int argc, char *argv[])
     jsgf_t *jsgf;
     fsg_model_t *fsg;
     cmd_ln_t *config;
+    const char *rule;
         
     if ((config = cmd_ln_parse_r(NULL, defn, argc, argv, TRUE)) == NULL)
 	return 1;
-		
+
     if (cmd_ln_boolean_r(config, "-help")) {
         usagemsg(argv[0]);
     }
@@ -137,8 +143,16 @@ main(int argc, char *argv[])
         return 1;
     }
 
-    fsg = get_fsg(jsgf, cmd_ln_str_r(config, "-rule") ? cmd_ln_str_r(config, "-rule") : NULL);
-    
+    rule = cmd_ln_str_r(config, "-rule") ? cmd_ln_str_r(config, "-rule") : NULL;
+    if (!(fsg = get_fsg(jsgf, rule))) {
+        E_ERROR("No fsg was built for the given rule '%s'.\n"
+                "Check rule name; it should be qualified (with grammar name)\n"
+                "and not enclosed in angle brackets (e.g. 'grammar.rulename').",
+                rule);
+        return 1;
+    }
+
+
     if (cmd_ln_boolean_r(config, "-compile")) {
 	fsg_model_null_trans_closure(fsg, NULL);
     }
