@@ -430,7 +430,6 @@ expand_rule(jsgf_t *grammar, jsgf_rule_t *rule, int rule_entry,
 {
     jsgf_rule_stack_t* rule_stack_entry;
     jsgf_rhs_t *rhs;
-    float norm;
 
     /* Push this rule onto the stack */
     rule_stack_entry = (jsgf_rule_stack_t*)ckd_calloc(1, sizeof (jsgf_rule_stack_t));
@@ -439,23 +438,8 @@ expand_rule(jsgf_t *grammar, jsgf_rule_t *rule, int rule_entry,
     grammar->rulestack = glist_add_ptr(grammar->rulestack,
         rule_stack_entry);
 
-    /* Normalize weights for all alternatives exiting rule_entry */
-    norm = 0;
-    for (rhs = rule->rhs; rhs; rhs = rhs->alt) {
-        if (rhs->atoms) {
-            jsgf_atom_t *atom = gnode_ptr(rhs->atoms);
-            norm += atom->weight;
-        }
-    }
-
-    if (norm == 0) norm = 1;
     for (rhs = rule->rhs; rhs; rhs = rhs->alt) {
         int lastnode;
-
-        if (rhs->atoms) {
-            jsgf_atom_t *atom = gnode_ptr(rhs->atoms);
-            atom->weight /= norm;
-        }
 
         lastnode = expand_rhs(grammar, rule, rhs,
             rule_entry, rule_exit);
