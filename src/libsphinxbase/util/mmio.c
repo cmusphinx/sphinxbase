@@ -231,7 +231,7 @@ mmio_file_read(const char *filename)
     mf = ckd_calloc(1, sizeof(*mf));
     mf->ptr = ptr;
     /* Align map size to next page. */
-    pagesize = getpagesize();
+    pagesize = sysconf(_SC_PAGESIZE);
     mf->mapsize = (buf.st_size + pagesize - 1) / pagesize * pagesize;
 
     return mf;
