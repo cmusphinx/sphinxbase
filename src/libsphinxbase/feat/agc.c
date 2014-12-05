@@ -164,9 +164,9 @@ agc_emax_update(agc_t *agc)
 
         /* Re-estimate max over past history; decay the history */
         agc->max = agc->obs_max_sum / agc->obs_utt;
-        if (agc->obs_utt == 8) {
+        if (agc->obs_utt == 16) {
             agc->obs_max_sum /= 2;
-            agc->obs_utt = 4;
+            agc->obs_utt = 8;
         }
     }
     E_INFO("AGCEMax: obs= %.2f, new= %.2f\n", agc->obs_max, agc->max);
