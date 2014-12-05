@@ -41,6 +41,7 @@
 #include "sphinxbase/ckd_alloc.h"
 #include "sphinxbase/strfuncs.h"
 #include "sphinxbase/hash_table.h"
+#include "sphinxbase/filename.h"
 #include "sphinxbase/err.h"
 #include "sphinxbase/jsgf.h"
 
@@ -95,31 +96,8 @@ jsgf_grammar_new(jsgf_t *parent)
         grammar->parent = parent;
     }
     else {
-        char *jsgf_path;
-
         grammar->rules = hash_table_new(64, 0);
         grammar->imports = hash_table_new(16, 0);
-
-/* No getenv() in Windows CE */
-#if !defined(_WIN32_WCE)
-        if ((jsgf_path = getenv("JSGF_PATH")) != NULL) {
-            char *word, *c;
-
-            /* FIXME: This should be a function in libsphinxbase. */
-            word = jsgf_path = ckd_salloc(jsgf_path);
-            while ((c = strchr(word, ':'))) {
-                *c = '\0';
-                grammar->searchpath = glist_add_ptr(grammar->searchpath, word);
-                word = c + 1;
-            }
-            grammar->searchpath = glist_add_ptr(grammar->searchpath, word);
-            grammar->searchpath = glist_reverse(grammar->searchpath);
-        }
-        else {
-            /* Default to current directory. */
-            grammar->searchpath = glist_add_ptr(grammar->searchpath, ckd_salloc("."));
-        }
-#endif 
     }
 
     return grammar;
@@ -828,6 +806,37 @@ jsgf_import_rule(jsgf_t *jsgf, char *name)
     return NULL;
 }
 
+static void
+jsgf_set_search_path(jsgf_t *jsgf, const char *filename)
+{
+     char *jsgf_path;
+
+#if !defined(_WIN32_WCE)
+     if ((jsgf_path = getenv("JSGF_PATH")) != NULL) {
+	char *word, *c;
+        /* FIXME: This should be a function in libsphinxbase. */
+        word = jsgf_path = ckd_salloc(jsgf_path);
+        while ((c = strchr(word, ':'))) {
+            *c = '\0';
+	     jsgf->searchpath = glist_add_ptr(jsgf->searchpath, word);
+    	     word = c + 1;
+        }
+        jsgf->searchpath = glist_add_ptr(jsgf->searchpath, word);
+        jsgf->searchpath = glist_reverse(jsgf->searchpath);
+        return;
+    }
+#endif
+
+    if (!filename) {
+	jsgf->searchpath = glist_add_ptr(jsgf->searchpath, ckd_salloc("."));
+	return;
+    }
+    
+    jsgf_path = ckd_salloc(filename);
+    path2dirname(filename, jsgf_path);
+    jsgf->searchpath = glist_add_ptr(jsgf->searchpath, jsgf_path);
+}
+
 jsgf_t *
 jsgf_parse_file(const char *filename, jsgf_t *parent)
 {
@@ -850,6 +859,10 @@ jsgf_parse_file(const char *filename, jsgf_t *parent)
     }
 
     jsgf = jsgf_grammar_new(parent);
+
+    if (!parent)
+        jsgf_set_search_path(jsgf, filename);
+
     yyrv = yyparse(yyscanner, jsgf);
     if (yyrv != 0) {
         E_ERROR("Failed to parse JSGF grammar from '%s'\n", filename ? filename : "(stdin)");
@@ -876,6 +889,9 @@ jsgf_parse_string(const char *string, jsgf_t * parent)
     buf = yy_scan_string(string, yyscanner);
 
     jsgf = jsgf_grammar_new(parent);
+    if (!parent)
+        jsgf_set_search_path(jsgf, NULL);
+
     yyrv = yyparse(yyscanner, jsgf);
     if (yyrv != 0) {
         E_ERROR("Failed to parse JSGF grammar from input string\n");
