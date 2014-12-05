@@ -1423,8 +1423,12 @@ feat_s2mfc2feat_live(feat_t * fcb, mfcc_t ** uttcep, int32 *inout_ncep,
 void 
 feat_update_stats(feat_t *fcb)
 {
-    if (fcb->cmn == CMN_PRIOR)
+    if (fcb->cmn == CMN_PRIOR) {
         cmn_prior_update(fcb->cmn_struct);
+    }
+    if (fcb->agc == AGC_EMAX || fcb->agc == AGC_MAX) {
+	agc_emax_update(fcb->agc_struct);	
+    }
 }
 
 feat_t *
