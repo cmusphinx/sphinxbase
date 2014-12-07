@@ -76,7 +76,8 @@ path2dirname(const char *path, char *dir)
     for (i = l - 1; (i > 0) && !(path[i] == '/'); --i);
 #endif
     if (i == 0) {
-        dir[0] = '\0';
+        dir[0] = '.';
+        dir[1] = '\0';
     } else {
         memcpy(dir, path, i);
         dir[i] = '\0';

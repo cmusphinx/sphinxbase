@@ -106,7 +106,7 @@ get_fsg(jsgf_t *grammar, const char *name)
         char const *rule_name = jsgf_rule_name(rule);
 
         if ((name == NULL && jsgf_rule_public(rule))
-            || (name && strlen(rule_name)-2 == strlen(name) &&
+            || (name && strlen(rule_name) - 2 == strlen(name) &&
                 0 == strncmp(rule_name + 1, name, strlen(rule_name) - 2))) {
             if (!name) {
                 E_INFO("No -rule was given; grabbing the first public rule: "

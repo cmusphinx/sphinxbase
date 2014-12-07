@@ -701,8 +701,9 @@ path_list_search(glist_t paths, char *path)
             fclose(tmp);
             return fullpath;
         }
-        else
+        else {
             ckd_free(fullpath);
+        }
     }
     return NULL;
 }
@@ -738,9 +739,12 @@ jsgf_import_rule(jsgf_t *jsgf, char *name)
         if (*c == '.') *c = '/';
     strcat(path, ".gram");
     newpath = path_list_search(jsgf->searchpath, path);
-    ckd_free(path);
-    if (newpath == NULL)
+    if (newpath == NULL) {
+	E_ERROR("Failed to find grammar %s\n", path);
+        ckd_free(path);
         return NULL;
+    }
+    ckd_free(path);
 
     path = newpath;
     E_INFO("Importing %s from %s to %s\n", name, path, jsgf->name);
