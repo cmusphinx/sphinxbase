@@ -202,7 +202,7 @@ static char *
 extract_grammar_name(char *rule_name)
 {
     char* dot_pos;
-    char* grammar_name = ckd_salloc(rule_name+1);
+    char* grammar_name = ckd_salloc(rule_name + 1);
     if ((dot_pos = strrchr(grammar_name + 1, '.')) == NULL) {
         ckd_free(grammar_name);
         return NULL;
@@ -459,10 +459,42 @@ jsgf_rule_t *
 jsgf_get_rule(jsgf_t *grammar, char const *name)
 {
     void *val;
-
-    if (hash_table_lookup(grammar->rules, name, &val) < 0)
+    char *fullname;
+    
+    fullname = string_join("<", name, ">", NULL);
+    if (hash_table_lookup(grammar->rules, fullname, &val) < 0) {
+	ckd_free(fullname);
         return NULL;
+    }
+    ckd_free(fullname);
     return (jsgf_rule_t *)val;
+}
+
+jsgf_rule_t *
+jsgf_get_public_rule(jsgf_t *grammar)
+{
+    jsgf_rule_iter_t *itor;
+    jsgf_rule_t *public_rule = NULL;
+
+    for (itor = jsgf_rule_iter(grammar); itor;
+         itor = jsgf_rule_iter_next(itor)) {
+        jsgf_rule_t *rule = jsgf_rule_iter_rule(itor);
+        if (jsgf_rule_public(rule)) {
+    	    const char *rule_name = jsgf_rule_name(rule);
+    	    char *dot_pos;
+    	    if ((dot_pos = strrchr(rule_name + 1, '.')) == NULL) {
+    		public_rule = rule;
+                jsgf_rule_iter_free(itor);
+                break;
+    	    }
+    	    if (0 == strncmp(rule_name + 1, jsgf_grammar_name(grammar), dot_pos - rule_name - 1)) {
+    		public_rule = rule;
+                jsgf_rule_iter_free(itor);
+                break;    		
+    	    }
+        }
+    }
+    return public_rule;
 }
 
 char const *

@@ -15,7 +15,7 @@ main(int argc, char *argv[])
 	lmath = logmath_init(1.0001, 0, 0);
 	jsgf = jsgf_parse_file(LMDIR "/polite.gram", NULL);
 	TEST_ASSERT(jsgf);
-	rule = jsgf_get_rule(jsgf, "<polite.startPolite>");
+	rule = jsgf_get_rule(jsgf, "polite.startPolite");
 	TEST_ASSERT(rule);
 	fsg = jsgf_build_fsg(jsgf, rule, lmath, 7.5);
 	TEST_ASSERT(fsg);

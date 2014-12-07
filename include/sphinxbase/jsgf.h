@@ -132,10 +132,16 @@ jsgf_rule_iter_t *jsgf_rule_iter(jsgf_t *grammar);
 #define jsgf_rule_iter_free(itor) hash_table_iter_free(itor)
 
 /**
- * Get a rule by name from a grammar.
+ * Get a rule by name from a grammar. Name should not contain brackets.
  */
 SPHINXBASE_EXPORT
-jsgf_rule_t *jsgf_get_rule(jsgf_t *grammar, char const *name);
+jsgf_rule_t *jsgf_get_rule(jsgf_t *grammar, const char *name);
+
+/**
+ * Returns the first public rule of the grammar
+ */ 
+SPHINXBASE_EXPORT
+jsgf_rule_t *jsgf_get_public_rule(jsgf_t *grammar);
 
 /**
  * Get the rule name from a rule.

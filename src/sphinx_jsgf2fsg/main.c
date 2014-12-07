@@ -54,7 +54,7 @@ static const arg_t defn[] = {
     NULL,
     "Input grammar in jsgf format (required)"},
 
-  { "-rule",
+  { "-toprule",
     ARG_STRING,
     NULL,
     "Root rule name (optional)"},
@@ -86,7 +86,7 @@ static const arg_t defn[] = {
 static void
 usagemsg(char *pgm)
 {
-    E_INFO("Usage: %s -jsgf <input.jsgf> -rule <rule name>\\\n", pgm);
+    E_INFO("Usage: %s -jsgf <input.jsgf> -toprule <rule name>\\\n", pgm);
     E_INFOCONT("\t[-fsm yes/no] [-compile yes/no]\n");
     E_INFOCONT("\t-fsg <output.fsg>\n");
 
@@ -96,30 +96,31 @@ usagemsg(char *pgm)
 static fsg_model_t *
 get_fsg(jsgf_t *grammar, const char *name)
 {
-    jsgf_rule_iter_t *itor;
-    logmath_t *lmath = logmath_init(1.0001, 0, 0);
-    fsg_model_t *fsg = NULL;
+    logmath_t *lmath;
+    fsg_model_t *fsg;
+    jsgf_rule_t *rule;
 
-    for (itor = jsgf_rule_iter(grammar); itor;
-         itor = jsgf_rule_iter_next(itor)) {
-        jsgf_rule_t *rule = jsgf_rule_iter_rule(itor);
-        char const *rule_name = jsgf_rule_name(rule);
-
-        if ((name == NULL && jsgf_rule_public(rule))
-            || (name && strlen(rule_name) - 2 == strlen(name) &&
-                0 == strncmp(rule_name + 1, name, strlen(rule_name) - 2))) {
-            if (!name) {
-                E_INFO("No -rule was given; grabbing the first public rule: "
-                       "'%s' of the grammar '%s'.\n", 
-                       rule_name, jsgf_grammar_name(grammar));
-            }
-            fsg = jsgf_build_fsg_raw(grammar, rule, logmath_retain(lmath), 1.0);
-            jsgf_rule_iter_free(itor);
-            break;
+    /* Take the -toprule if specified. */
+    if (name) {
+        rule = jsgf_get_rule(grammar, name);
+        if (rule == NULL) {
+            E_ERROR("Start rule %s not found\n", name);
+            return NULL;
         }
+    } else {
+        rule = jsgf_get_public_rule(grammar);
+        if (rule == NULL) {
+            E_ERROR("No public rules found in grammar %s\n", jsgf_grammar_name(grammar));
+            return NULL;
+        } else {
+            E_INFO("No -toprule was given; grabbing the first public rule: "
+                   "'%s' of the grammar '%s'.\n", 
+                   jsgf_rule_name(rule), jsgf_grammar_name(grammar));
+         }
     }
 
-    logmath_free(lmath);
+    lmath = logmath_init(1.0001, 0, 0);
+    fsg = jsgf_build_fsg_raw(grammar, rule, lmath, 1.0);
     return fsg;
 }
 
@@ -143,7 +144,7 @@ main(int argc, char *argv[])
         return 1;
     }
 
-    rule = cmd_ln_str_r(config, "-rule") ? cmd_ln_str_r(config, "-rule") : NULL;
+    rule = cmd_ln_str_r(config, "-toprule") ? cmd_ln_str_r(config, "-toprule") : NULL;
     if (!(fsg = get_fsg(jsgf, rule))) {
         E_ERROR("No fsg was built for the given rule '%s'.\n"
                 "Check rule name; it should be qualified (with grammar name)\n"

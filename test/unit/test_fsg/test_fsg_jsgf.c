@@ -17,7 +17,7 @@ main(int argc, char *argv[])
 	/* Test loading */
 	jsgf = jsgf_parse_file(LMDIR "/polite.gram", NULL);
 	TEST_ASSERT(jsgf);
-	rule = jsgf_get_rule(jsgf, "<polite.startPolite>");
+	rule = jsgf_get_rule(jsgf, "polite.startPolite");
 	TEST_ASSERT(rule);
 	fsg = jsgf_build_fsg(jsgf, rule, lmath, 7.5);
 	TEST_ASSERT(fsg);
@@ -42,7 +42,7 @@ main(int argc, char *argv[])
 
 	jsgf = jsgf_parse_string("#JSGF V1.0; grammar test; public <choice> = yes | no;", NULL);
 	TEST_ASSERT(jsgf);
-	rule = jsgf_get_rule(jsgf, "<test.choice>");
+	rule = jsgf_get_rule(jsgf, "test.choice");
 	TEST_ASSERT(rule);
 	fsg = jsgf_build_fsg(jsgf, rule, lmath, 7.5);
 	fsg_model_write(fsg, stdout);
