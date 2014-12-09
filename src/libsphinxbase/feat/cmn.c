@@ -167,7 +167,7 @@ cmn(cmn_t *cmn, mfcc_t ** mfc, int32 varnorm, int32 n_frame)
         mfcp = mfc[f];
 
         /* Skip zero energy frames */
-        if (mfc[0] < 0)
+        if (mfcp[0] < 0)
     	    continue;
 
         for (i = 0; i < cmn->veclen; i++) {
