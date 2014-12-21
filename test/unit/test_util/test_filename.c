@@ -37,7 +37,7 @@ main(int argc, char *argv[])
     TEST_EQUAL(0, strcmp(result2, testout));
 
     path2dirname(testname3, testout);
-    TEST_EQUAL(0, strcmp("", testout));
+    TEST_EQUAL(0, strcmp(".", testout));
 
     return 0;
 }
