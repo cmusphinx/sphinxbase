@@ -42,16 +42,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef HAVE_SYS_STAT_H
-#include <sys/stat.h>
-#endif
+
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#include <assert.h>
+
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#elif defined(_WIN32) && !defined(CYGWIN)
+#include <direct.h>
+#endif
 
 #include "sphinxbase/pio.h"
 #include "sphinxbase/filename.h"
@@ -482,21 +487,16 @@ stat_retry(const char *file, struct stat * statbuf)
 {
     int32 i;
 
-    
-    
     for (i = 0; i < STAT_RETRY_COUNT; i++) {
-
 #ifndef HAVE_SYS_STAT_H
-		FILE *fp;
+	FILE *fp;
 
-		if ((fp=(FILE *)fopen(file, "r"))!= 0)
-		{
-		    fseek( fp, 0, SEEK_END);
-		    statbuf->st_size = ftell( fp );
-		    fclose(fp);
-		    return 0;
-		}
-	
+	if ((fp = (FILE *)fopen(file, "r")) != 0) {
+	    fseek(fp, 0, SEEK_END);
+	    statbuf->st_size = ftell(fp);
+	    fclose(fp);
+	    return 0;
+	}
 #else /* HAVE_SYS_STAT_H */
         if (stat(file, statbuf) == 0)
             return 0;
@@ -614,15 +614,6 @@ bit_encode_flush(bit_encode_t *be)
     return 0;
 }
 
-#if defined(_WIN32) && !defined(CYGWIN)
-/* FIXME: Implement this. */
-int
-build_directory(const char *path)
-{
-    E_ERROR("build_directory() unimplemented on your platform!\n");
-    return -1;
-}
-#elif defined(HAVE_SYS_STAT_H) /* Unix, Cygwin, doesn't work on MINGW */
 int
 build_directory(const char *path)
 {
@@ -631,14 +622,22 @@ build_directory(const char *path)
     /* Utterly failed... */
     if (strlen(path) == 0)
         return -1;
+
+#if defined(HAVE_SYS_STAT_H) /* Unix, Cygwin, doesn't work on MINGW */
     /* Utterly succeeded... */
     else if ((rv = mkdir(path, 0777)) == 0)
         return 0;
+#elif defined(_WIN32) && !defined(CYGWIN)
+    /* Utterly succeeded... */
+    else if ((rv = _mkdir(path)) == 0)
+        return 0;
+#endif
+
     /* Or, it already exists... */
     else if (errno == EEXIST)
         return 0;
     else if (errno != ENOENT) {
-        E_ERROR_SYSTEM("Failed to create %s");
+        E_ERROR_SYSTEM("Failed to create %s", path);
         return -1;
     }
     else {
@@ -646,15 +645,11 @@ build_directory(const char *path)
         path2dirname(path, dirname);
         build_directory(dirname);
         ckd_free(dirname);
+
+#if defined(HAVE_SYS_STAT_H) /* Unix, Cygwin, doesn't work on MINGW */
         return mkdir(path, 0777);
+#elif defined(_WIN32) && !defined(CYGWIN)
+	return _mkdir(path);
+#endif
     }
 }
-
-#else
-int
-build_directory(const char *path)
-{
-    E_ERROR("build_directory() unimplemented on your platform!\n");
-    return -1;
-}
-#endif
