@@ -49,8 +49,8 @@
 %include <arrays_java.i>
 
 // Raw data return support
-%typemap(in,numinputs=0,noblock=1) size_t *RAWDATA_SIZE {
-   int temp_len;
+%typemap(in,numinputs=0,noblock=1) int32 *RAWDATA_SIZE {
+   int32 temp_len;
    $1 = &temp_len;
 }
 %typemap(jstype) int16 *get_rawdata "short[]"
