@@ -48,6 +48,22 @@
 
 %include <arrays_java.i>
 
+// Raw data return support
+%typemap(in,numinputs=0,noblock=1) size_t *RAWDATA_SIZE {
+   int temp_len;
+   $1 = &temp_len;
+}
+%typemap(jstype) int16 *get_rawdata "short[]"
+%typemap(jtype) int16 *get_rawdata "short[]"
+%typemap(jni) int16 *get_rawdata "jshortArray"
+%typemap(javaout) int16 *get_rawdata {
+  return $jnicall;
+}
+%typemap(out) int16 *get_rawdata {
+  $result = JCALL1(NewShortArray, jenv, temp_len);
+  JCALL4(SetShortArrayRegion, jenv, $result, 0, temp_len, $1);
+}
+
 // Special typemap for arrays of audio.
 %apply short[] {const int16 *SDATA};
 
