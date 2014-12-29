@@ -54,7 +54,9 @@
 
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
-#elif defined(_WIN32) && !defined(CYGWIN)
+#endif
+
+#if defined(_WIN32) && !defined(CYGWIN)
 #include <direct.h>
 #endif
 
@@ -623,13 +625,11 @@ build_directory(const char *path)
     if (strlen(path) == 0)
         return -1;
 
-#if defined(HAVE_SYS_STAT_H) /* Unix, Cygwin, doesn't work on MINGW */
-    /* Utterly succeeded... */
-    else if ((rv = mkdir(path, 0777)) == 0)
-        return 0;
-#elif defined(_WIN32) && !defined(CYGWIN)
-    /* Utterly succeeded... */
+#if defined(_WIN32) && !defined(CYGWIN)
     else if ((rv = _mkdir(path)) == 0)
+        return 0;
+#elif defined(HAVE_SYS_STAT_H) /* Unix, Cygwin, doesn't work on MINGW */
+    else if ((rv = mkdir(path, 0777)) == 0)
         return 0;
 #endif
 
@@ -646,10 +646,10 @@ build_directory(const char *path)
         build_directory(dirname);
         ckd_free(dirname);
 
-#if defined(HAVE_SYS_STAT_H) /* Unix, Cygwin, doesn't work on MINGW */
-        return mkdir(path, 0777);
-#elif defined(_WIN32) && !defined(CYGWIN)
+#if defined(_WIN32) && !defined(CYGWIN)
 	return _mkdir(path);
+#elif defined(HAVE_SYS_STAT_H) /* Unix, Cygwin, doesn't work on MINGW */
+        return mkdir(path, 0777);
 #endif
     }
 }
