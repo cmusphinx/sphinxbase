@@ -160,25 +160,6 @@ SPHINXBASE_EXPORT
 int ngram_model_free(ngram_model_t *model);
 
 /**
- * Re-encode word strings in an N-Gram model.
- *
- * Character set names are the same as those passed to iconv(1).  If
- * your system does not have iconv, this function may fail.  Also,
- * because all file formats consist of 8-bit character streams,
- * attempting to convert to or from UTF-16 (or any other encoding
- * which contains null bytes) is a recipe for total desaster.
- *
- * We have no interest in supporting UTF-16, so don't ask.
- *
- * Note that this does not affect any pronunciation dictionary you
- * might currently be using in conjunction with this N-Gram model, so
- * the effect of calling this during decoding is undefined.  That's a
- * bug!
- */
-SPHINXBASE_EXPORT
-int ngram_model_recode(ngram_model_t *model, const char *from, const char *to);
-
-/**
  * Constants for case folding.
  */
 typedef enum ngram_case_e {

@@ -70,10 +70,6 @@
         return ngram_type_to_str(type);
     }
 
-    void recode(const char *src, const char *dst, int *errcode) {
-        *errcode = ngram_model_recode($self, src, dst);
-    }
-
     void casefold(int kase, int *errcode) {
         *errcode = ngram_model_casefold($self, kase);
     }

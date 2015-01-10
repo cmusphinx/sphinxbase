@@ -81,16 +81,6 @@ static const arg_t defn[] = {
     NULL,
     "Output language model file (will guess if not specified)"},
 
-  { "-ienc",
-    ARG_STRING,
-    NULL,
-    "Input language model text encoding (no conversion done if not specified)"},
-
-  { "-oenc",
-    ARG_STRING,
-    "utf8",
-    "Output language model text encoding"},
-
   { "-case",
     ARG_STRING,
     NULL,
@@ -180,17 +170,6 @@ main(int argc, char *argv[])
         }
         else {
             otype = ngram_file_name_to_type(cmd_ln_str_r(config, "-o"));
-        }
-
-        /* Recode the language model if desired. */
-        if (cmd_ln_str_r(config, "-ienc")) {
-            if (ngram_model_recode(lm, cmd_ln_str_r(config, "-ienc"),
-                                   cmd_ln_str_r(config, "-oenc")) != 0) {
-                E_ERROR("Failed to recode language model from %s to %s\n",
-                        cmd_ln_str_r(config, "-ienc"),
-                        cmd_ln_str_r(config, "-oenc"));
-                goto error_out;
-            }
         }
 
         /* Case fold if requested. */

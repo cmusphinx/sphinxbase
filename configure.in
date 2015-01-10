@@ -32,7 +32,6 @@ AC_CHECK_SIZEOF(long long)
 AC_CHECK_SIZEOF(long)
 AC_CHECK_FUNCS([popen perror snprintf])
 AC_CHECK_HEADER(errno.h)
-AM_ICONV
 
 dnl
 dnl Check for Lapack stuff unless disabled

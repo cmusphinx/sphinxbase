@@ -2,13 +2,7 @@ SUBDIRS = src doc include test swig
 
 EXTRA_DIST = \
 	autogen.sh \
-	group/ABLD.BAT \
-	group/bld.inf \
-	group/sphinxbase.mmp \
-	m4/iconv.m4 \
-	m4/lib-ld.m4 \
-	m4/lib-link.m4 \
-	m4/lib-prefix.m4 \
+	m4/ax_pkg_swig.m4 \
 	m4/pkg.m4 \
 	sphinxbase.pc.in \
 	sphinxbase.sln \
@@ -30,12 +24,6 @@ pkgconfig_DATA = sphinxbase.pc
 CLEANFILES = sphinxbase.pc
 
 ACLOCAL_AMFLAGS = -I m4
-
-etags:
-	etags `find . -name "*.[ch]"`
-
-ctags:
-	ctags `find . -name "*.[ch]"`
 
 doxygen: 
 	doxygen ./doc/doxygen.cfg
