@@ -510,7 +510,7 @@ ngram_prob(ngram_model_t *model, const char *const *words, int32 n)
 
     ctx_id = (int32 *)ckd_calloc(n - 1, sizeof(*ctx_id));
     for (i = 1; i < n; ++i)
-      ctx_id[i] = ngram_wid(model, words[i]);
+      ctx_id[i - 1] = ngram_wid(model, words[i]);
 
     wid = ngram_wid(model, *words);
     prob = ngram_ng_prob(model, wid, ctx_id, n - 1, &nused);

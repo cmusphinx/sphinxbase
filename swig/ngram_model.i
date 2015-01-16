@@ -88,7 +88,7 @@
         return ngram_model_add_class($self, c, w, ptr, weights, n);
     }
 
-    int32 prob(int32 n, const char * const *ptr) {
+    int32 prob(size_t n, const char * const*ptr) {
         return ngram_prob($self, ptr, n);
     }
 }
