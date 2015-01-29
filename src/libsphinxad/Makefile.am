@@ -10,14 +10,13 @@ libsphinxad_la_LDFLAGS = -version-info 0:1:0
 
 libsphinxad_la_SOURCES = 
 
-EXTRA_libsphinxad_la_SOURCES = ad_base.c \
+EXTRA_libsphinxad_la_SOURCES = \
+	ad_base.c \
 	ad_oss.c \
 	ad_alsa.c \
 	ad_pulse.c \
-	ad_jack.c
-
-EXTRA_DIST = \
-	ad_s60.cpp \
+	ad_jack.c \
+	ad_openal.c \
 	ad_win32.c
 
 libsphinxad_la_DEPENDENCIES = @ad_files@
