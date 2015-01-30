@@ -6,12 +6,12 @@ trainer and all the Sphinx decoders (Sphinx-II, Sphinx-III, and
 PocketSphinx), as well as some common utilities for manipulating
 acoustic feature and audio files.
 
-Installation Guide: 
+Installation Guide
 
 This section contains installation for various platforms
 
 Linux/Unix installation
-^^^^^^^^^^^^^^^^^^^^^^^
+===================================================================================================
 
 sphinxbase is used by other modules.  The convention requires the
 physical layout of the code looks like this:
@@ -44,7 +44,7 @@ You can also check the validity of the package by typing
 
     > make check 
 
-and then install it with 
+and then install it with (might require permissions)
 
     > make install
 
@@ -53,25 +53,35 @@ customize it by running ./configure with an argument, as in
 
     >./configure --prefix=/my/own/installation/directory
 
-XCode Installation (for iPhone):
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Sphinxbase uses the standard unix autogen system, and there's a script
-included, 'build_for_iphone.sh' that will setup configure to create
-binaries that are XCode friendly.
+XCode Installation (for iPhone)
+===================================================================================================
 
-1) ./autogen.sh
-2) ./build_for_iphone.sh simulator
-3) ./build_for_iphone.sh device
 
-Then in XCode, open your project info, and for 'All Configurations', and
-set:
+Sphinxbase uses the standard unix autogen system, you can build
+sphinxbase with automake. You just need to pass correct configure
+arguments, set compiler path, set sysroot and other options. After you
+build the code you need to import dylib file into your project and you
+also need to configure includes for your project to find sphinxbase
+headers.
 
-'Header Search Paths' = "$(HOME)$(SDK_DIR)/include/sphinxbase"
-'Library Search Paths' = "$(HOME)$(SDK_DIR)/lib"
-'Other Linker Flags' = "-lsphinxbase"
+You also will have to create a recorder to capture audio with CoreAudio
+and feed it into the recognizer.
 
-Windows Installation:
-^^^^^^^^^^^^^^^^^^^^^
+For details see http://github.com/cmusphinx/pocketsphinx-ios-demo
+
+If you want to quickly start with Pocketsphinx, try OpenEars toolkit which
+includes Pocketsphinx http://www.politepix.com/openears/
+
+
+Android installation
+===================================================================================================
+
+Use pocketsphinx-android-demo project
+
+
+In MS Windows (TM), under MS Visual Studio 2010 (or newer - we test with Visual C++ 2010 Express)
+===================================================================================================
+
 To compile sphinxbase in Visual Studio 2010 Express (or newer):
 1, unzip the file.
 2, rename the directory to sphinxbase
@@ -84,4 +94,3 @@ In Step 4, make sure all projects are selected, preferably the
 If you are using cygwin, the installation procedure is very similar to
 the Unix installation. However, there is no audio driver support in
 cygwin currently so one can only use the batch mode recognzier. 
-
