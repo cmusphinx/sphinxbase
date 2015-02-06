@@ -179,7 +179,6 @@
     <ClCompile Include="..\..\src\libsphinxbase\util\slamch.c" />
     <ClCompile Include="..\..\src\libsphinxbase\util\slapack_lite.c" />
     <ClCompile Include="..\..\src\libsphinxbase\util\strfuncs.c" />
-    <ClCompile Include="..\..\src\libsphinxbase\util\utf8.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\include\sphinxbase\ad.h" />

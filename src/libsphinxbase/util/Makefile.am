@@ -30,7 +30,6 @@ libsphinxutil_la_SOURCES = \
 	profile.c \
 	sbthread.c \
 	strfuncs.c \
-	utf8.c \
 	$(LAPACK_LITE_SRCS)
 
 EXTRA_DIST = \

@@ -149,9 +149,6 @@
     <ClCompile Include="..\..\src\libsphinxbase\util\strfuncs.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\libsphinxbase\util\utf8.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\libsphinxbase\fe\yin.c">
       <Filter>Source Files</Filter>
     </ClCompile>
