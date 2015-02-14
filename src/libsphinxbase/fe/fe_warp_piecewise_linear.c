@@ -221,36 +221,3 @@ fe_warp_piecewise_linear_print(const char *label)
     }
     printf("\n");
 }
-
-/*
- * Log record.  Maintained by RCS.
- *
- * $Log: fe_warp_piecewise_linear.c,v $
- * Revision 1.2  2006/02/17 00:31:34  egouvea
- * Removed switch -melwarp. Changed the default for window length to
- * 0.025625 from 0.256 (so that a window at 16kHz sampling rate has
- * exactly 410 samples). Cleaned up include's. Replaced some E_FATAL()
- * with E_WARN() and return.
- *
- * Revision 1.1  2006/02/16 00:18:26  egouvea
- * Implemented flexible warping function. The user can specify at run
- * time which of several shapes they want to use. Currently implemented
- * are an affine function (y = ax + b), an inverse linear (y = a/x) and a
- * piecewise linear (y = ax, up to a frequency F, and then it "breaks" so
- * Nyquist frequency matches in both scales.
- *
- * Added two switches, -warp_type and -warp_params. The first specifies
- * the type, which valid values:
- *
- * -inverse or inverse_linear
- * -linear or affine
- * -piecewise or piecewise_linear
- *
- * The inverse_linear is the same as implemented by EHT. The -mel_warp
- * switch was kept for compatibility (maybe remove it in the
- * future?). The code is compatible with EHT's changes: cepstra created
- * from code after his changes should be the same as now. Scripts that
- * worked with his changes should work now without changes. Tested a few
- * cases, same results.
- *
- */
