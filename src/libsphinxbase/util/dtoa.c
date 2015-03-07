@@ -65,6 +65,9 @@
  *  7. sb_strtod has been modified so that it doesn't accept strings with
  *     leading whitespace.
  *
+ *  8. Global static variables are not used due to memory access issues. Fixes
+ *     usage from multiple threads.
+ *
  ***************************************************************/
 
 /* Please send bug reports for the original dtoa.c code to David M. Gay (dmg
@@ -167,11 +170,6 @@
 #define Bug(x) {fprintf(stderr, "%s\n", x); exit(1);}
 #endif
 
-#ifndef PRIVATE_MEM
-#define PRIVATE_MEM 2304
-#endif
-#define PRIVATE_mem ((PRIVATE_MEM+sizeof(double)-1)/sizeof(double))
-static double private_mem[PRIVATE_mem], *pmem_next = private_mem;
 
 #ifdef __cplusplus
 extern "C" {
@@ -327,7 +325,15 @@ Bigint {
 
 typedef struct Bigint Bigint;
 
-#ifndef Py_USING_MEMORY_DEBUGGER
+#define SPHINXBASE_USING_MEMORY_DEBUGGER 1
+
+#ifndef SPHINXBASE_USING_MEMORY_DEBUGGER
+
+#ifndef PRIVATE_MEM
+#define PRIVATE_MEM 2304
+#endif
+#define PRIVATE_mem ((PRIVATE_MEM+sizeof(double)-1)/sizeof(double))
+static double private_mem[PRIVATE_mem], *pmem_next = private_mem;
 
 /* Memory management: memory is allocated from, and returned to, Kmax+1 pools
    of memory, where pool k (0 <= k <= Kmax) is for Bigints b with b->maxwds ==
@@ -436,7 +442,7 @@ Bfree(Bigint *v)
     }
 }
 
-#endif /* Py_USING_MEMORY_DEBUGGER */
+#endif /* SPHINXBASE_USING_MEMORY_DEBUGGER */
 
 #define Bcopy(x,y) memcpy((char *)&x->sign, (char *)&y->sign,   \
                           y->wds*sizeof(Long) + 2*sizeof(int))
@@ -724,7 +730,7 @@ mult(Bigint *a, Bigint *b)
     return c;
 }
 
-#ifndef Py_USING_MEMORY_DEBUGGER
+#ifndef SPHINXBASE_USING_MEMORY_DEBUGGER
 
 /* p5s is a linked list of powers of 5 of the form 5**(2**i), i >= 2 */
 
@@ -835,7 +841,7 @@ pow5mult(Bigint *b, int k)
     return b;
 }
 
-#endif /* Py_USING_MEMORY_DEBUGGER */
+#endif /* SPHINXBASE_USING_MEMORY_DEBUGGER */
 
 /* shift a Bigint b left by k bits.  Return a pointer to the shifted result,
    or NULL on failure.  If the returned pointer is distinct from b then the
