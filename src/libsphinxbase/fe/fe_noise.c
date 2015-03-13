@@ -69,6 +69,16 @@
 #define LAMBDA_T 0.85
 #define MU_T 0.2
 #define MAX_GAIN 20
+#define SLOW_PEAK_FORGET_FACTOR 0.9995
+#define SLOW_PEAK_LEARN_FACTOR 0.9
+#define SPEECH_VOLUME_RANGE 8.0
+
+//#define VAD_DEBUG 1
+#ifdef VAD_DEBUG
+static FILE *vad_stats;
+static int64 low_snr = 0;
+static int64 low_volume = 0;
+#endif
 
 struct noise_stats_s {
     /* Smoothed power */
@@ -84,6 +94,9 @@ struct noise_stats_s {
     uint8 undefined;
     /* Number of items to process */
     uint32 num_filters;
+
+    /* Sum of slow peaks for VAD */
+    powspec_t slow_peak_sum;
 
     /* Precomputed constants */
     powspec_t lambda_power;
@@ -126,6 +139,45 @@ fe_lower_envelope(noise_stats_t *noise_stats, powspec_t * buf, powspec_t * floor
         }
 #endif
     }
+}
+
+/* update slow peaks, check if max signal level big enough compared to peak */
+static int16
+fe_is_frame_quite(noise_stats_t *noise_stats, powspec_t *buf, int32 num_filt)
+{
+    int i;
+    int16 is_quite;
+    powspec_t sum;
+    double smooth_factor, range;
+
+    sum = 0.0;
+    for (i = 0; i < num_filt; i++) {
+#ifndef FIXED_POINT
+        sum += buf[i];
+#else 
+        sum = fe_log_add(sum, buf[i]);
+#endif
+    }
+#ifndef FIXED_POINT
+    sum = log(sum);
+#endif
+    smooth_factor = (sum > noise_stats->slow_peak_sum) ? SLOW_PEAK_LEARN_FACTOR : SLOW_PEAK_FORGET_FACTOR;
+    noise_stats->slow_peak_sum = noise_stats->slow_peak_sum * smooth_factor +
+                                 sum * (1 - smooth_factor);
+
+#ifdef VAD_DEBUG
+#ifndef FIXED_POINT
+    fprintf(vad_stats, "%.3f %.3f ", noise_stats->slow_peak_sum, sum);
+#else
+    fprintf(vad_stats, "%d %d ", noise_stats->slow_peak_sum, sum);
+#endif
+#endif
+#ifndef FIXED_POINT
+    is_quite = noise_stats->slow_peak_sum - SPEECH_VOLUME_RANGE > sum;
+#else
+    is_quite = noise_stats->slow_peak_sum - FLOAT2FIX(SPEECH_VOLUME_RANGE) > sum;
+#endif
+    return is_quite;
 }
 
 /* temporal masking */
@@ -235,6 +287,10 @@ fe_init_noisestats(int num_filters)
     }
 #endif
 
+#ifdef VAD_DEBUG
+    vad_stats = fopen("vad_debug", "w");
+#endif
+
     return noise_stats;
 }
 
@@ -253,6 +309,11 @@ fe_free_noisestats(noise_stats_t * noise_stats)
     ckd_free(noise_stats->floor);
     ckd_free(noise_stats->peak);
     ckd_free(noise_stats);
+#ifdef VAD_DEBUG
+    fclose(vad_stats);
+    E_INFO("Low SNR [%ld] frames; Low volume [%ld] frames\n", (long)low_snr, (long)low_volume);
+#endif
+
 }
 
 /**
@@ -267,7 +328,8 @@ fe_track_snr(fe_t * fe, int32 *in_speech)
     noise_stats_t *noise_stats;
     powspec_t *mfspec;
     int32 i, num_filts;
-    powspec_t lrt, snr, max_signal, log_signal;
+    int16 is_quite;
+    powspec_t lrt, snr;
 
     if (!(fe->remove_noise || fe->remove_silence)) {
         *in_speech = TRUE;
@@ -281,12 +343,13 @@ fe_track_snr(fe_t * fe, int32 *in_speech)
     signal = (powspec_t *) ckd_calloc(num_filts, sizeof(powspec_t));
 
     if (noise_stats->undefined) {
+        noise_stats->slow_peak_sum = FIX2FLOAT(0.0);
         for (i = 0; i < num_filts; i++) {
             noise_stats->power[i] = mfspec[i];
             noise_stats->noise[i] = mfspec[i];
 #ifndef FIXED_POINT
             noise_stats->floor[i] = mfspec[i] / noise_stats->max_gain;
-            noise_stats->peak[i] = 0.0;       
+            noise_stats->peak[i] = 0.0;
 #else
             noise_stats->floor[i] = mfspec[i] - noise_stats->max_gain;
             noise_stats->peak[i] = MIN_FIXLOG;
@@ -309,37 +372,46 @@ fe_track_snr(fe_t * fe, int32 *in_speech)
     /* Noise estimation and vad decision */
     fe_lower_envelope(noise_stats, noise_stats->power, noise_stats->noise, num_filts);
 
-    lrt = FLOAT2FIX(0.0f);
-    max_signal = FLOAT2FIX(0.0f);
+    lrt = FLOAT2FIX(0.0);
     for (i = 0; i < num_filts; i++) {
 #ifndef FIXED_POINT
         signal[i] = noise_stats->power[i] - noise_stats->noise[i];
         if (signal[i] < 1.0)
             signal[i] = 1.0;
         snr = log(noise_stats->power[i] / noise_stats->noise[i]);
-        log_signal = log(signal[i]);
 #else
         signal[i] = fe_log_sub(noise_stats->power[i], noise_stats->noise[i]);
         snr = noise_stats->power[i] - noise_stats->noise[i];
-        log_signal = signal[i];
 #endif    
-        if (snr > lrt) {
+        if (snr > lrt)
             lrt = snr;
-            if (log_signal > max_signal) {
-		max_signal = log_signal;
-    	    }
-    	}
     }
+    is_quite = fe_is_frame_quite(noise_stats, signal, num_filts);
+
+#ifdef VAD_DEBUG
+    if (lrt < fe->vad_threshold)
+        low_snr++;
+    else if (is_quite)
+        low_volume++;
+#endif
 
 #ifndef FIXED_POINT
-    if (fe->remove_silence && (lrt < fe->vad_threshold || max_signal < fe->vad_threshold)) {
+    if (fe->remove_silence && (lrt < fe->vad_threshold || is_quite)) {
 #else
-    if (fe->remove_silence && (lrt < FLOAT2FIX(fe->vad_threshold) || max_signal < FLOAT2FIX(fe->vad_threshold))) {
+    if (fe->remove_silence && (lrt < FLOAT2FIX(fe->vad_threshold) || is_quite)) {
 #endif
         *in_speech = FALSE;
     } else {
-	*in_speech = TRUE;
+        *in_speech = TRUE;
     }
+
+#ifdef VAD_DEBUG
+#ifndef FIXED_POINT
+    fprintf(vad_stats, "%.3f %d\n", lrt, *in_speech);
+#else
+    fprintf(vad_stats, "%d %d\n", lrt, *in_speech);
+#endif
+#endif
 
     fe_lower_envelope(noise_stats, signal, noise_stats->floor, num_filts);
 
