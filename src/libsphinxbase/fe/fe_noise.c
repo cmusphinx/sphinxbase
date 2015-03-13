@@ -143,12 +143,12 @@ fe_lower_envelope(noise_stats_t *noise_stats, powspec_t * buf, powspec_t * floor
 
 /* update slow peaks, check if max signal level big enough compared to peak */
 static int16
-fe_is_frame_quite(noise_stats_t *noise_stats, powspec_t *buf, int32 num_filt)
+fe_is_frame_quiet(noise_stats_t *noise_stats, powspec_t *buf, int32 num_filt)
 {
     int i;
-    int16 is_quite;
+    int16 is_quiet;
     powspec_t sum;
-    double smooth_factor, range;
+    double smooth_factor;
 
     sum = 0.0;
     for (i = 0; i < num_filt; i++) {
@@ -173,11 +173,11 @@ fe_is_frame_quite(noise_stats_t *noise_stats, powspec_t *buf, int32 num_filt)
 #endif
 #endif
 #ifndef FIXED_POINT
-    is_quite = noise_stats->slow_peak_sum - SPEECH_VOLUME_RANGE > sum;
+    is_quiet = noise_stats->slow_peak_sum - SPEECH_VOLUME_RANGE > sum;
 #else
-    is_quite = noise_stats->slow_peak_sum - FLOAT2FIX(SPEECH_VOLUME_RANGE) > sum;
+    is_quiet = noise_stats->slow_peak_sum - FLOAT2FIX(SPEECH_VOLUME_RANGE) > sum;
 #endif
-    return is_quite;
+    return is_quiet;
 }
 
 /* temporal masking */
@@ -328,7 +328,7 @@ fe_track_snr(fe_t * fe, int32 *in_speech)
     noise_stats_t *noise_stats;
     powspec_t *mfspec;
     int32 i, num_filts;
-    int16 is_quite;
+    int16 is_quiet;
     powspec_t lrt, snr;
 
     if (!(fe->remove_noise || fe->remove_silence)) {
@@ -386,19 +386,19 @@ fe_track_snr(fe_t * fe, int32 *in_speech)
         if (snr > lrt)
             lrt = snr;
     }
-    is_quite = fe_is_frame_quite(noise_stats, signal, num_filts);
+    is_quiet = fe_is_frame_quiet(noise_stats, signal, num_filts);
 
 #ifdef VAD_DEBUG
     if (lrt < fe->vad_threshold)
         low_snr++;
-    else if (is_quite)
+    else if (is_quiet)
         low_volume++;
 #endif
 
 #ifndef FIXED_POINT
-    if (fe->remove_silence && (lrt < fe->vad_threshold || is_quite)) {
+    if (fe->remove_silence && (lrt < fe->vad_threshold || is_quiet)) {
 #else
-    if (fe->remove_silence && (lrt < FLOAT2FIX(fe->vad_threshold) || is_quite)) {
+    if (fe->remove_silence && (lrt < FLOAT2FIX(fe->vad_threshold) || is_quiet)) {
 #endif
         *in_speech = FALSE;
     } else {
