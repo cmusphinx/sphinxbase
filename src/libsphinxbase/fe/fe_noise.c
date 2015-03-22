@@ -346,11 +346,12 @@ fe_track_snr(fe_t * fe, int32 *in_speech)
         noise_stats->slow_peak_sum = FIX2FLOAT(0.0);
         for (i = 0; i < num_filts; i++) {
             noise_stats->power[i] = mfspec[i];
-            noise_stats->noise[i] = mfspec[i];
 #ifndef FIXED_POINT
+            noise_stats->noise[i] = mfspec[i] / noise_stats->max_gain;;
             noise_stats->floor[i] = mfspec[i] / noise_stats->max_gain;
             noise_stats->peak[i] = 0.0;
 #else
+            noise_stats->noise[i] = mfspec[i] - noise_stats->max_gain;;
             noise_stats->floor[i] = mfspec[i] - noise_stats->max_gain;
             noise_stats->peak[i] = MIN_FIXLOG;
 #endif
