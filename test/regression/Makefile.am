@@ -1,5 +1,4 @@
 EXTRA_DIST =					\
-	testfuncs_cygwin.sh			\
 	chan3.cepview				\
 	chan3-dither.cepview			\
 	chan3.logspec				\
@@ -12,8 +11,6 @@ EXTRA_DIST =					\
 	chan3.wav				\
 	chan3.sph				\
 	chan3.f0				\
-	tutorial-check.sh			\
-	crontab					\
 	polite.gram				\
 	test.gram				\
 	test.command.fsg			\

@@ -1,6 +1,5 @@
 check_PROGRAMS = \
 	test_thread \
-	test_tls_log \
 	test_event \
 	test_msgq
 

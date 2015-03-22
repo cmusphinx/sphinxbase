@@ -393,6 +393,7 @@ decode_sndfile(sphinx_wave2feat_t *wtf)
 
     nchans = cmd_ln_int32_r(wtf->config, "-nchans");
     whichchan = cmd_ln_int32_r(wtf->config, "-whichchan");
+    fe_start_stream(wtf->fe);
     fe_start_utt(wtf->fe);
     nfloat = 0;
     while ((nsamp = sf_read_short(wtf->insfh,
@@ -446,6 +447,7 @@ decode_pcm(sphinx_wave2feat_t *wtf)
 
     nchans = cmd_ln_int32_r(wtf->config, "-nchans");
     whichchan = cmd_ln_int32_r(wtf->config, "-whichchan");
+    fe_start_stream(wtf->fe);
     fe_start_utt(wtf->fe);
     nfloat = 0;
     while ((nsamp = fread(wtf->audio, sizeof(int16), wtf->blocksize, wtf->infh)) != 0) {

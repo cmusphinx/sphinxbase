@@ -7,6 +7,7 @@ AM_CFLAGS =\
 
 LDADD = ${top_builddir}/src/libsphinxbase/libsphinxbase.la -lm
 
+CLEANFILES = _test*.err _test*.out
 
 TESTS = _test_parse_badargs.test		\
 	_test_parse_defaults_r.test		\

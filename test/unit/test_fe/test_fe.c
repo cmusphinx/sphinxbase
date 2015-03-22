@@ -35,6 +35,7 @@ main(int argc, char *argv[])
 
     TEST_ASSERT(raw = fopen(TESTDATADIR "/chan3.raw", "rb"));
 
+    fe_start_stream(fe);
     TEST_EQUAL(0, fe_start_utt(fe));
     TEST_EQUAL(1024, fread(buf, sizeof(int16), 1024, raw));
 
@@ -86,6 +87,7 @@ main(int argc, char *argv[])
     inptr = &buf[0];
     nfr = 5;
     nsamp = 1024;
+    fe_start_stream(fe);
     TEST_EQUAL(0, fe_start_utt(fe));
     TEST_ASSERT(fe_process_frames(fe, &inptr, &nsamp, cepbuf2, &nfr, NULL) >= 0);
     /* First 1024 samples of chan3.raw is silence, nfr is expected to stay 0 */
@@ -95,16 +97,7 @@ main(int argc, char *argv[])
     TEST_ASSERT(fe_end_utt(fe, cepbuf2[4], &nfr) >= 0);
     printf("nfr %d\n", nfr);
     TEST_EQUAL(nfr, 0);
-    /* fe_process_frames overwrites features if frame is unvoiced, 
-     * so for cepbuf2 last frame is at 0 and previous are lost */
-    printf("%d: ", 3);
-    for (i = 0; i < DEFAULT_NUM_CEPSTRA; ++i) {
-        printf("%.2f,%.2f ",
-               MFCC2FLOAT(cepbuf1[3][i]),
-               MFCC2FLOAT(cepbuf2[0][i]));
-        TEST_EQUAL_FLOAT(cepbuf1[3][i], cepbuf2[0][i]);
-    }
-    printf("\n");
+
     /* output features stored in cepbuf[4] by fe_end_utt 
      * should be the same */
     printf("%d: ", 4);
@@ -124,6 +117,7 @@ main(int argc, char *argv[])
     nfr = 5;
     i = 5;
     nsamp = 256;
+    fe_start_stream(fe);
     TEST_EQUAL(0, fe_start_utt(fe));
     TEST_ASSERT(fe_process_frames(fe, &inptr, &nsamp, cptr, &i, NULL) >= 0);
     printf("inptr %d nsamp %d nfr %d\n", inptr - buf, nsamp, i);
@@ -169,6 +163,7 @@ main(int argc, char *argv[])
     /* And now, finally, test fe_process_utt() */
     inptr = &buf[0];
     i = 0;
+    fe_start_stream(fe);
     TEST_EQUAL(0, fe_start_utt(fe));
     TEST_ASSERT(fe_process_utt(fe, inptr, 256, &cptr, &nfr) >= 0);
     printf("i %d nfr %d\n", i, nfr);
