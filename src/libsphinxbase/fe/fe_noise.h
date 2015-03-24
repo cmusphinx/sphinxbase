@@ -61,6 +61,6 @@ void fe_track_snr(fe_t *fe, int32 *in_speech);
 /**
  * Updates global state based on local VAD state smoothing the estimate.
  */
-void fe_vad_hangover(fe_t *fe, mfcc_t *fea, int32 is_speech);
+void fe_vad_hangover(fe_t *fe, mfcc_t *feat, int32 is_speech, int32 store_pcm);
 
 #endif                          /* FE_NOISE_H */

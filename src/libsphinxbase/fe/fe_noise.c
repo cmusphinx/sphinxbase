@@ -347,7 +347,7 @@ fe_track_snr(fe_t * fe, int32 *in_speech)
         for (i = 0; i < num_filts; i++) {
             noise_stats->power[i] = mfspec[i];
 #ifndef FIXED_POINT
-            noise_stats->noise[i] = mfspec[i] / noise_stats->max_gain;;
+            noise_stats->noise[i] = mfspec[i]; // / noise_stats->max_gain;;
             noise_stats->floor[i] = mfspec[i] / noise_stats->max_gain;
             noise_stats->peak[i] = 0.0;
 #else
@@ -457,42 +457,36 @@ fe_track_snr(fe_t * fe, int32 *in_speech)
 }
 
 void
-fe_vad_hangover(fe_t * fe, mfcc_t * fea, int32 is_speech)
+fe_vad_hangover(fe_t * fe, mfcc_t * feat, int32 is_speech, int32 store_pcm)
 {
+    if (!fe->vad_data->in_speech) {
+        fe_prespch_write_cep(fe->vad_data->prespch_buf, feat);
+        if (store_pcm)
+            fe_prespch_write_pcm(fe->vad_data->prespch_buf, fe->spch);
+    }
+    
     /* track vad state and deal with cepstrum prespeech buffer */
-    fe->vad_data->state_changed = 0;
     if (is_speech) {
-        fe->vad_data->postspch_num = 0;
-        if (!fe->vad_data->global_state) {
-            fe->vad_data->prespch_num++;
-            fe_prespch_write_cep(fe->vad_data->prespch_buf, fea);
+        fe->vad_data->post_speech_frames = 0;
+        if (!fe->vad_data->in_speech) {
+            fe->vad_data->pre_speech_frames++;
             /* check for transition sil->speech */
-            if (fe->vad_data->prespch_num >= fe->prespch_len) {
-                fe->vad_data->prespch_num = 0;
-                fe->vad_data->global_state = 1;
-                /* transition silence->speech occurred */
-                fe->vad_data->state_changed = 1;
+            if (fe->vad_data->pre_speech_frames >= fe->start_speech) {
+                fe->vad_data->pre_speech_frames = 0;
+                fe->vad_data->in_speech = 1;
             }
         }
     } else {
-        fe->vad_data->prespch_num = 0;
-        fe_prespch_reset_cep(fe->vad_data->prespch_buf);
-        if (fe->vad_data->global_state) {
-            fe->vad_data->postspch_num++;
+        fe->vad_data->pre_speech_frames = 0;
+        if (fe->vad_data->in_speech) {
+            fe->vad_data->post_speech_frames++;
             /* check for transition speech->sil */
-            if (fe->vad_data->postspch_num >= fe->postspch_len) {
-                fe->vad_data->postspch_num = 0;
-                fe->vad_data->global_state = 0;
-                /* transition speech->silence occurred */
-                fe->vad_data->state_changed = 1;
+            if (fe->vad_data->post_speech_frames >= fe->post_speech) {
+                fe->vad_data->post_speech_frames = 0;
+                fe->vad_data->in_speech = 0;
+    	        fe_prespch_reset_cep(fe->vad_data->prespch_buf);
+        	fe_prespch_reset_pcm(fe->vad_data->prespch_buf);
             }
         }
-    }
-
-    if (fe->vad_data->store_pcm) {
-        if (is_speech || fe->vad_data->global_state)
-            fe_prespch_write_pcm(fe->vad_data->prespch_buf, fe->spch);
-        if (!is_speech && !fe->vad_data->global_state)
-            fe_prespch_reset_pcm(fe->vad_data->prespch_buf);
     }
 }

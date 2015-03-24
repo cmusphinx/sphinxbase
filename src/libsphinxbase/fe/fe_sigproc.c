@@ -1351,16 +1351,16 @@ fe_dct3(fe_t * fe, const mfcc_t * mfcep, powspec_t * mflogspec)
 }
 
 void
-fe_write_frame(fe_t * fe, mfcc_t * fea)
+fe_write_frame(fe_t * fe, mfcc_t * feat, int32 store_pcm)
 {
     int32 is_speech;
 
     fe_spec_magnitude(fe);
     fe_mel_spec(fe);
     fe_track_snr(fe, &is_speech);
-    fe_mel_cep(fe, fea);
-    fe_lifter(fe, fea);
-    fe_vad_hangover(fe, fea, is_speech);
+    fe_mel_cep(fe, feat);
+    fe_lifter(fe, feat);
+    fe_vad_hangover(fe, feat, is_speech, store_pcm);
 }
 
 

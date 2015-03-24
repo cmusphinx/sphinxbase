@@ -57,6 +57,10 @@ struct prespch_buf_s {
     int16 cep_write_ptr;
     /* read pointer for cep buffer */
     int16 cep_read_ptr;
+    /* Count */
+    int16 ncep;
+    
+    
     /* write pointer for pcm buffer */
     int16 pcm_write_ptr;
     /* frames amount in cep buffer */
@@ -82,6 +86,8 @@ fe_prespch_init(int num_frames, int num_cepstra, int num_samples)
     prespch_buf->num_frames_pcm = 0;
     prespch_buf->cep_write_ptr = 0;
     prespch_buf->cep_read_ptr = 0;
+    prespch_buf->ncep = 0;
+    
     prespch_buf->pcm_write_ptr = 0;
 
     prespch_buf->cep_buf = (mfcc_t **)
@@ -102,25 +108,28 @@ fe_prespch_extend_pcm(prespch_buf_t* prespch_buf, int num_frames_pcm)
 }
 
 int
-fe_prespch_read_cep(prespch_buf_t * prespch_buf, mfcc_t * fea)
+fe_prespch_read_cep(prespch_buf_t * prespch_buf, mfcc_t * feat)
 {
-    if (prespch_buf->cep_read_ptr >= prespch_buf->num_frames_cep)
+    if (prespch_buf->ncep == 0)
         return 0;
-    if (prespch_buf->cep_read_ptr >= prespch_buf->cep_write_ptr)
-        return 0;
-    memcpy(fea, prespch_buf->cep_buf[prespch_buf->cep_read_ptr],
+    memcpy(feat, prespch_buf->cep_buf[prespch_buf->cep_read_ptr],
            sizeof(mfcc_t) * prespch_buf->num_cepstra);
-    prespch_buf->cep_read_ptr++;
+    prespch_buf->cep_read_ptr = (prespch_buf->cep_read_ptr + 1) % prespch_buf->num_frames_cep;
+    prespch_buf->ncep--;
     return 1;
 }
 
 void
-fe_prespch_write_cep(prespch_buf_t * prespch_buf, mfcc_t * fea)
+fe_prespch_write_cep(prespch_buf_t * prespch_buf, mfcc_t * feat)
 {
-    assert(prespch_buf->cep_write_ptr < prespch_buf->num_frames_cep);
-    memcpy(prespch_buf->cep_buf[prespch_buf->cep_write_ptr], fea,
+    memcpy(prespch_buf->cep_buf[prespch_buf->cep_write_ptr], feat,
            sizeof(mfcc_t) * prespch_buf->num_cepstra);
-    prespch_buf->cep_write_ptr++;
+    prespch_buf->cep_write_ptr = (prespch_buf->cep_write_ptr + 1) % prespch_buf->num_frames_cep;
+    if (prespch_buf->ncep < prespch_buf->num_frames_cep) {
+        prespch_buf->ncep++;	
+    } else {
+        prespch_buf->cep_read_ptr = (prespch_buf->cep_read_ptr + 1) % prespch_buf->num_frames_cep;
+    }
 }
 
 void
@@ -155,6 +164,7 @@ fe_prespch_reset_cep(prespch_buf_t * prespch_buf)
 {
     prespch_buf->cep_read_ptr = 0;
     prespch_buf->cep_write_ptr = 0;
+    prespch_buf->ncep = 0;
 }
 
 void
@@ -178,5 +188,5 @@ fe_prespch_free(prespch_buf_t * prespch_buf)
 int32 
 fe_prespch_ncep(prespch_buf_t * prespch_buf)
 {
-    return prespch_buf->cep_write_ptr - prespch_buf->cep_read_ptr;
+    return prespch_buf->ncep;
 }

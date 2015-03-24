@@ -103,25 +103,14 @@ struct melfb_s {
     int32 round_filters;
 };
 
-typedef struct ringbuf_s {
-	powspec_t** bufs;
-	int16 buf_num;
-	int32 buf_len;
-	int16 start;
-	int16 end;
-	int32 recs;
-} ringbuf_t;
-
 /* sqrt(1/2), also used for unitary DCT-II/DCT-III */
 #define SQRT_HALF FLOAT2MFCC(0.707106781186548)
 
 typedef struct vad_data_s {
-    uint8 global_state;
-    uint8 state_changed;
-    uint8 store_pcm;
-    int16 prespch_num;
-    int16 postspch_num;
-    prespch_buf_t* prespch_buf;	
+    uint8 in_speech;
+    int16 pre_speech_frames;
+    int16 post_speech_frames;
+    prespch_buf_t* prespch_buf;
 } vad_data_t;
 
 /** Structure for the front-end computation. */
@@ -129,9 +118,6 @@ struct fe_s {
     cmd_ln_t *config;
     int refcount;
 
-    int16 prespch_len;
-    int16 postspch_len;
-    float32 vad_threshold;
 
     float32 sampling_rate;
     int16 frame_rate;
@@ -165,10 +151,15 @@ struct fe_s {
     melfb_t *mel_fb;
     /* Half of a Hamming Window. */
     window_t *hamming_window;
-    /* Storage for noise removal  */
+
+    /* Noise removal  */
     noise_stats_t *noise_stats;
 
-    /* Storage for VAD variables */
+    /* VAD variables */
+    int16 pre_speech;
+    int16 post_speech;
+    int16 start_speech;
+    float32 vad_threshold;
     vad_data_t *vad_data;
 
     /* Temporary buffers for processing. */
@@ -193,7 +184,7 @@ int fe_read_frame(fe_t *fe, int16 const *in, int32 len);
 int fe_shift_frame(fe_t *fe, int16 const *in, int32 len);
 
 /* Process a frame of data into features. */
-void fe_write_frame(fe_t *fe, mfcc_t *fea);
+void fe_write_frame(fe_t *fe, mfcc_t *feat, int32 store_pcm);
 
 /* Initialization functions. */
 int32 fe_build_melfilters(melfb_t *MEL_FB);

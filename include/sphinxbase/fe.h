@@ -91,10 +91,14 @@ extern "C" {
 #define DEFAULT_NUM_CEPSTRA 13
 /** Default number of filter bands used to generate MFCCs. */
 #define DEFAULT_NUM_FILTERS 40
-/** Default prespeech state length */
-#define DEFAULT_PRESPCH_STATE_LEN 10
-/** Default postspeech state length */
-#define DEFAULT_POSTSPCH_STATE_LEN 50
+
+/** Default prespeech length */
+#define DEFAULT_PRE_SPEECH 20
+/** Default postspeech length */
+#define DEFAULT_POST_SPEECH 50
+/** Default postspeech length */
+#define DEFAULT_START_SPEECH 10
+
 /** Default lower edge of mel filter bank. */
 #define DEFAULT_LOWER_FILT_FREQ 133.33334
 /** Default upper edge of mel filter bank. */
@@ -189,13 +193,18 @@ extern "C" {
    \
   { "-vad_prespeech", \
     ARG_INT32, \
-    ARG_STRINGIFY(DEFAULT_PRESPCH_STATE_LEN), \
+    ARG_STRINGIFY(DEFAULT_PRE_SPEECH), \
+    "Num of speech frames to keep before silence to speech." }, \
+   \
+  { "-vad_startspeech", \
+    ARG_INT32, \
+    ARG_STRINGIFY(DEFAULT_START_SPEECH), \
     "Num of speech frames to trigger vad from silence to speech." }, \
    \
   { "-vad_postspeech", \
     ARG_INT32, \
-    ARG_STRINGIFY(DEFAULT_POSTSPCH_STATE_LEN), \
-    "Num of silence frames to trigger vad from speech to silence." }, \
+    ARG_STRINGIFY(DEFAULT_POST_SPEECH), \
+    "Num of silence frames to keep after from speech to silence." }, \
    \
   { "-vad_threshold", \
     ARG_FLOAT32, \
