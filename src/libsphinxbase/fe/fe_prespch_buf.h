@@ -48,9 +48,6 @@ typedef struct prespch_buf_s prespch_buf_t;
 prespch_buf_t *fe_prespch_init(int num_frames, int num_cepstra,
                                int num_samples);
 
-/* Extends pcm prespeech buffer with specified amount of frames */
-void fe_prespch_extend_pcm(prespch_buf_t* prespch_buf, int num_frames_pcm);
-
 /* Reads mfcc frame from prespeech buffer */
 int fe_prespch_read_cep(prespch_buf_t * prespch_buf, mfcc_t * fea);
 
@@ -58,7 +55,7 @@ int fe_prespch_read_cep(prespch_buf_t * prespch_buf, mfcc_t * fea);
 void fe_prespch_write_cep(prespch_buf_t * prespch_buf, mfcc_t * fea);
 
 /* Reads pcm frame from prespeech buffer */
-void fe_prespch_read_pcm(prespch_buf_t * prespch_buf, int16 ** samples,
+void fe_prespch_read_pcm(prespch_buf_t * prespch_buf, int16 *samples,
                          int32 * samples_num);
 
 /* Writes pcm frame to prespeech buffer */

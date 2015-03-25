@@ -3,7 +3,7 @@ bindings.  Callback pop-style frontend would be a pain to support in
 bindings (you need to  call managed/python code from callback then)
 
 For effective noise cancellation we need a lookahead and corresponding
-delay in  processing
+delay in processing
 
 For effective CMN we need a delay in processing in the beginning too for 
 parameters estimation
@@ -15,7 +15,7 @@ Our overall delay should be minimal to provide users a real-time
 experience
 
 We need to operate on streams of audio, not just on utterances, there
-could be  adaptation across the stream
+could be adaptation across the stream
 
 The core concept of the live frontend must be FIFO. We push some data
 into it  and can get some data back. Every chunk of data must have

@@ -347,7 +347,7 @@ fe_track_snr(fe_t * fe, int32 *in_speech)
         for (i = 0; i < num_filts; i++) {
             noise_stats->power[i] = mfspec[i];
 #ifndef FIXED_POINT
-            noise_stats->noise[i] = mfspec[i]; // / noise_stats->max_gain;;
+            noise_stats->noise[i] = mfspec[i] / noise_stats->max_gain;
             noise_stats->floor[i] = mfspec[i] / noise_stats->max_gain;
             noise_stats->peak[i] = 0.0;
 #else

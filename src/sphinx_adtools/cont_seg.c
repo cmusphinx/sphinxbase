@@ -143,7 +143,7 @@ segment_audio()
     FILE *file;
     int16 pcm_buf[BLOCKSIZE];
     mfcc_t **cep_buf;
-    int16 *voiced_buf;
+    int16 voiced_buf = NULL;
     int32 voiced_nsamps, out_frameidx, uttstart = 0;
     char file_name[1024];
     uint8 cur_vad_state, vad_state, writing;
@@ -169,7 +169,6 @@ segment_audio()
     voiced_nsamps = 0;
     writing = 0;
     file = NULL;
-    voiced_buf = NULL;
     fe_start_stream(fe);
     fe_start_utt(fe);
     while ((k = read_audio(pcm_buf, BLOCKSIZE)) > 0) {
@@ -178,7 +177,7 @@ segment_audio()
         while (k) {
             nframes_tmp = nframes;
             fe_process_frames_ext(fe, &pcm_buf_tmp, &k, cep_buf,
-                                  &nframes_tmp, &voiced_buf,
+                                  &nframes_tmp, voiced_buf,
                                   &voiced_nsamps, &out_frameidx);
             if (out_frameidx > 0) {
         	uttstart = out_frameidx;
