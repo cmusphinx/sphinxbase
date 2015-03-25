@@ -13,7 +13,7 @@ Installation Guide
 This section contains installation for various platforms
 
 Linux/Unix installation
-===================================================================================================
+==============================================================================
 
 sphinxbase is used by other modules.  The convention requires the
 physical layout of the code looks like this:
@@ -23,7 +23,7 @@ physical layout of the code looks like this:
 So if you get the file from a distribution, you might want to rename
 sphinxbase-X.X to sphinxbase by typing
 
-    > mv sphinxbase-X.X sphinxbase (where X.X being the version of sphinxbase)
+    > mv sphinxbase-X.X sphinxbase (X.X being the version of sphinxbase)
 
 If you downloaded directly from the Subversion repository, you need to 
 create the "configure" file by typing
@@ -56,8 +56,7 @@ customize it by running ./configure with an argument, as in
     >./configure --prefix=/my/own/installation/directory
 
 XCode Installation (for iPhone)
-===================================================================================================
-
+==============================================================================
 
 Sphinxbase uses the standard unix autogen system, you can build
 sphinxbase with automake. You just need to pass correct configure
@@ -76,13 +75,13 @@ includes Pocketsphinx http://www.politepix.com/openears/
 
 
 Android installation
-===================================================================================================
+==============================================================================
 
 Use pocketsphinx-android-demo project
 
 
-In MS Windows (TM), under MS Visual Studio 2010 (or newer - we test with Visual C++ 2010 Express)
-===================================================================================================
+MS Windows installation:
+==============================================================================
 
 To compile sphinxbase in Visual Studio 2010 Express (or newer):
 1, unzip the file.
@@ -96,3 +95,7 @@ In Step 4, make sure all projects are selected, preferably the
 If you are using cygwin, the installation procedure is very similar to
 the Unix installation. However, there is no audio driver support in
 cygwin currently so one can only use the batch mode recognzier. 
+
+If you want to install Python packages on Windows, take a look at
+
+http://github.com/cmusphinx/pocketsphinx-python
