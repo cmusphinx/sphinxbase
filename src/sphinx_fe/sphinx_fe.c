@@ -126,7 +126,7 @@ detect_riff(sphinx_wave2feat_t *wtf)
         return -1;
     }
     if (fread(&hdr, sizeof(hdr), 1, fh) != 1) {
-        E_ERROR_SYSTEM("Failed to read RIFF header");
+        E_ERROR("Failed to read RIFF header");
         fclose(fh);
         return -1;
     }
@@ -1019,7 +1019,7 @@ run_control_file(sphinx_wave2feat_t *wtf, char const *ctlfile)
     hash_iter_t *itor;
     lineiter_t *li;
     FILE *ctlfh;
-    int nskip, runlen, npart, rv = 0;
+    int nskip, runlen, npart;
 
     if ((ctlfh = fopen(ctlfile, "r")) == NULL) {
         E_ERROR_SYSTEM("Failed to open control file %s", ctlfile);
@@ -1071,12 +1071,8 @@ run_control_file(sphinx_wave2feat_t *wtf, char const *ctlfile)
         build_filenames(wtf->config, li->buf, &infile, &outfile);
         if (hash_table_lookup(files, infile, NULL) == 0)
             continue;
-        rv = sphinx_wave2feat_convert_file(wtf, infile, outfile);
+        sphinx_wave2feat_convert_file(wtf, infile, outfile);
         hash_table_enter(files, infile, outfile);
-        if (rv != 0) {
-            lineiter_free(li);
-            break;
-        }
     }
     for (itor = hash_table_iter(files); itor;
          itor = hash_table_iter_next(itor)) {
@@ -1084,10 +1080,9 @@ run_control_file(sphinx_wave2feat_t *wtf, char const *ctlfile)
         ckd_free(hash_entry_val(itor->ent));
     }
     hash_table_free(files);
+    fclose(ctlfh);
 
-    if (fclose(ctlfh) == EOF)
-        E_ERROR_SYSTEM("Failed to close control file");
-    return rv;
+    return 0;
 }
 
 int
