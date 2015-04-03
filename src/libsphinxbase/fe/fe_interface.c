@@ -241,6 +241,15 @@ fe_init_auto_r(cmd_ln_t *config)
 
     assert (fe->frame_shift > 1);
 
+    if (fe->frame_size < fe->frame_shift) {
+        E_ERROR
+            ("Frame size %d (-wlen) must be greater than frame shift %d (-frate)\n",
+             fe->frame_size, fe->frame_shift);
+        fe_free(fe);
+        return NULL;
+    }
+
+
     if (fe->frame_size > (fe->fft_size)) {
         E_ERROR
             ("Number of FFT points has to be a power of 2 higher than %d, it is %d\n",
