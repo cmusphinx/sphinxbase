@@ -36,7 +36,7 @@
  */
 /*
  * \file lm3g_templates.c Core Sphinx 3-gram code used in
- * DMP/DMP32/ARPA (for now) model code.
+ * DMP/ARPA (for now) model code.
  */
 
 #include <assert.h>
