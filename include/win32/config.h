@@ -9,17 +9,11 @@
 /* Enable thread safety */
 #define ENABLE_THREADS 
 
-/* The Thread Local Storage class */
-#define SPHINXBASE_TLS __declspec(thread)
-
-/* Use Q15 fixed-point computation */
-/* #undef FIXED16 */
-
 /* Use fixed-point computation */
 /* #undef FIXED_POINT */
 
 /* Enable matrix algebra with LAPACK */
-#define WITH_LAPACK
+/* #undef WITH_LAPACK */
 
 /* The size of `long', as computed by sizeof. */
 #define SIZEOF_LONG 4

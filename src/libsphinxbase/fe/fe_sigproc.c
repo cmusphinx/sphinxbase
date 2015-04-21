@@ -730,19 +730,7 @@ fe_pre_emphasis(int16 const *in, frame_t * out, int32 len,
 {
     int i;
 
-#if defined(FIXED16)
-    int16 fxd_alpha = (int16) (factor * 0x8000);
-    int32 tmp1, tmp2;
-
-    tmp1 = (int32) in[0] << 15;
-    tmp2 = (int32) prior *fxd_alpha;
-    out[0] = (int16) ((tmp1 - tmp2) >> 15);
-    for (i = 1; i < len; ++i) {
-        tmp1 = (int32) in[i] << 15;
-        tmp2 = (int32) in[i - 1] * fxd_alpha;
-        out[i] = (int16) ((tmp1 - tmp2) >> 15);
-    }
-#elif defined(FIXED_POINT)
+#if defined(FIXED_POINT)
     fixed32 fxd_alpha = FLOAT2FIX(factor);
     out[0] = ((fixed32) in[0] << DEFAULT_RADIX) - (prior * fxd_alpha);
     for (i = 1; i < len; ++i)
@@ -760,9 +748,7 @@ fe_short_to_frame(int16 const *in, frame_t * out, int32 len)
 {
     int i;
 
-#if defined(FIXED16)
-    memcpy(out, in, len * sizeof(*out));
-#elif defined(FIXED_POINT)
+#if defined(FIXED_POINT)
     for (i = 0; i < len; i++)
         out[i] = (int32) in[i] << DEFAULT_RADIX;
 #else                           /* FIXED_POINT */
@@ -781,11 +767,7 @@ fe_create_hamming(window_t * in, int32 in_len)
         float64 hamm;
         hamm = (0.54 - 0.46 * cos(2 * M_PI * i /
                                   ((float64) in_len - 1.0)));
-#ifdef FIXED16
-        in[i] = (int16) (hamm * 0x8000);
-#else
         in[i] = FLOAT2COS(hamm);
-#endif
     }
 }
 
@@ -796,11 +778,7 @@ fe_hamming_window(frame_t * in, window_t * window, int32 in_len,
     int i;
 
     if (remove_dc) {
-#ifdef FIXED16
-        int32 mean = 0;         /* Use int32 to avoid possibility of overflow */
-#else
         frame_t mean = 0;
-#endif
 
         for (i = 0; i < in_len; i++)
             mean += in[i];
@@ -809,21 +787,10 @@ fe_hamming_window(frame_t * in, window_t * window, int32 in_len,
             in[i] -= (frame_t) mean;
     }
 
-#ifdef FIXED16
-    for (i = 0; i < in_len / 2; i++) {
-        int32 tmp1, tmp2;
-
-        tmp1 = (int32) in[i] * window[i];
-        tmp2 = (int32) in[in_len - 1 - i] * window[i];
-        in[i] = (int16) (tmp1 >> 15);
-        in[in_len - 1 - i] = (int16) (tmp2 >> 15);
-    }
-#else
     for (i = 0; i < in_len / 2; i++) {
         in[i] = COSMUL(in[i], window[i]);
         in[in_len - 1 - i] = COSMUL(in[in_len - 1 - i], window[i]);
     }
-#endif
 }
 
 static int
@@ -907,10 +874,7 @@ fe_create_twiddle(fe_t * fe)
 
     for (i = 0; i < fe->fft_size / 4; ++i) {
         float64 a = 2 * M_PI * i / fe->fft_size;
-#ifdef FIXED16
-        fe->ccc[i] = (int16) (cos(a) * 0x8000);
-        fe->sss[i] = (int16) (sin(a) * 0x8000);
-#elif defined(FIXED_POINT)
+#if defined(FIXED_POINT)
         fe->ccc[i] = FLOAT2COS(cos(a));
         fe->sss[i] = FLOAT2COS(sin(a));
 #else
@@ -921,134 +885,6 @@ fe_create_twiddle(fe_t * fe)
 }
 
 
-/* Translated from the FORTRAN (obviously) from "Real-Valued Fast
- * Fourier Transform Algorithms" by Henrik V. Sorensen et al., IEEE
- * Transactions on Acoustics, Speech, and Signal Processing, vol. 35,
- * no.6.  The 16-bit version does a version of "block floating
- * point" in order to avoid rounding errors.
- */
-#if defined(FIXED16)
-static int
-fe_fft_real(fe_t * fe)
-{
-    int i, j, k, m, n, lz;
-    frame_t *x, xt, max;
-
-    x = fe->frame;
-    m = fe->fft_order;
-    n = fe->fft_size;
-
-    /* Bit-reverse the input. */
-    j = 0;
-    for (i = 0; i < n - 1; ++i) {
-        if (i < j) {
-            xt = x[j];
-            x[j] = x[i];
-            x[i] = xt;
-        }
-        k = n / 2;
-        while (k <= j) {
-            j -= k;
-            k /= 2;
-        }
-        j += k;
-    }
-    /* Determine how many bits of dynamic range are in the input. */
-    max = 0;
-    for (i = 0; i < n; ++i)
-        if (abs(x[i]) > max)
-            max = abs(x[i]);
-    /* The FFT has a gain of M bits, so we need to attenuate the input
-     * by M bits minus the number of leading zeroes in the input's
-     * range in order to avoid overflows.  */
-    for (lz = 0; lz < m; ++lz)
-        if (max & (1 << (15 - lz)))
-            break;
-
-    /* Basic butterflies (2-point FFT, real twiddle factors):
-     * x[i]   = x[i] +  1 * x[i+1]
-     * x[i+1] = x[i] + -1 * x[i+1]
-     */
-    /* The quantization error introduced by attenuating the input at
-     * any given stage of the FFT has a cascading effect, so we hold
-     * off on it until it's absolutely necessary. */
-    for (i = 0; i < n; i += 2) {
-        int atten = (lz == 0);
-        xt = x[i] >> atten;
-        x[i] = xt + (x[i + 1] >> atten);
-        x[i + 1] = xt - (x[i + 1] >> atten);
-    }
-
-    /* The rest of the butterflies, in stages from 1..m */
-    for (k = 1; k < m; ++k) {
-        int n1, n2, n4;
-        /* Start attenuating once we hit the number of leading zeros. */
-        int atten = (k >= lz);
-
-        n4 = k - 1;
-        n2 = k;
-        n1 = k + 1;
-        /* Stride over each (1 << (k+1)) points */
-        for (i = 0; i < n; i += (1 << n1)) {
-            /* Basic butterfly with real twiddle factors:
-             * x[i]          = x[i] +  1 * x[i + (1<<k)]
-             * x[i + (1<<k)] = x[i] + -1 * x[i + (1<<k)]
-             */
-            xt = x[i] >> atten;
-            x[i] = xt + (x[i + (1 << n2)] >> atten);
-            x[i + (1 << n2)] = xt - (x[i + (1 << n2)] >> atten);
-
-            /* The other ones with real twiddle factors:
-             * x[i + (1<<k) + (1<<(k-1))]
-             *   = 0 * x[i + (1<<k-1)] + -1 * x[i + (1<<k) + (1<<k-1)]
-             * x[i + (1<<(k-1))]
-             *   = 1 * x[i + (1<<k-1)] +  0 * x[i + (1<<k) + (1<<k-1)]
-             */
-            x[i + (1 << n2) + (1 << n4)] =
-                -x[i + (1 << n2) + (1 << n4)] >> atten;
-            x[i + (1 << n4)] = x[i + (1 << n4)] >> atten;
-
-            /* Butterflies with complex twiddle factors.
-             * There are (1<<k-1) of them.
-             */
-            for (j = 1; j < (1 << n4); ++j) {
-                frame_t cc, ss, t1, t2;
-                int i1, i2, i3, i4;
-
-                i1 = i + j;
-                i2 = i + (1 << n2) - j;
-                i3 = i + (1 << n2) + j;
-                i4 = i + (1 << n2) + (1 << n2) - j;
-
-                /*
-                 * cc = real(W[j * n / (1<<(k+1))])
-                 * ss = imag(W[j * n / (1<<(k+1))])
-                 */
-                cc = fe->ccc[j << (m - n1)];
-                ss = fe->sss[j << (m - n1)];
-
-                /* There are some symmetry properties which allow us
-                 * to get away with only four multiplications here. */
-                {
-                    int32 tmp1, tmp2;
-                    tmp1 = (int32) x[i3] * cc + (int32) x[i4] * ss;
-                    tmp2 = (int32) x[i3] * ss - (int32) x[i4] * cc;
-                    t1 = (int16) (tmp1 >> 15) >> atten;
-                    t2 = (int16) (tmp2 >> 15) >> atten;
-                }
-
-                x[i4] = (x[i2] >> atten) - t2;
-                x[i3] = (-x[i2] >> atten) - t2;
-                x[i2] = (x[i1] >> atten) - t1;
-                x[i1] = (x[i1] >> atten) + t1;
-            }
-        }
-    }
-
-    /* Return the residual scaling factor. */
-    return lz;
-}
-#else                           /* !FIXED16 */
 static int
 fe_fft_real(fe_t * fe)
 {
@@ -1146,7 +982,6 @@ fe_fft_real(fe_t * fe)
     /* This isn't used, but return it for completeness. */
     return m;
 }
-#endif                          /* !FIXED16 */
 
 static void
 fe_spec_magnitude(fe_t * fe)
@@ -1169,9 +1004,7 @@ fe_spec_magnitude(fe_t * fe)
 
     /* The first point (DC coefficient) has no imaginary part */
     {
-#ifdef FIXED16
-        spec[0] = fixlog(abs(fft[0]) << scale) * 2;
-#elif defined(FIXED_POINT)
+#if defined(FIXED_POINT)
         spec[0] = FIXLN(abs(fft[0]) << scale) * 2;
 #else
         spec[0] = fft[0] * fft[0];
@@ -1179,11 +1012,7 @@ fe_spec_magnitude(fe_t * fe)
     }
 
     for (j = 1; j <= fftsize / 2; j++) {
-#ifdef FIXED16
-        int32 rr = fixlog(abs(fft[j]) << scale) * 2;
-        int32 ii = fixlog(abs(fft[fftsize - j]) << scale) * 2;
-        spec[j] = fe_log_add(rr, ii);
-#elif defined(FIXED_POINT)
+#if defined(FIXED_POINT)
         int32 rr = FIXLN(abs(fft[j]) << scale) * 2;
         int32 ii = FIXLN(abs(fft[fftsize - j]) << scale) * 2;
         spec[j] = fe_log_add(rr, ii);

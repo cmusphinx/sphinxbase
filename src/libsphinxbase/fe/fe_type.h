@@ -44,13 +44,7 @@
 #include "sphinxbase/fe.h"
 #include "sphinxbase/fixpoint.h"
 
-#ifdef FIXED16
-/* Q15 format */
-typedef int16 frame_t;
-typedef int16 window_t;
-typedef int32 powspec_t;
-typedef struct { int16 r, i; } complex;
-#elif defined(FIXED_POINT)
+#if defined(FIXED_POINT)
 typedef fixed32 frame_t;
 typedef int32 powspec_t;
 typedef fixed32 window_t;

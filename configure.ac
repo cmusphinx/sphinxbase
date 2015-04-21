@@ -115,17 +115,6 @@ fi])
 AM_CONDITIONAL(FIXED_POINT, test x$fixed_point = xtrue)
 
 dnl
-dnl Enable 16-bit fixed-point (Q15) format for MFCC (less accurate, faster)
-dnl
-AC_ARG_ENABLE(fixed16,
-	AS_HELP_STRING([--enable-fixed16],
-		       [Use 16-bit fixed-point for MFCC computation]),[
-if test x$enableval = xyes; then
-   AC_DEFINE(FIXED_POINT, [], [Use fixed-point computation])
-   AC_DEFINE(FIXED16, [], [Use Q15 fixed-point computation])
-fi])
-
-dnl
 dnl Enable debugging
 dnl
 AC_ARG_ENABLE(debug,

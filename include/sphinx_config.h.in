@@ -1,13 +1,10 @@
 /* sphinx_config.h: Externally visible configuration parameters */
 
-/* Default radix point for fixed-point */
-#undef DEFAULT_RADIX
-
-/* Use Q15 fixed-point computation */
-#undef FIXED16
-
 /* Use fixed-point computation */
 #undef FIXED_POINT
+
+/* Default radix point for fixed-point */
+#undef DEFAULT_RADIX
 
 /* The size of `long', as computed by sizeof. */
 #undef SIZEOF_LONG
