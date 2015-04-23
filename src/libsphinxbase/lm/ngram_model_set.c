@@ -326,6 +326,10 @@ ngram_model_set_read(cmd_ln_t *config,
         }
         set = ngram_model_set_init(config, lm_array, name_array,
                                    NULL, n_models);
+
+        for (i = 0; i < n_models; ++i) {
+    	    ngram_model_free(lm_array[i]);
+        }
         ckd_free(lm_array);
         ckd_free(name_array);
     }
