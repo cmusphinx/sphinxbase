@@ -66,6 +66,12 @@ negative error code."
 %include typemaps.i
 %include iterators.i
 
+#if SWIGPYTHON
+%begin %{
+#include <Python.h>
+%}
+#endif
+
 %begin %{
 #include <sphinxbase/cmd_ln.h>
 #include <sphinxbase/err.h>

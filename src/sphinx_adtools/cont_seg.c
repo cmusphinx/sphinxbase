@@ -143,7 +143,7 @@ segment_audio()
     FILE *file;
     int16 pcm_buf[BLOCKSIZE];
     mfcc_t **cep_buf;
-    int16 voiced_buf = NULL;
+    int16 *voiced_buf = NULL;
     int32 voiced_nsamps, out_frameidx, uttstart = 0;
     char file_name[1024];
     uint8 cur_vad_state, vad_state, writing;

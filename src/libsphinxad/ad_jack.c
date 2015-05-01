@@ -48,9 +48,6 @@
 #include <jack/jack.h>
 #include <jack/jack.h>
 #include <jack/ringbuffer.h>
-#ifdef HAVE_SAMPLERATE_H
-#include <samplerate.h>
-#endif
 
 #define DEFAULT_DEVICE "system:capture_1"
 #define BUFFER_SIZE 352800
@@ -313,69 +310,21 @@ int32
 ad_read(ad_rec_t * handle, int16 * buf, int32 max)
 {
     int i;
-#ifdef HAVE_SAMPLERATE_H
-    int resample_error;
-#endif
-
-   if (!handle->recording)
+    if (!handle->recording)
        return AD_EOF;
 
-   size_t length = sample_size * max;
+    size_t length = sample_size * max;
 
-#ifdef HAVE_SAMPLERATE_H
+    length = jack_ringbuffer_read (handle->rbuffer, (char*) handle->sample_buffer, length);
+    size_t length_in_samples = length / sample_size;
 
-   /* Resample the data from the sample rate set in the jack server to that required 
-    * by sphinx */
+    for(i = 0; i < length_in_samples; i++) {
+	buf[i] = (int16) (int16_range_over_two * (handle->sample_buffer[i] + 1.0) + SHRT_MIN);
+    }
 
-   length = jack_ringbuffer_peek (handle->rbuffer, (char*) handle->sample_buffer, length);
-   size_t length_in_samples = length / sample_size;
+    if (length == 0 && (!handle->recording)) {
+	return AD_EOF;
+    }
 
-   if(handle->resample_state == NULL)
-       return AD_EOF;
-
-   /* We will try to downsample if jackd is running at a higher sample rate */
-   jack_nframes_t jack_samplerate = jack_get_sample_rate(handle->client);
-
-   SRC_DATA data;
-
-   data.data_in = handle->sample_buffer;
-   data.input_frames = length_in_samples;
-   data.data_out = handle->resample_buffer;
-   data.output_frames = BUFFER_SIZE / sample_size;
-   data.src_ratio = (float) handle->sps / jack_samplerate;
-   data.end_of_input = 0;
-
-   if ((resample_error = src_process(handle->resample_state, &data)) != 0) {
-       fprintf (stderr, "resample error %s\n", src_strerror (resample_error));
-       return 1;
-   }
-
-   for(i = 0; i < data.output_frames_gen; i++) {
-       buf[i] = (int16) (int16_range_over_two * (handle->resample_buffer[i] + 1.0) + SHRT_MIN);
-   }
-
-   jack_ringbuffer_read_advance(handle->rbuffer, data.input_frames_used * sample_size);	
-
-   if(length == 0 && (!handle->recording)) {
-       return AD_EOF;
-   }
-
-   return data.output_frames_gen;
-
-#else
-
-   length = jack_ringbuffer_read (handle->rbuffer, (char*) handle->sample_buffer, length);
-   size_t length_in_samples = length / sample_size;
-
-   for(i = 0; i < length_in_samples; i++) {
-       buf[i] = (int16) (int16_range_over_two * (handle->sample_buffer[i] + 1.0) + SHRT_MIN);
-   }
-
-   if(length == 0 && (!handle->recording)) {
-       return AD_EOF;
-   }
-
-   return length_in_samples;
-
-#endif
+    return length_in_samples;
 }

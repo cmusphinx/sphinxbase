@@ -23,7 +23,6 @@ libsphinxad_la_DEPENDENCIES = @ad_files@
 libsphinxad_la_LIBADD = \
 	@ad_files@ \
 	@ad_libs@ \
-	@SAMPLERATE_LIBS@ \
 	$(top_builddir)/src/libsphinxbase/libsphinxbase.la
 
 AM_CFLAGS =\
