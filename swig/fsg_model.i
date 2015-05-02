@@ -83,10 +83,6 @@
         return fsg_model_add_alt($self, baseword, altword);
     }
 
-    void write(FILE *file) {
-        fsg_model_write($self, file);
-    }
-
     void writefile(const char *path) {
         fsg_model_writefile($self, path);
     }

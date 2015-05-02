@@ -34,19 +34,31 @@ typedef struct {
 
 // Exception to end iteration
 
+#if SWIGJAVA
 %exception TYPE##Iterator##::next() {
   if (!arg1->ptr) {
-#if SWIGJAVA
     jclass cls = (*jenv)->FindClass(jenv, "java/util/NoSuchElementException");
     (*jenv)->ThrowNew(jenv, cls, NULL);
     return $null;
-#elif SWIGPYTHON
-    SWIG_SetErrorObj(PyExc_StopIteration, SWIG_Py_Void());
-    SWIG_fail;
-#endif
   }
   $action;
 }
+#elif SWIGPYTHON
+%exception TYPE##Iterator##::next() {
+  if (!arg1->ptr) {
+    SWIG_SetErrorObj(PyExc_StopIteration, SWIG_Py_Void());
+    SWIG_fail;
+  }
+  $action;
+}
+%exception TYPE##Iterator##::__next__() {
+  if (!arg1->ptr) {
+    SWIG_SetErrorObj(PyExc_StopIteration, SWIG_Py_Void());
+    SWIG_fail;
+  }
+  $action;
+}
+#endif
 
 // Implementation of the iterator itself
 
@@ -63,6 +75,7 @@ typedef struct {
     ckd_free($self);
   }
 
+#if SWIGJAVA
   %newobject next;
   VALUE_TYPE * next() {
     if ($self->ptr) {
@@ -73,12 +86,35 @@ typedef struct {
 
     return NULL;
   }
-
-#if SWIGJAVA
   bool hasNext() {
     return $self->ptr != NULL;
   }
 #endif
+#if SWIGPYTHON
+
+  // Python2
+  %newobject next;
+  VALUE_TYPE * next() {
+    if ($self->ptr) {
+      VALUE_TYPE *value = ##VALUE_TYPE##_fromIter($self->ptr);
+      $self->ptr = ##PREFIX##_next($self->ptr);
+      return value;
+    }
+    return NULL;
+  }
+
+  // Python3
+  %newobject __next__;
+  VALUE_TYPE * __next__() {
+    if ($self->ptr) {
+      VALUE_TYPE *value = ##VALUE_TYPE##_fromIter($self->ptr);
+      $self->ptr = ##PREFIX##_next($self->ptr);
+      return value;
+    }
+    return NULL;
+  }
+#endif
+
 }
 
 %enddef

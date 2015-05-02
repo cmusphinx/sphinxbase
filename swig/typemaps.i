@@ -3,45 +3,29 @@
 %apply int {int32};
 
 #if SWIGPYTHON
-
-%include <file.i>
-
-// Special typemap for arrays of audio.
-%typemap(in) \ 
-  (const void *SDATA, size_t NSAMP) = (const char *STRING, size_t LENGTH);
-
-%typemap(check) size_t NSAMP {
-  char buf[64];
-  if ($1 % sizeof(int16)) {
-    sprintf(buf, "block size must be a multiple of %zd", sizeof(int16));
-    SWIG_exception(SWIG_ValueError, buf);
-  }
-}
-
 // Special typemap for string array
 %typemap(in) (size_t n, char **ptr) {
   /* Check if is a list */
+  $1 = 0;
   if (PyList_Check($input)) {
     int i;
     $1 = PyList_Size($input);
-    $2 = (char **) malloc(($1)*sizeof(char *));
+    $2 = (char **) calloc(($1 + 1), sizeof(char *));
     for (i = 0; i < $1; i++) {
       PyObject *o = PyList_GetItem($input,i);
-      if (PyString_Check(o))
-        $2[i] = PyString_AsString(PyList_GetItem($input,i));
-      else {
-        PyErr_SetString(PyExc_TypeError,"must be a list of strings");
-        free($2);
-        return NULL;
-      }
+      $2[i] = SWIG_Python_str_AsChar(o);
     }
   } else {
-    PyErr_SetString(PyExc_TypeError,"list type expected");
+    PyErr_SetString(PyExc_TypeError, "list type expected");
     return NULL;
   }
 }
 
 %typemap(freearg) (size_t n, char **ptr) {
+  int i;
+  for (i = 0; $2[i] != NULL; i++) {
+      SWIG_Python_str_DelForPy3($2[i]);
+  }
   free($2);
 }
 #elif SWIGJAVA
