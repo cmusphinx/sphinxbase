@@ -61,10 +61,6 @@ struct ad_rec_s {
     int32 recording;
     int32 sps;
     int32 bps;
-#ifdef HAVE_SAMPLERATE_H
-    SRC_STATE *resample_state;
-    jack_default_audio_sample_t *resample_buffer;
-#endif
 };
 
 /* #define MIC_SPEAKER_PASSTHROUGH_DEBUG */
@@ -127,12 +123,6 @@ ad_open_dev(const char *dev, int32 sps)
     ad_rec_t *handle;
     const char **ports;
 
-#ifdef HAVE_SAMPLERATE_H
-    int resample_error;
-    double samplerates_ratio;
-    jack_nframes_t jack_samplerate;
-#endif
-
     if (dev == NULL) {
         dev = DEFAULT_DEVICE;
     }
@@ -155,18 +145,8 @@ ad_open_dev(const char *dev, int32 sps)
 	return NULL;
     }
 
-#ifdef HAVE_SAMPLERATE_H
-    handle->resample_buffer = malloc(BUFFER_SIZE);
-
-    jack_samplerate = jack_get_sample_rate(handle->client);
-    samplerates_ratio = (double)((double)jack_samplerate / (double)sps);
-    
-    handle->rbuffer = jack_ringbuffer_create((int)((double)BUFFER_SIZE * samplerates_ratio));
-    handle->sample_buffer = malloc((int)((double)BUFFER_SIZE * samplerates_ratio));
-#else
     handle->rbuffer = jack_ringbuffer_create(BUFFER_SIZE);
     handle->sample_buffer = malloc(BUFFER_SIZE);
-#endif
 
     if(handle->rbuffer == NULL) {
         fprintf (stderr, "Failed to create jack ringbuffer\n");
@@ -242,14 +222,6 @@ ad_open_dev(const char *dev, int32 sps)
     free (ports);
 #endif
 
-#ifdef HAVE_SAMPLERATE_H
-    /* Initialize the sample rate converter. */
-    if ((handle->resample_state = src_new (SRC_SINC_BEST_QUALITY, 1, &resample_error)) == NULL) {
-        fprintf (stderr, "Error : src_new() failed: %s\n", src_strerror(resample_error));
-        return NULL;
-    }
-#endif
-
     handle->recording = 0;
     handle->sps = sps;
     handle->bps = sizeof(int16);
@@ -277,9 +249,6 @@ int32
 ad_close(ad_rec_t * handle)
 {
     free (handle->sample_buffer);
-#ifdef HAVE_SAMPLERATE_H
-    free (handle->resample_buffer);
-#endif
     jack_ringbuffer_free (handle->rbuffer); 	
     jack_client_close (handle->client);
     free(handle);

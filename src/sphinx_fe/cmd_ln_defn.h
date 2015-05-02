@@ -175,13 +175,6 @@ static arg_t defn[] = {
     "no",
     "Defines input format as Microsoft Wav (RIFF)" },
   
-#ifdef HAVE_SNDFILE_H
-  { "-sndfile",
-    ARG_BOOLEAN,
-    "no",
-    "Use libsndfile to read input data" },
-#endif
-  
   { "-nchans",
     ARG_INT32,
     "1",
