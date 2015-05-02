@@ -23,10 +23,12 @@
 
 %typemap(freearg) (size_t n, char **ptr) {
   int i;
-  for (i = 0; $2[i] != NULL; i++) {
-      SWIG_Python_str_DelForPy3($2[i]);
+  if ($2 != NULL) {
+    for (i = 0; $2[i] != NULL; i++) {
+        SWIG_Python_str_DelForPy3($2[i]);
+    }
+    free($2);
   }
-  free($2);
 }
 #elif SWIGJAVA
 
