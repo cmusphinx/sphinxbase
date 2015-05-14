@@ -49,25 +49,6 @@ TYPEMAP = {
   'ngram_model_t': ('NGramModel', 'ngram_model_'),
 }
 
-# Some files contain non-ASCII symbols and it makes our parsed sad.
-# Fortunately I don't need them, so let's skip them for now.
-#EXCLUDE_FILES = [
-#  'ad__s60_8cpp.xml',
-#  'fe__warp_8c.xml',
-#  'fe__warp_8h.xml',
-#  'fe__warp__affine_8c.xml',
-#  'fe__warp__affine_8h.xml',
-#  'fe__warp__inverse__linear_8c.xml',
-#  'fe__warp__inverse__linear_8h.xml',
-#  'fe__warp__piecewise__linear_8c.xml',
-#  'fe__warp__piecewise__linear_8h.xml',
-#  'jsgf__parser_8c.xml',
-#  'jsgf__parser_8h.xml',
-#  'matrix_8c.xml',
-#  'matrix_8h.xml',
-#  'cmd__ln__defn_8c.xml',
-#  'cmd__ln__defn_8h.xml',
-#]
 USE_PREFIXES = [
   'cmd__ln_8',
   'fe_8',
@@ -189,7 +170,7 @@ class Doxy2SWIG:
 
     def add_text(self, value):
         """Adds text corresponding to `value` into `self.pieces`."""
-        if type(value) in (types.ListType, types.TupleType):
+        if isinstance(value, tuple) or isinstance(value, list):
             self.pieces.extend(value)
         else:
             self.pieces.append(value)
@@ -249,7 +230,7 @@ class Doxy2SWIG:
         kind = node.attributes['kind'].value
         if kind in ('class', 'struct'):
             prot = node.attributes['prot'].value
-            if prot <> 'public':
+            if prot != 'public':
                 return
             names = ('compoundname', 'briefdescription',
                      'detaileddescription', 'includes')
@@ -333,7 +314,7 @@ class Doxy2SWIG:
             if name[:8] == 'operator': # Don't handle operators yet.
                 return
 
-            if not first.has_key('definition') or \
+            if not ('definition' in first) or \
                    kind in ['variable', 'typedef']:
                 return
 
@@ -427,7 +408,7 @@ class Doxy2SWIG:
                 if not os.path.exists(fname):
                     fname = os.path.join(self.my_dir,  fname)
                 if not self.quiet:
-                    print "parsing file: %s"%fname
+                    print ("parsing file: %s" % fname)
                 p = Doxy2SWIG(fname, self.include_function_definition, self.quiet)
                 p.generate()
                 self.pieces.extend(self.clean_pieces(p.pieces))
