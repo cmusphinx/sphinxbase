@@ -1,12 +1,26 @@
+man_MANS = \
+	sphinx_cepview.1 \
+	sphinx_cont_seg.1 \
+	sphinx_fe.1 \
+	sphinx_lm_convert.1 \
+	sphinx_lm_eval.1 \
+	sphinx_lm_sort.1 \
+	sphinx_pitch.1
+
 EXTRA_DIST = \
 	args2man.pl \
 	doxy2swig.py \
 	sphinx_cepview.1.in \
-	sphinx_cont_adseg.1 \
-	sphinx_cont_fileseg.1 \
+	sphinx_cont_seg.1.in \
 	sphinx_fe.1.in \
+	sphinx_pitch.1.in \
+	sphinx_cepview.1 \
+	sphinx_cont_seg.1 \
+	sphinx_fe.1 \
+	sphinx_lm_convert.1 \
+	sphinx_lm_eval.1 \
 	sphinx_lm_sort.1 \
-	sphinx_pitch.1.in
+	sphinx_pitch.1
 
 if BUILD_SWIG
 SWIG_DOC = pydoc.i

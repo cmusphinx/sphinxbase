@@ -75,6 +75,10 @@ static const arg_t cont_args_def[] = {
      ARG_STRING,
      NULL,
      "Name of audio device to use for input."},
+    {"-inmic",
+     ARG_BOOLEAN,
+     "no",
+     "Transcribe audio from microphone."},
     {"-infile",
      ARG_STRING,
      NULL,
@@ -242,22 +246,21 @@ segment_audio()
 int
 main(int argc, char *argv[])
 {
-    char const *cfg;
     int i;
     int16 buf[2048];
 
-    if (argc == 2) {
-        config = cmd_ln_parse_file_r(NULL, cont_args_def, argv[1], TRUE);
+    config = cmd_ln_parse_r(NULL, cont_args_def, argc, argv, TRUE);
+
+    if (config && cmd_ln_str_r(config, "-argfile"))
+        config = cmd_ln_parse_file_r(config, cont_args_def,
+                                     cmd_ln_str_r(config, "-argfile"), FALSE);
+    
+    if (config == NULL || (cmd_ln_str_r(config, "-infile") == NULL && cmd_ln_boolean_r(config, "-inmic") == FALSE)) {
+	E_INFO("Specify '-infile <file.wav>' to segment a file or '-inmic yes' to segment audio from microphone.\n");
+        cmd_ln_free_r(config);
+	return 1;
     }
-    else {
-        config = cmd_ln_parse_r(NULL, cont_args_def, argc, argv, FALSE);
-    }
-    /* Handle argument file as -argfile. */
-    if (config && (cfg = cmd_ln_str_r(config, "-argfile")) != NULL) {
-        config = cmd_ln_parse_file_r(config, cont_args_def, cfg, FALSE);
-    }
-    if (config == NULL)
-        return 1;
+
 
     singlefile = cmd_ln_boolean_r(config, "-singlefile");
     if ((infile_path = cmd_ln_str_r(config, "-infile")) != NULL) {
@@ -269,7 +272,7 @@ main(int argc, char *argv[])
         /* skip wav header */
         read_audio(buf, 44);
     }
-    else {
+    else if cmd_ln_boolean_r(config, "-inmic") {
         if ((ad = ad_open_dev(cmd_ln_str_r(config, "-adcdev"),
                               (int) cmd_ln_float32_r(config,
                                                      "-samprate"))) ==
