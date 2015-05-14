@@ -23,6 +23,7 @@ endif
 CLEANFILES = sphinxbase_wrap.c sphinxbase.py sphinxbase.pyc
 
 nodist_pkgpyexec_PYTHON = sphinxbase.py
+pkgpyexec_PYTHON = __init__.py
 pkgpyexec_LTLIBRARIES = _sphinxbase.la
 nodist__sphinxbase_la_SOURCES = sphinxbase_wrap.c
 
