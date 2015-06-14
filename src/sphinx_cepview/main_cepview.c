@@ -72,11 +72,6 @@
 #define STR_MAX_INT "2147483647"
 
 static arg_t arg[] = {
-
-    {"-logfn",
-     ARG_STRING,
-     NULL,
-     "Log file (default stdout/stderr)"},
     {"-i",
      ARG_INT32,
      NUM_COEFF,

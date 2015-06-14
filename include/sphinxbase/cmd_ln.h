@@ -399,6 +399,15 @@ SPHINXBASE_EXPORT
 void cmd_ln_print_help_r (cmd_ln_t *cmdln, FILE *fp, const arg_t *defn);
 
 /**
+ * Print current configuration values and defaults.
+ *
+ * @param fp   output stream
+ * @param defn Array of argument name definitions.
+ */
+SPHINXBASE_EXPORT
+void cmd_ln_print_values_r (cmd_ln_t *cmdln, FILE *fp, const arg_t *defn);
+
+/**
  * Non-reentrant version of cmd_ln_parse().
  *
  * @deprecated This is deprecated in favor of the re-entrant API
