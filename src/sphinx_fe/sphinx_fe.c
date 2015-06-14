@@ -761,8 +761,7 @@ sphinx_wave2feat_convert_file(sphinx_wave2feat_t *wtf,
     audio_type_t const *atype = NULL;
     int fshift, fsize;
 
-    if (cmd_ln_boolean_r(wtf->config, "-verbose"))
-        E_INFO("Converting %s to %s\n", infile, outfile);
+    E_INFO("Converting %s to %s\n", infile, outfile);
 
     wtf->infile = ckd_salloc(infile);
 
