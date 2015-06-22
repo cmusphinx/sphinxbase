@@ -5,7 +5,7 @@ This package contains the basic libraries shared by the CMU Sphinx trainer and
 all the Sphinx decoders (Sphinx-II, Sphinx-III, and PocketSphinx), as well as
 some common utilities for manipulating acoustic feature and audio files.
 
-Please see the (LICENSE) file for terms of use.
+Please see the LICENSE file for terms of use.
 
 Installation Guide
 
