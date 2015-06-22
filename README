@@ -73,7 +73,7 @@ includes Pocketsphinx http://www.politepix.com/openears/
 Android installation
 -------------------------------------------------------------------------------
 
-Use pocketsphinx-android-demo project.
+See http://github.com/cmuspinx/pocketsphinx-android-demo.
 
 
 MS Windows installation:
@@ -94,4 +94,4 @@ installation. However, there is no audio driver support in cygwin currently so
 one can only use the batch mode recognzier.
 
 If you want to install Python packages on Windows, take a look at
-http://github.com/cmusphinx/pocketsphinx-python
+http://github.com/cmusphinx/pocketsphinx-python.
