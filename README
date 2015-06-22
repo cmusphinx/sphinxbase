@@ -5,7 +5,7 @@ This package contains the basic libraries shared by the CMU Sphinx trainer and
 all the Sphinx decoders (Sphinx-II, Sphinx-III, and PocketSphinx), as well as
 some common utilities for manipulating acoustic feature and audio files.
 
-Please see the [LICENSE] file for terms of use.
+Please see the (LICENSE) file for terms of use.
 
 Installation Guide
 
@@ -85,10 +85,10 @@ MS Windows installation:
 
 To compile sphinxbase in Visual Studio 2010 Express (or newer):
 
-  1. unzip the file.
-  2. rename the directory to sphinxbase
-  3. go into the sphinxbase folder and click sphinxbase.sln
-  4. in the menu, choose Build -> Rebuild All -> Batch Build -> Build
+  1. Unzip the file.
+  2. Rename the directory to sphinxbase
+  3. Go into the sphinxbase folder and click sphinxbase.sln
+  4. In the menu, choose Build -> Rebuild All -> Batch Build -> Build
 
 In Step 4, make sure all projects are selected, preferably the "Release"
 version of each.
