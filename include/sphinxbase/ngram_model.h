@@ -77,8 +77,7 @@ typedef enum ngram_file_type_e {
     NGRAM_INVALID = -1, /**< Not a valid file type. */
     NGRAM_AUTO,  /**< Determine file type automatically. */
     NGRAM_ARPA,  /**< ARPABO text format (the standard). */
-    NGRAM_DMP,   /**< Sphinx .DMP format. */
-    NGRAM_DMP32, /**< Sphinx .DMP32 format (NOT SUPPORTED) */
+    NGRAM_BIN,   /**< Sphinx .DMP format. */
 } ngram_file_type_t;
 
 #define NGRAM_INVALID_WID -1 /**< Impossible word ID */
@@ -92,7 +91,6 @@ typedef enum ngram_file_type_e {
  *  - -mmap (boolean) whether to use memory-mapped I/O
  *  - -lw (float32) language weight to apply to the model
  *  - -wip (float32) word insertion penalty to apply to the model
- *  - -uw (float32) unigram weight to apply to the model
  *
  * @param file_name path to the file to read.
  * @param file_type type of the file, or NGRAM_AUTO to determine automatically.
@@ -185,23 +183,21 @@ int ngram_model_casefold(ngram_model_t *model, int kase);
  * values we actually need.  Call ngram_prob() if you want the "raw"
  * N-Gram probability estimate.
  *
- * To remove all weighting, call ngram_apply_weights(model, 1.0, 1.0, 1.0).
+ * To remove all weighting, call ngram_apply_weights(model, 1.0, 1.0).
  */
 SPHINXBASE_EXPORT
 int ngram_model_apply_weights(ngram_model_t *model,
-                              float32 lw, float32 wip, float32 uw);
+                              float32 lw, float32 wip);
 
 /**
  * Get the current weights from a language model.
  *
  * @param model The model in question.
  * @param out_log_wip Output: (optional) logarithm of word insertion penalty.
- * @param out_log_uw Output: (optional) logarithm of unigram weight.
  * @return language weight.
  */
 SPHINXBASE_EXPORT
-float32 ngram_model_get_weights(ngram_model_t *model, int32 *out_log_wip,
-                                int32 *out_log_uw);
+float32 ngram_model_get_weights(ngram_model_t *model, int32 *out_log_wip);
 
 /**
  * Get the score (scaled, interpolated log-probability) for a general
@@ -355,7 +351,7 @@ int32 ngram_model_get_size(ngram_model_t *model);
  * Get the counts of the various N-grams in the model.
  */
 SPHINXBASE_EXPORT
-int32 const *ngram_model_get_counts(ngram_model_t *model);
+uint32 const *ngram_model_get_counts(ngram_model_t *model);
 
 /**
  * M-gram iterator object.
@@ -694,11 +690,7 @@ SPHINXBASE_EXPORT
 int32 ngram_model_set_known_wid(ngram_model_t *set, int32 set_wid);
 
 /**
- * Flush any cached N-Gram information 
- *
- * Some types of models cache trigram or other N-Gram information to
- * speed repeated access to N-Grams with shared histories.  This
- * function flushes the cache so as to avoid dynamic memory leaks.
+ * Flush any cached N-Gram information
  */
 SPHINXBASE_EXPORT
 void ngram_model_flush(ngram_model_t *lm);

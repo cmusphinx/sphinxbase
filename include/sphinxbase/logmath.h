@@ -224,10 +224,22 @@ SPHINXBASE_EXPORT
 int logmath_log10_to_log(logmath_t *lmath, float64 log_p);
 
 /**
+ * Convert base 10 log (in floating point) to float log in base B.
+ */
+SPHINXBASE_EXPORT
+float logmath_log10_to_log_float(logmath_t *lmath, float64 log_p);
+
+/**
  * Convert integer log in base B to base 10 log (in floating point).
  */
 SPHINXBASE_EXPORT
 float64 logmath_log_to_log10(logmath_t *lmath, int logb_p);
+
+/**
+ * Convert float log in base B to base 10 log.
+ */
+SPHINXBASE_EXPORT
+float64 logmath_log_float_to_log10(logmath_t *lmath, float log_p);
 
 #ifdef __cplusplus
 }

@@ -104,9 +104,6 @@
     <ClCompile Include="..\..\src\libsphinxbase\util\listelem_alloc.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\libsphinxbase\lm\lm3g_model.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\libsphinxbase\util\logmath.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -117,15 +114,6 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\libsphinxbase\lm\ngram_model.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\libsphinxbase\lm\ngram_model_arpa.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\libsphinxbase\lm\ngram_model_dmp.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\libsphinxbase\lm\ngram_model_dmp32.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\libsphinxbase\lm\ngram_model_set.c">
@@ -162,6 +150,24 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\libsphinxbase\util\slapack_lite.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libsphinxbase\lm\ngram_model_trie.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libsphinxbase\lm\lm_trie.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libsphinxbase\lm\lm_trie_quant.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libsphinxbase\util\priority_queue.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libsphinxbase\util\bitarr.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\libsphinxbase\lm\ngrams_raw.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -262,9 +268,6 @@
     <ClInclude Include="..\..\include\sphinxbase\listelem_alloc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\libsphinxbase\lm\lm3g_model.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\sphinxbase\logmath.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -278,12 +281,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\sphinxbase\ngram_model.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\libsphinxbase\lm\ngram_model_arpa.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\libsphinxbase\lm\ngram_model_dmp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\libsphinxbase\lm\ngram_model_internal.h">
@@ -323,6 +320,24 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\sphinxbase\fe.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libsphinxbase\lm\ngram_model_trie.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libsphinxbase\lm\lm_trie.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libsphinxbase\lm\lm_trie_quant.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\sphinxbase\priority_queue.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\include\sphinxbase\bitarr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\libsphinxbase\lm\ngrams_raw.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

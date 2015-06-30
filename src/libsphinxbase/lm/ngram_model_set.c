@@ -546,7 +546,7 @@ ngram_model_set_add(ngram_model_t *base,
     }
 
     /* Renormalize the interpolation weights. */
-    fprob = weight * 1.0 / set->n_models;
+    fprob = weight * 1.0f / set->n_models;
     set->lweights = ckd_realloc(set->lweights,
                                 set->n_models * sizeof(*set->lweights));
     set->lweights[set->n_models - 1] = logmath_log(base->lmath, fprob);
@@ -599,7 +599,7 @@ ngram_model_set_remove(ngram_model_t *base,
 
     /* Renormalize the interpolation weights by scaling them by
      * 1/(1-fprob) */
-    fprob = logmath_exp(base->lmath, set->lweights[lmidx]);
+    fprob = (float32)logmath_exp(base->lmath, set->lweights[lmidx]);
     scale = logmath_log(base->lmath, 1.0 - fprob);
 
     /* Remove it from the array of lms, renormalize remaining weights,
@@ -670,14 +670,14 @@ ngram_model_set_map_words(ngram_model_t *base,
 
 static int
 ngram_model_set_apply_weights(ngram_model_t *base, float32 lw,
-                              float32 wip, float32 uw)
+                              float32 wip)
 {
     ngram_model_set_t *set = (ngram_model_set_t *)base;
     int32 i;
 
     /* Apply weights to each sub-model. */
     for (i = 0; i < set->n_models; ++i)
-        ngram_model_apply_weights(set->lms[i], lw, wip, uw);
+        ngram_model_apply_weights(set->lms[i], lw, wip);
     return 0;
 }
 
@@ -804,7 +804,7 @@ ngram_model_set_add_ug(ngram_model_t *base,
             if (newwid[i] == NGRAM_INVALID_WID) {
                 /* Add it to the submodel. */
                 newwid[i] = ngram_model_add_word(set->lms[i], base->word_str[wid],
-                                                 logmath_exp(base->lmath, lweight));
+                                                 (float32)logmath_exp(base->lmath, lweight));
                 if (newwid[i] == NGRAM_INVALID_WID) {
                     ckd_free(newwid);
                     return base->log_zero;
@@ -854,21 +854,10 @@ ngram_model_set_free(ngram_model_t *base)
     ckd_free_2d((void **)set->widmap);
 }
 
-static void
-ngram_model_set_flush(ngram_model_t *base)
-{
-    ngram_model_set_t *set = (ngram_model_set_t *)base;
-    int32 i;
-
-    for (i = 0; i < set->n_models; ++i)
-        ngram_model_flush(set->lms[i]);
-}
-
 static ngram_funcs_t ngram_model_set_funcs = {
     ngram_model_set_free,          /* free */
     ngram_model_set_apply_weights, /* apply_weights */
     ngram_model_set_score,         /* score */
     ngram_model_set_raw_score,     /* raw_score */
     ngram_model_set_add_ug,        /* add_ug */
-    ngram_model_set_flush          /* flush */
 };

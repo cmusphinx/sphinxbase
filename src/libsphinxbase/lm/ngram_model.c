@@ -86,8 +86,8 @@ ngram_file_name_to_type(const char *file_name)
      /* We use strncmp because there might be a .gz on the end. */
      if (0 == strncmp_nocase(ext, ".ARPA", 5))
          return NGRAM_ARPA;
-     if (0 == strncmp_nocase(ext, ".DMP", 4))
-         return NGRAM_DMP;
+     if (0 == strncmp_nocase(ext, ".DMP", 4) || 0 == strncmp_nocase(ext, ".BIN", 4))
+         return NGRAM_BIN;
      return NGRAM_INVALID;
  }
 
@@ -96,8 +96,8 @@ ngram_str_to_type(const char *str_name)
 {
     if (0 == strcmp_nocase(str_name, "arpa"))
         return NGRAM_ARPA;
-    if (0 == strcmp_nocase(str_name, "dmp"))
-        return NGRAM_DMP;
+    if (0 == strcmp_nocase(str_name, "dmp") || 0 == strcmp_nocase(str_name, "bin"))
+        return NGRAM_BIN;
     return NGRAM_INVALID;
 }
 
@@ -107,8 +107,8 @@ ngram_type_to_str(int type)
     switch (type) {
     case NGRAM_ARPA:
         return "arpa";
-    case NGRAM_DMP:
-        return "dmp";
+    case NGRAM_BIN:
+        return "dmp/bin";
     default:
         return NULL;
     }
@@ -122,21 +122,25 @@ ngram_type_to_str(int type)
                   logmath_t *lmath)
  {
      ngram_model_t *model = NULL;
-
      switch (file_type) {
      case NGRAM_AUTO: {
-         if ((model = ngram_model_arpa_read(config, file_name, lmath)) != NULL)
+         if ((model = ngram_model_trie_read_bin(config, file_name, lmath)) != NULL)
              break;
-         if ((model = ngram_model_dmp_read(config, file_name, lmath)) != NULL)
+         if ((model = ngram_model_trie_read_arpa(config, file_name, lmath)) != NULL)
+             break;
+         if ((model = ngram_model_trie_read_dmp(config, file_name, lmath)) != NULL)
              break;
          return NULL;
      }
      case NGRAM_ARPA:
-         model = ngram_model_arpa_read(config, file_name, lmath);
+         model = ngram_model_trie_read_arpa(config, file_name, lmath);
          break;
-     case NGRAM_DMP:
-         model = ngram_model_dmp_read(config, file_name, lmath);
-         break;
+     case NGRAM_BIN:
+         if ((model = ngram_model_trie_read_bin(config, file_name, lmath)) != NULL)
+             break;
+         if ((model = ngram_model_trie_read_dmp(config, file_name, lmath)) != NULL)
+             break;
+         return NULL;
      default:
          E_ERROR("language model file type not supported\n");
          return NULL;
@@ -146,16 +150,13 @@ ngram_type_to_str(int type)
      if (config) {
          float32 lw = 1.0;
          float32 wip = 1.0;
-         float32 uw = 1.0;
 
          if (cmd_ln_exists_r(config, "-lw"))
              lw = cmd_ln_float32_r(config, "-lw");
          if (cmd_ln_exists_r(config, "-wip"))
              wip = cmd_ln_float32_r(config, "-wip");
-         if (cmd_ln_exists_r(config, "-uw"))
-             uw = cmd_ln_float32_r(config, "-uw");
 
-         ngram_model_apply_weights(model, lw, wip, uw);
+         ngram_model_apply_weights(model, lw, wip);
      }
 
      return model;
@@ -174,9 +175,9 @@ ngram_type_to_str(int type)
          return ngram_model_write(model, file_name, file_type);
      }
      case NGRAM_ARPA:
-         return ngram_model_arpa_write(model, file_name);
-     case NGRAM_DMP:
-         return ngram_model_dmp_write(model, file_name);
+         return ngram_model_trie_write_arpa(model, file_name);
+     case NGRAM_BIN:
+         return ngram_model_trie_write_bin(model, file_name);
      default:
          E_ERROR("language model file type not supported\n");
          return -1;
@@ -185,8 +186,8 @@ ngram_type_to_str(int type)
      return -1;
  }
 
- int32
- ngram_model_init(ngram_model_t *base,
+int32
+ngram_model_init(ngram_model_t *base,
                   ngram_funcs_t *funcs,
                   logmath_t *lmath,
                   int32 n, int32 n_unigram)
@@ -196,15 +197,12 @@ ngram_type_to_str(int type)
      base->n = n;
      /* If this was previously initialized... */
     if (base->n_counts == NULL)
-        base->n_counts = ckd_calloc(3, sizeof(*base->n_counts));
+        base->n_counts = (uint32 *)ckd_calloc(n, sizeof(*base->n_counts));
     /* Don't reset weights if logmath object hasn't changed. */
     if (base->lmath != lmath) {
         /* Set default values for weights. */
         base->lw = 1.0;
         base->log_wip = 0; /* i.e. 1.0 */
-        base->log_uw = 0;  /* i.e. 1.0 */
-        base->log_uniform = logmath_log(lmath, 1.0 / n_unigram);
-        base->log_uniform_weight = logmath_get_zero(lmath);
         base->log_zero = logmath_get_zero(lmath);
         base->lmath = lmath;
     }
@@ -218,10 +216,10 @@ ngram_type_to_str(int type)
                 base->word_str[i] = NULL;
             }
         }
-        base->word_str = ckd_realloc(base->word_str, n_unigram * sizeof(char *));
+        base->word_str = (char **)ckd_realloc(base->word_str, n_unigram * sizeof(char *));
+    } else {
+        base->word_str = (char **)ckd_calloc(n_unigram, sizeof(char *));
     }
-    else
-        base->word_str = ckd_calloc(n_unigram, sizeof(char *));
     /* NOTE: They are no longer case-insensitive since we are allowing
      * other encodings for word strings.  Beware. */
     if (base->wid)
@@ -239,7 +237,6 @@ ngram_model_retain(ngram_model_t *model)
     ++model->refcount;
     return model;
 }
-
 
 void
 ngram_model_flush(ngram_model_t *model)
@@ -347,17 +344,15 @@ ngram_model_casefold(ngram_model_t *model, int kase)
 
 int
 ngram_model_apply_weights(ngram_model_t *model,
-                          float32 lw, float32 wip, float32 uw)
+                          float32 lw, float32 wip)
 {
-    return (*model->funcs->apply_weights)(model, lw, wip, uw);
+    return (*model->funcs->apply_weights)(model, lw, wip);
 }
 
 float32
-ngram_model_get_weights(ngram_model_t *model, int32 *out_log_wip,
-                        int32 *out_log_uw)
+ngram_model_get_weights(ngram_model_t *model, int32 *out_log_wip)
 {
     if (out_log_wip) *out_log_wip = model->log_wip;
-    if (out_log_uw) *out_log_uw = model->log_uw;
     return model->lw;
 }
 
@@ -509,7 +504,7 @@ ngram_prob(ngram_model_t *model, const char *const *words, int32 n)
     uint32 i;
 
     ctx_id = (int32 *)ckd_calloc(n - 1, sizeof(*ctx_id));
-    for (i = 1; i < n; ++i)
+    for (i = 1; i < (uint32)n; ++i)
       ctx_id[i - 1] = ngram_wid(model, words[i]);
 
     wid = ngram_wid(model, *words);
@@ -559,104 +554,12 @@ ngram_model_get_size(ngram_model_t *model)
   return 0;
 }
 
-int32 const *
+uint32 const *
 ngram_model_get_counts(ngram_model_t *model)
 {
   if (model != NULL)
     return model->n_counts;
   return NULL;
-}
-
-void
-ngram_iter_init(ngram_iter_t *itor, ngram_model_t *model,
-                int m, int successor)
-{
-    itor->model = model;
-    itor->wids = ckd_calloc(model->n, sizeof(*itor->wids));
-    itor->m = m;
-    itor->successor = successor;
-}
-
-ngram_iter_t *
-ngram_model_mgrams(ngram_model_t *model, int m)
-{
-    ngram_iter_t *itor;
-    /* The fact that m=n-1 is not exactly obvious.  Prevent accidents. */
-    if (m >= model->n)
-        return NULL;
-    if (model->funcs->mgrams == NULL)
-        return NULL;
-    itor = (*model->funcs->mgrams)(model, m);
-    return itor;
-}
-
-ngram_iter_t *
-ngram_iter(ngram_model_t *model, const char *word, ...)
-{
-    va_list history;
-    const char *hword;
-    int32 *histid;
-    int32 n_hist;
-    ngram_iter_t *itor;
-
-    va_start(history, word);
-    n_hist = 0;
-    while ((hword = va_arg(history, const char *)) != NULL)
-        ++n_hist;
-    va_end(history);
-
-    histid = ckd_calloc(n_hist, sizeof(*histid));
-    va_start(history, word);
-    n_hist = 0;
-    while ((hword = va_arg(history, const char *)) != NULL) {
-        histid[n_hist] = ngram_wid(model, hword);
-        ++n_hist;
-    }
-    va_end(history);
-
-    itor = ngram_ng_iter(model, ngram_wid(model, word), histid, n_hist);
-    ckd_free(histid);
-    return itor;
-}
-
-ngram_iter_t *
-ngram_ng_iter(ngram_model_t *model, int32 wid, int32 *history, int32 n_hist)
-{
-    if (n_hist >= model->n)
-        return NULL;
-    if (model->funcs->iter == NULL)
-        return NULL;
-    return (*model->funcs->iter)(model, wid, history, n_hist);
-}
-
-ngram_iter_t *
-ngram_iter_successors(ngram_iter_t *itor)
-{
-    /* Stop when we are at the highest order N-Gram. */
-    if (itor->m == itor->model->n - 1)
-        return NULL;
-    return (*itor->model->funcs->successors)(itor);
-}
-
-int32 const *
-ngram_iter_get(ngram_iter_t *itor,
-               int32 *out_score,
-               int32 *out_bowt)
-{
-    return (*itor->model->funcs->iter_get)(itor, out_score, out_bowt);
-}
-
-ngram_iter_t *
-ngram_iter_next(ngram_iter_t *itor)
-{
-    return (*itor->model->funcs->iter_next)(itor);
-}
-
-void
-ngram_iter_free(ngram_iter_t *itor)
-{
-    ckd_free(itor->wids);
-    (*itor->model->funcs->iter_free)(itor);
 }
 
 int32

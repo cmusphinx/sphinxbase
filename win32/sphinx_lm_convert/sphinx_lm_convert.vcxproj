@@ -18,7 +18,6 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-
   <PropertyGroup Label="Globals">
     <ProjectGuid>{AFB07B69-EDC1-4E99-B0F3-E6B14FF07C5D}</ProjectGuid>
     <RootNamespace>sphinx_lm_convert</RootNamespace>

@@ -25,7 +25,7 @@ run_tests(ngram_model_t *model)
 	TEST_EQUAL(n_used, 1);
 
 	/* Apply weights. */
-	ngram_model_apply_weights(model, 7.5, 0.5, 1.0);
+	ngram_model_apply_weights(model, 7.5, 0.5);
 	/* -9452 * 7.5 + log(0.5) = -77821 */
 	TEST_EQUAL_LOG(ngram_score(model, "daines", "huggins", "david", NULL),
 		   -77821);
@@ -35,7 +35,7 @@ run_tests(ngram_model_t *model)
 	TEST_EQUAL_LOG(ngram_probv(model, "huggins", "david", NULL), -831);
 
 	/* Un-apply weights. */
-	ngram_model_apply_weights(model, 1.0, 1.0, 1.0);
+	ngram_model_apply_weights(model, 1.0, 1.0);
 	TEST_EQUAL_LOG(ngram_score(model, "daines", "huggins", "david", NULL),
 		       -9452);
 	TEST_EQUAL_LOG(ngram_score(model, "huggins", "david", NULL), -831);
@@ -75,7 +75,7 @@ main(int argc, char *argv[])
 
 	lmath = logmath_init(1.0001, 0, 0);
 
-	model = ngram_model_read(NULL, LMDIR "/100.arpa.DMP", NGRAM_DMP, lmath);
+	model = ngram_model_read(NULL, LMDIR "/100.arpa.DMP", NGRAM_BIN, lmath);
 	run_tests(model);
 	ngram_model_free(model);
 

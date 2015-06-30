@@ -54,10 +54,11 @@
  */
 struct ngram_model_s {
     int refcount;       /**< Reference count */
-    int32 *n_counts;    /**< Counts for 1, 2, 3, ... grams */
+    uint32 *n_counts;    /**< Counts for 1, 2, 3, ... grams */
     int32 n_1g_alloc;   /**< Number of allocated word strings (for new word addition) */
     int32 n_words;      /**< Number of actual word strings (NOT the same as the
                              number of unigrams, due to class words). */
+
     uint8 n;            /**< This is an n-gram model (1, 2, 3, ...). */
     uint8 n_classes;    /**< Number of classes (maximum 128) */
     uint8 writable;     /**< Are word strings writable? */
@@ -66,9 +67,6 @@ struct ngram_model_s {
     logmath_t *lmath;   /**< Log-math object */
     float32 lw;         /**< Language model scaling factor */
     int32 log_wip;      /**< Log of word insertion penalty */
-    int32 log_uw;       /**< Log of unigram weight */
-    int32 log_uniform;  /**< Log of uniform (0-gram) probability */
-    int32 log_uniform_weight; /**< Log of uniform weight (i.e. 1 - unigram weight) */
     int32 log_zero;     /**< Zero probability, cached here for quick lookup */
     char **word_str;    /**< Unigram names */
     hash_table_t *wid;  /**< Mapping of unigram names to word IDs. */
@@ -97,6 +95,8 @@ struct ngram_class_s {
     int32 n_hash_inuse; /**< Number of words in nword_hash */
 };
 
+#define NGRAM_MAX_ORDER 5
+
 #define NGRAM_HASH_SIZE 128
 
 #define NGRAM_BASEWID(wid) ((wid)&0xffffff)
@@ -117,8 +117,7 @@ typedef struct ngram_funcs_s {
      */
     int (*apply_weights)(ngram_model_t *model,
                          float32 lw,
-                         float32 wip,
-                         float32 uw);
+                         float32 wip);
     /**
      * Implementation-specific function for querying language model score.
      */
@@ -149,42 +148,11 @@ typedef struct ngram_funcs_s {
      */
     int32 (*add_ug)(ngram_model_t *model,
                     int32 wid, int32 lweight);
+
     /**
      * Implementation-specific function for purging N-Gram cache
      */
     void (*flush)(ngram_model_t *model);
-
-    /**
-     * Implementation-specific function for iterating.
-     */
-    ngram_iter_t * (*iter)(ngram_model_t *model, int32 wid, int32 *history, int32 n_hist);
-
-    /**
-     * Implementation-specific function for iterating.
-     */
-    ngram_iter_t * (*mgrams)(ngram_model_t *model, int32 m);
-
-    /**
-     * Implementation-specific function for iterating.
-     */
-    ngram_iter_t * (*successors)(ngram_iter_t *itor);
-
-    /**
-     * Implementation-specific function for iterating.
-     */
-    int32 const * (*iter_get)(ngram_iter_t *itor,
-                              int32 *out_score,
-                              int32 *out_bowt);
-
-    /**
-     * Implementation-specific function for iterating.
-     */
-    ngram_iter_t * (*iter_next)(ngram_iter_t *itor);
-
-    /**
-     * Implementation-specific function for iterating.
-     */
-    void (*iter_free)(ngram_iter_t *itor);
 } ngram_funcs_t;
 
 /**
@@ -221,6 +189,37 @@ ngram_model_init(ngram_model_t *model,
 ngram_model_t *ngram_model_arpa_read(cmd_ln_t *config,
 				     const char *file_name,
 				     logmath_t *lmath);
+
+/**
+ * Read N-Gram model from and ARPABO text file and locate it in trie structure
+ */
+ngram_model_t* ngram_model_trie_read_arpa(cmd_ln_t *config, 
+                                          const char *path,
+                                          logmath_t *lmath);
+
+/**
+ * Write N-Gram model stored in trie structure in ARPABO format
+ */
+int ngram_model_trie_write_arpa(ngram_model_t *base,
+                                const char *path);
+
+/**
+ * Read N-Gram model from and binary file and locate it in trie structure
+ */
+ngram_model_t* ngram_model_trie_read_bin(cmd_ln_t *config, 
+                                          const char *path,
+                                          logmath_t *lmath);
+
+int ngram_model_trie_write_bin(ngram_model_t *model,
+                               const char *path);
+
+/**
+ * Read N-Gram model from DMP file and locate it in trie structure
+ */
+ngram_model_t* ngram_model_trie_read_dmp(cmd_ln_t *config,
+                                         const char *file_name,
+                                         logmath_t *lmath);
+
 /**
  * Read an N-Gram model from a Sphinx .DMP binary file.
  */

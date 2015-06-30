@@ -109,7 +109,7 @@ main(int argc, char *argv[])
 
 	lmath = logmath_init(1.0001, 0, 0);
 
-	model = ngram_model_read(NULL, LMDIR "/100.arpa.DMP", NGRAM_DMP, lmath);
+	model = ngram_model_read(NULL, LMDIR "/100.arpa.DMP", NGRAM_BIN, lmath);
 	run_tests(lmath, model);
 	ngram_model_free(model);
 

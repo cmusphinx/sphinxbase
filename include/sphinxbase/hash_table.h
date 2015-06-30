@@ -156,7 +156,7 @@ typedef struct hash_entry_s {
 	struct hash_entry_s *next;	/** For collision resolution */
 } hash_entry_t;
 
-typedef struct {
+typedef struct hash_table_s {
 	hash_entry_t *table;	/**Primary hash table, excluding entries that collide */
 	int32 size;		/** Primary hash table size, (is a prime#); NOTE: This is the
 				    number of primary entries ALLOCATED, NOT the number of valid

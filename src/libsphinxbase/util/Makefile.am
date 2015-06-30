@@ -8,7 +8,8 @@ LAPACK_LITE_SRCS = \
 	f2c_lite.c
 endif
 
-libsphinxutil_la_SOURCES = \
+libsphinxutil_la_SOURCES = \ 
+	bitarr.c \
 	bitvec.c \
 	bio.c \
 	case.c \
@@ -27,6 +28,7 @@ libsphinxutil_la_SOURCES = \
 	mmio.c \
 	pio.c \
 	matrix.c \
+	priority_queue.c \
 	profile.c \
 	sbthread.c \
 	strfuncs.c \

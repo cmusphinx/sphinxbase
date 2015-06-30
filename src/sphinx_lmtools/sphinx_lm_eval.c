@@ -105,11 +105,6 @@ static const arg_t defn[] = {
     "1.0",
     "Word insertion probability" },
 
-  { "-uw",
-    ARG_FLOAT32,
-    "1.0",
-    "Unigram probability weight (interpolated with uniform distribution)"},
-
   { "-verbose",
     ARG_BOOLEAN,
     "no",
@@ -313,8 +308,7 @@ main(int argc, char *argv[])
             ngram_model_read_classdef(lm, probdefn);
         ngram_model_apply_weights(lm,
                                   cmd_ln_float32_r(config, "-lw"),
-                                  cmd_ln_float32_r(config, "-wip"),
-                                  cmd_ln_float32_r(config, "-uw"));
+                                  cmd_ln_float32_r(config, "-wip"));
 
 	/* Now evaluate some text. */
 	lsnfn = cmd_ln_str_r(config, "-lsn");

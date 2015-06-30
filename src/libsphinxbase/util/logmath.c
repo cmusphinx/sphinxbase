@@ -476,8 +476,28 @@ logmath_log10_to_log(logmath_t *lmath, float64 log_p)
     return (int)(log_p * lmath->inv_log10_of_base) >> lmath->t.shift;
 }
 
+float 
+logmath_log10_to_log_float(logmath_t *lmath, float64 log_p)
+{
+    int i;
+    float res = (float)(log_p * lmath->inv_log10_of_base);
+    for (i = 0; i < lmath->t.shift; i++)
+        res /= 2.0f;
+    return res;
+}
+
 float64
 logmath_log_to_log10(logmath_t *lmath, int logb_p)
 {
     return (float64)(logb_p << lmath->t.shift) * lmath->log10_of_base;
+}
+
+float64
+logmath_log_float_to_log10(logmath_t *lmath, float log_p)
+{
+    int i;
+    for (i = 0; i < lmath->t.shift; i++) {
+        log_p *= 2;
+    }
+    return log_p * lmath->log10_of_base;
 }

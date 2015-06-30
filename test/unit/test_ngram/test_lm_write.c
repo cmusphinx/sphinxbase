@@ -50,19 +50,19 @@ main(int argc, char *argv[])
 	E_INFO("Converting ARPA to DMP\n");
 	model = ngram_model_read(NULL, LMDIR "/100.arpa.bz2", NGRAM_ARPA, lmath);
 	test_lm_vals(model);
-	TEST_EQUAL(0, ngram_model_write(model, "100.tmp.DMP", NGRAM_DMP));
+	TEST_EQUAL(0, ngram_model_write(model, "100.tmp.DMP", NGRAM_BIN));
 	ngram_model_free(model);
 
 	/* Convert DMP to ARPA */
 	E_INFO("Converting DMP to ARPA\n");
-	model = ngram_model_read(NULL, LMDIR "/100.arpa.DMP", NGRAM_DMP, lmath);
+	model = ngram_model_read(NULL, LMDIR "/100.arpa.DMP", NGRAM_BIN, lmath);
 	test_lm_vals(model);
 	TEST_EQUAL(0, ngram_model_write(model, "100.tmp.arpa", NGRAM_ARPA));
 	ngram_model_free(model);
 
 	/* Test converted DMP */
 	E_INFO("Testing converted DMP\n");
-	model = ngram_model_read(NULL, "100.tmp.DMP", NGRAM_DMP, lmath);
+	model = ngram_model_read(NULL, "100.tmp.DMP", NGRAM_BIN, lmath);
 	test_lm_vals(model);
 	ngram_model_free(model);
 
@@ -76,12 +76,12 @@ main(int argc, char *argv[])
 	E_INFO("Converting ARPA back to DMP\n");
 	model = ngram_model_read(NULL, "100.tmp.arpa", NGRAM_ARPA, lmath);
 	test_lm_vals(model);
-	TEST_EQUAL(0, ngram_model_write(model, "100.tmp.DMP", NGRAM_DMP));
+	TEST_EQUAL(0, ngram_model_write(model, "100.tmp.DMP", NGRAM_BIN));
 	ngram_model_free(model);
 
 	/* Convert ARPA back to DMP */
 	E_INFO("Converting DMP back to ARPA\n");
-	model = ngram_model_read(NULL, "100.tmp.DMP", NGRAM_DMP, lmath);
+	model = ngram_model_read(NULL, "100.tmp.DMP", NGRAM_BIN, lmath);
 	test_lm_vals(model);
 	TEST_EQUAL(0, ngram_model_write(model, "100.tmp.arpa", NGRAM_ARPA));
 	ngram_model_free(model);

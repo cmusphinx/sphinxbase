@@ -29,8 +29,8 @@ main(int argc, char *argv[])
 
 	lmath = logmath_init(1.0001, 0, 0);
 
-	lms[0] = ngram_model_read(NULL, LMDIR "/100.arpa.DMP", NGRAM_DMP, lmath);
-	lms[1] = ngram_model_read(NULL, LMDIR "/100_2.arpa.DMP", NGRAM_DMP, lmath);
+	lms[0] = ngram_model_read(NULL, LMDIR "/100.arpa.DMP", NGRAM_BIN, lmath);
+	lms[1] = ngram_model_read(NULL, LMDIR "/100_2.arpa.DMP", NGRAM_BIN, lmath);
 
 	lmset = ngram_model_set_init(NULL, lms, (char **)names, NULL, 2);
 	TEST_ASSERT(lmset);
@@ -92,8 +92,8 @@ main(int argc, char *argv[])
 
 	/* Test adding and removing language models with preserved
 	 * word ID mappings. */
-	lms[0] = ngram_model_read(NULL, LMDIR "/100.arpa.DMP", NGRAM_DMP, lmath);
-	lms[1] = ngram_model_read(NULL, LMDIR "/100_2.arpa.DMP", NGRAM_DMP, lmath);
+	lms[0] = ngram_model_read(NULL, LMDIR "/100.arpa.DMP", NGRAM_BIN, lmath);
+	lms[1] = ngram_model_read(NULL, LMDIR "/100_2.arpa.DMP", NGRAM_BIN, lmath);
 	lms[2] = ngram_model_read(NULL, LMDIR "/turtle.lm", NGRAM_ARPA, lmath);
 	lmset = ngram_model_set_init(NULL, lms, (char **)names, NULL, 1);
 	{

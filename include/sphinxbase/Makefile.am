@@ -2,6 +2,7 @@ pkginclude_HEADERS =				\
 	ad.h					\
 	agc.h					\
 	bio.h					\
+	bitarr.h				\
 	bitvec.h				\
 	byteorder.h				\
 	case.h					\
@@ -31,6 +32,7 @@ pkginclude_HEADERS =				\
 	pio.h					\
 	yin.h					\
 	prim_type.h				\
+	priority_queue.h		\
 	profile.h				\
 	sbthread.h				\
 	sphinxbase_export.h			\

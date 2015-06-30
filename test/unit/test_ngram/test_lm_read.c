@@ -56,7 +56,7 @@ main(int argc, char *argv[])
 	TEST_EQUAL(0, ngram_model_free(model));
 
 	/* Read a language model */
-	model = ngram_model_read(NULL, LMDIR "/100.arpa.DMP", NGRAM_DMP, lmath);
+	model = ngram_model_read(NULL, LMDIR "/100.arpa.DMP", NGRAM_BIN, lmath);
 	test_lm_vals(model);
 
 	/* Test refcounting. */
@@ -70,7 +70,7 @@ main(int argc, char *argv[])
 	test_lm_ug_vals(model);
 
 	/* Read a language model */
-	model = ngram_model_read(NULL, LMDIR "/turtle.ug.lm.DMP", NGRAM_DMP, lmath);
+	model = ngram_model_read(NULL, LMDIR "/turtle.ug.lm.DMP", NGRAM_BIN, lmath);
 	test_lm_ug_vals(model);
 
 	logmath_free(lmath);

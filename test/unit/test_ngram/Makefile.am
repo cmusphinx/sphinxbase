@@ -1,13 +1,12 @@
 check_PROGRAMS = \
 	test_lm_read \
-	test_lm_mmap \
 	test_lm_score \
 	test_lm_add \
 	test_lm_casefold \
 	test_lm_class \
 	test_lm_set \
-	test_lm_iter \
-	test_lm_write
+	test_lm_write \
+	test_trie_io
 
 TESTS = $(check_PROGRAMS)
 
@@ -33,4 +32,4 @@ EXTRA_DIST = 100.arpa.gz \
 	turtle.ug.lm \
 	turtle.ug.lm.DMP
 
-CLEANFILES = 100.tmp.arpa 100.tmp.DMP
+CLEANFILES = 100.tmp.arpa 100.tmp.DMP 100.tmp.trie.bin
