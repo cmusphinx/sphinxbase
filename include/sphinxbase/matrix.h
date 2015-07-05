@@ -207,4 +207,3 @@ void matrixadd(float32 **inout_a, float32 **b, int32 n);
 #endif
 
 #endif /* MATRIX_H */ 
-

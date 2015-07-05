@@ -118,7 +118,7 @@ uint32 bitarr_read_int25(bitarr_address_t address, uint8 length, uint32 mask)
 #if defined(__arm) || defined(__arm__)
     uint32 value32;
     const uint8 *base_off = (const uint8_t*)(address.base) + (address.offset >> 3);
-    memcpy(&value32, address.offset, sizeof(value32));
+    memcpy(&value32, base_off, sizeof(value32));
     return (value32 >> get_shift(address.offset & 7, length)) & mask;
 #else
     return (*(const uint32_t*)((const uint8_t*)(address.base) + (address.offset >> 3)) >> get_shift(address.offset & 7, length)) & mask;
