@@ -15,7 +15,7 @@ main(int argc, char *argv[])
 	logmath_t *lmath;
 	ngram_model_t *lms[3];
 	ngram_model_t *lmset;
-	const char *names[] = { "100", "100_2" };
+	const char *names[] = { "100", "102" };
 	const char *words[] = {
 		"<UNK>",
 		"ROBOMAN",
@@ -29,12 +29,12 @@ main(int argc, char *argv[])
 
 	lmath = logmath_init(1.0001, 0, 0);
 
-	lms[0] = ngram_model_read(NULL, LMDIR "/100.arpa.DMP", NGRAM_BIN, lmath);
-	lms[1] = ngram_model_read(NULL, LMDIR "/100_2.arpa.DMP", NGRAM_BIN, lmath);
+	lms[0] = ngram_model_read(NULL, LMDIR "/100.lm.dmp", NGRAM_BIN, lmath);
+	lms[1] = ngram_model_read(NULL, LMDIR "/102.lm.dmp", NGRAM_BIN, lmath);
 
 	lmset = ngram_model_set_init(NULL, lms, (char **)names, NULL, 2);
 	TEST_ASSERT(lmset);
-	TEST_EQUAL(ngram_model_set_select(lmset, "100_2"), lms[1]);
+	TEST_EQUAL(ngram_model_set_select(lmset, "102"), lms[1]);
 	TEST_EQUAL(ngram_model_set_select(lmset, "100"), lms[0]);
 	TEST_EQUAL(ngram_score(lmset, "sphinxtrain", NULL),
 		   logmath_log10_to_log(lmath, -2.7884));
@@ -43,7 +43,7 @@ main(int argc, char *argv[])
 	TEST_EQUAL_LOG(ngram_score(lmset, "daines", "huggins", "david", NULL),
 		       logmath_log10_to_log(lmath, -0.4105));
 
-	TEST_EQUAL(ngram_model_set_select(lmset, "100_2"), lms[1]);
+	TEST_EQUAL(ngram_model_set_select(lmset, "102"), lms[1]);
 	TEST_EQUAL(ngram_score(lmset, "sphinxtrain", NULL),
 		   logmath_log10_to_log(lmath, -2.8192));
 	TEST_EQUAL(ngram_score(lmset, "huggins", "david", NULL),
@@ -66,7 +66,7 @@ main(int argc, char *argv[])
 				   + 0.4 * pow(10, -2.8192)));
 
 	/* Test switching back to selected mode. */
-	TEST_EQUAL(ngram_model_set_select(lmset, "100_2"), lms[1]);
+	TEST_EQUAL(ngram_model_set_select(lmset, "102"), lms[1]);
 	TEST_EQUAL(ngram_score(lmset, "sphinxtrain", NULL),
 		   logmath_log10_to_log(lmath, -2.8192));
 	TEST_EQUAL(ngram_score(lmset, "huggins", "david", NULL),
@@ -92,14 +92,14 @@ main(int argc, char *argv[])
 
 	/* Test adding and removing language models with preserved
 	 * word ID mappings. */
-	lms[0] = ngram_model_read(NULL, LMDIR "/100.arpa.DMP", NGRAM_BIN, lmath);
-	lms[1] = ngram_model_read(NULL, LMDIR "/100_2.arpa.DMP", NGRAM_BIN, lmath);
+	lms[0] = ngram_model_read(NULL, LMDIR "/100.lm.dmp", NGRAM_BIN, lmath);
+	lms[1] = ngram_model_read(NULL, LMDIR "/102.lm.dmp", NGRAM_BIN, lmath);
 	lms[2] = ngram_model_read(NULL, LMDIR "/turtle.lm", NGRAM_ARPA, lmath);
 	lmset = ngram_model_set_init(NULL, lms, (char **)names, NULL, 1);
 	{
 		int32 wid;
 		wid = ngram_wid(lmset, "sphinxtrain");
-		TEST_ASSERT(ngram_model_set_add(lmset, lms[1], "100_2", 1.0, TRUE));
+		TEST_ASSERT(ngram_model_set_add(lmset, lms[1], "102", 1.0, TRUE));
 		/* Verify that it is the same. */
 		TEST_EQUAL(wid, ngram_wid(lmset, "sphinxtrain"));
 		/* Now add another model and verify that its words
@@ -108,7 +108,7 @@ main(int argc, char *argv[])
 		TEST_EQUAL(wid, ngram_wid(lmset, "sphinxtrain"));
 		TEST_EQUAL(ngram_unknown_wid(lmset), ngram_wid(lmset, "FORWARD"));
 		/* Remove language model, make sure this doesn't break horribly. */
-		TEST_EQUAL(lms[1], ngram_model_set_remove(lmset, "100_2", TRUE));
+		TEST_EQUAL(lms[1], ngram_model_set_remove(lmset, "102", TRUE));
 		ngram_model_free(lms[1]);
 		TEST_EQUAL(wid, ngram_wid(lmset, "sphinxtrain"));
 		/* Now enable remapping of word IDs and verify that it works. */
@@ -151,7 +151,7 @@ main(int argc, char *argv[])
 				   (1.0 / 3.0) * pow(10, -2.7884)
 				   + (1.0 / 3.0) * pow(10, -2.8192)));
 
-	ngram_model_set_select(lmset, "100_2");
+	ngram_model_set_select(lmset, "102");
 	TEST_EQUAL(ngram_score(lmset, "sphinxtrain", NULL),
 		   logmath_log10_to_log(lmath, -2.8192));
 	TEST_EQUAL(ngram_score(lmset, "huggins", "david", NULL),

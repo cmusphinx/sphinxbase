@@ -201,14 +201,13 @@ ngram_model_t* ngram_model_trie_read_arpa(cmd_ln_t *config,
 
     model->trie = lm_trie_create(counts[0], QUANT_16, order);
     read_1grams_arpa(&li, counts[0], base, model->trie->unigrams, (order > 1) ? TRUE : FALSE);
+
     if (order > 1) {
         raw_ngrams = ngrams_raw_read_arpa(&li, base->lmath, counts, order, base->wid);
         ngrams_raw_fix_counts(raw_ngrams, counts, fixed_counts, order);
-    }
-    for (i = 0; i < order; i++) {
-        base->n_counts[i] = fixed_counts[i];
-    }
-    if (order > 1) {
+        for (i = 0; i < order; i++) {
+            base->n_counts[i] = fixed_counts[i];
+        }        
         lm_trie_alloc_ngram(model->trie, fixed_counts, order);
         lm_trie_build(model->trie, raw_ngrams, counts, order);
         ngrams_raw_free(raw_ngrams, counts, order);

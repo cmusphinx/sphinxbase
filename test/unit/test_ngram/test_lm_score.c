@@ -75,11 +75,11 @@ main(int argc, char *argv[])
 
 	lmath = logmath_init(1.0001, 0, 0);
 
-	model = ngram_model_read(NULL, LMDIR "/100.arpa.DMP", NGRAM_BIN, lmath);
+	model = ngram_model_read(NULL, LMDIR "/100.lm.bin", NGRAM_BIN, lmath);
 	run_tests(model);
 	ngram_model_free(model);
 
-	model = ngram_model_read(NULL, LMDIR "/100.arpa.gz", NGRAM_ARPA, lmath);
+	model = ngram_model_read(NULL, LMDIR "/100.lm.gz", NGRAM_ARPA, lmath);
 	run_tests(model);
 	ngram_model_free(model);
 

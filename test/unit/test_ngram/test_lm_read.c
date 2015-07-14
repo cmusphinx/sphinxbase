@@ -50,28 +50,37 @@ main(int argc, char *argv[])
 
 	/* Initialize a logmath object to pass to ngram_read */
 	lmath = logmath_init(1.0001, 0, 0);
+
+
 	/* Read a language model */
-	model = ngram_model_read(NULL, LMDIR "/100.arpa.bz2", NGRAM_ARPA, lmath);
+	model = ngram_model_read(NULL, LMDIR "/turtle.ug.lm", NGRAM_ARPA, lmath);
+	test_lm_ug_vals(model);
+	TEST_EQUAL(0, ngram_model_free(model));
+
+	/* Read a language model */
+	model = ngram_model_read(NULL, LMDIR "/turtle.ug.lm.dmp", NGRAM_BIN, lmath);
+	test_lm_ug_vals(model);
+	TEST_EQUAL(0, ngram_model_free(model));
+
+	/* Read a language model */
+	model = ngram_model_read(NULL, LMDIR "/100.lm.bz2", NGRAM_ARPA, lmath);
 	test_lm_vals(model);
 	TEST_EQUAL(0, ngram_model_free(model));
 
 	/* Read a language model */
-	model = ngram_model_read(NULL, LMDIR "/100.arpa.DMP", NGRAM_BIN, lmath);
+	model = ngram_model_read(NULL, LMDIR "/100.lm.bin", NGRAM_BIN, lmath);
 	test_lm_vals(model);
+	TEST_EQUAL(0, ngram_model_free(model));
 
+	/* Read a language model */
+	model = ngram_model_read(NULL, LMDIR "/100.lm.dmp", NGRAM_BIN, lmath);
+	test_lm_vals(model);
 	/* Test refcounting. */
 	model = ngram_model_retain(model);
 	TEST_EQUAL(1, ngram_model_free(model));
 	TEST_EQUAL(ngram_score(model, "daines", "huggins", "david", NULL), -9452);
 	TEST_EQUAL(0, ngram_model_free(model));
 
-	/* Read a language model */
-	model = ngram_model_read(NULL, LMDIR "/turtle.ug.lm", NGRAM_ARPA, lmath);
-	test_lm_ug_vals(model);
-
-	/* Read a language model */
-	model = ngram_model_read(NULL, LMDIR "/turtle.ug.lm.DMP", NGRAM_BIN, lmath);
-	test_lm_ug_vals(model);
 
 	logmath_free(lmath);
 
