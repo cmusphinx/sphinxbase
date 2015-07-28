@@ -226,8 +226,7 @@ fsg_model_null_trans_closure(fsg_model_t * fsg, glist_t nulls)
             if (null_trans == NULL)
                 continue;
             for (itor = hash_table_iter(null_trans);
-                 itor != NULL;
-                 itor = hash_table_iter_next(itor)) {
+                 itor != NULL; itor = hash_table_iter_next(itor)) {
                 nulls = glist_add_ptr(nulls, hash_entry_val(itor->ent));
             }
         }
@@ -250,7 +249,8 @@ fsg_model_null_trans_closure(fsg_model_t * fsg, glist_t nulls)
             if (fsg->trans[tl1->to_state].null_trans == NULL)
                 continue;
 
-            for (itor = hash_table_iter(fsg->trans[tl1->to_state].null_trans);
+            for (itor =
+                 hash_table_iter(fsg->trans[tl1->to_state].null_trans);
                  itor; itor = hash_table_iter_next(itor)) {
 
                 tl2 = (fsg_link_t *) hash_entry_val(itor->ent);
@@ -273,7 +273,7 @@ fsg_model_null_trans_closure(fsg_model_t * fsg, glist_t nulls)
             }
         }
     } while (updated);
-    
+
     E_INFO("%d null transitions added\n", n);
 
     return nulls;
@@ -400,17 +400,19 @@ fsg_model_word_add(fsg_model_t * fsg, char const *word)
     if (wid == -1) {
         wid = fsg->n_word;
         if (fsg->n_word == fsg->n_word_alloc) {
-    	    old_size = fsg->n_word_alloc;
+            old_size = fsg->n_word_alloc;
             fsg->n_word_alloc += 10;
             fsg->vocab = ckd_realloc(fsg->vocab,
                                      fsg->n_word_alloc *
                                      sizeof(*fsg->vocab));
             if (fsg->silwords)
                 fsg->silwords =
-                    bitvec_realloc(fsg->silwords, old_size, fsg->n_word_alloc);
+                    bitvec_realloc(fsg->silwords, old_size,
+                                   fsg->n_word_alloc);
             if (fsg->altwords)
                 fsg->altwords =
-                    bitvec_realloc(fsg->altwords, old_size, fsg->n_word_alloc);
+                    bitvec_realloc(fsg->altwords, old_size,
+                                   fsg->n_word_alloc);
         }
         ++fsg->n_word;
         fsg->vocab[wid] = ckd_salloc(word);
@@ -469,9 +471,9 @@ fsg_model_add_alt(fsg_model_t * fsg, char const *baseword,
         fsg->altwords = bitvec_alloc(fsg->n_word_alloc);
     bitvec_set(fsg->altwords, altwid);
     if (fsg_model_is_filler(fsg, basewid)) {
-         if (fsg->silwords == NULL)
-	      fsg->silwords = bitvec_alloc(fsg->n_word_alloc);
-         bitvec_set(fsg->silwords, altwid);
+        if (fsg->silwords == NULL)
+            fsg->silwords = bitvec_alloc(fsg->n_word_alloc);
+        bitvec_set(fsg->silwords, altwid);
     }
 
     E_DEBUG(2, ("Adding alternate word transitions (%s,%s) to FSG\n",
