@@ -156,16 +156,6 @@ typedef struct ngram_funcs_s {
 } ngram_funcs_t;
 
 /**
- * Base iterator structure for N-grams.
- */
-struct ngram_iter_s {
-    ngram_model_t *model;
-    int32 *wids;      /**< Scratch space for word IDs. */
-    int16 m;          /**< Order of history. */
-    int16 successor;  /**< Is this a successor iterator? */
-};
-
-/**
  * One class definition from a classdef file.
  */
 typedef struct classdef_s {
@@ -265,11 +255,5 @@ void ngram_class_free(ngram_class_t *lmclass);
  * @return This probability, or 1 if word not found.
  */
 int32 ngram_class_prob(ngram_class_t *lmclass, int32 wid);
-
-/**
- * Initialize base M-Gram iterator structure.
- */
-void ngram_iter_init(ngram_iter_t *itor, ngram_model_t *model,
-                     int m, int successor);
 
 #endif /* __NGRAM_MODEL_INTERNAL_H__ */

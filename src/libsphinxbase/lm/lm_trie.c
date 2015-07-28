@@ -162,10 +162,12 @@ static void recursive_insert(lm_trie_t *trie, ngram_raw_t **raw_ngrams, uint32 *
     priority_queue_add(ngrams, ngram);
     raw_ngrams_ptr = (uint32 *)ckd_calloc(order - 1, sizeof(*raw_ngrams_ptr));
     for (i = 2; i <= order; ++i) {
+	if (counts[i - 1] <= 0)
+	    continue;
         ngram_raw_ord_t *tmp_ngram = (ngram_raw_ord_t *)ckd_calloc(1, sizeof(*tmp_ngram));
         tmp_ngram->order = i;
-        raw_ngrams_ptr[i-2] = 0;
-        tmp_ngram->instance = raw_ngrams[i - 2][raw_ngrams_ptr[i-2]];
+        raw_ngrams_ptr[i - 2] = 0;
+        tmp_ngram->instance = raw_ngrams[i - 2][0];
         priority_queue_add(ngrams, tmp_ngram);
     }
 

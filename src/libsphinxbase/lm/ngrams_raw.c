@@ -106,7 +106,8 @@ static void read_ngram_instance(lineiter_t **li, hash_table_t *wid, logmath_t *l
         return;
     }
     string_trim((*li)->buf, STRING_BOTH);
-    words_expected = order == order_max ? order + 1 : order + 2;
+    words_expected = order + 1;
+
     if ((n = str2words((*li)->buf, wptr, NGRAM_MAX_ORDER + 1)) < words_expected) {
         if ((*li)->buf[0] != '\0') {
             E_WARN("Format error; %d-gram ignored: %s\n", order, (*li)->buf);
@@ -114,23 +115,30 @@ static void read_ngram_instance(lineiter_t **li, hash_table_t *wid, logmath_t *l
     } else {
         if (order == order_max) {
             raw_ngram->weights = (float *)ckd_calloc(1, sizeof(*raw_ngram->weights));
-            raw_ngram->weights[0] = (float)atof_c(wptr[0]);
+            raw_ngram->weights[0] = atof_c(wptr[0]);
             if (raw_ngram->weights[0] > 0) {
                 E_WARN("%d-gram [%s] has positive probability. Zeroize\n", order, wptr[1]);
                 raw_ngram->weights[0] = 0.0f;
             }
             raw_ngram->weights[0] = logmath_log10_to_log_float(lmath, raw_ngram->weights[0]);
         } else {
+            float weight, backoff;
             raw_ngram->weights = (float *)ckd_calloc(2, sizeof(*raw_ngram->weights));
-            raw_ngram->weights[0] = (float)atof_c(wptr[0]);
-            if (raw_ngram->weights[0] > 0) {
+            
+            weight = atof_c(wptr[0]);
+            if (weight > 0) {
                 E_WARN("%d-gram [%s] has positive probability. Zeroize\n", order, wptr[1]);
                 raw_ngram->weights[0] = 0.0f;
+            } else {
+	        raw_ngram->weights[0] = logmath_log10_to_log_float(lmath, weight);
+	     }
+
+            if (n == order + 1) {
+        	raw_ngram->weights[1] = 0.0f;
+            } else {
+               backoff = atof_c(wptr[order + 1]);
+    	        raw_ngram->weights[1] = logmath_log10_to_log_float(lmath, backoff);
             }
-            raw_ngram->weights[0] = logmath_log10_to_log_float(lmath, raw_ngram->weights[0]);
-            raw_ngram->weights[1] = (float)atof_c(wptr[order + 1]);
-            raw_ngram->weights[1] = logmath_log10_to_log_float(lmath, raw_ngram->weights[1]);
-            //TODO classify float with fpclassify and warn if bad value occurred
         }
         raw_ngram->words = (uint32 *)ckd_calloc(order, sizeof(*raw_ngram->words));
         for (word_out = raw_ngram->words + order - 1, i = 1; word_out >= raw_ngram->words; --word_out, i++) {
@@ -317,16 +325,18 @@ void ngrams_raw_fix_counts(ngram_raw_t **raw_ngrams, uint32 *counts, uint32 *fix
 
     memset(words, -1, sizeof(words)); //since we have unsigned word idx that will give us unreachable maximum word index
     memcpy(fixed_counts, counts, order * sizeof(*fixed_counts));
-    for (i = 2; i <= order; ++i) {
+    for (i = 2; i <= order; i++) {
+	if (counts[i - 1] <= 0)
+	    continue;
         ngram_raw_ord_t *tmp_ngram = (ngram_raw_ord_t *)ckd_calloc(1, sizeof(*tmp_ngram));
         tmp_ngram->order = i;
-        raw_ngram_ptrs[i-2] = 0;
-        tmp_ngram->instance = raw_ngrams[i - 2][raw_ngram_ptrs[i-2]];
+        raw_ngram_ptrs[i - 2] = 0;
+        tmp_ngram->instance = raw_ngrams[i - 2][0];
         priority_queue_add(ngrams, tmp_ngram);
     }
 
     for (;;) {
-        uint8 to_increment = TRUE;
+        int32 to_increment = TRUE;
         ngram_raw_ord_t *top;
         if (priority_queue_size(ngrams) == 0) {
             break;

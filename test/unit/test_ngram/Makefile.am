@@ -28,6 +28,7 @@ EXTRA_DIST = \
 	100.lmctl \
 	102.lm.gz \
 	102.lm.dmp \
+	104.lm.gz \
 	turtle.lm \
 	turtle.lm.dmp \
 	turtle.ug.lm \

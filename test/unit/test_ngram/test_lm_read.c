@@ -51,7 +51,6 @@ main(int argc, char *argv[])
 	/* Initialize a logmath object to pass to ngram_read */
 	lmath = logmath_init(1.0001, 0, 0);
 
-
 	/* Read a language model */
 	model = ngram_model_read(NULL, LMDIR "/turtle.ug.lm", NGRAM_ARPA, lmath);
 	test_lm_ug_vals(model);
@@ -60,6 +59,10 @@ main(int argc, char *argv[])
 	/* Read a language model */
 	model = ngram_model_read(NULL, LMDIR "/turtle.ug.lm.dmp", NGRAM_BIN, lmath);
 	test_lm_ug_vals(model);
+	TEST_EQUAL(0, ngram_model_free(model));
+
+	/* Read a language model with missing backoffs */
+	model = ngram_model_read(NULL, LMDIR "/104.lm.gz", NGRAM_ARPA, lmath);
 	TEST_EQUAL(0, ngram_model_free(model));
 
 	/* Read a language model */

@@ -54,7 +54,6 @@ static ngram_funcs_t ngram_model_trie_funcs;
  */
 static int read_counts_arpa(lineiter_t **li, uint32* counts, int* order)
 {
-    int i;
     int32 ngram, prev_ngram;
     uint32 ngram_cnt;
 
@@ -65,6 +64,7 @@ static int read_counts_arpa(lineiter_t **li, uint32* counts, int* order)
             break;
         *li = lineiter_next(*li);
     }
+    
     if (*li == NULL || strcmp((*li)->buf, "\\data\\") != 0) {
         E_INFO("No \\data\\ mark in LM file\n");
         return -1;
@@ -83,6 +83,7 @@ static int read_counts_arpa(lineiter_t **li, uint32* counts, int* order)
         counts[*order] = ngram_cnt;
         (*order)++;
     }
+
     if (*li == NULL) {
         E_ERROR("EOF while reading ngram counts\n");
         return -1;
@@ -94,15 +95,11 @@ static int read_counts_arpa(lineiter_t **li, uint32* counts, int* order)
         if (strcmp((*li)->buf, "\\1-grams:") == 0)
             break;
     }
+
     if (*li == NULL) {
         E_ERROR_SYSTEM("Failed to read \\1-grams: mark");
         return -1;
     }
-    for (i = 0; i < *order; i++)
-        if (counts[i] <= 0) {
-            E_ERROR("Bad ngram count\n");
-            return -1;
-        }
 
     return 0;
 }
@@ -114,14 +111,14 @@ int string_comparator(const void *a, const void *b)
     return strcmp(*ia, *ib);
 } 
 
-static void read_1grams_arpa(lineiter_t **li, uint32 count, ngram_model_t *base, unigram_t *unigrams, uint8 with_bo)
+static void read_1grams_arpa(lineiter_t **li, uint32 count, ngram_model_t *base, unigram_t *unigrams)
 {
     uint32 i;
     int n;
     int n_parts;
     char *wptr[3];
 
-    n_parts = with_bo ? 3 : 2;
+    n_parts = 2;
     for (i = 0; i < count; i++) {
         *li = lineiter_next(*li);
         if (*li == NULL) {
@@ -135,15 +132,13 @@ static void read_1grams_arpa(lineiter_t **li, uint32 count, ngram_model_t *base,
             continue;
         } else {
             unigram_t *unigram = &unigrams[i];
-            unigram->prob = (float)atof_c(wptr[0]);
-            unigram->prob = logmath_log10_to_log_float(base->lmath, unigram->prob);
+            unigram->prob = logmath_log10_to_log_float(base->lmath, atof_c(wptr[0]));
             if (unigram->prob > 0) {
                 E_WARN("Unigram [%s] has positive probability. Zeroize\n", wptr[1]);
                 unigram->prob = 0;
             }
-            if (with_bo) {
-                unigram->bo = (float)atof_c(wptr[2]);
-                unigram->bo = logmath_log10_to_log_float(base->lmath, unigram->bo);
+            if (n == n_parts + 1) {
+                unigram->bo = logmath_log10_to_log_float(base->lmath, atof_c(wptr[2]));
             } else {
                 unigram->bo = 0.0f;
             }
@@ -200,7 +195,7 @@ ngram_model_t* ngram_model_trie_read_arpa(cmd_ln_t *config,
     base->writable = TRUE;
 
     model->trie = lm_trie_create(counts[0], QUANT_16, order);
-    read_1grams_arpa(&li, counts[0], base, model->trie->unigrams, (order > 1) ? TRUE : FALSE);
+    read_1grams_arpa(&li, counts[0], base, model->trie->unigrams);
 
     if (order > 1) {
         raw_ngrams = ngrams_raw_read_arpa(&li, base->lmath, counts, order, base->wid);
