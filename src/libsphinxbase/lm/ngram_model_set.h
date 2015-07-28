@@ -67,4 +67,4 @@ struct ngram_model_set_iter_s {
     int32 cur;
 };
 
-#endif /* __NGRAM_MODEL_SET_H__ */
+#endif                          /* __NGRAM_MODEL_SET_H__ */

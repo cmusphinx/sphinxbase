@@ -45,8 +45,8 @@
 #include <sphinxbase/err.h>
 
 typedef struct ngram_raw_s {
-    uint32 *words; /* array of word indexes, length corresponds to ngram order */
-    float *weights;  /* prob and backoff or just prob for longest order */
+    uint32 *words;              /* array of word indexes, length corresponds to ngram order */
+    float *weights;             /* prob and backoff or just prob for longest order */
 } ngram_raw_t;
 
 typedef struct ngram_raw_ord_s {
@@ -80,7 +80,9 @@ int ngram_ord_comparator(void *a_raw, void *b_raw);
  * @param order  [in] maximum order of ngrams
  * @return            raw ngrams of order bigger than 1
  */
-ngram_raw_t** ngrams_raw_read_arpa(lineiter_t **li, logmath_t *lmath, uint32 *counts, int order, hash_table_t *wid);
+ngram_raw_t **ngrams_raw_read_arpa(lineiter_t ** li, logmath_t * lmath,
+                                   uint32 * counts, int order,
+                                   hash_table_t * wid);
 
 /**
  * Reads ngrams of order > 1 from DMP file.
@@ -92,10 +94,14 @@ ngram_raw_t** ngrams_raw_read_arpa(lineiter_t **li, logmath_t *lmath, uint32 *co
  * @param do_swap      [in] wether to do swap of bits
  * @return                  raw ngrams of order bigger than 1
  */
-ngram_raw_t** ngrams_raw_read_dmp(FILE *fp, logmath_t *lmath, uint32 *counts, int order, uint32 *unigram_next, uint8 do_swap);
+ngram_raw_t **ngrams_raw_read_dmp(FILE * fp, logmath_t * lmath,
+                                  uint32 * counts, int order,
+                                  uint32 * unigram_next, uint8 do_swap);
 
-void ngrams_raw_fix_counts(ngram_raw_t **raw_ngrams, uint32 *counts, uint32 *fixed_counts, int order);
+void ngrams_raw_fix_counts(ngram_raw_t ** raw_ngrams, uint32 * counts,
+                           uint32 * fixed_counts, int order);
 
-void ngrams_raw_free(ngram_raw_t **raw_ngrams, uint32 *counts, int order);
+void ngrams_raw_free(ngram_raw_t ** raw_ngrams, uint32 * counts,
+                     int order);
 
-#endif /* __LM_NGRAMS_RAW_H__ */
+#endif                          /* __LM_NGRAMS_RAW_H__ */

@@ -46,6 +46,37 @@
 typedef struct ngram_model_trie_s {
     ngram_model_t base;  /**< Base ngram_model_t structure */
     lm_trie_t *trie;     /**< Trie structure that stores ngram relations and weights */
-}ngram_model_trie_t;
+} ngram_model_trie_t;
 
-#endif /* __NGRAM_MODEL_TRIE_H__ */
+/**
+ * Read N-Gram model from and ARPABO text file and arrange it in trie structure
+ */
+ngram_model_t *ngram_model_trie_read_arpa(cmd_ln_t * config,
+                                          const char *path,
+                                          logmath_t * lmath);
+
+/**
+ * Write N-Gram model stored in trie structure in ARPABO format
+ */
+int ngram_model_trie_write_arpa(ngram_model_t * base, const char *path);
+
+/**
+ * Read N-Gram model from the binary file and arrange it in a trie structure
+ */
+ngram_model_t *ngram_model_trie_read_bin(cmd_ln_t * config,
+                                         const char *path,
+                                         logmath_t * lmath);
+
+/**
+ * Write trie to binary file
+ */
+int ngram_model_trie_write_bin(ngram_model_t * model, const char *path);
+
+/**
+ * Read N-Gram model from DMP file and arrange it in trie structure
+ */
+ngram_model_t *ngram_model_trie_read_dmp(cmd_ln_t * config,
+                                         const char *file_name,
+                                         logmath_t * lmath);
+
+#endif                          /* __NGRAM_MODEL_TRIE_H__ */

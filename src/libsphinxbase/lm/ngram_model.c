@@ -57,6 +57,7 @@
 #include "sphinxbase/case.h"
 
 #include "ngram_model_internal.h"
+#include "ngram_model_trie.h"
 
 ngram_file_type_t
 ngram_file_name_to_type(const char *file_name)

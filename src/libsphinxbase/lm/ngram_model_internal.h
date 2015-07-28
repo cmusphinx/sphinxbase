@@ -111,30 +111,24 @@ typedef struct ngram_funcs_s {
     /**
      * Implementation-specific function for freeing an ngram_model_t.
      */
-    void (*free)(ngram_model_t *model);
+    void (*free) (ngram_model_t * model);
     /**
      * Implementation-specific function for applying language model weights.
      */
-    int (*apply_weights)(ngram_model_t *model,
-                         float32 lw,
-                         float32 wip);
+    int (*apply_weights) (ngram_model_t * model, float32 lw, float32 wip);
     /**
      * Implementation-specific function for querying language model score.
      */
-    int32 (*score)(ngram_model_t *model,
-                   int32 wid,
-                   int32 *history,
-                   int32 n_hist,
-                   int32 *n_used);
+     int32(*score) (ngram_model_t * model,
+                    int32 wid,
+                    int32 * history, int32 n_hist, int32 * n_used);
     /**
      * Implementation-specific function for querying raw language
      * model probability.
      */
-    int32 (*raw_score)(ngram_model_t *model,
-                       int32 wid,
-                       int32 *history,
-                       int32 n_hist,
-                       int32 *n_used);
+     int32(*raw_score) (ngram_model_t * model,
+                        int32 wid,
+                        int32 * history, int32 n_hist, int32 * n_used);
     /**
      * Implementation-specific function for adding unigrams.
      *
@@ -146,13 +140,12 @@ typedef struct ngram_funcs_s {
      * @return The language model score (not raw log-probability) of
      * the new word, or 0 for failure.
      */
-    int32 (*add_ug)(ngram_model_t *model,
-                    int32 wid, int32 lweight);
+     int32(*add_ug) (ngram_model_t * model, int32 wid, int32 lweight);
 
     /**
      * Implementation-specific function for purging N-Gram cache
      */
-    void (*flush)(ngram_model_t *model);
+    void (*flush) (ngram_model_t * model);
 } ngram_funcs_t;
 
 /**
@@ -168,92 +161,37 @@ typedef struct classdef_s {
  * Initialize the base ngram_model_t structure.
  */
 int32
-ngram_model_init(ngram_model_t *model,
-                 ngram_funcs_t *funcs,
-                 logmath_t *lmath,
-                 int32 n, int32 n_unigram);
-
-/**
- * Read an N-Gram model from an ARPABO text file.
- */
-ngram_model_t *ngram_model_arpa_read(cmd_ln_t *config,
-				     const char *file_name,
-				     logmath_t *lmath);
-
-/**
- * Read N-Gram model from and ARPABO text file and locate it in trie structure
- */
-ngram_model_t* ngram_model_trie_read_arpa(cmd_ln_t *config, 
-                                          const char *path,
-                                          logmath_t *lmath);
-
-/**
- * Write N-Gram model stored in trie structure in ARPABO format
- */
-int ngram_model_trie_write_arpa(ngram_model_t *base,
-                                const char *path);
-
-/**
- * Read N-Gram model from and binary file and locate it in trie structure
- */
-ngram_model_t* ngram_model_trie_read_bin(cmd_ln_t *config, 
-                                          const char *path,
-                                          logmath_t *lmath);
-
-int ngram_model_trie_write_bin(ngram_model_t *model,
-                               const char *path);
-
-/**
- * Read N-Gram model from DMP file and locate it in trie structure
- */
-ngram_model_t* ngram_model_trie_read_dmp(cmd_ln_t *config,
-                                         const char *file_name,
-                                         logmath_t *lmath);
-
-/**
- * Read an N-Gram model from a Sphinx .DMP binary file.
- */
-ngram_model_t *ngram_model_dmp_read(cmd_ln_t *config,
-				    const char *file_name,
-				    logmath_t *lmath);
-
-/**
- * Write an N-Gram model to an ARPABO text file.
- */
-int ngram_model_arpa_write(ngram_model_t *model,
-			   const char *file_name);
-/**
- * Write an N-Gram model to a Sphinx .DMP binary file.
- */
-int ngram_model_dmp_write(ngram_model_t *model,
-			  const char *file_name);
+ngram_model_init(ngram_model_t * model,
+                 ngram_funcs_t * funcs,
+                 logmath_t * lmath, int32 n, int32 n_unigram);
 
 /**
  * Read a probdef file.
  */
-int32 read_classdef_file(hash_table_t *classes, const char *classdef_file);
+int32 read_classdef_file(hash_table_t * classes,
+                         const char *classdef_file);
 
 /**
  * Free a class definition.
  */
-void classdef_free(classdef_t *classdef);
+void classdef_free(classdef_t * classdef);
 
 /**
  * Allocate and initialize an N-Gram class.
  */
-ngram_class_t *ngram_class_new(ngram_model_t *model, int32 tag_wid,
+ngram_class_t *ngram_class_new(ngram_model_t * model, int32 tag_wid,
                                int32 start_wid, glist_t classwords);
 
 /**
  * Deallocate an N-Gram class.
  */
-void ngram_class_free(ngram_class_t *lmclass);
+void ngram_class_free(ngram_class_t * lmclass);
 
 /**
  * Get the in-class log probability for a word in an N-Gram class.
  *
  * @return This probability, or 1 if word not found.
  */
-int32 ngram_class_prob(ngram_class_t *lmclass, int32 wid);
+int32 ngram_class_prob(ngram_class_t * lmclass, int32 wid);
 
-#endif /* __NGRAM_MODEL_INTERNAL_H__ */
+#endif                          /* __NGRAM_MODEL_INTERNAL_H__ */
