@@ -400,9 +400,11 @@ ngrams_raw_fix_counts(ngram_raw_t ** raw_ngrams, uint32 * counts,
     memset(words, -1, sizeof(words));   //since we have unsigned word idx that will give us unreachable maximum word index
     memcpy(fixed_counts, counts, order * sizeof(*fixed_counts));
     for (i = 2; i <= order; i++) {
+        ngram_raw_ord_t *tmp_ngram;
+        
         if (counts[i - 1] <= 0)
             continue;
-        ngram_raw_ord_t *tmp_ngram =
+        tmp_ngram =
             (ngram_raw_ord_t *) ckd_calloc(1, sizeof(*tmp_ngram));
         tmp_ngram->order = i;
         raw_ngram_ptrs[i - 2] = 0;
