@@ -88,10 +88,6 @@
       <ImportLibrary>../../bin/$(Configuration)/$(Platform)/sphinxbase.lib</ImportLibrary>
       <TargetMachine>$(MachineArch)</TargetMachine>
     </Link>
-    <Bscmake>
-      <SuppressStartupBanner>true</SuppressStartupBanner>
-      <OutputFile>.\../../bin/$(Configuration)/$(Platform)/sphinxbase.bsc</OutputFile>
-    </Bscmake>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)'=='Debug'">
     <Midl>
@@ -135,10 +131,6 @@
       <TargetMachine>$(MachineArch)</TargetMachine>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
     </Link>
-    <Bscmake>
-      <SuppressStartupBanner>true</SuppressStartupBanner>
-      <OutputFile>.\../../bin/$(Configuration)/$(Platform)/sphinxbase.bsc</OutputFile>
-    </Bscmake>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\libsphinxad\ad_win32.c" />

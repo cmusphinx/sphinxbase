@@ -16,6 +16,8 @@ EXTRA_DIST = \
 	win32/sphinx_lm_convert/sphinx_lm_convert.vcxproj.filters \
 	win32/sphinx_pitch/sphinx_pitch.vcxproj \
 	win32/sphinx_pitch/sphinx_pitch.vcxproj.filters \
+	win32/sphinx_seg/sphinx_seg.vcxproj \
+	win32/sphinx_seg/sphinx_seg.vcxproj.filters \
 	win32/sphinxbase/sphinxbase.vcxproj \
 	win32/sphinxbase/sphinxbase.vcxproj.filters
 
