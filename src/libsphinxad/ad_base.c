@@ -55,7 +55,7 @@
 #include "prim_type.h"
 #include "ad.h"
 
-ad_rec_s {
+struct ad_rec_s {
     int32 sps;		/**< Samples/sec */
     int32 bps;		/**< Bytes/sample */
 };
