@@ -131,7 +131,9 @@ SPHINXBASE_EXPORT
 float64 determinant(float32 **a, int32 len);
 
 /**
- * Invert (if possible) a positive definite matrix.
+ * Invert (if possible) a positive definite matrix with QR
+ * algorithm.
+ *
  * @param out_ainv The inverse of a will be stored here.
  * @param a The input matrix, must be positive definite.
  * @param len The dimension of the input matrix.
@@ -139,6 +141,9 @@ float64 determinant(float32 **a, int32 len);
  *
  * \note Only the upper triangular portion of a is considered,
  * therefore the check for positive-definiteness is not reliable.
+ *
+ * \note The inversion can be done in-place, so you can use the same matrix
+ * if you do not need to keep a.
  **/
 SPHINXBASE_EXPORT
 int32 invert(float32 **out_ainv, float32 **a, int32 len);
