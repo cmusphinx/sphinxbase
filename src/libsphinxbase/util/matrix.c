@@ -240,18 +240,21 @@ invert(float32 ** ainv, float32 ** a, int32 n)
     float32 **tmp_a;
     int32 info, nrhs, i;
 
-    /* Construct an identity matrix. */
-    memset(ainv[0], 0, sizeof(float32) * n * n);
-    for (i = 0; i < n; i++)
-        ainv[i][i] = 1.0;
     /* a is assumed to be symmetric, so we don't need to switch the
      * ordering of the data.  But we do need to copy it since it is
      * overwritten by LAPACK. */
     tmp_a = (float32 **)ckd_calloc_2d(n, n, sizeof(float32));
     memcpy(tmp_a[0], a[0], n*n*sizeof(float32));
+
+    /* Construct an identity matrix. */
+    memset(ainv[0], 0, sizeof(float32) * n * n);
+    for (i = 0; i < n; i++)
+        ainv[i][i] = 1.0;
+
     uplo = 'L';
     nrhs = n;
     sposv_(&uplo, &n, &nrhs, tmp_a[0], &n, ainv[0], &n, &info);
+
     ckd_free_2d((void **)tmp_a);
 
     if (info != 0)

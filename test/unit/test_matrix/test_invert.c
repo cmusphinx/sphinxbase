@@ -81,6 +81,21 @@ main(int argc, char *argv[])
 	a[0][0] = 1.0;
 	printf("%d\n", invert(ainv, a, 3));
 
+
+	memcpy(a[0], foo, sizeof(float32) * 3 * 3);
+	printf("%d\n", invert(a, a, 3));
+	/* Should see:
+	   0.75 -0.25 -0.25 
+	   -0.25 0.75 -0.25 
+	   -0.25 -0.25 0.75 
+	*/
+	for (i = 0; i < 3; ++i) {
+		for (j = 0; j < 3; ++j) {
+			printf("%.2f ", a[i][j]);
+		}
+		printf("\n");
+	}
+
 	ckd_free_2d((void **)a);
 	ckd_free_2d((void **)ainv);
 	ckd_free_2d((void **)ii);
