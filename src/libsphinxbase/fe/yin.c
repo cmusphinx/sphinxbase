@@ -190,6 +190,7 @@ yin_free(yin_t *pe)
 {
     ckd_free_2d(pe->diff_window);
     ckd_free(pe->period_window);
+    ckd_free(pe->frame);
     ckd_free(pe);
 }
 
