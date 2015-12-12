@@ -90,6 +90,18 @@ typedef struct {
     return $self->ptr != NULL;
   }
 #endif
+#if SWIGJAVASCRIPT
+  %newobject next;
+  VALUE_TYPE * next() {
+    if ($self->ptr) {
+      VALUE_TYPE *value = ##VALUE_TYPE##_fromIter($self->ptr);
+      $self->ptr = ##PREFIX##_next($self->ptr);
+      return value;
+    }
+
+    return NULL;
+  }
+#endif
 #if SWIGPYTHON
 
   // Python2
