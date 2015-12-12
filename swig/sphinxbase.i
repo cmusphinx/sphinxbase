@@ -53,6 +53,9 @@ negative error code."
 #if SWIGJAVA
 %module SphinxBase
 %rename("%(lowercamelcase)s", notregexmatch$name="^[A-Z]") "";
+#elif SWIGJAVASCRIPT
+%module SphinxBase
+%rename("%(lowercamelcase)s", notregexmatch$name="^[A-Z]") "";
 #else
 %module(docstring=DOCSTRING) sphinxbase
 #endif
