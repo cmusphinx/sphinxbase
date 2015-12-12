@@ -3,6 +3,7 @@ exec_prefix=@exec_prefix@
 libdir=@libdir@
 includedir=@includedir@
 libs="@LIBS@"
+datadir=@datarootdir@/@PACKAGE@
 
 Name: SphinxBase
 Description: Shared components for Sphinx speech recognition

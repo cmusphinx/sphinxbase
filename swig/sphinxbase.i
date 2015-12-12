@@ -69,16 +69,13 @@ negative error code."
 #endif
 
 %begin %{
+#include <stdbool.h>
 #include <sphinxbase/cmd_ln.h>
 #include <sphinxbase/err.h>
 #include <sphinxbase/fe.h>
 #include <sphinxbase/feat.h>
 #include <sphinxbase/jsgf.h>
 #include <sphinxbase/ngram_model.h>
-
-typedef int bool;
-#define false 0
-#define true 1
 
 typedef cmd_ln_t Config;
 typedef jsgf_t Jsgf;

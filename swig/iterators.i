@@ -64,7 +64,7 @@ typedef struct {
 
 %extend TYPE##Iterator {
   TYPE##Iterator(PREFIX##_t *ptr) {
-    TYPE##Iterator *iter = ckd_malloc(sizeof *iter);
+    TYPE##Iterator *iter = (TYPE##Iterator *)ckd_malloc(sizeof *iter);
     iter->ptr = ptr;
     return iter;
   }

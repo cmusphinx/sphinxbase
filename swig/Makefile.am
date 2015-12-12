@@ -1,6 +1,6 @@
 SUBDIRS = python
 
-swigdir = $(datadir)/@PACKAGE@/swig
+swigdir = $(pkgdatadir)/swig
 dist_swig_DATA = \
 	cmd_ln.i \
 	fe.i \
