@@ -89,8 +89,7 @@ typedef struct {
   bool hasNext() {
     return $self->ptr != NULL;
   }
-#endif
-#if SWIGJAVASCRIPT
+#elif SWIGJAVASCRIPT
   %newobject next;
   VALUE_TYPE * next() {
     if ($self->ptr) {
@@ -101,8 +100,7 @@ typedef struct {
 
     return NULL;
   }
-#endif
-#if SWIGPYTHON
+#elif SWIGPYTHON
 
   // Python2
   %newobject next;
@@ -124,6 +122,15 @@ typedef struct {
       return value;
     }
     return NULL;
+  }
+#elif SWIGRUBY  
+  void each() {
+    while ($self->ptr) {
+      VALUE_TYPE *value = ##VALUE_TYPE##_fromIter($self->ptr);
+      rb_yield(SWIG_NewPointerObj(SWIG_as_voidptr(value), SWIGTYPE_p_##VALUE_TYPE##, 0 |  0 ));
+      $self->ptr = ##PREFIX##_next($self->ptr);
+    }
+    return;
   }
 #endif
 
