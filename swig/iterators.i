@@ -1,6 +1,7 @@
 // Macro to construct iterable objects.
 %define sb_iterator(TYPE, PREFIX, VALUE_TYPE)
 
+#if !SWIGRUBY
 
 // Basic types
 
@@ -101,17 +102,7 @@ typedef struct {
     }
     return NULL;
   }
-#elif SWIGRUBY  
-  void each() {
-    while ($self->ptr) {
-      VALUE_TYPE *value = ##VALUE_TYPE##_fromIter($self->ptr);
-      rb_yield(SWIG_NewPointerObj(SWIG_as_voidptr(value), SWIGTYPE_p_##VALUE_TYPE##, 0 |  0 ));
-      $self->ptr = ##PREFIX##_next($self->ptr);
-    }
-    return;
-  }
 #endif
-
 }
 
 #if SWIGJAVA
@@ -135,31 +126,59 @@ typedef struct {
     throw new UnsupportedOperationException();
   }
 %}
+
 #endif
+
+#endif // SWIGRUBY
 
 %enddef
 
 
-%define sb_iterable(TYPE, ITER_TYPE, PREFIX, VALUE_TYPE)
+%define sb_iterable(TYPE, ITER_TYPE, PREFIX, INIT_PREFIX, VALUE_TYPE)
 
 // Methods to retrieve the iterator from the container
 
 %extend TYPE {
+  
+#if SWIGRUBY  
+  void each() {
+    ##PREFIX##_t *iter = INIT_PREFIX##($self);
+    while (iter) {
+      VALUE_TYPE *value = ##VALUE_TYPE##_fromIter(iter);
+      rb_yield(SWIG_NewPointerObj(SWIG_as_voidptr(value), SWIGTYPE_p_##VALUE_TYPE##, 0 |  0 ));
+      iter = PREFIX##_next(iter);
+    }
+    return;
+  }
+
+  void each(int count) {
+    ##PREFIX##_t *iter = INIT_PREFIX##($self);
+    int cnt = 0;
+    while (iter && cnt < count) {
+      VALUE_TYPE *value = ##VALUE_TYPE##_fromIter(iter);
+      rb_yield(SWIG_NewPointerObj(SWIG_as_voidptr(value), SWIGTYPE_p_##VALUE_TYPE##, 0 |  0 ));
+      iter = PREFIX##_next(iter);
+      cnt++;
+    }
+    if (iter)
+	PREFIX##_free(iter);
+    return;
+  }
+
+#else
+
+  
   // Also used in Java, but underscores are automatically removed
   %newobject __iter__;
   ITER_TYPE##Iterator * __iter__() {
-    return new_##ITER_TYPE##Iterator(PREFIX##($self));
+    return new_##ITER_TYPE##Iterator(INIT_PREFIX##($self));
   }
+  
+#endif 
+
 }
 
-sb_iterable_java(TYPE, VALUE_TYPE)
-
-%enddef
-
-%define sb_iterable_java(TYPE, VALUE_TYPE)
-
 // Same but without __iter__ which can vary from class to class
-
 #if SWIGJAVA
 %typemap(javainterfaces) TYPE "Iterable<"#VALUE_TYPE">"
 %typemap(javabody) TYPE %{
