@@ -1,28 +1,6 @@
 // Macro to construct iterable objects.
 %define sb_iterator(TYPE, PREFIX, VALUE_TYPE)
 
-#if SWIGJAVA
-%typemap(javainterfaces) TYPE##Iterator "java.util.Iterator<"#VALUE_TYPE">"
-%typemap(javabody) TYPE##Iterator %{
-
-  private long swigCPtr;
-  protected boolean swigCMemOwn;
-
-  public $javaclassname(long cPtr, boolean cMemoryOwn) {
-    swigCMemOwn = cMemoryOwn;
-    swigCPtr = cPtr;
-  }
-
-  public static long getCPtr($javaclassname obj) {
-    return (obj == null) ? 0 : obj.swigCPtr;
-  }
-
-  @Override
-  public void remove() {
-    throw new UnsupportedOperationException();
-  }
-%}
-#endif
 
 // Basic types
 
@@ -136,17 +114,41 @@ typedef struct {
 
 }
 
+#if SWIGJAVA
+%typemap(javainterfaces) TYPE##Iterator "java.util.Iterator<"#VALUE_TYPE">"
+%typemap(javabody) TYPE##Iterator %{
+
+  private long swigCPtr;
+  protected boolean swigCMemOwn;
+
+  public $javaclassname(long cPtr, boolean cMemoryOwn) {
+    swigCMemOwn = cMemoryOwn;
+    swigCPtr = cPtr;
+  }
+
+  public static long getCPtr($javaclassname obj) {
+    return (obj == null) ? 0 : obj.swigCPtr;
+  }
+
+  @Override
+  public void remove() {
+    throw new UnsupportedOperationException();
+  }
+%}
+#endif
+
 %enddef
 
 
-%define sb_iterable(TYPE, PREFIX, VALUE_TYPE)
+%define sb_iterable(TYPE, ITER_TYPE, PREFIX, VALUE_TYPE)
 
 // Methods to retrieve the iterator from the container
 
 %extend TYPE {
   // Also used in Java, but underscores are automatically removed
-  TYPE##Iterator * __iter__() {
-    return new_##TYPE##Iterator(PREFIX##($self));
+  %newobject __iter__;
+  ITER_TYPE##Iterator * __iter__() {
+    return new_##ITER_TYPE##Iterator(PREFIX##($self));
   }
 }
 

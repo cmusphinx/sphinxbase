@@ -104,8 +104,8 @@ typedef struct {} LogMath;
 sb_iterator(NGramModelSet, ngram_model_set_iter, NGramModel);
 sb_iterator(Jsgf, jsgf_rule_iter, JsgfRule)
 
-sb_iterable(NGramModelSet, ngram_model_set_iter, NGramModel)
-sb_iterable(Jsgf, jsgf_rule_iter, JsgfRule)
+sb_iterable(NGramModelSet, NGramModelSet, ngram_model_set_iter, NGramModel)
+sb_iterable(Jsgf, Jsgf, jsgf_rule_iter, JsgfRule)
 
 typedef struct {} NGramModelSet;
 typedef struct {} Jsgf;
