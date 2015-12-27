@@ -159,7 +159,7 @@ typedef struct {
     return new_##ITER_TYPE##Iterator(INIT_PREFIX##($self));
   }
 
-#else  /* PYTHON */
+#else  /* PYTHON, JS */
   %newobject __iter__;
   ITER_TYPE##Iterator * __iter__() {
     return new_##ITER_TYPE##Iterator(INIT_PREFIX##($self));

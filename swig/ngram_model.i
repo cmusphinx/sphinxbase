@@ -82,12 +82,6 @@
         return ngram_model_add_word($self, word, weight);
     }
 
-    int32 add_class(const char *c, float32 w, size_t n, char **ptr,
-                    const float32 *weights)
-    {
-        return ngram_model_add_class($self, c, w, ptr, weights, n);
-    }
-
     int32 prob(size_t n, const char * const*ptr) {
         return ngram_prob($self, ptr, n);
     }
