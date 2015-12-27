@@ -3,8 +3,17 @@
 
 #if !SWIGRUBY
 
-// Basic types
+#if SWIGJAVA
+%typemap(javainterfaces) TYPE##Iterator "java.util.Iterator<"#VALUE_TYPE">"
+%typemap(javacode) TYPE##Iterator %{
+  @Override
+  public void remove() {
+    throw new UnsupportedOperationException();
+  }
+%}
+#endif
 
+// Basic types
 %inline %{
 typedef struct {
   PREFIX##_t *ptr;
@@ -80,7 +89,6 @@ typedef struct {
     return NULL;
   }
 #elif SWIGPYTHON
-
   // Python2
   %newobject next;
   VALUE_TYPE * next() {
@@ -105,30 +113,6 @@ typedef struct {
 #endif
 }
 
-#if SWIGJAVA
-%typemap(javainterfaces) TYPE##Iterator "java.util.Iterator<"#VALUE_TYPE">"
-%typemap(javabody) TYPE##Iterator %{
-
-  private long swigCPtr;
-  protected boolean swigCMemOwn;
-
-  public $javaclassname(long cPtr, boolean cMemoryOwn) {
-    swigCMemOwn = cMemoryOwn;
-    swigCPtr = cPtr;
-  }
-
-  public static long getCPtr($javaclassname obj) {
-    return (obj == null) ? 0 : obj.swigCPtr;
-  }
-
-  @Override
-  public void remove() {
-    throw new UnsupportedOperationException();
-  }
-%}
-
-#endif
-
 #endif // SWIGRUBY
 
 %enddef
@@ -137,6 +121,10 @@ typedef struct {
 %define sb_iterable(TYPE, ITER_TYPE, PREFIX, INIT_PREFIX, VALUE_TYPE)
 
 // Methods to retrieve the iterator from the container
+
+#if SWIGJAVA
+%typemap(javainterfaces) TYPE "Iterable<"#VALUE_TYPE">"
+#endif
 
 %extend TYPE {
   
@@ -165,42 +153,19 @@ typedef struct {
     return;
   }
 
-#else
+#elif SWIGJAVA
+  %newobject iterator;
+  ITER_TYPE##Iterator * iterator() {
+    return new_##ITER_TYPE##Iterator(INIT_PREFIX##($self));
+  }
 
-  
-  // Also used in Java, but underscores are automatically removed
+#else  /* PYTHON */
   %newobject __iter__;
   ITER_TYPE##Iterator * __iter__() {
     return new_##ITER_TYPE##Iterator(INIT_PREFIX##($self));
-  }
-  
+  }  
 #endif 
 
 }
-
-// Same but without __iter__ which can vary from class to class
-#if SWIGJAVA
-%typemap(javainterfaces) TYPE "Iterable<"#VALUE_TYPE">"
-%typemap(javabody) TYPE %{
-
-  private long swigCPtr;
-  protected boolean swigCMemOwn;
-
-  public $javaclassname(long cPtr, boolean cMemoryOwn) {
-    swigCMemOwn = cMemoryOwn;
-    swigCPtr = cPtr;
-  }
-
-  public static long getCPtr($javaclassname obj) {
-    return (obj == null) ? 0 : obj.swigCPtr;
-  }
-
-  @Override
-  public java.util.Iterator<VALUE_TYPE> iterator () {
-    return iter();
-  }
-%}
-%javamethodmodifiers TYPE::__iter__ "private";
-#endif
 
 %enddef
