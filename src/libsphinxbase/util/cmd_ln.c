@@ -998,8 +998,8 @@ void
 cmd_ln_set_str_extra_r(cmd_ln_t *cmdln, char const *name, char const *str)
 {
     anytype_t *val;
-    if (hash_table_lookup(cmdln->ht, name, &val) < 0) {
-	val = (anytype_t *)cmd_ln_val_init(ARG_STRING, ckd_salloc(str));
+    if (hash_table_lookup(cmdln->ht, name, (void **)&val) < 0) {
+	val = (anytype_t *)cmd_ln_val_init(ARG_STRING, str);
 	hash_table_enter(cmdln->ht, name, (void *)val);
     } else {
         ckd_free(val->ptr);
