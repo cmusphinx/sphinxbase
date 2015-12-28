@@ -991,10 +991,20 @@ cmd_ln_set_str_r(cmd_ln_t *cmdln, char const *name, char const *str)
         return;
     }
     ckd_free(val->ptr);
-    if (str == NULL)
-        val->ptr = NULL;
-    else
+    val->ptr = ckd_salloc(str);
+}
+
+void
+cmd_ln_set_str_extra_r(cmd_ln_t *cmdln, char const *name, char const *str)
+{
+    anytype_t *val;
+    if (hash_table_lookup(cmdln->ht, name, &val) < 0) {
+	val = (anytype_t *)cmd_ln_val_init(ARG_STRING, ckd_salloc(str));
+	hash_table_enter(cmdln->ht, name, (void *)val);
+    } else {
+        ckd_free(val->ptr);
         val->ptr = ckd_salloc(str);
+    }
 }
 
 void

@@ -57,6 +57,10 @@
         cmd_ln_set_str_r($self, key, val);
     }
 
+    void set_string_extra(const char *key, const char *val) {
+        cmd_ln_set_str_extra_r($self, key, val);
+    }
+
     bool exists(const char *key) {
         return cmd_ln_exists_r($self, key);
     }

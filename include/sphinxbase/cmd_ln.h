@@ -345,6 +345,19 @@ SPHINXBASE_EXPORT
 void cmd_ln_set_str_r(cmd_ln_t *cmdln, char const *name, char const *str);
 
 /**
+ * Set a string in a command-line object even if it is not present in argument
+ * description. Useful for setting extra values computed from configuration, propagated
+ * to other parts.
+ *
+ * @param cmdln Command-line object.
+ * @param name The command-line flag to set.
+ * @param str String value to set.  The command-line object does not
+ *            retain ownership of this pointer.
+ */
+SPHINXBASE_EXPORT
+void cmd_ln_set_str_extra_r(cmd_ln_t *cmdln, char const *name, char const *str);
+
+/**
  * Set an integer in a command-line object.
  *
  * @param cmdln Command-line object.
