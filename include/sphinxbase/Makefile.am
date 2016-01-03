@@ -1,6 +1,7 @@
 pkginclude_HEADERS =				\
 	ad.h					\
 	agc.h					\
+	array_heap.h				\
 	bio.h					\
 	bitarr.h				\
 	bitvec.h				\

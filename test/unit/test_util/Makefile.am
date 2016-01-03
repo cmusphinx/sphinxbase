@@ -1,6 +1,7 @@
 check_PROGRAMS = \
 	test_fopen \
 	test_huff_code \
+	test_array_heap \
 	test_bitarr    \
 	test_bit_encode \
 	test_build_directory \

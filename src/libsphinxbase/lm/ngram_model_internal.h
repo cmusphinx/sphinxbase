@@ -95,7 +95,7 @@ struct ngram_class_s {
     int32 n_hash_inuse; /**< Number of words in nword_hash */
 };
 
-#define NGRAM_MAX_ORDER 5
+#define NGRAM_MAX_ORDER 6
 
 #define NGRAM_HASH_SIZE 128
 
