@@ -8,7 +8,7 @@ LAPACK_LITE_SRCS = \
 	f2c_lite.c
 endif
 
-libsphinxutil_la_SOURCES = \ 
+libsphinxutil_la_SOURCES = \
 	bitarr.c \
 	bitvec.c \
 	bio.c \
