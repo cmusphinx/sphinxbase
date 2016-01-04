@@ -48,4 +48,8 @@
     ~LogMath() {
         logmath_free($self);
     }
+    
+    double exp(int prob) {
+        return logmath_exp($self, prob);
+    }
 }
