@@ -1,6 +1,7 @@
 %include <exception.i>
 
 %apply int {int32};
+%apply double {float64};
 
 #if SWIGJAVA
 
