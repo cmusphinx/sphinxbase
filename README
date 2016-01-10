@@ -15,7 +15,7 @@ physical layout of the code looks like this:
 
     .
     ├── package/
-    └── shinxbase/
+    └── sphinxbase/
 
 So if you get the file from a distribution, you might want to rename
 sphinxbase-X.X to sphinxbase by typing:
