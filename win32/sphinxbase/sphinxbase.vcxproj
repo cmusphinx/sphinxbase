@@ -174,7 +174,6 @@
     <ClCompile Include="..\..\src\libsphinxbase\util\glist.c" />
     <ClCompile Include="..\..\src\libsphinxbase\util\hash_table.c" />
     <ClCompile Include="..\..\src\libsphinxbase\util\heap.c" />
-    <ClCompile Include="..\..\src\libsphinxbase\util\huff_code.c" />
     <ClCompile Include="..\..\src\libsphinxbase\util\listelem_alloc.c" />
     <ClCompile Include="..\..\src\libsphinxbase\util\logmath.c" />
     <ClCompile Include="..\..\src\libsphinxbase\util\matrix.c" />
@@ -210,13 +209,11 @@
     <ClInclude Include="..\..\include\sphinxbase\glist.h" />
     <ClInclude Include="..\..\include\sphinxbase\hash_table.h" />
     <ClInclude Include="..\..\include\sphinxbase\heap.h" />
-    <ClInclude Include="..\..\include\sphinxbase\huff_code.h" />
     <ClInclude Include="..\..\include\sphinxbase\jsgf.h" />
     <ClInclude Include="..\..\include\sphinxbase\logmath.h" />
     <ClInclude Include="..\..\include\sphinxbase\listelem_alloc.h" />
     <ClInclude Include="..\..\include\sphinxbase\matrix.h" />
     <ClInclude Include="..\..\include\sphinxbase\mmio.h" />
-    <ClInclude Include="..\..\include\sphinxbase\mulaw.h" />
     <ClInclude Include="..\..\include\sphinxbase\ngram_model.h" />
     <ClInclude Include="..\..\include\sphinxbase\pio.h" />
     <ClInclude Include="..\..\include\sphinxbase\prim_type.h" />

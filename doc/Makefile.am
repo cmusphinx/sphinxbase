@@ -60,7 +60,6 @@ headers = \
 	$(top_srcdir)/include/sphinxbase/logmath.h \
 	$(top_srcdir)/include/sphinxbase/matrix.h \
 	$(top_srcdir)/include/sphinxbase/mmio.h \
-	$(top_srcdir)/include/sphinxbase/mulaw.h \
 	$(top_srcdir)/include/sphinxbase/ngram_model.h \
 	$(top_srcdir)/include/sphinxbase/pio.h \
 	$(top_srcdir)/include/sphinxbase/prim_type.h \

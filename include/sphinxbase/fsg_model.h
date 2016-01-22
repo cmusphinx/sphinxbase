@@ -60,6 +60,14 @@
 #include <sphinxbase/listelem_alloc.h>
 #include <sphinxbase/sphinxbase_export.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+#if 0
+/* Fool Emacs. */
+}
+#endif
+
 /*
  * A single transition in the FSG.
  */
@@ -360,5 +368,9 @@ void fsg_model_write_symtab(fsg_model_t *fsg, FILE *file);
  */
 SPHINXBASE_EXPORT
 void fsg_model_writefile_symtab(fsg_model_t *fsg, char const *file);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __FSG_MODEL_H__ */

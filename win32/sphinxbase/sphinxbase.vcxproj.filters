@@ -86,9 +86,6 @@
     <ClCompile Include="..\..\src\libsphinxbase\util\heap.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\libsphinxbase\util\huff_code.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\libsphinxbase\lm\jsgf.c">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -250,9 +247,6 @@
     <ClInclude Include="..\..\include\sphinxbase\heap.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\include\sphinxbase\huff_code.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\include\sphinxbase\jsgf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -275,9 +269,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\sphinxbase\mmio.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\sphinxbase\mulaw.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\sphinxbase\ngram_model.h">
