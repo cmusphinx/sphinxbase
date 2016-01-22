@@ -75,7 +75,7 @@
         return fsg_model_tag_trans_add($self, src, dst, logp, wid);
     }
 
-    int add_silence(const char *silword, int state, int32 silprob) {
+    int add_silence(const char *silword, int32 state, float silprob) {
         return fsg_model_add_silence($self, silword, state, silprob); 
     }
 
