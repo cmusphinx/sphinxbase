@@ -40,7 +40,6 @@
 
 #include <assert.h>
 #include <string.h>
-#include <stdint.h>
 
 #include <sphinxbase/prim_type.h>
 /* Win32/WinCE DLL gunk */
