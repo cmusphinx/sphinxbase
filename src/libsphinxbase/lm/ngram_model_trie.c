@@ -91,17 +91,6 @@ read_counts_arpa(lineiter_t ** li, uint32 * counts, int *order)
         return -1;
     }
 
-    /* Position iterator to the unigrams header '\1-grams:\' */
-    while ((*li = lineiter_next(*li))) {
-        if (strcmp((*li)->buf, "\\1-grams:") == 0)
-            break;
-    }
-
-    if (*li == NULL) {
-        E_ERROR_SYSTEM("Failed to read \\1-grams: mark");
-        return -1;
-    }
-
     return 0;
 }
 
@@ -113,7 +102,7 @@ string_comparator(const void *a, const void *b)
     return strcmp(*ia, *ib);
 }
 
-static void
+static int
 read_1grams_arpa(lineiter_t ** li, uint32 count, ngram_model_t * base,
                  unigram_t * unigrams)
 {
@@ -122,6 +111,14 @@ read_1grams_arpa(lineiter_t ** li, uint32 count, ngram_model_t * base,
     int n_parts;
     char *wptr[3];
 
+    while (strcmp((*li)->buf, "\\1-grams:") != 0) {
+	*li = lineiter_next(*li);
+    }
+    if (*li == NULL) {
+        E_ERROR_SYSTEM("Failed to read \\1-grams: mark");
+        return -1;
+    }
+
     n_parts = 2;
     for (i = 0; i < count; i++) {
         *li = lineiter_next(*li);
@@ -129,19 +126,18 @@ read_1grams_arpa(lineiter_t ** li, uint32 count, ngram_model_t * base,
             E_ERROR
                 ("Unexpected end of ARPA file. Failed to read %dth unigram\n",
                  i + 1);
-            break;
+            return -1;
         }
         if ((n = str2words((*li)->buf, wptr, 3)) < n_parts) {
-            E_ERROR("Format error; unigram ignored: %s\n", (*li)->buf);
-            break;
+            E_ERROR("Format error at line %s, Failed to read unigrams\n", (*li)->buf);
+            return -1;
         }
 
         unigram_t *unigram = &unigrams[i];
         unigram->prob =
             logmath_log10_to_log_float(base->lmath, atof_c(wptr[0]));
         if (unigram->prob > 0) {
-            E_WARN("Unigram [%s] has positive probability. Zeroize\n",
-                   wptr[1]);
+            E_WARN("Unigram '%s' has positive probability\n", wptr[1]);
             unigram->prob = 0;
         }
         if (n == n_parts + 1) {
@@ -152,10 +148,12 @@ read_1grams_arpa(lineiter_t ** li, uint32 count, ngram_model_t * base,
         else {
             unigram->bo = 0.0f;
         }
-        //TODO classify float with fpclassify and warn if bad value occurred
+
+        /* TODO: classify float with fpclassify and warn if bad value occurred */
         base->word_str[i] = ckd_salloc(wptr[1]);
     }
-    //fill hash-table that maps unigram names to their word ids
+
+    /* fill hash-table that maps unigram names to their word ids */
     for (i = 0; i < count; i++) {
         if ((hash_table_enter
              (base->wid, base->word_str[i],
@@ -164,6 +162,7 @@ read_1grams_arpa(lineiter_t ** li, uint32 count, ngram_model_t * base,
                    base->word_str[i]);
         }
     }
+    return 0;
 }
 
 ngram_model_t *
@@ -208,7 +207,12 @@ ngram_model_trie_read_arpa(cmd_ln_t * config,
     base->writable = TRUE;
 
     model->trie = lm_trie_create(counts[0], QUANT_16, order);
-    read_1grams_arpa(&li, counts[0], base, model->trie->unigrams);
+    if (read_1grams_arpa(&li, counts[0], base, model->trie->unigrams) < 0) {
+        ckd_free(model);
+        lineiter_free(li);
+        fclose_comp(fp, is_pipe);
+        return NULL;
+    }
 
     if (order > 1) {
         raw_ngrams =

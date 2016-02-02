@@ -126,8 +126,7 @@ read_ngram_instance(lineiter_t ** li, hash_table_t * wid,
             (float *) ckd_calloc(1, sizeof(*raw_ngram->weights));
         raw_ngram->weights[0] = atof_c(wptr[0]);
         if (raw_ngram->weights[0] > 0) {
-            E_WARN("%d-gram [%s] has positive probability. Zeroize\n",
-                   order, wptr[1]);
+            E_WARN("%d-gram '%s' has positive probability\n", order, wptr[1]);
             raw_ngram->weights[0] = 0.0f;
         }
         raw_ngram->weights[0] =
@@ -140,8 +139,7 @@ read_ngram_instance(lineiter_t ** li, hash_table_t * wid,
 
         weight = atof_c(wptr[0]);
         if (weight > 0) {
-            E_WARN("%d-gram [%s] has positive probability. Zeroize\n",
-                   order, wptr[1]);
+            E_WARN("%d-gram '%s' has positive probability\n", order, wptr[1]);
             raw_ngram->weights[0] = 0.0f;
         }
         else {
@@ -203,16 +201,16 @@ ngrams_raw_read_arpa(lineiter_t ** li, logmath_t * lmath, uint32 * counts,
         ngrams_raw_read_order(&raw_ngrams[order_it - 2], li, wid, lmath,
                               counts[order_it - 1], order_it, order);
     }
-    //check for end-mark in arpa file
+
+    /* Check if we found ARPA end-mark */
     *li = lineiter_next(*li);
-    //check if we finished reading
     if (*li == NULL)
-        E_ERROR("ARPA file ends without end-mark\n");
-    //check if we found ARPA end-mark
-    if (strcmp((*li)->buf, "\\end\\") != 0)
-        E_ERROR
-            ("Finished reading ARPA file. Expecting end mark but found [%s]\n",
+        E_WARN("ARPA file ends without end-mark\n");
+    if (strcmp((*li)->buf, "\\end\\") != 0) {
+        E_WARN
+            ("Finished reading ARPA file. Expecting end mark but found '%s'\n",
              (*li)->buf);
+    }
 
     return raw_ngrams;
 }

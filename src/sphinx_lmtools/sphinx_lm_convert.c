@@ -162,7 +162,7 @@ main(int argc, char *argv[])
 	}
 
 	if (lm == NULL) {
-	    E_FATAL("Failed to read the model from the file '%s'", cmd_ln_str_r(config, "-i"));
+	    E_FATAL("Failed to read the model from the file '%s'\n", cmd_ln_str_r(config, "-i"));
 	}
 
         /* Guess or set the output language model type. */

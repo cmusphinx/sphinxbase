@@ -167,7 +167,7 @@ fopen_comp(const char *file, const char *mode, int32 * ispipe)
             ckd_free(command);
         }
         else {
-            E_ERROR("Compressed file operation for mode %s is not supported", mode);
+            E_ERROR("Compressed file operation for mode %s is not supported\n", mode);
             return NULL;
         }
 #endif /* HAVE_POPEN */
@@ -350,9 +350,10 @@ lineiter_next(lineiter_t *li)
 	return lineiter_next_plain(li);
     
     for (li = lineiter_next_plain(li); li; li = lineiter_next_plain(li)) {
-	if (li->buf && li->buf[0] != '#') {
+	if (li->buf) {
 	    li->buf = string_trim(li->buf, STRING_BOTH);
-	    break;
+	    if (li->buf[0] != 0 && li->buf[0] != '#')
+		break;
 	}
     }
     return li;
