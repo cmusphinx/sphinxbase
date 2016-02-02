@@ -113,61 +113,56 @@ read_ngram_instance(lineiter_t ** li, hash_table_t * wid,
                 order);
         return;
     }
-    string_trim((*li)->buf, STRING_BOTH);
     words_expected = order + 1;
-
     if ((n =
          str2words((*li)->buf, wptr,
                    NGRAM_MAX_ORDER + 1)) < words_expected) {
-        if ((*li)->buf[0] != '\0') {
-            E_WARN("Format error; %d-gram ignored: %s\n", order,
-                   (*li)->buf);
+        E_ERROR("Format error; %d-gram ignored: %s\n", order, (*li)->buf);
+        return;
+    }
+
+    if (order == order_max) {
+        raw_ngram->weights =
+            (float *) ckd_calloc(1, sizeof(*raw_ngram->weights));
+        raw_ngram->weights[0] = atof_c(wptr[0]);
+        if (raw_ngram->weights[0] > 0) {
+            E_WARN("%d-gram [%s] has positive probability. Zeroize\n",
+                   order, wptr[1]);
+            raw_ngram->weights[0] = 0.0f;
         }
+        raw_ngram->weights[0] =
+            logmath_log10_to_log_float(lmath, raw_ngram->weights[0]);
     }
     else {
-        if (order == order_max) {
-            raw_ngram->weights =
-                (float *) ckd_calloc(1, sizeof(*raw_ngram->weights));
-            raw_ngram->weights[0] = atof_c(wptr[0]);
-            if (raw_ngram->weights[0] > 0) {
-                E_WARN("%d-gram [%s] has positive probability. Zeroize\n",
-                       order, wptr[1]);
-                raw_ngram->weights[0] = 0.0f;
-            }
-            raw_ngram->weights[0] =
-                logmath_log10_to_log_float(lmath, raw_ngram->weights[0]);
+        float weight, backoff;
+        raw_ngram->weights =
+            (float *) ckd_calloc(2, sizeof(*raw_ngram->weights));
+
+        weight = atof_c(wptr[0]);
+        if (weight > 0) {
+            E_WARN("%d-gram [%s] has positive probability. Zeroize\n",
+                   order, wptr[1]);
+            raw_ngram->weights[0] = 0.0f;
         }
         else {
-            float weight, backoff;
-            raw_ngram->weights =
-                (float *) ckd_calloc(2, sizeof(*raw_ngram->weights));
-
-            weight = atof_c(wptr[0]);
-            if (weight > 0) {
-                E_WARN("%d-gram [%s] has positive probability. Zeroize\n",
-                       order, wptr[1]);
-                raw_ngram->weights[0] = 0.0f;
-            }
-            else {
-                raw_ngram->weights[0] =
-                    logmath_log10_to_log_float(lmath, weight);
-            }
-
-            if (n == order + 1) {
-                raw_ngram->weights[1] = 0.0f;
-            }
-            else {
-                backoff = atof_c(wptr[order + 1]);
-                raw_ngram->weights[1] =
-                    logmath_log10_to_log_float(lmath, backoff);
-            }
+            raw_ngram->weights[0] =
+                logmath_log10_to_log_float(lmath, weight);
         }
-        raw_ngram->words =
-            (uint32 *) ckd_calloc(order, sizeof(*raw_ngram->words));
-        for (word_out = raw_ngram->words + order - 1, i = 1;
-             word_out >= raw_ngram->words; --word_out, i++) {
-            hash_table_lookup_int32(wid, wptr[i], (int32 *) word_out);
+
+        if (n == order + 1) {
+            raw_ngram->weights[1] = 0.0f;
         }
+        else {
+            backoff = atof_c(wptr[order + 1]);
+            raw_ngram->weights[1] =
+                logmath_log10_to_log_float(lmath, backoff);
+        }
+    }
+    raw_ngram->words =
+        (uint32 *) ckd_calloc(order, sizeof(*raw_ngram->words));
+    for (word_out = raw_ngram->words + order - 1, i = 1;
+         word_out >= raw_ngram->words; --word_out, i++) {
+        hash_table_lookup_int32(wid, wptr[i], (int32 *) word_out);
     }
 }
 
@@ -181,7 +176,6 @@ ngrams_raw_read_order(ngram_raw_t ** raw_ngrams, lineiter_t ** li,
 
     sprintf(expected_header, "\\%d-grams:", order);
     while ((*li = lineiter_next(*li))) {
-        string_trim((*li)->buf, STRING_BOTH);
         if (strcmp((*li)->buf, expected_header) == 0)
             break;
     }
@@ -211,12 +205,6 @@ ngrams_raw_read_arpa(lineiter_t ** li, logmath_t * lmath, uint32 * counts,
     }
     //check for end-mark in arpa file
     *li = lineiter_next(*li);
-    string_trim((*li)->buf, STRING_BOTH);
-    //skip empty lines if any
-    while (*li && strlen((*li)->buf) == 0) {
-        *li = lineiter_next(*li);
-        string_trim((*li)->buf, STRING_BOTH);
-    }
     //check if we finished reading
     if (*li == NULL)
         E_ERROR("ARPA file ends without end-mark\n");

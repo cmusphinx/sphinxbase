@@ -60,7 +60,6 @@ read_counts_arpa(lineiter_t ** li, uint32 * counts, int *order)
 
     /* skip file until past the '\data\' marker */
     while (*li) {
-        string_trim((*li)->buf, STRING_BOTH);
         if (strcmp((*li)->buf, "\\data\\") == 0)
             break;
         *li = lineiter_next(*li);
@@ -94,7 +93,6 @@ read_counts_arpa(lineiter_t ** li, uint32 * counts, int *order)
 
     /* Position iterator to the unigrams header '\1-grams:\' */
     while ((*li = lineiter_next(*li))) {
-        string_trim((*li)->buf, STRING_BOTH);
         if (strcmp((*li)->buf, "\\1-grams:") == 0)
             break;
     }
@@ -133,32 +131,29 @@ read_1grams_arpa(lineiter_t ** li, uint32 count, ngram_model_t * base,
                  i + 1);
             break;
         }
-        string_trim((*li)->buf, STRING_BOTH);
         if ((n = str2words((*li)->buf, wptr, 3)) < n_parts) {
-            if ((*li)->buf[0] != '\0')
-                E_WARN("Format error; unigram ignored: %s\n", (*li)->buf);
-            continue;
+            E_ERROR("Format error; unigram ignored: %s\n", (*li)->buf);
+            break;
+        }
+
+        unigram_t *unigram = &unigrams[i];
+        unigram->prob =
+            logmath_log10_to_log_float(base->lmath, atof_c(wptr[0]));
+        if (unigram->prob > 0) {
+            E_WARN("Unigram [%s] has positive probability. Zeroize\n",
+                   wptr[1]);
+            unigram->prob = 0;
+        }
+        if (n == n_parts + 1) {
+            unigram->bo =
+                logmath_log10_to_log_float(base->lmath,
+                                           atof_c(wptr[2]));
         }
         else {
-            unigram_t *unigram = &unigrams[i];
-            unigram->prob =
-                logmath_log10_to_log_float(base->lmath, atof_c(wptr[0]));
-            if (unigram->prob > 0) {
-                E_WARN("Unigram [%s] has positive probability. Zeroize\n",
-                       wptr[1]);
-                unigram->prob = 0;
-            }
-            if (n == n_parts + 1) {
-                unigram->bo =
-                    logmath_log10_to_log_float(base->lmath,
-                                               atof_c(wptr[2]));
-            }
-            else {
-                unigram->bo = 0.0f;
-            }
-            //TODO classify float with fpclassify and warn if bad value occurred
-            base->word_str[i] = ckd_salloc(wptr[1]);
+            unigram->bo = 0.0f;
         }
+        //TODO classify float with fpclassify and warn if bad value occurred
+        base->word_str[i] = ckd_salloc(wptr[1]);
     }
     //fill hash-table that maps unigram names to their word ids
     for (i = 0; i < count; i++) {
@@ -193,7 +188,7 @@ ngram_model_trie_read_arpa(cmd_ln_t * config,
     }
 
     model = (ngram_model_trie_t *) ckd_calloc(1, sizeof(*model));
-    li = lineiter_start(fp);
+    li = lineiter_start_clean(fp);
     /* Read n-gram counts from file */
     if (read_counts_arpa(&li, counts, &order) == -1) {
         ckd_free(model);
