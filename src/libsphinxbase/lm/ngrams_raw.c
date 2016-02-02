@@ -173,10 +173,10 @@ ngrams_raw_read_order(ngram_raw_t ** raw_ngrams, lineiter_t ** li,
     uint32 i;
 
     sprintf(expected_header, "\\%d-grams:", order);
-    while ((*li = lineiter_next(*li))) {
-        if (strcmp((*li)->buf, expected_header) == 0)
-            break;
+    while (*li && strcmp((*li)->buf, expected_header) != 0) {
+	*li = lineiter_next(*li);
     }
+    
     *raw_ngrams = (ngram_raw_t *) ckd_calloc(count, sizeof(ngram_raw_t));
     for (i = 0; i < count; i++) {
         read_ngram_instance(li, wid, lmath, order, order_max,

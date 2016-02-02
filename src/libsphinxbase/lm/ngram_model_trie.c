@@ -111,7 +111,7 @@ read_1grams_arpa(lineiter_t ** li, uint32 count, ngram_model_t * base,
     int n_parts;
     char *wptr[3];
 
-    while (strcmp((*li)->buf, "\\1-grams:") != 0) {
+    while (*li && strcmp((*li)->buf, "\\1-grams:") != 0) {
 	*li = lineiter_next(*li);
     }
     if (*li == NULL) {
