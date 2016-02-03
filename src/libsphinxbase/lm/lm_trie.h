@@ -92,8 +92,7 @@ typedef struct lm_trie_s {
 /**
  * Creates lm_trie structure. Fills it if binary file with correspondent data is provided
  */
-lm_trie_t *lm_trie_create(uint32 unigram_count,
-                          lm_trie_quant_type_t quant_type, int order);
+lm_trie_t *lm_trie_create(uint32 unigram_count, int order);
 
 lm_trie_t *lm_trie_read_bin(uint32 * counts, int order, FILE * fp);
 

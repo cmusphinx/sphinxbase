@@ -49,14 +49,6 @@
 
 #include "sphinxbase/bitarr.h"
 
-/**
- * Union to map float to integer to store latter in bit array
- */
-typedef union { 
-    float f; 
-    uint32 i; 
-} float_enc;
-
 #define SIGN_BIT (0x80000000)
 
 /**
@@ -136,37 +128,6 @@ void bitarr_write_int25(bitarr_address_t address, uint8 length, uint32 value)
 #else
     *(uint32 *)((uint8 *)(address.base) + (address.offset >> 3)) |= (value << get_shift(address.offset & 7, length));
 #endif
-}
-
-float bitarr_read_negfloat(bitarr_address_t address) 
-{
-    float_enc encoded;
-    encoded.i = (uint32)(read_off(address) >> get_shift(address.offset & 7, 31));
-    // Sign bit set means negative.  
-    encoded.i |= SIGN_BIT;
-    return encoded.f;
-}
-
-void bitarr_write_negfloat(bitarr_address_t address, float value) 
-{
-    float_enc encoded;
-    encoded.f = value;
-    encoded.i &= ~SIGN_BIT;
-    bitarr_write_int57(address, 31, encoded.i);
-}
-
-float bitarr_read_float(bitarr_address_t address)
-{
-    float_enc encoded;
-    encoded.i = (uint32)(read_off(address) >> get_shift(address.offset & 7, 32));
-    return encoded.f;
-}
-
-void bitarr_write_float(bitarr_address_t address, float value) 
-{
-    float_enc encoded;
-    encoded.f = value;
-    bitarr_write_int57(address, 32, encoded.i);
 }
 
 void bitarr_mask_from_max(bitarr_mask_t *bit_mask, uint32 max_value)

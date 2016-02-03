@@ -125,44 +125,6 @@ void
 bitarr_write_int25(bitarr_address_t address, uint8 length, uint32 value);
 
 /**
- * Read non positive float32 from bit array.
- * Probability [0, 1) in log domain can be stored like this.
- * @param address of value in bit array
- * @return float value taht was read
- */
-SPHINXBASE_EXPORT
-float 
-bitarr_read_negfloat(bitarr_address_t address);
-
-/**
- * Writes non positive float32 to bit array.
- * Probability [0, 1) in log domain can be stored like this
- * @param address where to write
- * @param value what to write
- */
-SPHINXBASE_EXPORT
-void 
-bitarr_write_negfloat(bitarr_address_t address, float value);
-
-/**
- * Reads float32 from bit array
- * @param address in bit array from where to read
- * @return value float32 that was read
- */
-SPHINXBASE_EXPORT
-float 
-bitarr_read_float(bitarr_address_t address);
-
-/**
- * Writes float32 to bit array
- * @param address in bit array where to write
- * @param value float32 to write
- */
-SPHINXBASE_EXPORT
-void 
-bitarr_write_float(bitarr_address_t address, float value);
-
-/**
  * Fills mask for certain int range according to provided max value
  * @param bit_mask mask that is filled
  * @param max_value bigest integer that is going to be stored using this mask

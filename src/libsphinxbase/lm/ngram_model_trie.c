@@ -206,7 +206,7 @@ ngram_model_trie_read_arpa(cmd_ln_t * config,
                      (int32) counts[0]);
     base->writable = TRUE;
 
-    model->trie = lm_trie_create(counts[0], QUANT_16, order);
+    model->trie = lm_trie_create(counts[0], order);
     if (read_1grams_arpa(&li, counts[0], base, model->trie->unigrams) < 0) {
         ckd_free(model);
         lineiter_free(li);
@@ -639,8 +639,8 @@ ngram_model_trie_read_dmp(cmd_ln_t * config,
     ngram_model_init(base, &ngram_model_trie_funcs, lmath, order,
                      (int32) counts[0]);
 
-    model->trie = lm_trie_create(counts[0], QUANT_16, order);
-    //read unigrams. no tricks here
+    model->trie = lm_trie_create(counts[0], order);
+
     unigram_next =
         (uint32 *) ckd_calloc((int32) counts[0] + 1, sizeof(unigram_next));
     for (j = 0; j <= (int32) counts[0]; j++) {

@@ -43,17 +43,10 @@
 
 typedef struct lm_trie_quant_s lm_trie_quant_t;
 
-typedef enum lm_trie_quant_type_e {
-    NO_QUANT,
-    QUANT_16
-} lm_trie_quant_type_t;
-
 /**
  * Create qunatizing
  */
-lm_trie_quant_t *lm_trie_quant_create(lm_trie_quant_type_t quant_type,
-                                      int order);
-
+lm_trie_quant_t *lm_trie_quant_create(int order);
 
 /**
  * Write quant data to binary file
@@ -81,11 +74,6 @@ uint8 lm_trie_quant_msize(lm_trie_quant_t * quant);
  * Only probability should be stored
  */
 uint8 lm_trie_quant_lsize(lm_trie_quant_t * quant);
-
-/**
- * Checks whether quantizing should be trained
- */
-uint8 lm_trie_quant_to_train(lm_trie_quant_t * quant);
 
 /**
  * Trains prob and backoff quantizer for specified ngram order on provided raw ngram list

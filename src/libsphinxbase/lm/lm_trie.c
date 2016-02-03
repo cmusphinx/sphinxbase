@@ -294,12 +294,11 @@ lm_trie_init(uint32 unigram_count)
 }
 
 lm_trie_t *
-lm_trie_create(uint32 unigram_count, lm_trie_quant_type_t quant_type,
-               int order)
+lm_trie_create(uint32 unigram_count, int order)
 {
     lm_trie_t *trie = lm_trie_init(unigram_count);
     trie->quant =
-        (order > 1) ? lm_trie_quant_create(quant_type, order) : 0;
+        (order > 1) ? lm_trie_quant_create(order) : 0;
     return trie;
 }
 
@@ -395,15 +394,16 @@ lm_trie_build(lm_trie_t * trie, ngram_raw_t ** raw_ngrams, uint32 * counts,
               int order)
 {
     int i;
-    if (lm_trie_quant_to_train(trie->quant)) {
+
+    if (order > 1)
         E_INFO("Training quantizer\n");
-        for (i = 2; i < order; i++) {
-            lm_trie_quant_train(trie->quant, i, counts[i - 1],
-                                raw_ngrams[i - 2]);
-        }
-        lm_trie_quant_train_prob(trie->quant, order, counts[order - 1],
-                                 raw_ngrams[order - 2]);
+    for (i = 2; i < order; i++) {
+        lm_trie_quant_train(trie->quant, i, counts[i - 1],
+                            raw_ngrams[i - 2]);
     }
+    lm_trie_quant_train_prob(trie->quant, order, counts[order - 1],
+                             raw_ngrams[order - 2]);
+
     E_INFO("Building LM trie\n");
     recursive_insert(trie, raw_ngrams, counts, order);
     /* Set ending offsets so the last entry will be sized properly */

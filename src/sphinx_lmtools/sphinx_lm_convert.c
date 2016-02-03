@@ -91,11 +91,6 @@ static const arg_t defn[] = {
     "no",
     "Use memory-mapped I/O for reading binary LM files"},
 
-  { "-lm_trie",
-    ARG_BOOLEAN,
-    "no",
-    "Whether trie structure should be used for model holding during convertion"},
-
   { "-debug",
     ARG_INT32,
     NULL,
