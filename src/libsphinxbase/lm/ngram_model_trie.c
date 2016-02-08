@@ -376,9 +376,8 @@ ngram_model_trie_write_arpa(ngram_model_t * base, const char *path)
                            &raw_ngram_idx, base->n_counts, range, hist, 0,
                            i, base->n);
             assert(raw_ngram_idx == base->n_counts[i - 1]);
-            ngram_comparator(NULL, &i); //setting up order in comparator
             qsort(raw_ngrams, (size_t) base->n_counts[i - 1],
-                  sizeof(ngram_raw_t), &ngram_comparator);
+                  sizeof(ngram_raw_t), &ngram_ord_comparator);
             //now we write sorted ngrams to file
             fprintf(fp, "\n\\%d-grams:\n", i);
             for (j = 0; j < base->n_counts[i - 1]; j++) {

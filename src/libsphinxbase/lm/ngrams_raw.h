@@ -46,13 +46,9 @@
 
 typedef struct ngram_raw_s {
     uint32 *words;              /* array of word indexes, length corresponds to ngram order */
-    float *weights;             /* prob and backoff or just prob for longest order */
+    float32 *weights;           /* prob and backoff or just prob for longest order */
+    uint8 order;
 } ngram_raw_t;
-
-typedef struct ngram_raw_ord_s {
-    ngram_raw_t instance;
-    int order;
-} ngram_raw_ord_t;
 
 typedef union {
     float32 f;
@@ -60,16 +56,9 @@ typedef union {
 } dmp_weight_t;
 
 /**
- * Raw ngrams comparator. Usage:
- * > ngram_comparator(NULL, &order); - to set order of ngrams
- * > qsort(ngrams, count, sizeof(lm_ngram_t), &ngram_comparator); - to sort ngrams in increasing order
- */
-int ngram_comparator(const void *first_void, const void *second_void);
-
-/**
  * Raw ordered ngrams comparator
  */
-int ngram_ord_comparator(void *a_raw, void *b_raw);
+int ngram_ord_comparator(const void *a_raw, const void *b_raw);
 
 /**
  * Read ngrams of order > 1 from ARPA file

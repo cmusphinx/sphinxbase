@@ -24,7 +24,7 @@ extern "C" {
 typedef struct priority_queue_s priority_queue_t;
 
 SPHINXBASE_EXPORT
-priority_queue_t* priority_queue_create(size_t len, int (*compare)(void *a, void *b));
+priority_queue_t* priority_queue_create(size_t len, int (*compare)(const void *a, const void *b));
 
 SPHINXBASE_EXPORT
 void* priority_queue_poll(priority_queue_t *queue);

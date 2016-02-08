@@ -49,51 +49,24 @@
 #include "ngrams_raw.h"
 
 int
-ngram_comparator(const void *first_void, const void *second_void)
+ngram_ord_comparator(const void *a_raw, const void *b_raw)
 {
-    static int order = -1;
-    uint32 *first, *second, *end;
-
-    if (first_void == NULL) {
-        //technical usage, setuping order
-        order = *(int *) second_void;
-        return 0;
-    }
-    if (order < 2) {
-        E_ERROR("Order for ngram comprator was not set\n");
-        return 0;
-    }
-    first = ((ngram_raw_t *) first_void)->words;
-    second = ((ngram_raw_t *) second_void)->words;
-    end = first + order;
-    for (; first != end; ++first, ++second) {
-        if (*first < *second)
-            return -1;
-        if (*first > *second)
-            return 1;
-    }
-    return 0;
-}
-
-int
-ngram_ord_comparator(void *a_raw, void *b_raw)
-{
-    ngram_raw_ord_t *a = (ngram_raw_ord_t *) a_raw;
-    ngram_raw_ord_t *b = (ngram_raw_ord_t *) b_raw;
+    ngram_raw_t *a = (ngram_raw_t *) a_raw;
+    ngram_raw_t *b = (ngram_raw_t *) b_raw;
     int a_w_ptr = 0;
     int b_w_ptr = 0;
     while (a_w_ptr < a->order && b_w_ptr < b->order) {
-        if (a->instance.words[a_w_ptr] == b->instance.words[b_w_ptr]) {
+        if (a->words[a_w_ptr] == b->words[b_w_ptr]) {
             a_w_ptr++;
             b_w_ptr++;
             continue;
         }
-        if (a->instance.words[a_w_ptr] < b->instance.words[b_w_ptr])
-            return 1;
-        else
+        if (a->words[a_w_ptr] < b->words[b_w_ptr])
             return -1;
+        else
+            return 1;
     }
-    return b->order - a->order;
+    return a->order - b->order;
 }
 
 static void
@@ -120,6 +93,8 @@ read_ngram_instance(lineiter_t ** li, hash_table_t * wid,
         E_ERROR("Format error; %d-gram ignored: %s\n", order, (*li)->buf);
         return;
     }
+
+    raw_ngram->order = order;
 
     if (order == order_max) {
         raw_ngram->weights =
@@ -184,8 +159,7 @@ ngrams_raw_read_order(ngram_raw_t ** raw_ngrams, lineiter_t ** li,
     }
 
     //sort raw ngrams that was read
-    ngram_comparator(NULL, &order);     //setting up order in comparator
-    qsort(*raw_ngrams, count, sizeof(ngram_raw_t), &ngram_comparator);
+    qsort(*raw_ngrams, count, sizeof(ngram_raw_t), &ngram_ord_comparator);
 }
 
 ngram_raw_t **
@@ -273,6 +247,7 @@ ngrams_raw_read_dmp(FILE * fp, logmath_t * lmath, uint32 * counts,
             SWAP_INT16(&wid);
         raw_ngram->words =
             (uint32 *) ckd_calloc(2, sizeof(*raw_ngram->words));
+        raw_ngram->order = 2;
         raw_ngram->words[0] = (uint32) wid;
         while (ngram_idx < counts[0] && j == unigram_next[ngram_idx]) {
             ngram_idx++;
@@ -306,6 +281,7 @@ ngrams_raw_read_dmp(FILE * fp, logmath_t * lmath, uint32 * counts,
             fread(&wid, sizeof(wid), 1, fp);
             if (do_swap)
                 SWAP_INT16(&wid);
+    	    raw_ngram->order = 3;
             raw_ngram->words =
                 (uint32 *) ckd_calloc(3, sizeof(*raw_ngram->words));
             raw_ngram->words[0] = (uint32) wid;
@@ -361,14 +337,12 @@ ngrams_raw_read_dmp(FILE * fp, logmath_t * lmath, uint32 * counts,
 
     //sort raw ngrams for reverse trie
     i = 2;                      //set order
-    ngram_comparator(NULL, &i);
     qsort(raw_ngrams[0], (size_t) counts[1], sizeof(*raw_ngrams[0]),
-          &ngram_comparator);
+          &ngram_ord_comparator);
     if (order > 2) {
         i = 3;                  //set order
-        ngram_comparator(NULL, &i);
         qsort(raw_ngrams[1], (size_t) counts[2], sizeof(*raw_ngrams[1]),
-              &ngram_comparator);
+              &ngram_ord_comparator);
     }
     return raw_ngrams;
 }
@@ -386,48 +360,49 @@ ngrams_raw_fix_counts(ngram_raw_t ** raw_ngrams, uint32 * counts,
     memset(words, -1, sizeof(words));   //since we have unsigned word idx that will give us unreachable maximum word index
     memcpy(fixed_counts, counts, order * sizeof(*fixed_counts));
     for (i = 2; i <= order; i++) {
-        ngram_raw_ord_t *tmp_ngram;
+        ngram_raw_t *tmp_ngram;
         
         if (counts[i - 1] <= 0)
             continue;
-        tmp_ngram =
-            (ngram_raw_ord_t *) ckd_calloc(1, sizeof(*tmp_ngram));
-        tmp_ngram->order = i;
+
         raw_ngram_ptrs[i - 2] = 0;
-        tmp_ngram->instance = raw_ngrams[i - 2][0];
+
+        tmp_ngram =
+            (ngram_raw_t *) ckd_calloc(1, sizeof(*tmp_ngram));
+        *tmp_ngram = raw_ngrams[i - 2][0];
+        tmp_ngram->order = i;
         priority_queue_add(ngrams, tmp_ngram);
     }
 
     for (;;) {
         int32 to_increment = TRUE;
-        ngram_raw_ord_t *top;
+        ngram_raw_t *top;
         if (priority_queue_size(ngrams) == 0) {
             break;
         }
-        top = (ngram_raw_ord_t *) priority_queue_poll(ngrams);
+        top = (ngram_raw_t *) priority_queue_poll(ngrams);
         if (top->order == 2) {
-            memcpy(words, top->instance.words, 2 * sizeof(*words));
+            memcpy(words, top->words, 2 * sizeof(*words));
         }
         else {
             for (i = 0; i < top->order - 1; i++) {
-                if (words[i] != top->instance.words[i]) {
+                if (words[i] != top->words[i]) {
                     int num;
                     num = (i == 0) ? 1 : i;
-                    memcpy(words, top->instance.words,
+                    memcpy(words, top->words,
                            (num + 1) * sizeof(*words));
                     fixed_counts[num]++;
                     to_increment = FALSE;
                     break;
                 }
             }
-            words[top->order - 1] = top->instance.words[top->order - 1];
+            words[top->order - 1] = top->words[top->order - 1];
         }
         if (to_increment) {
             raw_ngram_ptrs[top->order - 2]++;
         }
         if (raw_ngram_ptrs[top->order - 2] < counts[top->order - 1]) {
-            top->instance =
-                raw_ngrams[top->order - 2][raw_ngram_ptrs[top->order - 2]];
+            *top = raw_ngrams[top->order - 2][raw_ngram_ptrs[top->order - 2]];
             priority_queue_add(ngrams, top);
         }
         else {

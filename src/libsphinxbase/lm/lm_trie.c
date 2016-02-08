@@ -179,34 +179,37 @@ recursive_insert(lm_trie_t * trie, ngram_raw_t ** raw_ngrams,
     const uint32 unigram_count = (uint32) counts[0];
     priority_queue_t *ngrams =
         priority_queue_create(order, &ngram_ord_comparator);
-    ngram_raw_ord_t *ngram;
+    ngram_raw_t *ngram;
     uint32 *raw_ngrams_ptr;
     int i;
 
     words = (uint32 *) ckd_calloc(order, sizeof(*words));       //for blanks catching
     probs = (float *) ckd_calloc(order - 1, sizeof(*probs));    //for blanks prob generating
-    ngram = (ngram_raw_ord_t *) ckd_calloc(1, sizeof(*ngram));
+    ngram = (ngram_raw_t *) ckd_calloc(1, sizeof(*ngram));
     ngram->order = 1;
-    ngram->instance.words = &unigram_idx;
+    ngram->words = &unigram_idx;
     priority_queue_add(ngrams, ngram);
     raw_ngrams_ptr =
         (uint32 *) ckd_calloc(order - 1, sizeof(*raw_ngrams_ptr));
     for (i = 2; i <= order; ++i) {
-        ngram_raw_ord_t *tmp_ngram;
+        ngram_raw_t *tmp_ngram;
         
         if (counts[i - 1] <= 0)
             continue;
-        tmp_ngram =
-            (ngram_raw_ord_t *) ckd_calloc(1, sizeof(*tmp_ngram));
-        tmp_ngram->order = i;
+
         raw_ngrams_ptr[i - 2] = 0;
-        tmp_ngram->instance = raw_ngrams[i - 2][0];
+        tmp_ngram =
+            (ngram_raw_t *) ckd_calloc(1, sizeof(*tmp_ngram));
+        *tmp_ngram = raw_ngrams[i - 2][0];
+        tmp_ngram->order = i;
+
         priority_queue_add(ngrams, tmp_ngram);
     }
 
     for (;;) {
-        ngram_raw_ord_t *top =
-            (ngram_raw_ord_t *) priority_queue_poll(ngrams);
+        ngram_raw_t *top =
+            (ngram_raw_t *) priority_queue_poll(ngrams);
+
         if (top->order == 1) {
             trie->unigrams[unigram_idx].next = unigram_next(trie, order);
             words[0] = unigram_idx;
@@ -219,40 +222,40 @@ recursive_insert(lm_trie_t * trie, ngram_raw_t ** raw_ngrams,
         }
         else {
             for (i = 0; i < top->order - 1; i++) {
-                if (words[i] != top->instance.words[i]) {
+                if (words[i] != top->words[i]) {
                     //need to insert dummy suffixes to make ngram of higher order reachable
                     int j;
                     assert(i > 0);      //unigrams are not pruned without removing ngrams that contains them
                     for (j = i; j < top->order - 1; j++) {
                         middle_t *middle = &trie->middle_begin[j - 1];
                         bitarr_address_t address =
-                            middle_insert(middle, top->instance.words[j],
+                            middle_insert(middle, top->words[j],
                                           j + 1, order);
                         //calculate prob for blank
                         float calc_prob =
                             probs[j - 1] +
-                            trie->unigrams[top->instance.words[j]].bo;
+                            trie->unigrams[top->words[j]].bo;
                         probs[j] = calc_prob;
                         lm_trie_quant_mwrite(trie->quant, address, j - 1,
                                              calc_prob, 0.0f);
                     }
                 }
             }
-            memcpy(words, top->instance.words,
+            memcpy(words, top->words,
                    top->order * sizeof(*words));
             if (top->order == order) {
-                float *weights = top->instance.weights;
+                float *weights = top->weights;
                 bitarr_address_t address =
                     longest_insert(trie->longest,
-                                   top->instance.words[top->order - 1]);
+                                   top->words[top->order - 1]);
                 lm_trie_quant_lwrite(trie->quant, address, weights[0]);
             }
             else {
-                float *weights = top->instance.weights;
+                float *weights = top->weights;
                 middle_t *middle = &trie->middle_begin[top->order - 2];
                 bitarr_address_t address =
                     middle_insert(middle,
-                                  top->instance.words[top->order - 1],
+                                  top->words[top->order - 1],
                                   top->order, order);
                 //write prob and backoff
                 probs[top->order - 1] = weights[0];
@@ -261,9 +264,9 @@ recursive_insert(lm_trie_t * trie, ngram_raw_t ** raw_ngrams,
             }
             raw_ngrams_ptr[top->order - 2]++;
             if (raw_ngrams_ptr[top->order - 2] < counts[top->order - 1]) {
-                top->instance =
-                    raw_ngrams[top->order -
+        	*top = raw_ngrams[top->order -
                                2][raw_ngrams_ptr[top->order - 2]];
+
                 priority_queue_add(ngrams, top);
             }
             else {

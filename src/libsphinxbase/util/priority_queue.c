@@ -48,10 +48,10 @@ struct priority_queue_s {
     size_t alloc_size;
     size_t size;
     void *max_element;
-    int (*compare)(void *a, void *b);
+    int (*compare)(const void *a, const void *b);
 };
 
-priority_queue_t* priority_queue_create(size_t len, int (*compare)(void *a, void *b))
+priority_queue_t* priority_queue_create(size_t len, int (*compare)(const void *a, const void *b))
 {
     priority_queue_t* queue;
 
@@ -93,7 +93,7 @@ void* priority_queue_poll(priority_queue_t *queue)
         if (queue->max_element == NULL) {
             queue->max_element = queue->pointers[i];
         } else {
-            if (queue->compare(queue->pointers[i], queue->max_element) > 0)
+            if (queue->compare(queue->pointers[i], queue->max_element) < 0)
                 queue->max_element = queue->pointers[i];
         }
     }
@@ -115,7 +115,7 @@ void priority_queue_add(priority_queue_t *queue, void *element)
         }
     }
 
-    if (queue->max_element == NULL || queue->compare(element, queue->max_element) > 0) {
+    if (queue->max_element == NULL || queue->compare(element, queue->max_element) < 0) {
         queue->max_element = element;
     }
     queue->size++;
