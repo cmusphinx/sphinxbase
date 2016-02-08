@@ -94,14 +94,6 @@ read_counts_arpa(lineiter_t ** li, uint32 * counts, int *order)
     return 0;
 }
 
-int
-string_comparator(const void *a, const void *b)
-{
-    const char **ia = (const char **) a;
-    const char **ib = (const char **) b;
-    return strcmp(*ia, *ib);
-}
-
 static int
 read_1grams_arpa(lineiter_t ** li, uint32 count, ngram_model_t * base,
                  unigram_t * unigrams)
@@ -176,7 +168,6 @@ ngram_model_trie_read_arpa(cmd_ln_t * config,
     ngram_raw_t **raw_ngrams;
     int32 is_pipe;
     uint32 counts[NGRAM_MAX_ORDER];
-    uint32 fixed_counts[NGRAM_MAX_ORDER];
     int order;
     int i;
 
@@ -208,7 +199,7 @@ ngram_model_trie_read_arpa(cmd_ln_t * config,
 
     model->trie = lm_trie_create(counts[0], order);
     if (read_1grams_arpa(&li, counts[0], base, model->trie->unigrams) < 0) {
-        ckd_free(model);
+	ngram_model_free(base);
         lineiter_free(li);
         fclose_comp(fp, is_pipe);
         return NULL;
@@ -218,12 +209,7 @@ ngram_model_trie_read_arpa(cmd_ln_t * config,
         raw_ngrams =
             ngrams_raw_read_arpa(&li, base->lmath, counts, order,
                                  base->wid);
-        ngrams_raw_fix_counts(raw_ngrams, counts, fixed_counts, order);
-        for (i = 0; i < order; i++) {
-            base->n_counts[i] = fixed_counts[i];
-        }
-        lm_trie_alloc_ngram(model->trie, fixed_counts, order);
-        lm_trie_build(model->trie, raw_ngrams, counts, order);
+        lm_trie_build(model->trie, raw_ngrams, counts, base->n_counts, order);
         ngrams_raw_free(raw_ngrams, counts, order);
     }
 
@@ -534,9 +520,8 @@ ngram_model_trie_read_dmp(cmd_ln_t * config,
     int32 vn, ts;
     int32 count;
     uint32 counts[3];
-    uint32 fixed_counts[3];
     uint32 *unigram_next;
-    int i, order;
+    int order;
     char str[1024];
     FILE *fp;
     ngram_model_trie_t *model;
@@ -644,24 +629,23 @@ ngram_model_trie_read_dmp(cmd_ln_t * config,
         (uint32 *) ckd_calloc((int32) counts[0] + 1, sizeof(unigram_next));
     for (j = 0; j <= (int32) counts[0]; j++) {
         int32 bigrams;
-        dmp_weight_t weight;
+        int32 mapid;
+        dmp_weight_t weightp;
+        dmp_weight_t weightb;
+
         /* Skip over the mapping ID, we don't care about it. */
-        fread(&bigrams, sizeof(int32), 1, fp);
         /* Read the weights from actual unigram structure. */
-        fread(&weight, sizeof(weight), 1, fp);
-        if (do_swap)
-            SWAP_INT32(&weight.l);
-        weight.f = logmath_log10_to_log_float(lmath, weight.f);
-        model->trie->unigrams[j].prob = weight.f;
-        fread(&weight, sizeof(weight), 1, fp);
-        if (do_swap)
-            SWAP_INT32(&weight.l);
-        weight.f = logmath_log10_to_log_float(lmath, weight.f);
-        model->trie->unigrams[j].bo = weight.f;
-        //store pointer to dmp next to recognize wid
+        fread(&mapid, sizeof(int32), 1, fp);
+        fread(&weightp, sizeof(weightp), 1, fp);
+        fread(&weightb, sizeof(weightb), 1, fp);
         fread(&bigrams, sizeof(int32), 1, fp);
-        if (do_swap)
+        if (do_swap) {
+            SWAP_INT32(&weightp.l);
+            SWAP_INT32(&weightb.l);
             SWAP_INT32(&bigrams);
+        }
+        model->trie->unigrams[j].prob = logmath_log10_to_log_float(lmath, weightp.f);
+        model->trie->unigrams[j].bo = logmath_log10_to_log_float(lmath, weightb.f);
         model->trie->unigrams[j].next = bigrams;
         unigram_next[j] = bigrams;
     }
@@ -670,20 +654,11 @@ ngram_model_trie_read_dmp(cmd_ln_t * config,
         raw_ngrams =
             ngrams_raw_read_dmp(fp, lmath, counts, order, unigram_next,
                                 do_swap);
-        ngrams_raw_fix_counts(raw_ngrams, counts, fixed_counts, order);
-        for (i = 0; i < order; i++) {
-            base->n_counts[i] = fixed_counts[i];
-        }
-
-        //build reversed trie
-        lm_trie_alloc_ngram(model->trie, order > 2 ? fixed_counts : counts,
-                            order);
-        lm_trie_build(model->trie, raw_ngrams, counts, order);
-        counts[1]++;
-
-        //free raw ngrams
+        lm_trie_build(model->trie, raw_ngrams, counts, base->n_counts, order);        
         ngrams_raw_free(raw_ngrams, counts, order);
     }
+    
+    /* Sentinel unigram and bigrams read before */
     ckd_free(unigram_next);
 
     /* read ascii word strings */
@@ -783,8 +758,8 @@ lm_trie_flush(ngram_model_t * base)
 {
     ngram_model_trie_t *model = (ngram_model_trie_t *) base;
     lm_trie_t *trie = model->trie;
-    memset(trie->prev_hist, -1, sizeof(trie->prev_hist));       //prepare request history
-    memset(trie->backoff, 0, sizeof(trie->backoff));
+    memset(trie->hist_cache, -1, sizeof(trie->hist_cache));       //prepare request history
+    memset(trie->backoff_cache, 0, sizeof(trie->backoff_cache));
     return;
 }
 

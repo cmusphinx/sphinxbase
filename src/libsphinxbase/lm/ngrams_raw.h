@@ -87,9 +87,6 @@ ngram_raw_t **ngrams_raw_read_dmp(FILE * fp, logmath_t * lmath,
                                   uint32 * counts, int order,
                                   uint32 * unigram_next, uint8 do_swap);
 
-void ngrams_raw_fix_counts(ngram_raw_t ** raw_ngrams, uint32 * counts,
-                           uint32 * fixed_counts, int order);
-
 void ngrams_raw_free(ngram_raw_t ** raw_ngrams, uint32 * counts,
                      int order);
 

@@ -85,8 +85,8 @@ typedef struct lm_trie_s {
     longest_t *longest;
     lm_trie_quant_t *quant;
 
-    float backoff[NGRAM_MAX_ORDER];
-    uint32 prev_hist[NGRAM_MAX_ORDER - 1];
+    float backoff_cache[NGRAM_MAX_ORDER];
+    uint32 hist_cache[NGRAM_MAX_ORDER - 1];
 } lm_trie_t;
 
 /**
@@ -100,10 +100,8 @@ void lm_trie_write_bin(lm_trie_t * trie, uint32 unigram_count, FILE * fp);
 
 void lm_trie_free(lm_trie_t * trie);
 
-void lm_trie_alloc_ngram(lm_trie_t * trie, uint32 * counts, int order);
-
 void lm_trie_build(lm_trie_t * trie, ngram_raw_t ** raw_ngrams,
-                   uint32 * counts, int order);
+                   uint32 * counts, uint32 *out_counts, int order);
 
 unigram_t *unigram_find(unigram_t * u, uint32 word, node_range_t * next);
 

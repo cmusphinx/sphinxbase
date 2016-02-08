@@ -245,27 +245,33 @@ ngrams_raw_read_dmp(FILE * fp, logmath_t * lmath, uint32 * counts,
         fread(&wid, sizeof(wid), 1, fp);
         if (do_swap)
             SWAP_INT16(&wid);
-        raw_ngram->words =
-            (uint32 *) ckd_calloc(2, sizeof(*raw_ngram->words));
         raw_ngram->order = 2;
-        raw_ngram->words[0] = (uint32) wid;
         while (ngram_idx < counts[0] && j == unigram_next[ngram_idx]) {
             ngram_idx++;
         }
-        raw_ngram->words[1] = (uint32) ngram_idx - 1;
-        raw_ngram->weights =
-            (float *) ckd_calloc(2, sizeof(*raw_ngram->weights));
+	
+	if (j != counts[1]) {
+            raw_ngram->words =
+    		(uint32 *) ckd_calloc(2, sizeof(*raw_ngram->words));
+    	    raw_ngram->words[0] = (uint32) wid;
+	    raw_ngram->words[1] = (uint32) ngram_idx - 1;
+	}
+
         fread(&prob_idx, sizeof(prob_idx), 1, fp);
-        if (do_swap)
-            SWAP_INT16(&prob_idx);
-        raw_ngram->weights[0] = prob_idx + 0.5f;        //keep index in float. ugly but avoiding using extra memory
         fread(&bo_idx, sizeof(bo_idx), 1, fp);
-        if (do_swap)
-            SWAP_INT16(&bo_idx);
-        raw_ngram->weights[1] = bo_idx + 0.5f;  //keep index in float. ugly but avoiding using extra memory
         fread(&bigrams_next[j], sizeof(bigrams_next[j]), 1, fp);
-        if (do_swap)
+        if (do_swap) {
+            SWAP_INT16(&prob_idx);
+            SWAP_INT16(&bo_idx);
             SWAP_INT16(&bigrams_next[j]);
+        }
+
+	if (j != counts[1]) {
+            raw_ngram->weights =
+	        (float *) ckd_calloc(2, sizeof(*raw_ngram->weights));
+            raw_ngram->weights[0] = prob_idx + 0.5f; //keep index in float. ugly but avoiding using extra memory
+	    raw_ngram->weights[1] = bo_idx + 0.5f; //keep index in float. ugly but avoiding using extra memory
+	}
     }
     assert(ngram_idx == counts[0]);
 
@@ -345,73 +351,6 @@ ngrams_raw_read_dmp(FILE * fp, logmath_t * lmath, uint32 * counts,
               &ngram_ord_comparator);
     }
     return raw_ngrams;
-}
-
-void
-ngrams_raw_fix_counts(ngram_raw_t ** raw_ngrams, uint32 * counts,
-                      uint32 * fixed_counts, int order)
-{
-    priority_queue_t *ngrams =
-        priority_queue_create(order - 1, &ngram_ord_comparator);
-    uint32 raw_ngram_ptrs[NGRAM_MAX_ORDER - 1];
-    uint32 words[NGRAM_MAX_ORDER];
-    int i;
-
-    memset(words, -1, sizeof(words));   //since we have unsigned word idx that will give us unreachable maximum word index
-    memcpy(fixed_counts, counts, order * sizeof(*fixed_counts));
-    for (i = 2; i <= order; i++) {
-        ngram_raw_t *tmp_ngram;
-        
-        if (counts[i - 1] <= 0)
-            continue;
-
-        raw_ngram_ptrs[i - 2] = 0;
-
-        tmp_ngram =
-            (ngram_raw_t *) ckd_calloc(1, sizeof(*tmp_ngram));
-        *tmp_ngram = raw_ngrams[i - 2][0];
-        tmp_ngram->order = i;
-        priority_queue_add(ngrams, tmp_ngram);
-    }
-
-    for (;;) {
-        int32 to_increment = TRUE;
-        ngram_raw_t *top;
-        if (priority_queue_size(ngrams) == 0) {
-            break;
-        }
-        top = (ngram_raw_t *) priority_queue_poll(ngrams);
-        if (top->order == 2) {
-            memcpy(words, top->words, 2 * sizeof(*words));
-        }
-        else {
-            for (i = 0; i < top->order - 1; i++) {
-                if (words[i] != top->words[i]) {
-                    int num;
-                    num = (i == 0) ? 1 : i;
-                    memcpy(words, top->words,
-                           (num + 1) * sizeof(*words));
-                    fixed_counts[num]++;
-                    to_increment = FALSE;
-                    break;
-                }
-            }
-            words[top->order - 1] = top->words[top->order - 1];
-        }
-        if (to_increment) {
-            raw_ngram_ptrs[top->order - 2]++;
-        }
-        if (raw_ngram_ptrs[top->order - 2] < counts[top->order - 1]) {
-            *top = raw_ngrams[top->order - 2][raw_ngram_ptrs[top->order - 2]];
-            priority_queue_add(ngrams, top);
-        }
-        else {
-            ckd_free(top);
-        }
-    }
-
-    assert(priority_queue_size(ngrams) == 0);
-    priority_queue_free(ngrams, NULL);
 }
 
 void

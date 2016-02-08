@@ -46,6 +46,8 @@
 #include "lm_trie.h"
 #include "lm_trie_quant.h"
 
+static void lm_trie_alloc_ngram(lm_trie_t * trie, uint32 * counts, int order);
+
 static uint32
 base_size(uint32 entries, uint32 max_vocab, uint8 remaining_bits)
 {
@@ -169,6 +171,74 @@ unigram_next(lm_trie_t * trie, int order)
         insert_index;
 }
 
+void
+lm_trie_fix_counts(ngram_raw_t ** raw_ngrams, uint32 * counts,
+                   uint32 * fixed_counts, int order)
+{
+    priority_queue_t *ngrams =
+        priority_queue_create(order - 1, &ngram_ord_comparator);
+    uint32 raw_ngram_ptrs[NGRAM_MAX_ORDER - 1];
+    uint32 words[NGRAM_MAX_ORDER];
+    int i;
+
+    memset(words, -1, sizeof(words));   //since we have unsigned word idx that will give us unreachable maximum word index
+    memcpy(fixed_counts, counts, order * sizeof(*fixed_counts));
+    for (i = 2; i <= order; i++) {
+        ngram_raw_t *tmp_ngram;
+        
+        if (counts[i - 1] <= 0)
+            continue;
+
+        raw_ngram_ptrs[i - 2] = 0;
+
+        tmp_ngram =
+            (ngram_raw_t *) ckd_calloc(1, sizeof(*tmp_ngram));
+        *tmp_ngram = raw_ngrams[i - 2][0];
+        tmp_ngram->order = i;
+        priority_queue_add(ngrams, tmp_ngram);
+    }
+
+    for (;;) {
+        int32 to_increment = TRUE;
+        ngram_raw_t *top;
+        if (priority_queue_size(ngrams) == 0) {
+            break;
+        }
+        top = (ngram_raw_t *) priority_queue_poll(ngrams);
+        if (top->order == 2) {
+            memcpy(words, top->words, 2 * sizeof(*words));
+        }
+        else {
+            for (i = 0; i < top->order - 1; i++) {
+                if (words[i] != top->words[i]) {
+                    int num;
+                    num = (i == 0) ? 1 : i;
+                    memcpy(words, top->words,
+                           (num + 1) * sizeof(*words));
+                    fixed_counts[num]++;
+                    to_increment = FALSE;
+                    break;
+                }
+            }
+            words[top->order - 1] = top->words[top->order - 1];
+        }
+        if (to_increment) {
+            raw_ngram_ptrs[top->order - 2]++;
+        }
+        if (raw_ngram_ptrs[top->order - 2] < counts[top->order - 1]) {
+            *top = raw_ngrams[top->order - 2][raw_ngram_ptrs[top->order - 2]];
+            priority_queue_add(ngrams, top);
+        }
+        else {
+            ckd_free(top);
+        }
+    }
+
+    assert(priority_queue_size(ngrams) == 0);
+    priority_queue_free(ngrams, NULL);
+}
+
+
 static void
 recursive_insert(lm_trie_t * trie, ngram_raw_t ** raw_ngrams,
                  uint32 * counts, int order)
@@ -287,8 +357,8 @@ lm_trie_init(uint32 unigram_count)
     lm_trie_t *trie;
 
     trie = (lm_trie_t *) ckd_calloc(1, sizeof(*trie));
-    memset(trie->prev_hist, -1, sizeof(trie->prev_hist));       //prepare request history
-    memset(trie->backoff, 0, sizeof(trie->backoff));
+    memset(trie->hist_cache, -1, sizeof(trie->hist_cache));       //prepare request history
+    memset(trie->backoff_cache, 0, sizeof(trie->backoff_cache));
     trie->unigrams =
         (unigram_t *) ckd_calloc((unigram_count + 1),
                                  sizeof(*trie->unigrams));
@@ -344,7 +414,7 @@ lm_trie_free(lm_trie_t * trie)
     ckd_free(trie);
 }
 
-void
+static void
 lm_trie_alloc_ngram(lm_trie_t * trie, uint32 * counts, int order)
 {
     int i;
@@ -393,11 +463,14 @@ lm_trie_alloc_ngram(lm_trie_t * trie, uint32 * counts, int order)
 }
 
 void
-lm_trie_build(lm_trie_t * trie, ngram_raw_t ** raw_ngrams, uint32 * counts,
+lm_trie_build(lm_trie_t * trie, ngram_raw_t ** raw_ngrams, uint32 * counts, uint32 *out_counts,
               int order)
 {
     int i;
 
+    lm_trie_fix_counts(raw_ngrams, counts, out_counts, order);
+    lm_trie_alloc_ngram(trie, out_counts, order);
+    
     if (order > 1)
         E_INFO("Training quantizer\n");
     for (i = 2; i < order; i++) {
@@ -632,7 +705,7 @@ lm_trie_hist_score(lm_trie_t * trie, int32 wid, int32 * hist, int32 n_hist,
         address = middle_find(&trie->middle_begin[i], hist[i], &node);
         if (address.base == NULL) {
             for (j = i; j < n_hist; j++) {
-                prob += trie->backoff[j];
+                prob += trie->backoff_cache[j];
             }
             return prob;
         }
@@ -643,7 +716,7 @@ lm_trie_hist_score(lm_trie_t * trie, int32 wid, int32 * hist, int32 n_hist,
     }
     address = longest_find(trie->longest, hist[n_hist - 1], &node);
     if (address.base == NULL) {
-        return prob + trie->backoff[n_hist - 1];
+        return prob + trie->backoff_cache[n_hist - 1];
     }
     else {
         (*n_used)++;
@@ -670,17 +743,17 @@ update_backoff(lm_trie_t * trie, int32 * hist, int32 n_hist)
     node_range_t node;
     bitarr_address_t address;
 
-    memset(trie->backoff, 0, sizeof(trie->backoff));
-    trie->backoff[0] = unigram_find(trie->unigrams, hist[0], &node)->bo;
+    memset(trie->backoff_cache, 0, sizeof(trie->backoff_cache));
+    trie->backoff_cache[0] = unigram_find(trie->unigrams, hist[0], &node)->bo;
     for (i = 1; i < n_hist; i++) {
         address = middle_find(&trie->middle_begin[i - 1], hist[i], &node);
         if (address.base == NULL) {
             break;
         }
-        trie->backoff[i] =
+        trie->backoff_cache[i] =
             lm_trie_quant_mboread(trie->quant, address, i - 1);
     }
-    memcpy(trie->prev_hist, hist, n_hist * sizeof(*hist));
+    memcpy(trie->hist_cache, hist, n_hist * sizeof(*hist));
 }
 
 float
@@ -692,7 +765,7 @@ lm_trie_score(lm_trie_t * trie, int order, int32 wid, int32 * hist,
     }
     else {
         assert(n_hist == order - 1);
-        if (!history_matches(hist, (int32 *) trie->prev_hist, n_hist)) {
+        if (!history_matches(hist, (int32 *) trie->hist_cache, n_hist)) {
             update_backoff(trie, hist, n_hist);
         }
         return lm_trie_hist_score(trie, wid, hist, n_hist, n_used);
