@@ -238,10 +238,8 @@ lm_trie_quant_train(lm_trie_quant_t * quant, int order, uint32 counts,
 
     for (backoff_num = 0, prob_num = 0; raw_ngrams != raw_ngrams_end;
          raw_ngrams++) {
-        float *weights = raw_ngrams->weights;
-        probs[prob_num++] = *weights;   //first goes prob
-        weights++;              //increment to backoff
-        backoffs[backoff_num++] = *weights;
+        probs[prob_num++] = raw_ngrams->prob;   //first goes prob
+        backoffs[backoff_num++] = raw_ngrams->backoff;
     }
 
     make_bins(probs, prob_num, quant->tables[order - 2][0].begin,
@@ -264,8 +262,7 @@ lm_trie_quant_train_prob(lm_trie_quant_t * quant, int order, uint32 counts,
     raw_ngrams_end = raw_ngrams + counts;
 
     for (prob_num = 0; raw_ngrams != raw_ngrams_end; raw_ngrams++) {
-        float *weights = raw_ngrams->weights;
-        probs[prob_num++] = *weights;
+        probs[prob_num++] = raw_ngrams->prob;
     }
 
     make_bins(probs, prob_num, quant->tables[order - 2][0].begin,

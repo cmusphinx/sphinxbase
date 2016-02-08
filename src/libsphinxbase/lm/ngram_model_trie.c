@@ -274,16 +274,15 @@ ngram_model_trie_write_arpa(ngram_model_t * base, const char *path)
             fprintf(fp, "\n\\%d-grams:\n", i);
             for (j = 0; j < base->n_counts[i - 1]; j++) {
                 int k;
-                fprintf(fp, "%.4f", logmath_log_float_to_log10(base->lmath, raw_ngrams[j].weights[0]));
+                fprintf(fp, "%.4f", logmath_log_float_to_log10(base->lmath, raw_ngrams[j].prob));
                 for (k = 0; k < i; k++) {
                     fprintf(fp, "\t%s",
                             base->word_str[raw_ngrams[j].words[k]]);
                 }
                 ckd_free(raw_ngrams[j].words);
                 if (i < base->n) {
-                    fprintf(fp, "\t%.4f", logmath_log_float_to_log10(base->lmath, raw_ngrams[j].weights[1]));
+                    fprintf(fp, "\t%.4f", logmath_log_float_to_log10(base->lmath, raw_ngrams[j].backoff));
                 }
-                ckd_free(raw_ngrams[j].weights);
                 fprintf(fp, "\n");
             }
             ckd_free(raw_ngrams);

@@ -314,23 +314,21 @@ recursive_insert(lm_trie_t * trie, ngram_raw_t ** raw_ngrams,
             memcpy(words, top->words,
                    top->order * sizeof(*words));
             if (top->order == order) {
-                float *weights = top->weights;
                 bitarr_address_t address =
                     longest_insert(trie->longest,
                                    top->words[top->order - 1]);
-                lm_trie_quant_lwrite(trie->quant, address, weights[0]);
+                lm_trie_quant_lwrite(trie->quant, address, top->prob);
             }
             else {
-                float *weights = top->weights;
                 middle_t *middle = &trie->middle_begin[top->order - 2];
                 bitarr_address_t address =
                     middle_insert(middle,
                                   top->words[top->order - 1],
                                   top->order, order);
                 //write prob and backoff
-                probs[top->order - 1] = weights[0];
+                probs[top->order - 1] = top->prob;
                 lm_trie_quant_mwrite(trie->quant, address, top->order - 2,
-                                     weights[0], weights[1]);
+                                     top->prob, top->backoff);
             }
             raw_ngrams_ptr[top->order - 2]++;
             if (raw_ngrams_ptr[top->order - 2] < counts[top->order - 1]) {
@@ -826,9 +824,6 @@ lm_trie_fill_raw_ngram(lm_trie_t * trie,
         assert(n_hist == order - 1);
         for (ptr = range.begin; ptr < range.end; ptr++) {
             ngram_raw_t *raw_ngram = &raw_ngrams[*raw_ngram_idx];
-            raw_ngram->weights =
-                (float *) ckd_calloc(order == max_order ? 1 : 2,
-                                     sizeof(*raw_ngram->weights));
             if (order == max_order) {
                 longest_t *longest = trie->longest;     //access
                 address.base = longest->base.base;
@@ -852,10 +847,9 @@ lm_trie_fill_raw_ngram(lm_trie_t * trie,
                 backoff =
                     lm_trie_quant_mboread(trie->quant, address,
                                           n_hist - 1);
-                raw_ngram->weights[1] =
-                    (float) backoff;
+                raw_ngram->backoff = backoff;
             }
-            raw_ngram->weights[0] = (float)prob;
+            raw_ngram->prob = prob;
             raw_ngram->words =
                 (uint32 *) ckd_calloc(order, sizeof(*raw_ngram->words));
             for (i = 0; i <= n_hist; i++) {

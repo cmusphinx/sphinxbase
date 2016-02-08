@@ -46,8 +46,9 @@
 
 typedef struct ngram_raw_s {
     uint32 *words;              /* array of word indexes, length corresponds to ngram order */
-    float32 *weights;           /* prob and backoff or just prob for longest order */
-    uint8 order;
+    float32 prob;
+    float32 backoff;
+    uint32 order;
 } ngram_raw_t;
 
 typedef union {

@@ -97,37 +97,33 @@ read_ngram_instance(lineiter_t ** li, hash_table_t * wid,
     raw_ngram->order = order;
 
     if (order == order_max) {
-        raw_ngram->weights =
-            (float *) ckd_calloc(1, sizeof(*raw_ngram->weights));
-        raw_ngram->weights[0] = atof_c(wptr[0]);
-        if (raw_ngram->weights[0] > 0) {
+        raw_ngram->prob = atof_c(wptr[0]);
+        if (raw_ngram->prob > 0) {
             E_WARN("%d-gram '%s' has positive probability\n", order, wptr[1]);
-            raw_ngram->weights[0] = 0.0f;
+            raw_ngram->prob = 0.0f;
         }
-        raw_ngram->weights[0] =
-            logmath_log10_to_log_float(lmath, raw_ngram->weights[0]);
+        raw_ngram->prob =
+            logmath_log10_to_log_float(lmath, raw_ngram->prob);
     }
     else {
         float weight, backoff;
-        raw_ngram->weights =
-            (float *) ckd_calloc(2, sizeof(*raw_ngram->weights));
 
         weight = atof_c(wptr[0]);
         if (weight > 0) {
             E_WARN("%d-gram '%s' has positive probability\n", order, wptr[1]);
-            raw_ngram->weights[0] = 0.0f;
+            raw_ngram->prob = 0.0f;
         }
         else {
-            raw_ngram->weights[0] =
+            raw_ngram->prob =
                 logmath_log10_to_log_float(lmath, weight);
         }
 
         if (n == order + 1) {
-            raw_ngram->weights[1] = 0.0f;
+            raw_ngram->backoff = 0.0f;
         }
         else {
             backoff = atof_c(wptr[order + 1]);
-            raw_ngram->weights[1] =
+            raw_ngram->backoff =
                 logmath_log10_to_log_float(lmath, backoff);
         }
     }
@@ -212,8 +208,13 @@ read_dmp_weight_array(FILE * fp, logmath_t * lmath, uint8 do_swap,
     }
     //replace indexes with real probs in raw bigrams
     for (i = 0; i < counts; i++) {
-        raw_ngrams[i].weights[weight_idx] =
-            tmp_weight_arr[(int) raw_ngrams[i].weights[weight_idx]].f;
+	if (weight_idx == 0) {
+	    raw_ngrams[i].prob =
+                tmp_weight_arr[(int) raw_ngrams[i].prob].f;
+        } else {
+	    raw_ngrams[i].backoff =
+                tmp_weight_arr[(int) raw_ngrams[i].backoff].f;
+        }
     }
     ckd_free(tmp_weight_arr);
 }
@@ -267,10 +268,8 @@ ngrams_raw_read_dmp(FILE * fp, logmath_t * lmath, uint32 * counts,
         }
 
 	if (j != counts[1]) {
-            raw_ngram->weights =
-	        (float *) ckd_calloc(2, sizeof(*raw_ngram->weights));
-            raw_ngram->weights[0] = prob_idx + 0.5f; //keep index in float. ugly but avoiding using extra memory
-	    raw_ngram->weights[1] = bo_idx + 0.5f; //keep index in float. ugly but avoiding using extra memory
+            raw_ngram->prob = prob_idx + 0.5f; //keep index in float. ugly but avoiding using extra memory
+	    raw_ngram->backoff = bo_idx + 0.5f; //keep index in float. ugly but avoiding using extra memory
 	}
     }
     assert(ngram_idx == counts[0]);
@@ -285,18 +284,17 @@ ngrams_raw_read_dmp(FILE * fp, logmath_t * lmath, uint32 * counts,
             ngram_raw_t *raw_ngram = &raw_ngrams[1][j];
 
             fread(&wid, sizeof(wid), 1, fp);
-            if (do_swap)
+            fread(&prob_idx, sizeof(prob_idx), 1, fp);
+            if (do_swap) {
                 SWAP_INT16(&wid);
+                SWAP_INT16(&prob_idx);
+            }
+            
     	    raw_ngram->order = 3;
             raw_ngram->words =
                 (uint32 *) ckd_calloc(3, sizeof(*raw_ngram->words));
             raw_ngram->words[0] = (uint32) wid;
-            raw_ngram->weights =
-                (float *) ckd_calloc(1, sizeof(*raw_ngram->weights));
-            fread(&prob_idx, sizeof(prob_idx), 1, fp);
-            if (do_swap)
-                SWAP_INT16(&prob_idx);
-            raw_ngram->weights[0] = prob_idx + 0.5f;    //keep index in float. ugly but avoiding using extra memory
+            raw_ngram->prob = prob_idx + 0.5f;    //keep index in float. ugly but avoiding using extra memory
         }
     }
 
@@ -361,7 +359,6 @@ ngrams_raw_free(ngram_raw_t ** raw_ngrams, uint32 * counts, int order)
 
     for (order_it = 0; order_it < order - 1; order_it++) {
         for (num = 0; num < counts[order_it + 1]; num++) {
-            ckd_free(raw_ngrams[order_it][num].weights);
             ckd_free(raw_ngrams[order_it][num].words);
         }
         ckd_free(raw_ngrams[order_it]);
