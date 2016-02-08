@@ -103,7 +103,10 @@ void lm_trie_free(lm_trie_t * trie);
 void lm_trie_build(lm_trie_t * trie, ngram_raw_t ** raw_ngrams,
                    uint32 * counts, uint32 *out_counts, int order);
 
-unigram_t *unigram_find(unigram_t * u, uint32 word, node_range_t * next);
+void lm_trie_fill_raw_ngram(lm_trie_t * trie,
+			    ngram_raw_t * raw_ngrams, uint32 * raw_ngram_idx,
+            	            uint32 * counts, node_range_t range, uint32 * hist,
+    	                    int n_hist, int order, int max_order);
 
 float lm_trie_score(lm_trie_t * trie, int order, int32 wid, int32 * hist,
                     int32 n_hist, int32 * n_used);

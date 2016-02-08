@@ -771,3 +771,97 @@ lm_trie_score(lm_trie_t * trie, int order, int32 wid, int32 * hist,
         return lm_trie_hist_score(trie, wid, hist, n_hist, n_used);
     }
 }
+
+void
+lm_trie_fill_raw_ngram(lm_trie_t * trie,
+    		       ngram_raw_t * raw_ngrams, uint32 * raw_ngram_idx,
+            	       uint32 * counts, node_range_t range, uint32 * hist,
+    	               int n_hist, int order, int max_order)
+{
+    if (n_hist > 0 && range.begin == range.end) {
+        return;
+    }
+    if (n_hist == 0) {
+        uint32 i;
+        for (i = 0; i < counts[0]; i++) {
+            node_range_t node;
+            unigram_find(trie->unigrams, i, &node);
+            hist[0] = i;
+            lm_trie_fill_raw_ngram(trie, raw_ngrams, raw_ngram_idx, counts,
+                           node, hist, 1, order, max_order);
+        }
+    }
+    else if (n_hist < order - 1) {
+        uint32 ptr;
+        node_range_t node;
+        bitarr_address_t address;
+        uint32 new_word;
+        middle_t *middle = &trie->middle_begin[n_hist - 1];
+        for (ptr = range.begin; ptr < range.end; ptr++) {
+            address.base = middle->base.base;
+            address.offset = ptr * middle->base.total_bits;
+            new_word =
+                bitarr_read_int25(address, middle->base.word_bits,
+                                  middle->base.word_mask);
+            hist[n_hist] = new_word;
+            address.offset += middle->base.word_bits + middle->quant_bits;
+            node.begin =
+                bitarr_read_int25(address, middle->next_mask.bits,
+                                  middle->next_mask.mask);
+            address.offset =
+                (ptr + 1) * middle->base.total_bits +
+                middle->base.word_bits + middle->quant_bits;
+            node.end =
+                bitarr_read_int25(address, middle->next_mask.bits,
+                                  middle->next_mask.mask);
+            lm_trie_fill_raw_ngram(trie, raw_ngrams, raw_ngram_idx, counts,
+                           node, hist, n_hist + 1, order, max_order);
+        }
+    }
+    else {
+        bitarr_address_t address;
+        uint32 ptr;
+        float prob, backoff;
+        int i;
+        assert(n_hist == order - 1);
+        for (ptr = range.begin; ptr < range.end; ptr++) {
+            ngram_raw_t *raw_ngram = &raw_ngrams[*raw_ngram_idx];
+            raw_ngram->weights =
+                (float *) ckd_calloc(order == max_order ? 1 : 2,
+                                     sizeof(*raw_ngram->weights));
+            if (order == max_order) {
+                longest_t *longest = trie->longest;     //access
+                address.base = longest->base.base;
+                address.offset = ptr * longest->base.total_bits;
+                hist[n_hist] =
+                    bitarr_read_int25(address, longest->base.word_bits,
+                                      longest->base.word_mask);
+                address.offset += longest->base.word_bits;
+                prob = lm_trie_quant_lpread(trie->quant, address);
+            }
+            else {
+                middle_t *middle = &trie->middle_begin[n_hist - 1];
+                address.base = middle->base.base;
+                address.offset = ptr * middle->base.total_bits;
+                hist[n_hist] =
+                    bitarr_read_int25(address, middle->base.word_bits,
+                                      middle->base.word_mask);
+                address.offset += middle->base.word_bits;
+                prob =
+                    lm_trie_quant_mpread(trie->quant, address, n_hist - 1);
+                backoff =
+                    lm_trie_quant_mboread(trie->quant, address,
+                                          n_hist - 1);
+                raw_ngram->weights[1] =
+                    (float) backoff;
+            }
+            raw_ngram->weights[0] = (float)prob;
+            raw_ngram->words =
+                (uint32 *) ckd_calloc(order, sizeof(*raw_ngram->words));
+            for (i = 0; i <= n_hist; i++) {
+                raw_ngram->words[i] = hist[n_hist - i];
+            }
+            (*raw_ngram_idx)++;
+        }
+    }
+}

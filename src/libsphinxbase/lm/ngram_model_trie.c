@@ -219,101 +219,6 @@ ngram_model_trie_read_arpa(cmd_ln_t * config,
     return base;
 }
 
-static void
-fill_raw_ngram(lm_trie_t * trie, logmath_t * lmath,
-               ngram_raw_t * raw_ngrams, uint32 * raw_ngram_idx,
-               uint32 * counts, node_range_t range, uint32 * hist,
-               int n_hist, int order, int max_order)
-{
-    if (n_hist > 0 && range.begin == range.end) {
-        return;
-    }
-    if (n_hist == 0) {
-        uint32 i;
-        for (i = 0; i < counts[0]; i++) {
-            node_range_t node;
-            unigram_find(trie->unigrams, i, &node);
-            hist[0] = i;
-            fill_raw_ngram(trie, lmath, raw_ngrams, raw_ngram_idx, counts,
-                           node, hist, 1, order, max_order);
-        }
-    }
-    else if (n_hist < order - 1) {
-        uint32 ptr;
-        node_range_t node;
-        bitarr_address_t address;
-        uint32 new_word;
-        middle_t *middle = &trie->middle_begin[n_hist - 1];
-        for (ptr = range.begin; ptr < range.end; ptr++) {
-            address.base = middle->base.base;
-            address.offset = ptr * middle->base.total_bits;
-            new_word =
-                bitarr_read_int25(address, middle->base.word_bits,
-                                  middle->base.word_mask);
-            hist[n_hist] = new_word;
-            address.offset += middle->base.word_bits + middle->quant_bits;
-            node.begin =
-                bitarr_read_int25(address, middle->next_mask.bits,
-                                  middle->next_mask.mask);
-            address.offset =
-                (ptr + 1) * middle->base.total_bits +
-                middle->base.word_bits + middle->quant_bits;
-            node.end =
-                bitarr_read_int25(address, middle->next_mask.bits,
-                                  middle->next_mask.mask);
-            fill_raw_ngram(trie, lmath, raw_ngrams, raw_ngram_idx, counts,
-                           node, hist, n_hist + 1, order, max_order);
-        }
-    }
-    else {
-        bitarr_address_t address;
-        uint32 ptr;
-        float prob, backoff;
-        int i;
-        assert(n_hist == order - 1);
-        for (ptr = range.begin; ptr < range.end; ptr++) {
-            ngram_raw_t *raw_ngram = &raw_ngrams[*raw_ngram_idx];
-            raw_ngram->weights =
-                (float *) ckd_calloc(order == max_order ? 1 : 2,
-                                     sizeof(*raw_ngram->weights));
-            if (order == max_order) {
-                longest_t *longest = trie->longest;     //access
-                address.base = longest->base.base;
-                address.offset = ptr * longest->base.total_bits;
-                hist[n_hist] =
-                    bitarr_read_int25(address, longest->base.word_bits,
-                                      longest->base.word_mask);
-                address.offset += longest->base.word_bits;
-                prob = lm_trie_quant_lpread(trie->quant, address);
-            }
-            else {
-                middle_t *middle = &trie->middle_begin[n_hist - 1];
-                address.base = middle->base.base;
-                address.offset = ptr * middle->base.total_bits;
-                hist[n_hist] =
-                    bitarr_read_int25(address, middle->base.word_bits,
-                                      middle->base.word_mask);
-                address.offset += middle->base.word_bits;
-                prob =
-                    lm_trie_quant_mpread(trie->quant, address, n_hist - 1);
-                backoff =
-                    lm_trie_quant_mboread(trie->quant, address,
-                                          n_hist - 1);
-                raw_ngram->weights[1] =
-                    (float) logmath_log_float_to_log10(lmath, backoff);
-            }
-            raw_ngram->weights[0] =
-                (float) logmath_log_float_to_log10(lmath, prob);
-            raw_ngram->words =
-                (uint32 *) ckd_calloc(order, sizeof(*raw_ngram->words));
-            for (i = 0; i <= n_hist; i++) {
-                raw_ngram->words[i] = hist[n_hist - i];
-            }
-            (*raw_ngram_idx)++;
-        }
-    }
-}
-
 int
 ngram_model_trie_write_arpa(ngram_model_t * base, const char *path)
 {
@@ -356,9 +261,10 @@ ngram_model_trie_write_arpa(ngram_model_t * base, const char *path)
             uint32 hist[NGRAM_MAX_ORDER];
             node_range_t range;
             raw_ngram_idx = 0;
-            range.begin = range.end = 0;        //initialize to disable warning
+            range.begin = range.end = 0;  
+            //initialize to disable warning
             //we need to iterate over a trie here. recursion should do the job
-            fill_raw_ngram(model->trie, base->lmath, raw_ngrams,
+            lm_trie_fill_raw_ngram(model->trie, raw_ngrams,
                            &raw_ngram_idx, base->n_counts, range, hist, 0,
                            i, base->n);
             assert(raw_ngram_idx == base->n_counts[i - 1]);
@@ -368,14 +274,14 @@ ngram_model_trie_write_arpa(ngram_model_t * base, const char *path)
             fprintf(fp, "\n\\%d-grams:\n", i);
             for (j = 0; j < base->n_counts[i - 1]; j++) {
                 int k;
-                fprintf(fp, "%.4f", raw_ngrams[j].weights[0]);
+                fprintf(fp, "%.4f", logmath_log_float_to_log10(base->lmath, raw_ngrams[j].weights[0]));
                 for (k = 0; k < i; k++) {
                     fprintf(fp, "\t%s",
                             base->word_str[raw_ngrams[j].words[k]]);
                 }
                 ckd_free(raw_ngrams[j].words);
                 if (i < base->n) {
-                    fprintf(fp, "\t%.4f", raw_ngrams[j].weights[1]);
+                    fprintf(fp, "\t%.4f", logmath_log_float_to_log10(base->lmath, raw_ngrams[j].weights[1]));
                 }
                 ckd_free(raw_ngrams[j].weights);
                 fprintf(fp, "\n");
