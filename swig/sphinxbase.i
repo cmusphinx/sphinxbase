@@ -72,7 +72,13 @@ negative error code."
 #endif
 
 %begin %{
-#include <stdbool.h>
+
+#ifndef __cplusplus
+typedef int bool;
+#define true 1
+#define false 0
+#endif
+
 #include <sphinxbase/cmd_ln.h>
 #include <sphinxbase/err.h>
 #include <sphinxbase/fe.h>
