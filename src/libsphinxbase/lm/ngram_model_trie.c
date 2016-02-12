@@ -113,6 +113,8 @@ read_1grams_arpa(lineiter_t ** li, uint32 count, ngram_model_t * base,
 
     n_parts = 2;
     for (i = 0; i < count; i++) {
+        unigram_t *unigram;
+        
         *li = lineiter_next(*li);
         if (*li == NULL) {
             E_ERROR
@@ -125,7 +127,7 @@ read_1grams_arpa(lineiter_t ** li, uint32 count, ngram_model_t * base,
             return -1;
         }
 
-        unigram_t *unigram = &unigrams[i];
+        unigram = &unigrams[i];
         unigram->prob =
             logmath_log10_to_log_float(base->lmath, atof_c(wptr[0]));
         if (unigram->prob > 0) {
@@ -262,15 +264,15 @@ ngram_model_trie_write_arpa(ngram_model_t * base, const char *path)
             node_range_t range;
             raw_ngram_idx = 0;
             range.begin = range.end = 0;  
-            //initialize to disable warning
-            //we need to iterate over a trie here. recursion should do the job
+
+            /* we need to iterate over a trie here. recursion should do the job */
             lm_trie_fill_raw_ngram(model->trie, raw_ngrams,
                            &raw_ngram_idx, base->n_counts, range, hist, 0,
                            i, base->n);
             assert(raw_ngram_idx == base->n_counts[i - 1]);
             qsort(raw_ngrams, (size_t) base->n_counts[i - 1],
                   sizeof(ngram_raw_t), &ngram_ord_comparator);
-            //now we write sorted ngrams to file
+
             fprintf(fp, "\n\\%d-grams:\n", i);
             for (j = 0; j < base->n_counts[i - 1]; j++) {
                 int k;
@@ -583,7 +585,7 @@ ngram_model_trie_free(ngram_model_t * base)
 static int
 trie_apply_weights(ngram_model_t * base, float32 lw, float32 wip)
 {
-    //just update weights that are going to be used on score calculation
+    /* just update weights that are going to be used on score calculation */
     base->lw = lw;
     base->log_wip = logmath_log(base->lmath, wip);
     return 0;
@@ -663,7 +665,7 @@ lm_trie_flush(ngram_model_t * base)
 {
     ngram_model_trie_t *model = (ngram_model_trie_t *) base;
     lm_trie_t *trie = model->trie;
-    memset(trie->hist_cache, -1, sizeof(trie->hist_cache));       //prepare request history
+    memset(trie->hist_cache, -1, sizeof(trie->hist_cache));
     memset(trie->backoff_cache, 0, sizeof(trie->backoff_cache));
     return;
 }

@@ -73,7 +73,7 @@
 #define SLOW_PEAK_LEARN_FACTOR 0.9
 #define SPEECH_VOLUME_RANGE 8.0
 
-//#define VAD_DEBUG 1
+/* define VAD_DEBUG 1 */
 #ifdef VAD_DEBUG
 static FILE *vad_stats;
 static int64 low_snr = 0;
@@ -419,7 +419,7 @@ fe_track_snr(fe_t * fe, int32 *in_speech)
     fe_temp_masking(noise_stats, signal, noise_stats->peak, num_filts);
 
     if (!fe->remove_noise) {
-        //no need for further calculations if noise cancellation disabled
+        /* no need for further calculations if noise cancellation disabled */
         ckd_free(signal);
         return;
     }

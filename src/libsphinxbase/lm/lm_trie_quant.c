@@ -115,7 +115,7 @@ quant_size(int order)
     int bo_bits = 16;
     size_t longest_table = (1U << prob_bits) * sizeof(float);
     size_t middle_table = (1U << bo_bits) * sizeof(float) + longest_table;
-    // unigrams are currently not quantized so no need for a table.  
+    /* unigrams are currently not quantized so no need for a table. */
     return (order - 2) * middle_table + longest_table;
 }
 
@@ -207,7 +207,7 @@ make_bins(float *values, uint32 values_num, float *centers, uint32 bins)
     for (i = 0; i < bins; i++, centers++, start = finish) {
         finish = values + (size_t) ((uint64) values_num * (i + 1) / bins);
         if (finish == start) {
-            // zero length bucket.
+            /* zero length bucket. */
             *centers = i ? *(centers - 1) : -FLOAT_INF;
         }
         else {
@@ -238,7 +238,7 @@ lm_trie_quant_train(lm_trie_quant_t * quant, int order, uint32 counts,
 
     for (backoff_num = 0, prob_num = 0; raw_ngrams != raw_ngrams_end;
          raw_ngrams++) {
-        probs[prob_num++] = raw_ngrams->prob;   //first goes prob
+        probs[prob_num++] = raw_ngrams->prob;
         backoffs[backoff_num++] = raw_ngrams->backoff;
     }
 

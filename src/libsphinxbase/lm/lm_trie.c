@@ -52,10 +52,10 @@ static uint32
 base_size(uint32 entries, uint32 max_vocab, uint8 remaining_bits)
 {
     uint8 total_bits = bitarr_required_bits(max_vocab) + remaining_bits;
-    // Extra entry for next pointer at the end.  
-    // +7 then / 8 to round up bits and convert to bytes
-    // +sizeof(uint64) so that ReadInt57 etc don't go segfault.  
-    // Note that this waste is O(order), not O(number of ngrams).
+    /* Extra entry for next pointer at the end.  
+     * +7 then / 8 to round up bits and convert to bytes
+     * +sizeof(uint64) so that ReadInt57 etc don't go segfault.  
+     * Note that this waste is O(order), not O(number of ngrams).*/
     return ((1 + entries) * total_bits + 7) / 8 + sizeof(uint64);
 }
 
@@ -181,7 +181,7 @@ lm_trie_fix_counts(ngram_raw_t ** raw_ngrams, uint32 * counts,
     uint32 words[NGRAM_MAX_ORDER];
     int i;
 
-    memset(words, -1, sizeof(words));   //since we have unsigned word idx that will give us unreachable maximum word index
+    memset(words, -1, sizeof(words));
     memcpy(fixed_counts, counts, order * sizeof(*fixed_counts));
     for (i = 2; i <= order; i++) {
         ngram_raw_t *tmp_ngram;
@@ -253,8 +253,8 @@ recursive_insert(lm_trie_t * trie, ngram_raw_t ** raw_ngrams,
     uint32 *raw_ngrams_ptr;
     int i;
 
-    words = (uint32 *) ckd_calloc(order, sizeof(*words));       //for blanks catching
-    probs = (float *) ckd_calloc(order - 1, sizeof(*probs));    //for blanks prob generating
+    words = (uint32 *) ckd_calloc(order, sizeof(*words));
+    probs = (float *) ckd_calloc(order - 1, sizeof(*probs));
     ngram = (ngram_raw_t *) ckd_calloc(1, sizeof(*ngram));
     ngram->order = 1;
     ngram->words = &unigram_idx;
@@ -293,15 +293,15 @@ recursive_insert(lm_trie_t * trie, ngram_raw_t ** raw_ngrams,
         else {
             for (i = 0; i < top->order - 1; i++) {
                 if (words[i] != top->words[i]) {
-                    //need to insert dummy suffixes to make ngram of higher order reachable
+                    /* need to insert dummy suffixes to make ngram of higher order reachable */
                     int j;
-                    assert(i > 0);      //unigrams are not pruned without removing ngrams that contains them
+                    assert(i > 0);  /* unigrams are not pruned without removing ngrams that contains them */
                     for (j = i; j < top->order - 1; j++) {
                         middle_t *middle = &trie->middle_begin[j - 1];
                         bitarr_address_t address =
                             middle_insert(middle, top->words[j],
                                           j + 1, order);
-                        //calculate prob for blank
+                        /* calculate prob for blank */
                         float calc_prob =
                             probs[j - 1] +
                             trie->unigrams[top->words[j]].bo;
@@ -325,7 +325,7 @@ recursive_insert(lm_trie_t * trie, ngram_raw_t ** raw_ngrams,
                     middle_insert(middle,
                                   top->words[top->order - 1],
                                   top->order, order);
-                //write prob and backoff
+                /* write prob and backoff */
                 probs[top->order - 1] = top->prob;
                 lm_trie_quant_mwrite(trie->quant, address, top->order - 2,
                                      top->prob, top->backoff);
@@ -355,7 +355,7 @@ lm_trie_init(uint32 unigram_count)
     lm_trie_t *trie;
 
     trie = (lm_trie_t *) ckd_calloc(1, sizeof(*trie));
-    memset(trie->hist_cache, -1, sizeof(trie->hist_cache));       //prepare request history
+    memset(trie->hist_cache, -1, sizeof(trie->hist_cache)); /* prepare request history */
     memset(trie->backoff_cache, 0, sizeof(trie->backoff_cache));
     trie->unigrams =
         (unigram_t *) ckd_calloc((unigram_count + 1),
@@ -444,7 +444,7 @@ lm_trie_alloc_ngram(lm_trie_t * trie, uint32 * counts, int order)
                         counts[0], counts[i]);
     }
     trie->longest = (longest_t *) ckd_calloc(1, sizeof(*trie->longest));
-    // Crazy backwards thing so we initialize using pointers to ones that have already been initialized
+    /* Crazy backwards thing so we initialize using pointers to ones that have already been initialized */
     for (i = order - 1; i >= 2; --i) {
         middle_t *middle_ptr = &trie->middle_begin[i - 2];
         middle_init(middle_ptr, middle_starts[i - 2],
@@ -481,7 +481,7 @@ lm_trie_build(lm_trie_t * trie, ngram_raw_t ** raw_ngrams, uint32 * counts, uint
     E_INFO("Building LM trie\n");
     recursive_insert(trie, raw_ngrams, counts, order);
     /* Set ending offsets so the last entry will be sized properly */
-    // Last entry for unigrams was already set.  
+    /* Last entry for unigrams was already set. */
     if (trie->middle_begin != trie->middle_end) {
         middle_t *middle_ptr;
         for (middle_ptr = trie->middle_begin;
@@ -524,7 +524,7 @@ uniform_find(void *base, uint8 total_bits, uint8 key_bits, uint32 key_mask,
             before_it + (1 +
                          calc_pivot(key - before_v, after_v - before_v,
                                     after_it - before_it - 1));
-        //access by pivot
+        /* access by pivot */
         address.offset = pivot * (uint32) total_bits;
         mid = bitarr_read_int25(address, key_bits, key_mask);
         if (mid < key) {
@@ -549,7 +549,7 @@ middle_find(middle_t * middle, uint32 word, node_range_t * range)
     uint32 at_pointer;
     bitarr_address_t address;
 
-    //finding BitPacked with uniform find
+    /* finding BitPacked with uniform find */
     if (!uniform_find
         ((void *) middle->base.base, middle->base.total_bits,
          middle->base.word_bits, middle->base.word_mask, range->begin - 1,
@@ -581,7 +581,7 @@ longest_find(longest_t * longest, uint32 word, node_range_t * range)
     uint32 at_pointer;
     bitarr_address_t address;
 
-    //finding BitPacked with uniform find
+    /* finding BitPacked with uniform find */
     if (!uniform_find
         ((void *) longest->base.base, longest->base.total_bits,
          longest->base.word_bits, longest->base.word_mask,
@@ -614,7 +614,7 @@ get_available_prob(lm_trie_t * trie, int32 wid, int32 * hist,
         return prob;
     }
 
-    //find ngrams of higher order if any
+    /* find ngrams of higher order if any */
     order_minus_2 = 0;
     independent_left = (node.begin == node.end);
     hist_iter = hist;
@@ -633,7 +633,7 @@ get_available_prob(lm_trie_t * trie, int32 wid, int32 * hist,
         independent_left = (address.base == NULL)
             || (node.begin == node.end);
 
-        //didn't find entry
+        /* didn't find entry */
         if (address.base == NULL)
             return prob;
         prob = lm_trie_quant_mpread(trie->quant, address, order_minus_2);
@@ -825,7 +825,7 @@ lm_trie_fill_raw_ngram(lm_trie_t * trie,
         for (ptr = range.begin; ptr < range.end; ptr++) {
             ngram_raw_t *raw_ngram = &raw_ngrams[*raw_ngram_idx];
             if (order == max_order) {
-                longest_t *longest = trie->longest;     //access
+                longest_t *longest = trie->longest;
                 address.base = longest->base.base;
                 address.offset = ptr * longest->base.total_bits;
                 hist[n_hist] =

@@ -42,7 +42,6 @@
 #include <sphinxbase/pio.h>
 #include <sphinxbase/strfuncs.h>
 #include <sphinxbase/ckd_alloc.h>
-#include <sphinxbase/priority_queue.h>
 #include <sphinxbase/byteorder.h>
 
 #include "ngram_model_internal.h"
@@ -154,7 +153,6 @@ ngrams_raw_read_order(ngram_raw_t ** raw_ngrams, lineiter_t ** li,
                             &((*raw_ngrams)[i]));
     }
 
-    //sort raw ngrams that was read
     qsort(*raw_ngrams, count, sizeof(ngram_raw_t), &ngram_ord_comparator);
 }
 
@@ -206,7 +204,7 @@ read_dmp_weight_array(FILE * fp, logmath_t * lmath, uint8 do_swap,
         tmp_weight_arr[i].f =
             logmath_log10_to_log_float(lmath, tmp_weight_arr[i].f);
     }
-    //replace indexes with real probs in raw bigrams
+    /* replace indexes with real probs in raw bigrams */
     for (i = 0; i < counts; i++) {
 	if (weight_idx == 0) {
 	    raw_ngrams[i].prob =
@@ -225,13 +223,12 @@ ngram_raw_t **
 ngrams_raw_read_dmp(FILE * fp, logmath_t * lmath, uint32 * counts,
                     int order, uint32 * unigram_next, uint8 do_swap)
 {
-    int i;
     uint32 j, ngram_idx;
     uint16 *bigrams_next;
     ngram_raw_t **raw_ngrams =
         (ngram_raw_t **) ckd_calloc(order - 1, sizeof(*raw_ngrams));
 
-    //read bigrams
+    /* read bigrams */
     raw_ngrams[0] =
         (ngram_raw_t *) ckd_calloc((size_t) (counts[1] + 1),
                                    sizeof(*raw_ngrams[0]));
@@ -268,13 +265,13 @@ ngrams_raw_read_dmp(FILE * fp, logmath_t * lmath, uint32 * counts,
         }
 
 	if (j != counts[1]) {
-            raw_ngram->prob = prob_idx + 0.5f; //keep index in float. ugly but avoiding using extra memory
-	    raw_ngram->backoff = bo_idx + 0.5f; //keep index in float. ugly but avoiding using extra memory
+            raw_ngram->prob = prob_idx + 0.5f; /* keep index in float. ugly but avoiding using extra memory */
+	    raw_ngram->backoff = bo_idx + 0.5f;
 	}
     }
     assert(ngram_idx == counts[0]);
 
-    //read trigrams
+    /* read trigrams */
     if (order > 2) {
         raw_ngrams[1] =
             (ngram_raw_t *) ckd_calloc((size_t) counts[2],
@@ -294,20 +291,20 @@ ngrams_raw_read_dmp(FILE * fp, logmath_t * lmath, uint32 * counts,
             raw_ngram->words =
                 (uint32 *) ckd_calloc(3, sizeof(*raw_ngram->words));
             raw_ngram->words[0] = (uint32) wid;
-            raw_ngram->prob = prob_idx + 0.5f;    //keep index in float. ugly but avoiding using extra memory
+            raw_ngram->prob = prob_idx + 0.5f; /* keep index in float. ugly but avoiding using extra memory */
         }
     }
 
-    //read prob2
+    /* read prob2 */
     read_dmp_weight_array(fp, lmath, do_swap, (int32) counts[1],
                           raw_ngrams[0], 0);
-    //read bo2
+    /* read bo2 */
     if (order > 2) {
         int32 k;
         int32 *tseg_base;
         read_dmp_weight_array(fp, lmath, do_swap, (int32) counts[1],
                               raw_ngrams[0], 1);
-        //read prob3
+        /* read prob3 */
         read_dmp_weight_array(fp, lmath, do_swap, (int32) counts[2],
                               raw_ngrams[1], 0);
         /* Read tseg_base size and tseg_base to fill trigram's first words */
@@ -339,12 +336,10 @@ ngrams_raw_read_dmp(FILE * fp, logmath_t * lmath, uint32 * counts,
     }
     ckd_free(bigrams_next);
 
-    //sort raw ngrams for reverse trie
-    i = 2;                      //set order
+    /* sort raw ngrams for reverse trie */
     qsort(raw_ngrams[0], (size_t) counts[1], sizeof(*raw_ngrams[0]),
           &ngram_ord_comparator);
     if (order > 2) {
-        i = 3;                  //set order
         qsort(raw_ngrams[1], (size_t) counts[2], sizeof(*raw_ngrams[1]),
               &ngram_ord_comparator);
     }
