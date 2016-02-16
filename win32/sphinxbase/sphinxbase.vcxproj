@@ -62,7 +62,7 @@
       <Optimization>MaxSpeed</Optimization>
       <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
       <AdditionalIncludeDirectories>../../include/win32;../../include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>NDEBUG;_USRDLL;SPHINX_DLL;SPHINXBASE_EXPORTS;HAVE_CONFIG_H;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_USRDLL;SPHINXBASE_EXPORTS;HAVE_CONFIG_H;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeaderOutputFile>.\$(Configuration)\$(Platform)/sphinxbase.pch</PrecompiledHeaderOutputFile>
@@ -102,7 +102,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>../../include/win32;../../include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_DEBUG;_USRDLL;SPHINX_DLL;SPHINXBASE_EXPORTS;HAVE_CONFIG_H;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_USRDLL;SPHINXBASE_EXPORTS;HAVE_CONFIG_H;_CRT_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
@@ -137,6 +137,7 @@
     <ClCompile Include="..\..\src\libsphinxbase\feat\agc.c" />
     <ClCompile Include="..\..\src\libsphinxbase\feat\cmn.c" />
     <ClCompile Include="..\..\src\libsphinxbase\feat\cmn_prior.c" />
+    <ClCompile Include="..\..\src\libsphinxbase\feat\cmn_adapt.c" />
     <ClCompile Include="..\..\src\libsphinxbase\feat\feat.c" />
     <ClCompile Include="..\..\src\libsphinxbase\feat\lda.c" />
     <ClCompile Include="..\..\src\libsphinxbase\fe\fe_interface.c" />
@@ -174,6 +175,7 @@
     <ClCompile Include="..\..\src\libsphinxbase\util\glist.c" />
     <ClCompile Include="..\..\src\libsphinxbase\util\hash_table.c" />
     <ClCompile Include="..\..\src\libsphinxbase\util\heap.c" />
+    <ClCompile Include="..\..\src\libsphinxbase\util\huff_code.c" />
     <ClCompile Include="..\..\src\libsphinxbase\util\listelem_alloc.c" />
     <ClCompile Include="..\..\src\libsphinxbase\util\logmath.c" />
     <ClCompile Include="..\..\src\libsphinxbase\util\matrix.c" />
@@ -209,11 +211,13 @@
     <ClInclude Include="..\..\include\sphinxbase\glist.h" />
     <ClInclude Include="..\..\include\sphinxbase\hash_table.h" />
     <ClInclude Include="..\..\include\sphinxbase\heap.h" />
+    <ClInclude Include="..\..\include\sphinxbase\huff_code.h" />
     <ClInclude Include="..\..\include\sphinxbase\jsgf.h" />
     <ClInclude Include="..\..\include\sphinxbase\logmath.h" />
     <ClInclude Include="..\..\include\sphinxbase\listelem_alloc.h" />
     <ClInclude Include="..\..\include\sphinxbase\matrix.h" />
     <ClInclude Include="..\..\include\sphinxbase\mmio.h" />
+    <ClInclude Include="..\..\include\sphinxbase\mulaw.h" />
     <ClInclude Include="..\..\include\sphinxbase\ngram_model.h" />
     <ClInclude Include="..\..\include\sphinxbase\pio.h" />
     <ClInclude Include="..\..\include\sphinxbase\prim_type.h" />

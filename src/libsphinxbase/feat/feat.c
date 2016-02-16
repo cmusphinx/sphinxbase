@@ -918,7 +918,7 @@ feat_cmn(feat_t *fcb, mfcc_t **mfc, int32 nfr, int32 beginutt, int32 endutt)
     cmn_type_t cmn_type = fcb->cmn;
 
     if (!(beginutt && endutt)
-        && cmn_type != CMN_NONE) /* Only cmn_prior in block computation mode. */
+        && cmn_type != CMN_NONE && cmn_type != CMN_ADAPT ) /* Only cmn_prior in block computation mode. */
         fcb->cmn = cmn_type = CMN_PRIOR;
 
     switch (cmn_type) {
@@ -929,6 +929,8 @@ feat_cmn(feat_t *fcb, mfcc_t **mfc, int32 nfr, int32 beginutt, int32 endutt)
         cmn_prior(fcb->cmn_struct, mfc, fcb->varnorm, nfr);
         if (endutt)
             cmn_prior_update(fcb->cmn_struct);
+    case CMN_ADAPT:
+        cmn_adapt(fcb->cmn_struct, mfc, fcb->varnorm, nfr);
         break;
     default:
         ;
