@@ -28,16 +28,30 @@ cmn_adapt(cmn_t *cmn, mfcc_t **incep, int32 varnorm, int32 nfr) {
             if ( abs(incep[i][j]) > cep_cur[j] )
                 cep_cur[j] = abs(incep[i][j]);
 
-        mfcc_t u_prob = ( cep_cur[j] / cmn->max[j] ) * 0.1f;
-        if ( u_prob < 0.0f )
-            u_prob = 0.0f;
-        if ( u_prob > 0.1f )
-            u_prob = 0.1f;
+        if ( cep_cur[j] == 0.0f )
+            cep_cur[j] = 0.0001f;
 
-        cmn->max[j] = cep_cur[j] * u_prob + cmn->max[j] * (1.0f-u_prob);
+        if ( cmn->max[j] == 0.0f )
+            cmn->max[j] = cep_cur[j] * 1.1f;
+
+        if ( cep_cur[j] > cmn->max[j] * 2.0f ) {
+
+            cmn->max[j] = cep_cur[j] * 1.1f;
+
+        } else {
+
+            mfcc_t u_prob = ( cep_cur[j] / cmn->max[j] ) * 0.1f;
+
+            if ( u_prob > 0.1f )
+                u_prob = 0.1f;
+
+            cmn->max[j] = cep_cur[j] * u_prob + cmn->max[j] * (1.0f-u_prob);
+        }
+
     }
 
     mfcc_t prob0 = ( cep_cur[0] / cmn->max[0] ) * 0.01f;
+
     if ( prob0 > 0.01 )
         prob0 = 0.01f;
 
