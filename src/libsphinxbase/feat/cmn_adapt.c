@@ -60,7 +60,13 @@ cmn_adapt(cmn_t *cmn, mfcc_t **incep, int32 varnorm, int32 nfr) {
         if ( cep_cur[0] > cmn->max[0] )
             cmn->max[0] = cep_cur[0] * prob0 + cmn->max[0] * (1.0f-prob0);
 
-        mfcc_t e_prob = incep[i][0] / cmn->max[0] * 0.001f;
+        mfcc_t e_prob;
+
+        if ( incep[i][0] <= 0.0f ) {
+            e_prob = 0.0f;
+        } else {
+            e_prob = incep[i][0] / cmn->max[0] * 0.001f;
+        }
 
         for (j = 0; j < cmn->veclen; j++) {
             cmn->sum[j] += incep[i][j];                         // save compatibility with prior method, you can to remove it
