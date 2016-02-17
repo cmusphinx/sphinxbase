@@ -129,6 +129,7 @@ cmn_type_t cmn_type_from_str(const char *str);
 typedef struct {
     mfcc_t *cmn_mean;   /**< Temporary variable: current means */
     mfcc_t *max;        /**< Temporary variable: current maximums */
+    mfcc_t *cur;        /**< Temporary variable: local maximums */
     mfcc_t *cmn_var;    /**< Temporary variables: stored the cmn variance */
     mfcc_t *sum;        /**< The sum of the cmn frames */
     int32 nframe;	/**< Number of frames */

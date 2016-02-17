@@ -138,6 +138,7 @@ cmn_init(int32 veclen)
     cmn->cmn_var = (mfcc_t *) ckd_calloc(veclen, sizeof(mfcc_t));
     cmn->sum = (mfcc_t *) ckd_calloc(veclen, sizeof(mfcc_t));
     cmn->max = (mfcc_t *) ckd_calloc(veclen, sizeof(mfcc_t));
+    cmn->cur = (mfcc_t *) ckd_calloc(veclen, sizeof(mfcc_t));
     /* A front-end dependent magic number */
     cmn->cmn_mean[0] = FLOAT2MFCC(12.0);
     cmn->max[0] = FLOAT2MFCC(24.0);
@@ -238,6 +239,9 @@ cmn_free(cmn_t * cmn)
 
         if (cmn->max)
             ckd_free((void *) cmn->max);
+
+        if (cmn->cur)
+            ckd_free((void *) cmn->cur);
 
         ckd_free((void *) cmn);
     }
