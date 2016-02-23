@@ -13,7 +13,7 @@
 /* #undef FIXED_POINT */
 
 /* Enable matrix algebra with LAPACK */
-/* #undef WITH_LAPACK */
+#define WITH_LAPACK 1
 
 /* The size of `long', as computed by sizeof. */
 #define SIZEOF_LONG 4
