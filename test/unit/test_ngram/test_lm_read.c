@@ -69,6 +69,10 @@ main(int argc, char *argv[])
 	model = ngram_model_read(NULL, LMDIR "/105.lm.gz", NGRAM_ARPA, lmath);
 	TEST_EQUAL(NULL, model);
 
+	/* Read corrupted language model, error expected */
+	model = ngram_model_read(NULL, LMDIR "/106.lm.gz", NGRAM_ARPA, lmath);
+	TEST_EQUAL(NULL, model);
+
 	/* Read a language model */
 	model = ngram_model_read(NULL, LMDIR "/100.lm.bz2", NGRAM_ARPA, lmath);
 	test_lm_vals(model);

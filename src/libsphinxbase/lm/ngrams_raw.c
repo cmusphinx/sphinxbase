@@ -68,7 +68,7 @@ ngram_ord_comparator(const void *a_raw, const void *b_raw)
     return a->order - b->order;
 }
 
-static void
+static int
 read_ngram_instance(lineiter_t ** li, hash_table_t * wid,
                     logmath_t * lmath, int order, int order_max,
                     ngram_raw_t * raw_ngram)
@@ -79,18 +79,19 @@ read_ngram_instance(lineiter_t ** li, hash_table_t * wid,
     char *wptr[NGRAM_MAX_ORDER + 1];
     uint32 *word_out;
 
-    *li = lineiter_next(*li);
+    if (*li) 
+        *li = lineiter_next(*li);
     if (*li == NULL) {
         E_ERROR("Unexpected end of ARPA file. Failed to read %d-gram\n",
                 order);
-        return;
+        return -1;
     }
     words_expected = order + 1;
     if ((n =
          str2words((*li)->buf, wptr,
                    NGRAM_MAX_ORDER + 1)) < words_expected) {
         E_ERROR("Format error; %d-gram ignored: %s\n", order, (*li)->buf);
-        return;
+        return -1;
     }
 
     raw_ngram->order = order;
@@ -132,9 +133,10 @@ read_ngram_instance(lineiter_t ** li, hash_table_t * wid,
          word_out >= raw_ngram->words; --word_out, i++) {
         hash_table_lookup_int32(wid, wptr[i], (int32 *) word_out);
     }
+    return 0;
 }
 
-static void
+static int
 ngrams_raw_read_order(ngram_raw_t ** raw_ngrams, lineiter_t ** li,
                       hash_table_t * wid, logmath_t * lmath, uint32 count,
                       int order, int order_max)
@@ -147,13 +149,20 @@ ngrams_raw_read_order(ngram_raw_t ** raw_ngrams, lineiter_t ** li,
 	*li = lineiter_next(*li);
     }
     
+    if (*li == NULL) {
+	E_ERROR("Failed to find '%s', language model file truncated\n", expected_header);
+	return -1;
+    }
+    
     *raw_ngrams = (ngram_raw_t *) ckd_calloc(count, sizeof(ngram_raw_t));
     for (i = 0; i < count; i++) {
-        read_ngram_instance(li, wid, lmath, order, order_max,
-                            &((*raw_ngrams)[i]));
+        if (read_ngram_instance(li, wid, lmath, order, order_max,
+                            &((*raw_ngrams)[i])) < 0)
+            break;
     }
 
     qsort(*raw_ngrams, count, sizeof(ngram_raw_t), &ngram_ord_comparator);
+    return 0;
 }
 
 ngram_raw_t **
@@ -165,19 +174,25 @@ ngrams_raw_read_arpa(lineiter_t ** li, logmath_t * lmath, uint32 * counts,
 
     raw_ngrams =
         (ngram_raw_t **) ckd_calloc(order - 1, sizeof(*raw_ngrams));
+
     for (order_it = 2; order_it <= order; order_it++) {
-        ngrams_raw_read_order(&raw_ngrams[order_it - 2], li, wid, lmath,
-                              counts[order_it - 1], order_it, order);
+        if (ngrams_raw_read_order(&raw_ngrams[order_it - 2], li, wid, lmath,
+                              counts[order_it - 1], order_it, order) < 0)
+        break;
     }
 
     /* Check if we found ARPA end-mark */
-    *li = lineiter_next(*li);
-    if (*li == NULL)
-        E_WARN("ARPA file ends without end-mark\n");
-    if (strcmp((*li)->buf, "\\end\\") != 0) {
-        E_WARN
-            ("Finished reading ARPA file. Expecting end mark but found '%s'\n",
-             (*li)->buf);
+    if (*li == NULL) {
+        E_ERROR("ARPA file ends without end-mark\n");
+	ngrams_raw_free(raw_ngrams, counts, order);
+        return NULL;
+    } else {
+        *li = lineiter_next(*li);
+	if (strcmp((*li)->buf, "\\end\\") != 0) {
+    	    E_WARN
+        	("Finished reading ARPA file. Expecting end mark but found '%s'\n",
+        	 (*li)->buf);
+        }
     }
 
     return raw_ngrams;

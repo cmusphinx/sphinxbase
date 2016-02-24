@@ -211,6 +211,12 @@ ngram_model_trie_read_arpa(cmd_ln_t * config,
         raw_ngrams =
             ngrams_raw_read_arpa(&li, base->lmath, counts, order,
                                  base->wid);
+        if (raw_ngrams == NULL) {
+            ngram_model_free(base);
+            lineiter_free(li);
+            fclose_comp(fp, is_pipe);
+            return NULL;
+        }
         lm_trie_build(model->trie, raw_ngrams, counts, base->n_counts, order);
         ngrams_raw_free(raw_ngrams, counts, order);
     }
@@ -435,7 +441,7 @@ ngram_model_trie_read_dmp(cmd_ln_t * config,
     ngram_model_t *base;
     ngram_raw_t **raw_ngrams;
 
-    E_INFO("Trying to read LM in DMP format\n");
+    E_INFO("Trying to read LM in dmp format\n");
     if ((fp = fopen_comp(file_name, "rb", &is_pipe)) == NULL) {
         E_ERROR("Dump file %s not found\n", file_name);
         return NULL;
