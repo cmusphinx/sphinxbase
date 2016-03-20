@@ -37,6 +37,7 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include <sphinxbase/prim_type.h>
 #include <sphinxbase/ckd_alloc.h>

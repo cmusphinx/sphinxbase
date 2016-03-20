@@ -39,14 +39,9 @@
  * bitarr.c -- Bit array manipulations implementation.
  */
 
-#ifdef __APPLE__
-#include <architecture/byte_order.h>
-#elif __linux__
-#include <endian.h>
-#elif !defined(_WIN32) && !defined(_WIN64)
-#include <arpa/nameser_compat.h>
-#endif 
-
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 #include "sphinxbase/bitarr.h"
 
 #define SIGN_BIT (0x80000000)
@@ -60,12 +55,10 @@
  */
 static uint8 get_shift(uint8 bit, uint8 length)
 {
-#if BYTE_ORDER == LITTLE_ENDIAN
-    return bit;
-#elif BYTE_ORDER == BIG_ENDIAN
+#ifdef WORDS_BIGENDIAN
     return 64 - length - bit;
 #else
-#error "Bit packing code isn't written for your byte order."
+    return bit;
 #endif
 }
 

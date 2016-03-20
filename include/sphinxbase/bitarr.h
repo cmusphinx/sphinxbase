@@ -38,7 +38,6 @@
 #ifndef _LIBUTIL_BITARR_H_
 #define _LIBUTIL_BITARR_H_
 
-#include <assert.h>
 #include <string.h>
 
 #include <sphinxbase/prim_type.h>
@@ -66,7 +65,7 @@ extern "C" {
 typedef struct bitarr_mask_s {
     uint8 bits;
     uint32 mask;
-}bitarr_mask_t;
+} bitarr_mask_t;
 
 /**
  * Structure that stores address of certain value in bit array
@@ -74,7 +73,7 @@ typedef struct bitarr_mask_s {
 typedef struct bitarr_address_s {
     void *base;
     uint32 offset;
-}bitarr_address_t;
+} bitarr_address_t;
 
 /**
  * Read uint64 value from bit array. 
@@ -85,8 +84,7 @@ typedef struct bitarr_address_s {
  * @return uint64 value that was read
  */
 SPHINXBASE_EXPORT
-uint64
-bitarr_read_int57(bitarr_address_t address, uint8 length, uint64 mask);
+uint64 bitarr_read_int57(bitarr_address_t address, uint8 length, uint64 mask);
 
 /**
  * Write specified value into bit array.
@@ -97,8 +95,7 @@ bitarr_read_int57(bitarr_address_t address, uint8 length, uint64 mask);
  * @param value integer to write
  */
 SPHINXBASE_EXPORT
-void 
-bitarr_write_int57(bitarr_address_t address, uint8 length, uint64 value);
+void bitarr_write_int57(bitarr_address_t address, uint8 length, uint64 value);
 
 /**
  * Read uint32 value from bit array. 
@@ -109,8 +106,7 @@ bitarr_write_int57(bitarr_address_t address, uint8 length, uint64 value);
  * @return uint32 value that was read
  */
 SPHINXBASE_EXPORT
-uint32 
-bitarr_read_int25(bitarr_address_t address, uint8 length, uint32 mask);
+uint32 bitarr_read_int25(bitarr_address_t address, uint8 length, uint32 mask);
 
 /**
  * Write specified value into bit array.
@@ -121,8 +117,7 @@ bitarr_read_int25(bitarr_address_t address, uint8 length, uint32 mask);
  * @param value integer to write
  */
 SPHINXBASE_EXPORT
-void 
-bitarr_write_int25(bitarr_address_t address, uint8 length, uint32 value);
+void bitarr_write_int25(bitarr_address_t address, uint8 length, uint32 value);
 
 /**
  * Fills mask for certain int range according to provided max value
@@ -130,8 +125,7 @@ bitarr_write_int25(bitarr_address_t address, uint8 length, uint32 value);
  * @param max_value bigest integer that is going to be stored using this mask
  */
 SPHINXBASE_EXPORT
-void
-bitarr_mask_from_max(bitarr_mask_t *bit_mask, uint32 max_value);
+void bitarr_mask_from_max(bitarr_mask_t *bit_mask, uint32 max_value);
 
 /**
  * Computes amount of bits required ti store integers upto value provided.
@@ -139,8 +133,7 @@ bitarr_mask_from_max(bitarr_mask_t *bit_mask, uint32 max_value);
  * @return amount of bits required to store integers from range with maximum provided
  */
 SPHINXBASE_EXPORT
-uint8
-bitarr_required_bits(uint32 max_value);
+uint8 bitarr_required_bits(uint32 max_value);
 
 #ifdef __cplusplus
 }

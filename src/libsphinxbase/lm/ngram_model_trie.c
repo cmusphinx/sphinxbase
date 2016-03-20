@@ -36,6 +36,7 @@
  */
 
 #include <string.h>
+#include <assert.h>
 
 #include <sphinxbase/err.h>
 #include <sphinxbase/pio.h>
