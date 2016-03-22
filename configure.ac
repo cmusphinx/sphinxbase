@@ -127,25 +127,25 @@ dnl
 dnl determine audio type or use none if none supported on this platform
 dnl
 case $host in
-	*-*-linux*|*-*-uclinux*|*-*-freebsd*|*-*-netbsd*|*-*-openbsd*)
-		# Check for PulseAudio, JACK, then fallback ALSA, then fall back to OSS
+	*-*-linux*|*-*-uclinux*|*-*-freebsd*)
+		# Check for PulseAudio, then fallback ALSA, then fall back to OSS
 		AC_CHECK_HEADER(pulse/pulseaudio.h,[
 			ad_files="ad_pulse.lo"
 			AC_CHECK_LIB(pulse-simple, pa_simple_new)
 			AC_CHECK_LIB(pulse, pa_strerror)
                         ],[
-                AC_CHECK_HEADER(jack/jack.h,[
-                        ad_files="ad_jack.lo"
-                        AC_CHECK_LIB(jack, jack_connect)],[
 		AC_CHECK_HEADER(alsa/asoundlib.h,[
 			ad_files="ad_alsa.lo"
 			ad_backend="AD_BACKEND_ALSA"
 			AC_CHECK_LIB(asound, snd_pcm_open)],[
 			ad_files="ad_oss.lo"
 			])
-		])
                 ])
 		;;
+	*-*-netbsd*|*-*-openbsd*)
+		ad_files="ad_oss.lo"
+		ad_libs="-lossaudio"
+	        ;;
 	*-*-*cygwin*|*-*-*mingw*)
 		ad_files="ad_win32.lo"
 		ad_libs="-lwinmm"
