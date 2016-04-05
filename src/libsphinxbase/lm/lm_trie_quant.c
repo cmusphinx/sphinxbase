@@ -164,8 +164,8 @@ lm_trie_quant_read_bin(FILE * fp, int order)
 void
 lm_trie_quant_write_bin(lm_trie_quant_t * quant, FILE * fp)
 {
-    int dummy = 0;
-
+    /* Before it was quantization type */
+    int dummy = 1;
     fwrite(&dummy, sizeof(dummy), 1, fp);
     fwrite(quant->mem, sizeof(*quant->mem), quant->mem_size, fp);
 }
