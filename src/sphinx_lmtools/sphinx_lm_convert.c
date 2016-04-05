@@ -138,8 +138,7 @@ main(int argc, char *argv[])
 	if (cmd_ln_str_r(config, "-i") == NULL || cmd_ln_str_r(config, "-i") == NULL) {
             E_ERROR("Please specify both input and output models\n");
             goto error_out;
-        }
-	    
+        }	    
 	
 	/* Load the input language model. */
         if (cmd_ln_str_r(config, "-ifmt")) {
@@ -157,7 +156,8 @@ main(int argc, char *argv[])
 	}
 
 	if (lm == NULL) {
-	    E_FATAL("Failed to read the model from the file '%s'\n", cmd_ln_str_r(config, "-i"));
+	    E_ERROR("Failed to read the model from the file '%s'\n", cmd_ln_str_r(config, "-i"));
+	    goto error_out;
 	}
 
         /* Guess or set the output language model type. */

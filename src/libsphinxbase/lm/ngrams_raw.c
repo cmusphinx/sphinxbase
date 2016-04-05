@@ -36,7 +36,6 @@
  */
 
 #include <string.h>
-#include <assert.h>
 
 #include <sphinxbase/err.h>
 #include <sphinxbase/pio.h>
@@ -284,7 +283,13 @@ ngrams_raw_read_dmp(FILE * fp, logmath_t * lmath, uint32 * counts,
 	    raw_ngram->backoff = bo_idx + 0.5f;
 	}
     }
-    assert(ngram_idx == counts[0]);
+
+    if (ngram_idx < counts[0]) {
+        E_ERROR("Corrupted model, not enough unigrams %d %d\n", ngram_idx, counts[0]);
+        ckd_free(bigrams_next);
+        ngrams_raw_free(raw_ngrams, counts, order);
+        return NULL;
+    }
 
     /* read trigrams */
     if (order > 2) {
@@ -347,7 +352,13 @@ ngrams_raw_read_dmp(FILE * fp, logmath_t * lmath, uint32 * counts,
             }
         }
         ckd_free(tseg_base);
-        assert(ngram_idx == counts[2]);
+        
+        if (ngram_idx < counts[2]) {
+      	    E_ERROR("Corrupted model, some trigrams have no corresponding bigram\n");
+    	    ckd_free(bigrams_next);
+    	    ngrams_raw_free(raw_ngrams, counts, order);
+    	    return NULL;
+        }
     }
     ckd_free(bigrams_next);
 

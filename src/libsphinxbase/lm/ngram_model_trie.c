@@ -568,6 +568,12 @@ ngram_model_trie_read_dmp(cmd_ln_t * config,
         raw_ngrams =
             ngrams_raw_read_dmp(fp, lmath, counts, order, unigram_next,
                                 do_swap);
+        if (raw_ngrams == NULL) {
+            ngram_model_free(base);
+            ckd_free(unigram_next);
+            fclose_comp(fp, is_pipe);
+            return NULL;
+        }
         lm_trie_build(model->trie, raw_ngrams, counts, base->n_counts, order);        
         ngrams_raw_free(raw_ngrams, counts, order);
     }
