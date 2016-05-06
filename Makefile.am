@@ -1,6 +1,7 @@
 SUBDIRS = src doc include test swig
 
 EXTRA_DIST = \
+	LICENSE \
 	autogen.sh \
 	m4/ax_pkg_swig.m4 \
 	m4/pkg.m4 \
