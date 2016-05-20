@@ -471,6 +471,8 @@ fe_process_frames_ext(fe_t *fe,
             memcpy(fe->overflow_samps + fe->num_overflow_samps,
                    *inout_spch, *inout_nsamps * (sizeof(int16)));
             fe->num_overflow_samps += *inout_nsamps;
+            /* Update global sample counter with number of samples */
+            fe->sample_counter += *inout_nsamps;
             /* Update input-output pointers and counters. */
             *inout_spch += *inout_nsamps;
             *inout_nsamps = 0;
