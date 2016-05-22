@@ -118,7 +118,6 @@ struct fe_s {
     cmd_ln_t *config;
     int refcount;
 
-
     float32 sampling_rate;
     int16 frame_rate;
     int16 frame_shift;
@@ -139,11 +138,11 @@ struct fe_s {
     uint8 remove_silence;
 
     float32 pre_emphasis_alpha;
-    int32 seed;
+    int16 pre_emphasis_prior;
+    int32 dither_seed;
 
-    size_t sample_counter;
-    uint8 start_flag;
-    uint8 reserved;
+    int16 num_overflow_samps;    
+    size_t num_processed_samps;
 
     /* Twiddle factors for FFT. */
     frame_t *ccc, *sss;
@@ -168,8 +167,6 @@ struct fe_s {
     frame_t *frame;
     powspec_t *spec, *mfspec;
     int16 *overflow_samps;
-    int16 num_overflow_samps;    
-    int16 prior;
 };
 
 void fe_init_dither(int32 seed);

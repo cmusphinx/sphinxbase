@@ -799,11 +799,11 @@ fe_spch_to_frame(fe_t * fe, int len)
     /* Copy to the frame buffer. */
     if (fe->pre_emphasis_alpha != 0.0) {
         fe_pre_emphasis(fe->spch, fe->frame, len,
-                        fe->pre_emphasis_alpha, fe->prior);
+                        fe->pre_emphasis_alpha, fe->pre_emphasis_prior);
         if (len >= fe->frame_shift)
-            fe->prior = fe->spch[fe->frame_shift - 1];
+            fe->pre_emphasis_prior = fe->spch[fe->frame_shift - 1];
         else
-            fe->prior = fe->spch[len - 1];
+            fe->pre_emphasis_prior = fe->spch[len - 1];
     }
     else
         fe_short_to_frame(fe->spch, fe->frame, len);

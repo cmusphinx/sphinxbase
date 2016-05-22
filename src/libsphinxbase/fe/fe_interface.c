@@ -78,7 +78,7 @@ fe_parse_general_params(cmd_ln_t *config, fe_t * fe)
     fe->frame_rate = (int16)frate;
     if (cmd_ln_boolean_r(config, "-dither")) {
         fe->dither = 1;
-        fe->seed = cmd_ln_int32_r(config, "-seed");
+        fe->dither_seed = cmd_ln_int32_r(config, "-seed");
     }
 #ifdef WORDS_BIGENDIAN
     fe->swap = strcmp("big", cmd_ln_str_r(config, "-input_endian")) == 0 ? 0 : 1;
@@ -181,12 +181,11 @@ fe_print_current(fe_t const *fe)
            fe->mel_fb->upper_filt_freq);
     E_INFO("\tNumber of filters:         %d\n", fe->mel_fb->num_filters);
     E_INFO("\tNumber of Overflow Samps:  %d\n", fe->num_overflow_samps);
-    E_INFO("\tStart Utt Status:          %d\n", fe->start_flag);
     E_INFO("Will %sremove DC offset at frame level\n",
            fe->remove_dc ? "" : "not ");
     if (fe->dither) {
         E_INFO("Will add dither to audio\n");
-        E_INFO("Dither seeded with %d\n", fe->seed);
+        E_INFO("Dither seeded with %d\n", fe->dither_seed);
     }
     else {
         E_INFO("Will not add dither to audio\n");
@@ -230,7 +229,7 @@ fe_init_auto_r(cmd_ln_t *config)
      */
     fe->frame_shift = (int32) (fe->sampling_rate / fe->frame_rate + 0.5);
     fe->frame_size = (int32) (fe->window_length * fe->sampling_rate + 0.5);
-    fe->prior = 0;
+    fe->pre_emphasis_prior = 0;
     
     fe_start_stream(fe);
 
@@ -254,7 +253,7 @@ fe_init_auto_r(cmd_ln_t *config)
     }
 
     if (fe->dither)
-        fe_init_dither(fe->seed);
+        fe_init_dither(fe->dither_seed);
 
     /* establish buffers for overflow samps and hamming window */
     fe->overflow_samps = ckd_calloc(fe->frame_size, sizeof(int16));
@@ -340,8 +339,7 @@ fe_start_utt(fe_t * fe)
 {
     fe->num_overflow_samps = 0;
     memset(fe->overflow_samps, 0, fe->frame_size * sizeof(int16));
-    fe->start_flag = 1;
-    fe->prior = 0;
+    fe->pre_emphasis_prior = 0;
     fe_reset_vad_data(fe->vad_data);
     return 0;
 }
@@ -349,7 +347,7 @@ fe_start_utt(fe_t * fe)
 void 
 fe_start_stream(fe_t *fe)
 {
-    fe->sample_counter = 0;
+    fe->num_processed_samps = 0;
     fe_reset_noisestats(fe->noise_stats);
 }
 
@@ -415,7 +413,7 @@ fe_check_prespeech(fe_t *fe, int32 *inout_nframes, mfcc_t **buf_cep, int outidx,
 
             /* Sets the start frame for the returned data so that caller can update timings */
 	    if (out_frameidx) {
-    	        *out_frameidx = (fe->sample_counter + orig_nsamps - *inout_nsamps) / fe->frame_shift - fe->pre_speech;
+    	        *out_frameidx = (fe->num_processed_samps + orig_nsamps - *inout_nsamps) / fe->frame_shift - fe->pre_speech;
     	    }
     	} else {
 	    outidx++;
@@ -471,7 +469,7 @@ fe_process_frames_ext(fe_t *fe,
             memcpy(fe->overflow_samps + fe->num_overflow_samps,
                    *inout_spch, *inout_nsamps * (sizeof(int16)));
             fe->num_overflow_samps += *inout_nsamps;
-            /* Update input-output pointers and counters. */
+	    fe->num_processed_samps += *inout_nsamps;
             *inout_spch += *inout_nsamps;
             *inout_nsamps = 0;
         }
@@ -577,9 +575,9 @@ fe_process_frames_ext(fe_t *fe,
     }
 
     /* Finally update the frame counter with the number of frames
-     * and global sample counter with number of samples we procesed*/
+     * and global sample counter with number of samples we procesed */
     *inout_nframes = outidx; /* FIXME: Not sure why I wrote it this way... */
-    fe->sample_counter += orig_nsamps - *inout_nsamps;
+    fe->num_processed_samps += orig_nsamps - *inout_nsamps;
 
     return 0;
 }
@@ -620,7 +618,6 @@ fe_end_utt(fe_t * fe, mfcc_t * cepvector, int32 * nframes)
 
     /* reset overflow buffers... */
     fe->num_overflow_samps = 0;
-    fe->start_flag = 0;
 
     return 0;
 }
