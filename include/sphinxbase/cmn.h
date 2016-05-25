@@ -110,7 +110,8 @@ extern "C" {
 typedef enum cmn_type_e {
     CMN_NONE = 0,
     CMN_CURRENT,
-    CMN_PRIOR
+    CMN_PRIOR,
+    CMN_ADAPT
 } cmn_type_t;
 
 /** String representations of cmn_type_t values. */
@@ -127,6 +128,8 @@ cmn_type_t cmn_type_from_str(const char *str);
 
 typedef struct {
     mfcc_t *cmn_mean;   /**< Temporary variable: current means */
+    mfcc_t *max;        /**< Temporary variable: current maximums */
+    mfcc_t *cur;        /**< Temporary variable: local maximums */
     mfcc_t *cmn_var;    /**< Temporary variables: stored the cmn variance */
     mfcc_t *sum;        /**< The sum of the cmn frames */
     int32 nframe;	/**< Number of frames */
@@ -183,6 +186,18 @@ void cmn_prior_get(cmn_t *cmn, mfcc_t *vec);
 /* RAH, free previously allocated memory */
 SPHINXBASE_EXPORT
 void cmn_free (cmn_t *cmn);
+
+/**
+ * CMN for one block of data, using adapted mean
+ */
+SPHINXBASE_EXPORT
+void cmn_adapt(cmn_t *cmn,       /**< In/Out: cmn normalization, which contains
+                                    the cmn_mean and cmn_var) */
+               mfcc_t **incep,   /**< In/Out: mfc[f] = mfc vector in frame f*/
+	       int32 varnorm,    /**< varnorm is supported */
+	       int32 nfr         /**< Number of incoming frames */
+    );
+
 
 #ifdef __cplusplus
 }

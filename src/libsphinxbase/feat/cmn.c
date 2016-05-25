@@ -110,7 +110,8 @@
 const char *cmn_type_str[] = {
     "none",
     "current",
-    "prior"
+    "prior",
+    "adapt"
 };
 static const int n_cmn_type_str = sizeof(cmn_type_str)/sizeof(cmn_type_str[0]);
 
@@ -136,8 +137,11 @@ cmn_init(int32 veclen)
     cmn->cmn_mean = (mfcc_t *) ckd_calloc(veclen, sizeof(mfcc_t));
     cmn->cmn_var = (mfcc_t *) ckd_calloc(veclen, sizeof(mfcc_t));
     cmn->sum = (mfcc_t *) ckd_calloc(veclen, sizeof(mfcc_t));
+    cmn->max = (mfcc_t *) ckd_calloc(veclen, sizeof(mfcc_t));
+    cmn->cur = (mfcc_t *) ckd_calloc(veclen, sizeof(mfcc_t));
     /* A front-end dependent magic number */
     cmn->cmn_mean[0] = FLOAT2MFCC(12.0);
+    cmn->max[0] = FLOAT2MFCC(24.0);
     cmn->nframe = 0;
     E_INFO("mean[0]= %.2f, mean[1..%d]= 0.0\n",
            MFCC2FLOAT(cmn->cmn_mean[0]), veclen - 1);
@@ -232,6 +236,12 @@ cmn_free(cmn_t * cmn)
 
         if (cmn->sum)
             ckd_free((void *) cmn->sum);
+
+        if (cmn->max)
+            ckd_free((void *) cmn->max);
+
+        if (cmn->cur)
+            ckd_free((void *) cmn->cur);
 
         ckd_free((void *) cmn);
     }

@@ -77,15 +77,15 @@ extern "C" {
 { "-cmn",                                                               \
       ARG_STRING,                                                       \
       "current",                                                        \
-      "Cepstral mean normalization scheme ('current', 'prior', or 'none')" }, \
+      "Cepstral mean normalization scheme ('current', 'prior', 'adapt' or 'none')" }, \
 { "-cmninit",                                                           \
       ARG_STRING,                                                       \
       "8.0",                                                            \
-      "Initial values (comma-separated) for cepstral mean when 'prior' is used" }, \
+      "Initial values (comma-separated) for cepstral mean when 'prior' or 'adapt' is used" }, \
 { "-varnorm",                                                           \
       ARG_BOOLEAN,                                                      \
       "no",                                                             \
-      "Variance normalize each utterance (only if CMN == current)" },   \
+      "Variance normalize each utterance (only if CMN == 'current' or 'adapt')" },   \
 { "-agc",                                                               \
       ARG_STRING,                                                       \
       "none",                                                           \

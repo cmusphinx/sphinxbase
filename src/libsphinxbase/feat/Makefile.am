@@ -4,6 +4,7 @@ libsphinxfeat_la_SOURCES =			\
 	agc.c					\
 	cmn.c					\
 	cmn_prior.c				\
+	cmn_adapt.c				\
 	lda.c					\
 	feat.c
 
