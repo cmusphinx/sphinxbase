@@ -136,7 +136,7 @@
     <ClCompile Include="..\..\src\libsphinxad\ad_win32.c" />
     <ClCompile Include="..\..\src\libsphinxbase\feat\agc.c" />
     <ClCompile Include="..\..\src\libsphinxbase\feat\cmn.c" />
-    <ClCompile Include="..\..\src\libsphinxbase\feat\cmn_prior.c" />
+    <ClCompile Include="..\..\src\libsphinxbase\feat\cmn_live.c" />
     <ClCompile Include="..\..\src\libsphinxbase\feat\feat.c" />
     <ClCompile Include="..\..\src\libsphinxbase\feat\lda.c" />
     <ClCompile Include="..\..\src\libsphinxbase\fe\fe_interface.c" />

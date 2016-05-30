@@ -109,8 +109,8 @@ extern "C" {
  */
 typedef enum cmn_type_e {
     CMN_NONE = 0,
-    CMN_CURRENT,
-    CMN_PRIOR
+    CMN_BATCH,
+    CMN_LIVE
 } cmn_type_t;
 
 /** String representations of cmn_type_t values. */
@@ -152,10 +152,10 @@ void cmn (cmn_t *cmn,   /**< In/Out: cmn normalization, which contains the cmn_m
 #define CMN_WIN         500
 
 /**
- * CMN for one block of data, using prior mean
+ * CMN for one block of data, using live mean
  */
 SPHINXBASE_EXPORT
-void cmn_prior(cmn_t *cmn,        /**< In/Out: cmn normalization, which contains
+void cmn_live(cmn_t *cmn,        /**< In/Out: cmn normalization, which contains
                                     the cmn_mean and cmn_var) */
                mfcc_t **incep,  /**< In/Out: mfc[f] = mfc vector in frame f*/
 	       int32 varnorm,    /**< This flag should always be 0 for live */
@@ -163,22 +163,22 @@ void cmn_prior(cmn_t *cmn,        /**< In/Out: cmn normalization, which contains
     );
 
 /**
- * Update prior mean based on observed data
+ * Update live mean based on observed data
  */
 SPHINXBASE_EXPORT
-void cmn_prior_update(cmn_t *cmn);
+void cmn_live_update(cmn_t *cmn);
 
 /**
- * Set the prior mean.
+ * Set the live mean.
  */
 SPHINXBASE_EXPORT
-void cmn_prior_set(cmn_t *cmn, mfcc_t const *vec);
+void cmn_live_set(cmn_t *cmn, mfcc_t const *vec);
 
 /**
- * Get the prior mean.
+ * Get the live mean.
  */
 SPHINXBASE_EXPORT
-void cmn_prior_get(cmn_t *cmn, mfcc_t *vec);
+void cmn_live_get(cmn_t *cmn, mfcc_t *vec);
 
 /* RAH, free previously allocated memory */
 SPHINXBASE_EXPORT

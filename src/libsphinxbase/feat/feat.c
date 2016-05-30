@@ -919,16 +919,16 @@ feat_cmn(feat_t *fcb, mfcc_t **mfc, int32 nfr, int32 beginutt, int32 endutt)
 
     if (!(beginutt && endutt)
         && cmn_type != CMN_NONE) /* Only cmn_prior in block computation mode. */
-        fcb->cmn = cmn_type = CMN_PRIOR;
+        fcb->cmn = cmn_type = CMN_LIVE;
 
     switch (cmn_type) {
-    case CMN_CURRENT:
+    case CMN_BATCH:
         cmn(fcb->cmn_struct, mfc, fcb->varnorm, nfr);
         break;
-    case CMN_PRIOR:
-        cmn_prior(fcb->cmn_struct, mfc, fcb->varnorm, nfr);
+    case CMN_LIVE:
+        cmn_live(fcb->cmn_struct, mfc, fcb->varnorm, nfr);
         if (endutt)
-            cmn_prior_update(fcb->cmn_struct);
+            cmn_live_update(fcb->cmn_struct);
         break;
     default:
         ;
@@ -1423,8 +1423,8 @@ feat_s2mfc2feat_live(feat_t * fcb, mfcc_t ** uttcep, int32 *inout_ncep,
 void 
 feat_update_stats(feat_t *fcb)
 {
-    if (fcb->cmn == CMN_PRIOR) {
-        cmn_prior_update(fcb->cmn_struct);
+    if (fcb->cmn == CMN_LIVE) {
+        cmn_live_update(fcb->cmn_struct);
     }
     if (fcb->agc == AGC_EMAX || fcb->agc == AGC_MAX) {
 	agc_emax_update(fcb->agc_struct);	

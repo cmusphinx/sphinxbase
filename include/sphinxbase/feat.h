@@ -76,12 +76,12 @@ extern "C" {
      "Number of components in the input feature vector" },              \
 { "-cmn",                                                               \
       ARG_STRING,                                                       \
-      "current",                                                        \
-      "Cepstral mean normalization scheme ('current', 'prior', or 'none')" }, \
+      "live",                                                        \
+      "Cepstral mean normalization scheme ('live', 'batch', or 'none')" }, \
 { "-cmninit",                                                           \
       ARG_STRING,                                                       \
-      "8.0",                                                            \
-      "Initial values (comma-separated) for cepstral mean when 'prior' is used" }, \
+      "40,3,-1",                                                        \
+      "Initial values (comma-separated) for cepstral mean when 'live' is used" }, \
 { "-varnorm",                                                           \
       ARG_BOOLEAN,                                                      \
       "no",                                                             \

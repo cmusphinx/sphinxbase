@@ -32,7 +32,7 @@
     <ClCompile Include="..\..\src\libsphinxbase\feat\cmn.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\libsphinxbase\feat\cmn_prior.c">
+    <ClCompile Include="..\..\src\libsphinxbase\feat\cmn_live.c">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\libsphinxbase\util\dtoa.c">

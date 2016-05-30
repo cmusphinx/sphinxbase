@@ -3,7 +3,7 @@ noinst_LTLIBRARIES = libsphinxfeat.la
 libsphinxfeat_la_SOURCES =			\
 	agc.c					\
 	cmn.c					\
-	cmn_prior.c				\
+	cmn_live.c				\
 	lda.c					\
 	feat.c
 

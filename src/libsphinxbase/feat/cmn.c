@@ -36,58 +36,7 @@
  */
 /*
  * cmn.c -- Various forms of cepstral mean normalization
- *
- * **********************************************
- * CMU ARPA Speech Project
- *
- * Copyright (c) 1996 Carnegie Mellon University.
- * ALL RIGHTS RESERVED.
- * **********************************************
- * 
- * HISTORY
- * $Log$
- * Revision 1.14  2006/02/24  15:57:47  egouvea
- * Removed cmn = NULL from the cmn_free(), since it's pointless (my bad!).
- * 
- * Removed cmn_prior, which was surrounded by #if 0/#endif, since the
- * function is already in cmn_prior.c
- * 
- * Revision 1.13  2006/02/23 03:47:49  arthchan2003
- * Used Evandro's changes. Resolved conflicts.
- *
- *
- * Revision 1.12  2006/02/23 00:48:23  egouvea
- * Replaced loops resetting vectors with the more efficient memset()
- *
- * Revision 1.11  2006/02/22 23:43:55  arthchan2003
- * Merged from the branch SPHINX3_5_2_RCI_IRII_BRANCH: Put data structure into the cmn_t structure.
- *
- * Revision 1.10.4.2  2005/10/17 04:45:57  arthchan2003
- * Free stuffs in cmn and feat corectly.
- *
- * Revision 1.10.4.1  2005/07/05 06:25:08  arthchan2003
- * Fixed dox-doc.
- *
- * Revision 1.10  2005/06/21 19:28:00  arthchan2003
- * 1, Fixed doxygen documentation. 2, Added $ keyword.
- *
- * Revision 1.3  2005/03/30 01:22:46  archan
- * Fixed mistakes in last updates. Add
- *
- * 
- * 20.Apr.2001  RAH (rhoughton@mediasite.com, ricky.houghton@cs.cmu.edu)
- *              Added cmn_free() and moved *mean and *var out global space and named them cmn_mean and cmn_var
- * 
- * 28-Apr-1999	M K Ravishankar (rkm@cs.cmu.edu) at Carnegie Mellon University
- * 		Changed the name norm_mean() to cmn().
- * 
- * 19-Jun-1996	M K Ravishankar (rkm@cs.cmu.edu) at Carnegie Mellon University
- * 		Changed to compute CMN over ALL dimensions of cep instead of 1..12.
- * 
- * 04-Nov-1995	M K Ravishankar (rkm@cs.cmu.edu) at Carnegie Mellon University
- * 		Created.
  */
-
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -109,6 +58,11 @@
 /* NOTE!  These must match the enum in cmn.h */
 const char *cmn_type_str[] = {
     "none",
+    "batch",
+    "live"
+};
+const char *cmn_alt_type_str[] = {
+    "none",
     "current",
     "prior"
 };
@@ -120,7 +74,7 @@ cmn_type_from_str(const char *str)
     int i;
 
     for (i = 0; i < n_cmn_type_str; ++i) {
-        if (0 == strcmp(str, cmn_type_str[i]))
+        if (0 == strcmp(str, cmn_type_str[i]) || 0 == strcmp(str, cmn_alt_type_str[i]))
             return (cmn_type_t)i;
     }
     E_FATAL("Unknown CMN type '%s'\n", str);
