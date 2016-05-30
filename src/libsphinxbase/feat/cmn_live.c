@@ -34,17 +34,6 @@
  * ====================================================================
  *
  */
-/*************************************************
- * CMU ARPA Speech Project
- *
- * Copyright (c) 2000 Carnegie Mellon University.
- * ALL RIGHTS RESERVED.
- * **********************************************
- * 
- * 30-Dec-2000  Rita Singh (rsingh@cs.cmu.edu) at Carnegie Mellon University
- * Created
- */
-
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -59,11 +48,11 @@
 #include "sphinxbase/cmn.h"
 
 void
-cmn_prior_set(cmn_t *cmn, mfcc_t const * vec)
+cmn_live_set(cmn_t *cmn, mfcc_t const * vec)
 {
     int32 i;
 
-    E_INFO("cmn_prior_set: from < ");
+    E_INFO("Update from < ");
     for (i = 0; i < cmn->veclen; i++)
         E_INFOCONT("%5.2f ", MFCC2FLOAT(cmn->cmn_mean[i]));
     E_INFOCONT(">\n");
@@ -74,14 +63,14 @@ cmn_prior_set(cmn_t *cmn, mfcc_t const * vec)
     }
     cmn->nframe = CMN_WIN;
 
-    E_INFO("cmn_prior_set: to   < ");
+    E_INFO("Update to   < ");
     for (i = 0; i < cmn->veclen; i++)
         E_INFOCONT("%5.2f ", MFCC2FLOAT(cmn->cmn_mean[i]));
     E_INFOCONT(">\n");
 }
 
 void
-cmn_prior_get(cmn_t *cmn, mfcc_t * vec)
+cmn_live_get(cmn_t *cmn, mfcc_t * vec)
 {
     int32 i;
 
@@ -91,12 +80,12 @@ cmn_prior_get(cmn_t *cmn, mfcc_t * vec)
 }
 
 static void
-cmn_prior_shiftwin(cmn_t *cmn)
+cmn_live_shiftwin(cmn_t *cmn)
 {
     mfcc_t sf;
     int32 i;
 
-    E_INFO("cmn_prior_update: from < ");
+    E_INFO("Update from < ");
     for (i = 0; i < cmn->veclen; i++)
         E_INFOCONT("%5.2f ", MFCC2FLOAT(cmn->cmn_mean[i]));
     E_INFOCONT(">\n");
@@ -113,14 +102,14 @@ cmn_prior_shiftwin(cmn_t *cmn)
         cmn->nframe = CMN_WIN;
     }
 
-    E_INFO("cmn_prior_update: to   < ");
+    E_INFO("Update to   < ");
     for (i = 0; i < cmn->veclen; i++)
         E_INFOCONT("%5.2f ", MFCC2FLOAT(cmn->cmn_mean[i]));
     E_INFOCONT(">\n");
 }
 
 void
-cmn_prior_update(cmn_t *cmn)
+cmn_live_update(cmn_t *cmn)
 {
     mfcc_t sf;
     int32 i;
@@ -128,7 +117,7 @@ cmn_prior_update(cmn_t *cmn)
     if (cmn->nframe <= 0)
         return;
 
-    E_INFO("cmn_prior_update: from < ");
+    E_INFO("Update from < ");
     for (i = 0; i < cmn->veclen; i++)
         E_INFOCONT("%5.2f ", MFCC2FLOAT(cmn->cmn_mean[i]));
     E_INFOCONT(">\n");
@@ -146,14 +135,14 @@ cmn_prior_update(cmn_t *cmn)
         cmn->nframe = CMN_WIN;
     }
 
-    E_INFO("cmn_prior_update: to   < ");
+    E_INFO("Update to   < ");
     for (i = 0; i < cmn->veclen; i++)
         E_INFOCONT("%5.2f ", MFCC2FLOAT(cmn->cmn_mean[i]));
     E_INFOCONT(">\n");
 }
 
 void
-cmn_prior(cmn_t *cmn, mfcc_t **incep, int32 varnorm, int32 nfr)
+cmn_live(cmn_t *cmn, mfcc_t **incep, int32 varnorm, int32 nfr)
 {
     int32 i, j;
 
@@ -180,5 +169,5 @@ cmn_prior(cmn_t *cmn, mfcc_t **incep, int32 varnorm, int32 nfr)
 
     /* Shift buffer down if we have more than CMN_WIN_HWM frames */
     if (cmn->nframe > CMN_WIN_HWM)
-        cmn_prior_shiftwin(cmn);
+        cmn_live_shiftwin(cmn);
 }
