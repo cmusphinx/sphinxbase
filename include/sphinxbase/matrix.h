@@ -82,7 +82,7 @@ SPHINXBASE_EXPORT void norm_3d(float32 ***arr, uint32 d1, uint32 d2, uint32 d3);
 /**
  * Floor 3-d array
  * @param out output array
- * @para in input array
+ * @param in input array
  * @param d1 dimension
  * @param d2 dimension
  * @param d3 dimension
@@ -109,7 +109,7 @@ SPHINXBASE_EXPORT void floor_nz_3d(float32 ***m, uint32 d1, uint32 d2, uint32 d3
 
 /**
  * Floor 1-d array
- * @param m array
+ * @param v array
  * @param d1 dimension
  * @param floor floor value
  **/

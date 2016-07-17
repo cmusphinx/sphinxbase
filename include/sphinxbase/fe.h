@@ -370,6 +370,7 @@ int fe_start_utt(fe_t *fe);
  * the <tt>-logspec</tt> or <tt>-smoothspec</tt> options to
  * fe_init_auto() were true.
  *
+ * @param fe Front-end object
  * @return Dimensionality of front-end output.
  */
 SPHINXBASE_EXPORT
@@ -384,6 +385,7 @@ int fe_get_output_size(fe_t *fe);
  * frames of output, you must have at least <code>(N-1) *
  * *out_frame_shift + *out_frame_size</code> input samples.
  *
+ * @param fe Front-end object
  * @param out_frame_shift Output: Number of samples between each frame start.
  * @param out_frame_size Output: Number of samples in each frame.
  */

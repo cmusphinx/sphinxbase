@@ -171,7 +171,8 @@ typedef void (*err_cb_f)(void* user_data, err_lvl_t, const char *, ...);
  * to your application. By default the handler which dumps messages to
  * stderr is set.
  *
- * @param - callback to pass messages too.
+ * @param callback callback to pass messages too
+ * @param user_data data to pass to callback
  */
 SPHINXBASE_EXPORT void
 err_set_callback(err_cb_f callback, void *user_data);
@@ -179,7 +180,7 @@ err_set_callback(err_cb_f callback, void *user_data);
 /**
  * Direct all logging to a given filehandle if default logfp callback is set.
  *
- * @param logfp Filehandle to send log messages to, or NULL to disable logging.
+ * @param stream Filehandle to send log messages to, or NULL to disable logging.
  */
 SPHINXBASE_EXPORT void
 err_set_logfp(FILE *stream);
@@ -198,7 +199,7 @@ err_get_logfp(void);
  *
  * Previous logging filehandle is closed (unless it was stdout or stderr).
  *
- * @param file File path to send log messages to
+ * @param path File path to send log messages to
  * @return 0 for success, <0 for failure (e.g. if file does not exist)
  */
 SPHINXBASE_EXPORT int

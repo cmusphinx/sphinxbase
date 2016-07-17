@@ -65,7 +65,6 @@ static uint8 get_shift(uint8 bit, uint8 length)
 /**
  * Read uint64 value from the given address
  * @param address to read from
- * @param pointer to value where to save read value
  * @return uint64 value that was read
  */
 static uint64 read_off(bitarr_address_t address)

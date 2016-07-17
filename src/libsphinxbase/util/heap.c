@@ -78,7 +78,7 @@ typedef struct heapnode_s {
     void *data;                 /**< Application data at this node */
     int32 val;                  /**< Associated with above application data; according to which
                                    heap is sorted (in ascending order) */
-    int32 nl, nr;               /**< #left/right descendants of this node (for balancing heap) */
+    int32 nl, nr;               /**< left/right descendants of this node (for balancing heap) */
     struct heapnode_s *l;       /**< Root of left descendant heap */
     struct heapnode_s *r;       /**< Root of right descendant heap */
 } heapnode_t;

@@ -179,16 +179,9 @@ key2hash(hash_table_t * h, const char *key)
 
     register const char *cp;
 
-    /** ARCHAN 20050712: 
-	[1236322] libutil\str2words special character bgu
-	HACK Apply suggested hack of fixing the hash table such that
-	it can work with extended ascii code . This is a hack because
-	the best way to solve it is to make sure all character
-	representation is unsigned character in the first place. (or
-	better unicode.)
-    **/
-
-    /*register char c; */
+    /* This is a hack because the best way to solve it is to make sure 
+       all character representation is unsigned character in the first place.        
+       (or better unicode.) */
     register unsigned char c;
     register int32 s;
     register uint32 hash;

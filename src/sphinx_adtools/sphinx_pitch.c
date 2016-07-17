@@ -375,8 +375,7 @@ extract_pitch(const char *in, const char *out)
     size_t flen, fshift, nsamps;
     int16 *buf = NULL;
     yin_t *yin = NULL;
-    uint16 period;
-    float bestdiff;
+    uint16 period, bestdiff;
     int32 sps;
 
     if (out) {
@@ -447,7 +446,7 @@ extract_pitch(const char *in, const char *out)
                     /* Time point. */
                     (double)nsamps/sps,
                     /* "Probability" of voicing. */
-                    bestdiff > 1.0 ? 0.0 : 1.0 - (double)bestdiff,
+                    bestdiff > 32768 ? 0.0 : 1.0 - (double)bestdiff / 32768,
                     /* Pitch (possibly bogus) */
                     period == 0 ? sps : (double)sps / period);
             nsamps += fshift;
@@ -465,7 +464,7 @@ extract_pitch(const char *in, const char *out)
                     /* Time point. */
                     (double)nsamps/sps,
                     /* "Probability" of voicing. */
-                    bestdiff > 1.0 ? 0.0 : 1.0 - (double)bestdiff,
+                    bestdiff > 32768 ? 0.0 : 1.0 - (double)bestdiff / 32768,
                     /* Pitch (possibly bogus) */
                     period == 0 ? sps : (double)sps / period);
     }

@@ -405,8 +405,9 @@ int cmd_ln_exists_r(cmd_ln_t *cmdln, char const *name);
  * Print a help message listing the valid argument names, and the associated
  * attributes as given in defn.
  *
+ * @param cmdln command-line object
  * @param fp   output stream
- * @param defn Array of argument name definitions.
+ * @param defn array of argument name definitions.
  */
 SPHINXBASE_EXPORT
 void cmd_ln_print_help_r (cmd_ln_t *cmdln, FILE *fp, const arg_t *defn);
@@ -414,8 +415,9 @@ void cmd_ln_print_help_r (cmd_ln_t *cmdln, FILE *fp, const arg_t *defn);
 /**
  * Print current configuration values and defaults.
  *
+ * @param cmdln  command-line object
  * @param fp   output stream
- * @param defn Array of argument name definitions.
+ * @param defn array of argument name definitions.
  */
 SPHINXBASE_EXPORT
 void cmd_ln_print_values_r (cmd_ln_t *cmdln, FILE *fp, const arg_t *defn);
