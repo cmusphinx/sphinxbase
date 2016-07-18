@@ -90,11 +90,7 @@ cmn_init(int32 veclen)
     cmn->cmn_mean = (mfcc_t *) ckd_calloc(veclen, sizeof(mfcc_t));
     cmn->cmn_var = (mfcc_t *) ckd_calloc(veclen, sizeof(mfcc_t));
     cmn->sum = (mfcc_t *) ckd_calloc(veclen, sizeof(mfcc_t));
-    /* A front-end dependent magic number */
-    cmn->cmn_mean[0] = FLOAT2MFCC(12.0);
     cmn->nframe = 0;
-    E_INFO("mean[0]= %.2f, mean[1..%d]= 0.0\n",
-           MFCC2FLOAT(cmn->cmn_mean[0]), veclen - 1);
 
     return cmn;
 }
