@@ -3,7 +3,7 @@ SET(SOURCES	fsg_model.c
 			jsgf_parser.c
 			jsgf_scanner.c
 			lm_trie.c
-			#lm_trie_quant.c
+			lm_trie_quant.c
 			ngram_model.c
 			ngram_model_set.c
 			ngram_model_trie.c
