@@ -1,4 +1,4 @@
-#add_subdirectory(libsphinxad)
+add_subdirectory(libsphinxad)
 add_subdirectory(libsphinxbase)
 add_subdirectory(sphinx_adtools)
 add_subdirectory(sphinx_cepview)
