@@ -64,7 +64,6 @@
 #include <sys/ioctl.h>
 #include <errno.h>
 #include <unistd.h>
-#include <config.h>
 
 #include "prim_type.h"
 #include "ad.h"
