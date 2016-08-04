@@ -19,6 +19,7 @@ find_package(OpenAL)
 if (OPENAL_FOUND)
 	set(SOURCES ${SOURCES} ad_openal.c)
 	set(LIBS ${LIBS} ${OPENAL_LIBRARY})
+	include_directories(${OPENAL_INCLUDE_DIR})
 endif()
 
 find_package(ALSA)
