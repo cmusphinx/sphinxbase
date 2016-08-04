@@ -1,3 +1,5 @@
+include_directories(${CMAKE_SOURCE_DIR}/include/sphinxbase)
+
 if (WIN32)
 	set(SOURCES ${SOURCES} ad_win32.c)
 endif ()
