@@ -27,6 +27,7 @@ set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -std=gnu11 -O3")
 configure_file("${CMAKE_SOURCE_DIR}/include/sphinx_config.h.in" "${CMAKE_SOURCE_DIR}/include/sphinx_config.h")
 INCLUDE_DIRECTORIES(include)
 ADD_SUBDIRECTORY(src)
+ADD_SUBDIRECTORY(test EXCLUDE_FROM_ALL)
 
 ADD_LIBRARY(${PROJECT_NAME} STATIC
 		$<TARGET_OBJECTS:libsphinxad>
