@@ -19,3 +19,5 @@ SET(SOURCES	fe_interface.c
 	)
 	
 add_library(fe OBJECT ${SOURCES})
+
+set_property(TARGET fe PROPERTY POSITION_INDEPENDENT_CODE TRUE)

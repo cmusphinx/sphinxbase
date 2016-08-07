@@ -31,3 +31,4 @@ if (WIN32)
 endif ()
 
 add_library(util OBJECT ${SOURCES})
+set_property(TARGET util PROPERTY POSITION_INDEPENDENT_CODE TRUE)

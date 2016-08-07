@@ -6,3 +6,4 @@ SET(SOURCES	agc.c
 	)
 	
 add_library(feat OBJECT ${SOURCES})
+set_property(TARGET feat PROPERTY POSITION_INDEPENDENT_CODE TRUE)

@@ -29,3 +29,4 @@ if (ALSA_FOUND)
 endif()
 
 add_library(libsphinxad OBJECT ${SOURCES})
+set_property(TARGET libsphinxad PROPERTY POSITION_INDEPENDENT_CODE TRUE)

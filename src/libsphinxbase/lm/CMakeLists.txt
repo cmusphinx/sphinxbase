@@ -11,3 +11,4 @@ SET(SOURCES	fsg_model.c
 	)
 	
 add_library(lm OBJECT ${SOURCES})
+set_property(TARGET lm PROPERTY POSITION_INDEPENDENT_CODE TRUE)
