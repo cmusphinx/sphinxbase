@@ -1,3 +1,9 @@
-SET(SOURCES sphinx_fe.c)
+set(PROGRAM sphinx_fe)
+set(SOURCES sphinx_fe.c)
 
-add_library(sphinx_fe OBJECT ${SOURCES})
+add_executable(${PROGRAM} ${SOURCES})
+target_link_libraries(${PROGRAM} ${PROJECT_NAME})
+set_target_properties (${PROGRAM}
+                        PROPERTIES
+                        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}
+)
