@@ -7,7 +7,6 @@ SET(SOURCES	bio.c
 		cmd_ln.c
 		dtoa.c
 		err.c
-		errno.c
 		f2c_lite.c
 		filename.c
 		genrand.c
@@ -26,5 +25,9 @@ SET(SOURCES	bio.c
 		slapack_lite.c
 		strfuncs.c
 	)
-	
+
+if (WIN32)
+    set(SOURCES ${SOURCES}  errno.c)
+endif ()
+
 add_library(util OBJECT ${SOURCES})
