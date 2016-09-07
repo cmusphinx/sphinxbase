@@ -85,6 +85,7 @@
 typedef struct cmd_ln_val_s {
     anytype_t val;
     int type;
+    char *name;
 } cmd_ln_val_t;
 
 struct cmd_ln_s {
@@ -361,7 +362,7 @@ parse_string_list(const char *str)
 }
 
 static cmd_ln_val_t *
-cmd_ln_val_init(int t, const char *str)
+cmd_ln_val_init(int t, const char *name, const char *str)
 {
     cmd_ln_val_t *v;
     anytype_t val;
@@ -423,6 +424,7 @@ cmd_ln_val_init(int t, const char *str)
     v = (cmd_ln_val_t *)ckd_calloc(1, sizeof(*v));
     memcpy(v, &val, sizeof(val));
     v->type = t;
+    v->name = ckd_salloc(name);
 
     return v;
 }
@@ -483,6 +485,7 @@ cmd_ln_val_free(cmd_ln_val_t *val)
     }
     if (val->type & ARG_STRING)
         ckd_free(val->val.ptr);
+    ckd_free(val->name);
     ckd_free(val);
 }
 
@@ -619,9 +622,9 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
         }
 
         if (argdef == NULL)
-            val = cmd_ln_val_init(ARG_STRING, argv[j + 1]);
+            val = cmd_ln_val_init(ARG_STRING, argv[j], argv[j + 1]);
         else {
-            if ((val = cmd_ln_val_init(argdef->type, argv[j + 1])) == NULL) {
+            if ((val = cmd_ln_val_init(argdef->type, argv[j], argv[j + 1])) == NULL) {
                 cmd_ln_print_help_r(cmdln, stderr, defn);
                 E_ERROR("Bad argument value for %s: %s\n", argv[j],
                         argv[j + 1]);
@@ -629,7 +632,7 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
             }
         }
 
-        if ((v = hash_table_enter(cmdln->ht, argv[j], (void *)val)) !=
+        if ((v = hash_table_enter(cmdln->ht, val->name, (void *)val)) !=
             (void *)val)
         {
             if (strict) {
@@ -639,7 +642,7 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
                 goto error;
             }
             else {
-                v = hash_table_replace(cmdln->ht, argv[j], (void *)val);
+                v = hash_table_replace(cmdln->ht, val->name, (void *)val);
                 cmd_ln_val_free((cmd_ln_val_t *)v);
             }
         }
@@ -651,13 +654,13 @@ cmd_ln_parse_r(cmd_ln_t *inout_cmdln, const arg_t * defn, int32 argc, char *argv
         void *v;
 
         if (hash_table_lookup(cmdln->ht, defn[i].name, &v) < 0) {
-            if ((val = cmd_ln_val_init(defn[i].type, defn[i].deflt)) == NULL) {
+            if ((val = cmd_ln_val_init(defn[i].type, defn[i].name, defn[i].deflt)) == NULL) {
                 E_ERROR
                     ("Bad default argument value for %s: %s\n",
                      defn[i].name, defn[i].deflt);
                 goto error;
             }
-            hash_table_enter(cmdln->ht, defn[i].name, (void *)val);
+            hash_table_enter(cmdln->ht, val->name, (void *)val);
         }
     }
 
@@ -789,7 +792,7 @@ cmd_ln_parse_file_r(cmd_ln_t *inout_cmdln, const arg_t * defn, const char *filen
     /*
      * Initialize default argv, argc, and argv_size.
      */
-    argv_size = 10;
+    argv_size = 30;
     argc = 0;
     f_argv = (char **)ckd_calloc(argv_size, sizeof(char *));
     /* Silently make room for \0 */
@@ -835,6 +838,7 @@ cmd_ln_parse_file_r(cmd_ln_t *inout_cmdln, const arg_t * defn, const char *filen
                 f_argv = tmp_argv;
                 argv_size *= 2;
             }
+
             /* Add the string to the list of arguments */
             f_argv[argc] = ckd_salloc(str);
             len = 0;
@@ -997,13 +1001,13 @@ cmd_ln_set_str_r(cmd_ln_t *cmdln, char const *name, char const *str)
 void
 cmd_ln_set_str_extra_r(cmd_ln_t *cmdln, char const *name, char const *str)
 {
-    anytype_t *val;
+    cmd_ln_val_t *val;
     if (hash_table_lookup(cmdln->ht, name, (void **)&val) < 0) {
-	val = (anytype_t *)cmd_ln_val_init(ARG_STRING, str);
-	hash_table_enter(cmdln->ht, name, (void *)val);
+	val = cmd_ln_val_init(ARG_STRING, name, str);
+	hash_table_enter(cmdln->ht, val->name, (void *)val);
     } else {
-        ckd_free(val->ptr);
-        val->ptr = ckd_salloc(str);
+        ckd_free(val->val.ptr);
+        val->val.ptr = ckd_salloc(str);
     }
 }
 
