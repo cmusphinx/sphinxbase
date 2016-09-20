@@ -514,7 +514,7 @@ ngram_probv(ngram_model_t * model, const char *word, ...)
 }
 
 int32
-ngram_prob(ngram_model_t * model, const char *const *words, int32 n)
+ngram_prob(ngram_model_t * model, const char* const *words, int32 n)
 {
     int32 *ctx_id;
     int32 nused;
