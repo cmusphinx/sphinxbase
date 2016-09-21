@@ -281,7 +281,7 @@ int32 ngram_probv(ngram_model_t *model, const char *word, ...);
  * unigram weight (interpolation with uniform) is not removed.
  */
 SPHINXBASE_EXPORT
-int32 ngram_prob(ngram_model_t *model, const char *const *words, int32 n);
+int32 ngram_prob(ngram_model_t *model, const char* const *words, int32 n);
 
 /**
  * Quick "raw" probability lookup for a general N-Gram.
