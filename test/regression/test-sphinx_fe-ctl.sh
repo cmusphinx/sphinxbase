@@ -23,6 +23,22 @@ run_program sphinx_fe/sphinx_fe \
 -input_endian little \
 > $tmpout 2>&1 
 
+run_program sphinx_fe/sphinx_fe \
+-samprate 11025 \
+-frate 105 \
+-wlen 0.024 \
+-alpha 0.97 \
+-ncep 13 \
+-nfft 512 \
+-nfilt 36 \
+-upperf 5400 \
+-lowerf 130 \
+-blocksize 262500 \
+-nchans 2 \
+-i $tests/regression/chan3.2chan.wav \
+-o chan3.2chan.wav.mfc
+> $tmpout 2>&1 
+
 if ! cmp chan3.wav.mfc chan3.raw.mfc; then
     fail "WAV and RAW compare"
 fi
