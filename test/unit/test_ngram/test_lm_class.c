@@ -87,7 +87,7 @@ run_tests(logmath_t *lmath, ngram_model_t *model)
 
 	/* Add a new class. */
 	{
-		const char *words[] = { "blatz:foobie", "hurf:foobie" };
+		char *words[] = { "blatz:foobie", "hurf:foobie" };
 		float32 weights[] = { 0.6, 0.4 };
 		int32 foobie_prob;
 		rv = ngram_model_add_class(model, "[foobie]", 1.0,

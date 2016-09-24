@@ -34,7 +34,7 @@
  * ====================================================================
  *
  */
-/* YOU MUST USE FLEX 2.5.37 OR NEWER TO PROCESS THIS FILE!!! */
+/* YOU MUST USE FLEX 2.6.1 OR NEWER TO PROCESS THIS FILE!!! */
 %{
 
 #include "jsgf_internal.h"

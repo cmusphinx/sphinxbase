@@ -31,7 +31,6 @@ AM_CFLAGS =-I$(top_srcdir)/include/sphinxbase \
 	   -I$(top_srcdir)/include \
 	   -I$(top_builddir)/include
 
-# Nobody has the version of Flex needed to regenerate the scanner, so
-# we can't give it a name that would induce Make to try to build it.
-# Hence the underscore.  Sorry folks.
+# Warning: you need flex 2.6.1 at least, command line is
+# flex --nounistd -o jsgf_scanner.c _jsgf_scanner.l
 EXTRA_DIST = _jsgf_scanner.l

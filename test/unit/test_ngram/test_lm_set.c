@@ -125,18 +125,17 @@ main(int argc, char *argv[])
 	/* Test iterators. */
 	{
 		ngram_model_set_iter_t *itor;
-		ngram_model_t *lm;
 		char const *lmname;
 
 		itor = ngram_model_set_iter(lmset);
 		TEST_ASSERT(itor);
-		lm = ngram_model_set_iter_model(itor, &lmname);
+		ngram_model_set_iter_model(itor, &lmname);
 		printf("1: %s\n", lmname);
 		itor = ngram_model_set_iter_next(itor);
-		lm = ngram_model_set_iter_model(itor, &lmname);
+		ngram_model_set_iter_model(itor, &lmname);
 		printf("2: %s\n", lmname);
 		itor = ngram_model_set_iter_next(itor);
-		lm = ngram_model_set_iter_model(itor, &lmname);
+		ngram_model_set_iter_model(itor, &lmname);
 		printf("3: %s\n", lmname);
 		itor = ngram_model_set_iter_next(itor);
 		TEST_EQUAL(itor, NULL);

@@ -11,13 +11,13 @@
 void
 run_tests(logmath_t *lmath, ngram_model_t *model)
 {
-	int32 wid, score;
+	int32 score;
 
-	wid = ngram_model_add_word(model, "foobie", 1.0);
+	ngram_model_add_word(model, "foobie", 1.0);
 	score = ngram_score(model, "foobie", NULL);
 	TEST_EQUAL_LOG(score, logmath_log(lmath, 1.0/401)); /* #unigrams */
 
-	wid = ngram_model_add_word(model, "quux", 0.5);
+	ngram_model_add_word(model, "quux", 0.5);
 	score = ngram_score(model, "quux", NULL);
 	TEST_EQUAL_LOG(score, logmath_log(lmath, 0.5/402)); /* #unigrams */
 }
