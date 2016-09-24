@@ -151,7 +151,7 @@ case $host in
 		ad_libs="-lwinmm"
 		;;
 	*-apple-*darwin*)
-		sdkparam=`xcodebuild -showsdks | awk '/^$/{p=0};p; /OS X SDKs:/{p=1}' | tail -1 | cut -f3`
+		sdkparam=`xcodebuild -showsdks | awk '/^$/{p=0};p; /macOS SDKs:/{p=1}; /OS X SDKs:/{p=1}' | tail -1 | cut -f3`
 		sdkpath=`xcodebuild -version $sdkparam Path`
 		ad_cppflags="-I$sdkpath/System/Library/Frameworks/OpenAL.framework/Versions/A/Headers/"
 		backup_CPPFLAGS="$CPPFLAGS"
