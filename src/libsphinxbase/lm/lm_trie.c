@@ -519,6 +519,11 @@ uniform_find(void *base, uint8 total_bits, uint8 key_bits, uint32 key_mask,
 {
     bitarr_address_t address;
     address.base = base;
+
+    /* If we look for unigram added later */
+    if (key > after_v)
+	return FALSE;
+
     while (after_it - before_it > 1) {
         uint32 mid;
         uint32 pivot =
