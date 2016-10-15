@@ -134,7 +134,7 @@ detect_riff(sphinx_wave2feat_t *wtf)
 	return -1;
     }
     if (cmd_ln_float32_r(wtf->config, "-samprate") != hdr.SamplingFreq) {
-	E_ERROR("Sample rate %.1f does not match configured value in file '%s'\n", hdr.SamplingFreq, wtf->infile);
+	E_ERROR("Sample rate %.1f does not match configured value in file '%s'\n", (float)hdr.SamplingFreq, wtf->infile);
 	fclose(fh);
 	return -1;
     }
