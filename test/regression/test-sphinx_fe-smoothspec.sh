@@ -7,6 +7,7 @@ echo "WAVE2FEAT-SMOOTHSPEC TEST"
 run_program sphinx_fe/sphinx_fe \
 -smoothspec yes \
 -samprate 11025 \
+-vad_threshold 2.0 \
 -frate 105 \
 -wlen 0.024 \
 -alpha 0.97 \

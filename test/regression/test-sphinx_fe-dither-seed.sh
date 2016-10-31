@@ -8,6 +8,7 @@ tmpout="test-sphinx_fe-dither-seed.out"
 echo "WAVE2FEAT-DITHER-SEED TEST"
 run_program sphinx_fe/sphinx_fe \
 -dither 1 \
+-vad_threshold 2.0 \
 -seed 1234 \
 -samprate 11025 \
 -frate 105 \

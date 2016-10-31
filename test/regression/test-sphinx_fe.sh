@@ -5,6 +5,7 @@ tmpout="test-sphinx_fe.out"
 
 echo "WAVE2FEAT TEST"
 run_program sphinx_fe/sphinx_fe \
+-vad_threshold 2.0 \
 -samprate 11025 \
 -frate 105 \
 -wlen 0.024 \

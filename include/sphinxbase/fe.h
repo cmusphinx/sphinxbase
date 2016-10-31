@@ -208,7 +208,7 @@ extern "C" {
    \
   { "-vad_threshold", \
     ARG_FLOAT32, \
-    "2.0", \
+    "3.0", \
     "Threshold for decision between noise and silence frames. Log-ratio between signal level and noise level." }, \
    \
   { "-input_endian", \

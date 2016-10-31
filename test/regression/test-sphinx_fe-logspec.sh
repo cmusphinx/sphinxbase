@@ -6,6 +6,7 @@ tmpout="test-sphinx_fe-logspec.out"
 echo "WAVE2FEAT-LOGSPEC TEST"
 run_program sphinx_fe/sphinx_fe \
 -logspec 1 \
+-vad_threshold 2.0 \
 -samprate 11025 \
 -frate 105 \
 -wlen 0.024 \

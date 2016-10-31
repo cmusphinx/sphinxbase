@@ -6,6 +6,7 @@ tmpout="test-sphinx_fe-ctl.out"
 echo "WAVE2FEAT CTL/WAV/SPH TEST"
 run_program sphinx_fe/sphinx_fe \
 -samprate 11025 \
+-vad_threshold 2.0 \
 -frate 105 \
 -wlen 0.024 \
 -alpha 0.97 \
@@ -25,6 +26,7 @@ run_program sphinx_fe/sphinx_fe \
 
 run_program sphinx_fe/sphinx_fe \
 -samprate 11025 \
+-vad_threshold 2.0 \
 -frate 105 \
 -wlen 0.024 \
 -alpha 0.97 \
