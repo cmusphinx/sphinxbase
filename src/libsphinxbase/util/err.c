@@ -89,6 +89,9 @@ err_msg(err_lvl_t lvl, const char *path, long ln, const char *fmt, ...)
     char msg[1024];
     va_list ap;
 
+    if (lvl < err_get_debug_level())
+        return;
+
     if (!err_cb)
         return;
 
