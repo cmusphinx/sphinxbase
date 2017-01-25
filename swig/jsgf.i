@@ -46,15 +46,15 @@
     jsgf_grammar_free($self);
   }
 
-  const char * get_name() {
+  const char *get_name() {
     return jsgf_grammar_name($self);
   }
 
-  JsgfRule * get_rule(const char *name) {
+  JsgfRule *get_rule(const char *name) {
     return jsgf_get_rule($self, name);
   }
 
-  FsgModel * build_fsg(JsgfRule *rule, LogMath *logmath, float lw) {
+  FsgModel *build_fsg(JsgfRule *rule, LogMath *logmath, float lw) {
     return jsgf_build_fsg($self, rule, logmath, lw);
   }
 }
@@ -65,14 +65,11 @@
     return NULL;
   }
 
-  ~JsgfRule() {
+  static JsgfRule *fromIter(void *itor) {
+    return jsgf_rule_iter_rule((jsgf_rule_iter_t *)itor);
   }
 
-  static JsgfRule * fromIter(jsgf_rule_iter_t *itor) {
-    return jsgf_rule_iter_rule(itor);
-  }
-
-  const char * get_name() {
+  const char *get_name() {
     return jsgf_rule_name($self);
   }
 

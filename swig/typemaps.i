@@ -1,33 +1,26 @@
 %include <exception.i>
 
-%apply int {int32};
-%apply double {float64};
-
 // Support for return of raw data
 #if SWIGJAVA
-
 %include <arrays_java.i>
+%apply short[] {const short *SDATA};
 
-%typemap(in, numinputs=0, noblock=1) int32 *RAWDATA_SIZE {
-   int32 temp_len;
+%typemap(in, numinputs=0, noblock=1) int *RAWDATA_SIZE {
+   int temp_len;
    $1 = &temp_len;
 }
-%typemap(jstype) int16 *get_rawdata "short[]"
-%typemap(jtype) int16 *get_rawdata "short[]"
-%typemap(jni) int16 *get_rawdata "jshortArray"
-%typemap(javaout) int16 *get_rawdata {
+%typemap(jstype) short *get_rawdata "short[]"
+%typemap(jtype) short *get_rawdata "short[]"
+%typemap(jni) short *get_rawdata "jshortArray"
+%typemap(javaout) short *get_rawdata {
   return $jnicall;
 }
-%typemap(out) int16 *get_rawdata {
+%typemap(out) short *get_rawdata {
   $result = JCALL1(NewShortArray, jenv, temp_len);
   JCALL4(SetShortArrayRegion, jenv, $result, 0, temp_len, $1);
 }
 
-%apply short[] {const int16 *SDATA};
-
-#endif
-
-#if SWIGCSHARP
+#elif SWIGCSHARP
 %include <arrays_csharp.i>
 %apply unsigned char INPUT[] {const unsigned char *SDATA};
 #endif

@@ -26,12 +26,13 @@
 %}
 #endif
 
-// Basic types
-%inline %{
+// Structure
+%begin %{
 typedef struct {
   PREFIX##_t *ptr;
 } TYPE##Iterator;
 %}
+typedef struct {} TYPE##Iterator;
 
 // Exception to end iteration
 
@@ -64,9 +65,10 @@ typedef struct {
 // Implementation of the iterator itself
 
 %extend TYPE##Iterator {
-  TYPE##Iterator(PREFIX##_t *ptr) {
+
+  TYPE##Iterator(void *ptr) {
     TYPE##Iterator *iter = (TYPE##Iterator *)ckd_malloc(sizeof *iter);
-    iter->ptr = ptr;
+    iter->ptr = (PREFIX##_t *)ptr;
     return iter;
   }
 

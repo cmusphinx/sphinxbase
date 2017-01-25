@@ -38,9 +38,9 @@
 
 %extend NGramModel {
 
-    static NGramModel *fromIter(ngram_model_set_iter_t *itor) {
+    static NGramModel *fromIter(void *itor) {
         const char *name;
-	return ngram_model_set_iter_model(itor, &name);
+	return ngram_model_set_iter_model((ngram_model_set_iter_t*)itor, &name);
     }
 
     NGramModel(const char *path) {
@@ -58,11 +58,11 @@
         ngram_model_free($self);
     }
 
-    void write(const char *path, ngram_file_type_t ftype, int *errcode) {
+    void write(const char *path, int ftype, int *errcode) {
         *errcode = ngram_model_write($self, path, ftype);
     }
 
-    ngram_file_type_t str_to_type(const char *str) {
+    int str_to_type(const char *str) {
         return ngram_str_to_type(str);
     }
 
@@ -74,20 +74,15 @@
         *errcode = ngram_model_casefold($self, kase);
     }
 
-    int32 size() {
+    int size() {
         return ngram_model_get_size($self);
     }
 
-    int32 add_word(const char *word, float32 weight) {
+    int add_word(const char *word, float weight) {
         return ngram_model_add_word($self, word, weight);
     }
 
-    int32 add_class(const char *c, float32 w, size_t n, char **ptr,
-                    const float32 *weights) {
-        return ngram_model_add_class($self, c, w, ptr, weights, n);
-    }
-
-    int32 prob(size_t n, char **ptr) {
+    int prob(size_t n, char **ptr) {
         return ngram_prob($self, (const char * const *)ptr, n);
     }
 }
@@ -102,7 +97,7 @@
         ngram_model_free($self);
     }
 
-    int32 count() {
+    int count() {
         return ngram_model_set_count($self);
     }
 

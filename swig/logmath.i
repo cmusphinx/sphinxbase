@@ -41,15 +41,11 @@
 	return logmath_init(1.0001f, 0, 0);
     }
 
-    LogMath(logmath_t *ptr) {
-        return ptr;
-    }
-
     ~LogMath() {
         logmath_free($self);
     }
     
-    float64 exp(int prob) {
+    double exp(int prob) {
         return logmath_exp($self, prob);
     }
 }

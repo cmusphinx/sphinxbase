@@ -39,12 +39,8 @@
 // TODO: search for functions returning error code
 %extend FsgModel {
 
-    FsgModel(const char *name, LogMath *logmath, float lw, int32 n) {
+    FsgModel(const char *name, LogMath *logmath, float lw, int n) {
 	return fsg_model_init(name, logmath, lw, n);
-    }
-
-    FsgModel(fsg_model_t *ptr) {
-        return ptr;
     }
 
     FsgModel(const char *path, LogMath *logmath, float lw) {
@@ -63,19 +59,19 @@
         return fsg_model_word_add($self, word);
     }
 
-    void trans_add(int32 src, int32 dst, int32 logp, int32 wid) {
+    void trans_add(int src, int dst, int logp, int wid) {
         fsg_model_trans_add($self, src, dst, logp, wid);
     }
 
-    int32 null_trans_add(int32 src, int32 dst, int32 logp) {
+    int null_trans_add(int src, int dst, int logp) {
         return fsg_model_null_trans_add($self, src, dst, logp);
     }
 
-    int32 tag_trans_add(int32 src, int32 dst, int32 logp, int32 wid) {
+    int tag_trans_add(int src, int dst, int logp, int wid) {
         return fsg_model_tag_trans_add($self, src, dst, logp, wid);
     }
 
-    int add_silence(const char *silword, int32 state, float silprob) {
+    int add_silence(const char *silword, int state, float silprob) {
         return fsg_model_add_silence($self, silword, state, silprob); 
     }
 

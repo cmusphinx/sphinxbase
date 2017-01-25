@@ -37,8 +37,9 @@
 
 
 %extend FrontEnd {
-    FrontEnd(fe_t *ptr) {
-        return ptr;
+
+    FrontEnd() {
+	return NULL;
     }
 
     ~FrontEnd() {
@@ -49,19 +50,9 @@
         return fe_get_output_size($self);
     }
 
-    void start_utt(int *errcode) {
-        *errcode = fe_start_utt($self);
-    }
-
-    int32 process_utt(const int16 *spch, size_t nsamps, mfcc_t ***cep_block, int *errcode) {
-        int32 nframes;
-        *errcode = fe_process_utt($self, spch, nsamps, cep_block, &nframes);
-        return nframes;
-    }
-
-    int32 end_utt(mfcc_t *out_cepvector, int *errcode) {
-        int32 nframes;
-        *errcode = fe_end_utt($self, out_cepvector, &nframes);
+    int process_utt(char *spch, size_t nsamps, mfcc_t ***cep_block) {
+        int nframes;
+        fe_process_utt($self, (const int16*) spch, nsamps, cep_block, &nframes);
         return nframes;
     }
 }
