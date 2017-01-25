@@ -27,6 +27,10 @@
 
 #endif
 
+#if SWIGCSHARP
+%include <arrays_csharp.i>
+%apply unsigned char INPUT[] {const unsigned char *SDATA};
+#endif
 
 // Define typemaps to wrap error codes returned by some functions,
 // into runtime exceptions.

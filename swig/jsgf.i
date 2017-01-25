@@ -37,9 +37,6 @@
 
 
 %extend Jsgf {
-#if SWIGJAVA
-  %rename(name) getName;
-#endif
 
   Jsgf(const char *path) {
     return jsgf_parse_file(path, NULL);
@@ -49,7 +46,7 @@
     jsgf_grammar_free($self);
   }
 
-  const char * name() {
+  const char * get_name() {
     return jsgf_grammar_name($self);
   }
 
@@ -63,12 +60,6 @@
 }
 
 %extend JsgfRule {
-#if SWIGJAVA
-  %rename(getName) name;
-  %rename(isPublic) public;
-
-  %javamethodmodifiers JsgfRule "private";
-#endif
 
   JsgfRule() {
     return NULL;
@@ -81,11 +72,11 @@
     return jsgf_rule_iter_rule(itor);
   }
 
-  const char * name() {
+  const char * get_name() {
     return jsgf_rule_name($self);
   }
 
-  bool public() {
+  bool is_public() {
     return jsgf_rule_public($self);
   }
 }

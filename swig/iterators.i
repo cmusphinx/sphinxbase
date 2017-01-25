@@ -13,6 +13,19 @@
 %}
 #endif
 
+#if SWIGCSHARP
+%typemap(csinterfaces) TYPE##Iterator "global::System.Collections.IEnumerator"
+%typemap(cscode) TYPE##Iterator %{
+  public object Current 
+  {
+     get
+     {
+       return GetCurrent();
+     }
+  }
+%}
+#endif
+
 // Basic types
 %inline %{
 typedef struct {
@@ -110,7 +123,26 @@ typedef struct {
     }
     return NULL;
   }
+#elif SWIGCSHARP
+  bool MoveNext() {
+    $self->ptr = ##PREFIX##_next($self->ptr);
+    if ($self->ptr) {
+	return true;
+    }
+    return false;
+  }
+  
+  void Reset() {
+    return;
+  }
+
+  VALUE_TYPE *GetCurrent() {
+    VALUE_TYPE *value = ##VALUE_TYPE##_fromIter($self->ptr);
+    return value;
+  }
 #endif
+
+
 }
 
 #endif // SWIGRUBY
@@ -124,6 +156,15 @@ typedef struct {
 
 #if SWIGJAVA
 %typemap(javainterfaces) TYPE "Iterable<"#VALUE_TYPE">"
+#endif
+
+#if SWIGCSHARP
+%typemap(csinterfaces) TYPE "global::System.Collections.IEnumerable"
+%typemap(cscode) TYPE %{
+  global::System.Collections.IEnumerator global::System.Collections.IEnumerable.GetEnumerator() {
+     return (global::System.Collections.IEnumerator) GetEnumerator();
+  }
+%}
 #endif
 
 %extend TYPE {
@@ -158,6 +199,11 @@ typedef struct {
   ITER_TYPE##Iterator * iterator() {
     return new_##ITER_TYPE##Iterator(INIT_PREFIX##($self));
   }
+#elif SWIGCSHARP
+  %newobject get_enumerator;
+  ITER_TYPE##Iterator *get_enumerator() {
+    return new_##ITER_TYPE##Iterator(INIT_PREFIX##($self));
+  } 
 
 #else  /* PYTHON, JS */
   %newobject __iter__;
