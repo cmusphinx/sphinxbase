@@ -59,6 +59,8 @@ negative error code."
 #elif SWIGCSHARP
 %module SphinxBase
 %rename("%(camelcase)s", notregexmatch$name="^[A-Z]") "";
+#elif SWIGRUBY
+%module sphinxbase
 #else
 %module(docstring=DOCSTRING) sphinxbase
 #endif

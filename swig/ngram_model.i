@@ -59,7 +59,7 @@
     }
 
     void write(const char *path, int ftype, int *errcode) {
-        *errcode = ngram_model_write($self, path, ftype);
+        *errcode = ngram_model_write($self, path, (ngram_file_type_t)ftype);
     }
 
     int str_to_type(const char *str) {
