@@ -1,6 +1,6 @@
 if BUILD_SWIG
 
-SWIG_FLAGS = -I$(top_srcdir)/include
+SWIG_FLAGS = -I$(top_srcdir)/include -threads
 
 SWIG_DIR = $(top_srcdir)/swig
 
