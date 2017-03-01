@@ -325,6 +325,7 @@ detect_sphinx_mfc(sphinx_wave2feat_t *wtf)
             SWAP_INT32(&len);
             E_ERROR("Mismatch in header/file lengths: 0x%08x vs 0x%08x\n",
                     len, flen);
+            fclose(fh);
             return -1;
         }
         /* Set the input endianness to the opposite of the machine endianness... */
