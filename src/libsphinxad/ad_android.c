@@ -89,7 +89,7 @@ void bqRecorderCallback(SLAndroidSimpleBufferQueueItf bq, void *context){
 	
     SLresult result;
 	result = (*r->m_recorderBufferQueue)->Enqueue(r->m_recorderBufferQueue, r->m_pRecorderBuffer, r->m_recorderSize * sizeof(short));
-	if (SL_RESULT_SUCCESS == result) {
+	if (SL_RESULT_SUCCESS != result) {
         fprintf(stderr, "error set record buffer\n");
     }
 	pthread_mutex_unlock(&r->m_bufferOperLock);
@@ -137,7 +137,7 @@ ad_rec_t *ad_open_dev(const char * dev, int32 samples_per_sec)
 	
 	// configure audio sink
     SLDataLocator_AndroidSimpleBufferQueue loc_bq = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE, 2};
-    SLDataFormat_PCM format_pcm = {SL_DATAFORMAT_PCM, 1, SL_SAMPLINGRATE_16,
+    SLDataFormat_PCM format_pcm = {SL_DATAFORMAT_PCM, 1, samples_per_sec * 1000,
         SL_PCMSAMPLEFORMAT_FIXED_16, SL_PCMSAMPLEFORMAT_FIXED_16,
         SL_SPEAKER_FRONT_CENTER, SL_BYTEORDER_LITTLEENDIAN};
 	SLDataSink audioSnk = {&loc_bq, &format_pcm};
@@ -200,11 +200,11 @@ int32 ad_start_rec(ad_rec_t * r)
     }
     // in case already recording, stop recording and clear buffer queue
     SLresult result = (*r->m_recorderRecord)->SetRecordState(r->m_recorderRecord, SL_RECORDSTATE_STOPPED);
-    if(SL_RESULT_SUCCESS == result){
+    if(SL_RESULT_SUCCESS != result){
 		return -2;
 	}
     result = (*r->m_recorderBufferQueue)->Clear(r->m_recorderBufferQueue);
-    if(SL_RESULT_SUCCESS == result){
+    if(SL_RESULT_SUCCESS != result){
 		return -3;
 	}
 
@@ -216,13 +216,13 @@ int32 ad_start_rec(ad_rec_t * r)
     result = (*r->m_recorderBufferQueue)->Enqueue(r->m_recorderBufferQueue, r->m_pRecorderBuffer, r->m_recorderSize * sizeof(short));
     // the most likely other result is SL_RESULT_BUFFER_INSUFFICIENT,
     // which for this code example would indicate a programming error
-	if(SL_RESULT_SUCCESS == result){
+	if(SL_RESULT_SUCCESS != result){
 		return -4;
 	}
 
     // start recording
     result = (*r->m_recorderRecord)->SetRecordState(r->m_recorderRecord, SL_RECORDSTATE_RECORDING);
-	if(SL_RESULT_SUCCESS == result){
+	if(SL_RESULT_SUCCESS != result){
 		return -5;
 	}
 	return 0;
@@ -233,11 +233,11 @@ int32 ad_stop_rec(ad_rec_t * r)
 {
 	// in case already recording, stop recording and clear buffer queue
     SLresult result = (*r->m_recorderRecord)->SetRecordState(r->m_recorderRecord, SL_RECORDSTATE_STOPPED);
-    if(SL_RESULT_SUCCESS == result){
+    if(SL_RESULT_SUCCESS != result){
 		return -1;
 	}
 	result = (*r->m_recorderBufferQueue)->Clear(r->m_recorderBufferQueue);
-    if(SL_RESULT_SUCCESS == result){
+    if(SL_RESULT_SUCCESS != result){
 		return -2;
 	}
 	pthread_mutex_unlock(&r->m_audioEngineLock);

@@ -66,7 +66,7 @@ LOCAL_C_INCLUDES :=	$(LOCAL_PATH)/include/android 			\
 					$(LOCAL_PATH)/include/sphinxbase
 
 LOCAL_LDLIBS     := -llog -lOpenSLES
-					
-LOCAL_CFLAGS := -DHAVE_CONFIG_H -D_CRT_SECURE_NO_DEPRECATE -DANDROID -fvisibility=hidden  
+
+LOCAL_CFLAGS := -fpic -DHAVE_CONFIG_H
   
 include $(BUILD_SHARED_LIBRARY) 
