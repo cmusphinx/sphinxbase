@@ -255,6 +255,7 @@ int32 ad_read(ad_rec_t * r, int16 * buf, int32 max)
 	r->m_nAlreadySet -= nReadMaxSize;
 	if(r->m_nAlreadySet > 0)
 		memcpy(r->m_pBufferTotal, r->m_pBufferTotal + nReadMaxSize * sizeof(short), r->m_nAlreadySet * sizeof(short));
+    pthread_mutex_unlock(&r->m_bufferOperLock);
     return nReadMaxSize;
 }
 
