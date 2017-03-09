@@ -208,9 +208,6 @@ int32 ad_start_rec(ad_rec_t * r)
 		return -3;
 	}
 
-    // the buffer is not valid for playback yet
-    r->m_recorderSize = 0;
-
     // enqueue an empty buffer to be filled by the recorder
     // (for streaming recording, we would enqueue at least 2 empty buffers to start things off)
     result = (*r->m_recorderBufferQueue)->Enqueue(r->m_recorderBufferQueue, r->m_pRecorderBuffer, r->m_recorderSize * sizeof(short));
