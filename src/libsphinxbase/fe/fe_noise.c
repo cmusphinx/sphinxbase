@@ -192,11 +192,11 @@ fe_temp_masking(noise_stats_t *noise_stats, powspec_t * buf, powspec_t * peak, i
 
 #ifndef FIXED_POINT
         peak[i] *= noise_stats->lambda_t;
-        if (buf[i] < noise_stats->lambda_t * peak[i])
+        if (buf[i] < peak[i] * noise_stats->mu_t)
             buf[i] = peak[i] * noise_stats->mu_t;
 #else
         peak[i] += noise_stats->lambda_t;
-        if (buf[i] < noise_stats->lambda_t + peak[i])
+        if (buf[i] < peak[i] + noise_stats->mu_t)
             buf[i] = peak[i] + noise_stats->mu_t;
 #endif
 
