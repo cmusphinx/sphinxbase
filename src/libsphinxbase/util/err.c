@@ -234,6 +234,7 @@ err_logfp_cb(void *user_data, err_lvl_t lvl, const char *fmt, ...)
     va_start(ap, fmt);
     vfprintf(fp, fmt, ap);
     va_end(ap);
+    fflush(fp);
 }
 #endif
 
