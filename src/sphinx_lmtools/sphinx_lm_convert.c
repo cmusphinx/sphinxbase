@@ -91,12 +91,6 @@ static const arg_t defn[] = {
     "no",
     "Use memory-mapped I/O for reading binary LM files"},
 
-  { "-debug",
-    ARG_INT32,
-    NULL,
-    "Verbosity level for debugging messages"
-  },
-
   { NULL, 0, NULL, NULL }
 };
 
@@ -126,8 +120,6 @@ main(int argc, char *argv[])
 	if (cmd_ln_boolean_r(config, "-help")) {
 	    usagemsg(argv[0]);
 	}
-
-        err_set_debug_level(cmd_ln_int32_r(config, "-debug"));
 
 	/* Create log math object. */
 	if ((lmath = logmath_init

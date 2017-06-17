@@ -57,8 +57,6 @@
 static FILE*  logfp = NULL;
 static int    logfp_disabled = FALSE;
 
-static int sphinx_debug_level;
-
 #if defined(__ANDROID__)
 #include <android/log.h>
 static void
@@ -274,20 +272,6 @@ err_get_logfp(void)
 	return stderr;
 
     return logfp;
-}
-
-int
-err_set_debug_level(int level)
-{
-    int prev = sphinx_debug_level;
-    sphinx_debug_level = level;
-    return prev;
-}
-
-int
-err_get_debug_level(void)
-{
-    return sphinx_debug_level;
 }
 
 void

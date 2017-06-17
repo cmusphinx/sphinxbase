@@ -115,15 +115,6 @@ fi])
 AM_CONDITIONAL(FIXED_POINT, test x$fixed_point = xtrue)
 
 dnl
-dnl Enable debugging
-dnl
-AC_ARG_ENABLE(debug,
-	AS_HELP_STRING([--enable-debug],
-			[Enable debugging output]),
-	AC_DEFINE(SPHINX_DEBUG, [],
-	          [Enable debugging output]))
-
-dnl
 dnl determine audio type or use none if none supported on this platform
 dnl
 case $host in

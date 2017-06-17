@@ -124,25 +124,12 @@ extern "C" {
 #define E_INFO_NOFN(...)  err_msg(ERR_INFO, NULL, 0, __VA_ARGS__)
 
 /**
- * Print debugging information to standard error stream.
- *
- * This will only print a message if:
- *  1. Debugging is enabled at compile time
- *  2. The debug level is greater than or equal to \a level
- *
- * Note that for portability reasons the format and arguments must be
- * enclosed in an extra set of parentheses.
+ * Debug is disabled by default
  */
 #ifdef SPHINX_DEBUG
-#define E_DEBUG(level, ...) \
-    if (err_get_debug_level() >= level) \
-        err_msg(ERR_DEBUG, FILELINE, __VA_ARGS__)
-#define E_DEBUGCONT(level, ...) \
-    if (err_get_debug_level() >= level) \
-        err_msg(ERR_DEBUG, NULL, 0, __VA_ARGS__)
+#define E_DEBUG(...) err_msg(ERR_DEBUG, NULL, 0, __VA_ARGS__)
 #else
-#define E_DEBUG(level,x)
-#define E_DEBUGCONT(level,x)
+#define E_DEBUG(...)
 #endif
 
 typedef enum err_e {
@@ -204,24 +191,6 @@ err_get_logfp(void);
  */
 SPHINXBASE_EXPORT int
 err_set_logfile(const char *path);
-
-/**
- * Set debugging verbosity level.
- *
- * Note that debugging messages are only enabled when compiled with -DDEBUG.
- *
- * @param level Verbosity level to set, or 0 to disable debug messages.
- */
-SPHINXBASE_EXPORT
-int err_set_debug_level(int level);
-
-/**
- * Get debugging verbosity level.
- *
- * Note that debugging messages are only enabled when compiled with -DDEBUG.
- */
-SPHINXBASE_EXPORT
-int err_get_debug_level(void);
 
 #ifdef __cplusplus
 }

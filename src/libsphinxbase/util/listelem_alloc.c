@@ -221,8 +221,8 @@ __listelem_malloc_id__(listelem_alloc_t *list, char *caller_file,
             E_ERROR("Failed to find block index for pointer %p!\n", ptr);
         }
         ptridx = (ptr - block) / (list->elemsize / sizeof(*block));
-        E_DEBUG(4,("ptr %p block %p blkidx %d ptridx %d\n",
-                   ptr, block, list->n_blocks - blkidx - 1, ptridx));
+        E_DEBUG("ptr %p block %p blkidx %d ptridx %d\n",
+                ptr, block, list->n_blocks - blkidx - 1, ptridx);
         *out_id = ((list->n_blocks - blkidx - 1) << BLKID_SHIFT) | ptridx;
     }
 
