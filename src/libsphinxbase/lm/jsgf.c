@@ -566,7 +566,7 @@ jsgf_build_fsg_internal(jsgf_t * grammar, jsgf_rule_t * rule,
                 int wid = fsg_model_word_add(fsg, link->atom->name);
                 fsg_model_trans_add(fsg, link->from, link->to,
                                     logmath_log(lmath, link->atom->weight),
-                                    wid);
+                                    wid, link->atom->tags);
             }
         }
         else {

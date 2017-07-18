@@ -111,7 +111,7 @@ nextline_str2words(FILE * fp, int32 * lineno,
 
 void
 fsg_model_trans_add(fsg_model_t * fsg,
-                    int32 from, int32 to, int32 logp, int32 wid)
+                    int32 from, int32 to, int32 logp, int32 wid, glist_t tags)
 {
     fsg_link_t *link;
     glist_t gl;
@@ -136,6 +136,7 @@ fsg_model_trans_add(fsg_model_t * fsg,
     link->to_state = to;
     link->logs2prob = logp;
     link->wid = wid;
+    link->tags = tags;
 
     /* Add it to the list of transitions and update the hash table */
     gl = glist_add_ptr(gl, (void *) link);
@@ -431,12 +432,12 @@ fsg_model_add_silence(fsg_model_t * fsg, char const *silword,
     n_trans = 0;
     if (state == -1) {
         for (src = 0; src < fsg->n_state; src++) {
-            fsg_model_trans_add(fsg, src, src, logsilp, silwid);
+            fsg_model_trans_add(fsg, src, src, logsilp, silwid, NULL);
             ++n_trans;
         }
     }
     else {
-        fsg_model_trans_add(fsg, state, state, logsilp, silwid);
+        fsg_model_trans_add(fsg, state, state, logsilp, silwid, NULL);
         ++n_trans;
     }
 
@@ -684,7 +685,7 @@ fsg_model_read(FILE * fp, logmath_t * lmath, float32 lw)
                 wid = lastwid;
                 ++lastwid;
             }
-            fsg_model_trans_add(fsg, i, j, tprob, wid);
+            fsg_model_trans_add(fsg, i, j, tprob, wid, NULL);
             ++n_trans;
         }
         else {
