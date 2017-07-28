@@ -68,6 +68,8 @@ extern "C" {
 }
 #endif
 
+#define MAX_TAG_SIZE 50
+
 /*
  * A single transition in the FSG.
  */
@@ -76,7 +78,7 @@ typedef struct fsg_link_s {
     int32 to_state;
     int32 logs2prob;	/**< log(transition probability)*lw */
     int32 wid;		/**< Word-ID; <0 if epsilon or null transition */
-    char tag[50];   /**< List containig tags (char *) associated with the link */
+    char tag[MAX_TAG_SIZE];   /**< List containig tags (char *) associated with the link */
 } fsg_link_t;
 
 /* Access macros */
