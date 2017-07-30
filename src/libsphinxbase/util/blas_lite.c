@@ -98,12 +98,12 @@ logical lsame_(char *ca, char *cb)
           upper case 'Z'.
 */
 
-	if (inta >= 129 && inta <= 137 || inta >= 145 && inta <= 153 || inta
-		>= 162 && inta <= 169) {
+	if ((inta >= 129 && inta <= 137) || (inta >= 145 && inta <= 153) ||
+		(inta >= 162 && inta <= 169)) {
 	    inta += 64;
 	}
-	if (intb >= 129 && intb <= 137 || intb >= 145 && intb <= 153 || intb
-		>= 162 && intb <= 169) {
+	if ((intb >= 129 && intb <= 137) || (intb >= 145 && intb <= 153) ||
+		(intb >= 162 && intb <= 169)) {
 	    intb += 64;
 	}
 
@@ -422,7 +422,7 @@ L60:
 
 /*     Quick return if possible. */
 
-    if (*m == 0 || *n == 0 || (*alpha == 0.f || *k == 0) && *beta == 1.f) {
+    if (*m == 0 || *n == 0 || ((*alpha == 0.f || *k == 0) && *beta == 1.f)) {
 	return 0;
     }
 
@@ -723,7 +723,7 @@ L60:
 
 /*     Quick return if possible. */
 
-    if (*m == 0 || *n == 0 || *alpha == 0.f && *beta == 1.f) {
+    if (*m == 0 || *n == 0 || (*alpha == 0.f && *beta == 1.f)) {
 	return 0;
     }
 
@@ -1135,7 +1135,7 @@ L40:
 
 /*     Quick return if possible. */
 
-    if (*m == 0 || *n == 0 || *alpha == 0.f && *beta == 1.f) {
+    if (*m == 0 || *n == 0 || (*alpha == 0.f && *beta == 1.f)) {
 	return 0;
     }
 
@@ -1447,7 +1447,7 @@ L40:
 
 /*     Quick return if possible. */
 
-    if (*n == 0 || (*alpha == 0.f || *k == 0) && *beta == 1.f) {
+    if (*n == 0 || ((*alpha == 0.f || *k == 0) && *beta == 1.f)) {
 	return 0;
     }
 

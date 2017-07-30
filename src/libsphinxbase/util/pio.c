@@ -653,4 +653,5 @@ build_directory(const char *path)
         return mkdir(path, 0777);
 #endif
     }
+    return -1; //control should never reach here; fixes some compiler warnings
 }
