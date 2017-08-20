@@ -119,12 +119,12 @@ read_1grams_arpa(lineiter_t ** li, uint32 count, ngram_model_t * base,
         *li = lineiter_next(*li);
         if (*li == NULL) {
             E_ERROR
-                ("Unexpected end of ARPA file. Failed to read %dth unigram\n",
+                ("Unexpected end of ARPA file. Failed to read unigram %d\n",
                  i + 1);
             return -1;
         }
         if ((n = str2words((*li)->buf, wptr, 3)) < n_parts) {
-            E_ERROR("Format error at line %s, Failed to read unigrams\n", (*li)->buf);
+            E_ERROR("Format error at line %d, Failed to read unigrams\n", (*li)->lineno);
             return -1;
         }
 
