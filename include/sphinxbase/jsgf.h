@@ -63,6 +63,10 @@ extern "C" {
 
 typedef struct jsgf_s jsgf_t;
 typedef struct jsgf_rule_s jsgf_rule_t;
+typedef struct jsgf_rhs_s jsgf_rhs_t;
+typedef struct jsgf_atom_s jsgf_atom_t;
+typedef struct jsgf_link_s jsgf_link_t;
+typedef struct jsgf_rule_stack_s jsgf_rule_stack_t;
 
 /**
  * Create a new JSGF grammar.
@@ -200,6 +204,68 @@ fsg_model_t *jsgf_read_string(const char *string, logmath_t * lmath, float32 lw)
  */
 SPHINXBASE_EXPORT
 int jsgf_write_fsg(jsgf_t *grammar, jsgf_rule_t *rule, FILE *outfh);
+
+/* ------------ MOVED FROM jsgf_internal.h ---------- */
+#define jsgf_atom_is_rule(atom) ((atom)->name[0] == '<')
+
+void jsgf_add_link(jsgf_t *grammar, jsgf_atom_t *atom, int from, int to);
+jsgf_atom_t *jsgf_atom_new(char *name, float weight);
+jsgf_atom_t *jsgf_kleene_new(jsgf_t *jsgf, jsgf_atom_t *atom, int plus);
+jsgf_rule_t *jsgf_optional_new(jsgf_t *jsgf, jsgf_rhs_t *exp);
+jsgf_rule_t *jsgf_define_rule(jsgf_t *jsgf, char *name, jsgf_rhs_t *rhs, int is_public);
+jsgf_rule_t *jsgf_import_rule(jsgf_t *jsgf, char *name);
+
+int jsgf_atom_free(jsgf_atom_t *atom);
+int jsgf_rule_free(jsgf_rule_t *rule);
+jsgf_rule_t *jsgf_rule_retain(jsgf_rule_t *rule);
+
+/* ------------ MY FUNCTIONS ----------- */
+
+/**
+ * Creates a new atom with single tag.
+ *
+ */
+SPHINXBASE_EXPORT
+jsgf_atom_t *jsgf_atom_with_tag_new(char *name, float weight, char *tag);
+
+/**
+ * Creates a new rhs struct.
+ *
+ */
+SPHINXBASE_EXPORT
+jsgf_rhs_t *jsgf_rhs_new();
+
+/**
+ * Some getters and setters put to allow the single inclusion of jsgf.h.
+ *
+ */
+
+SPHINXBASE_EXPORT
+jsgf_rhs_t *jsgf_get_rule_rhs(jsgf_rule_t *rule);
+
+SPHINXBASE_EXPORT
+jsgf_rhs_t *jsgf_get_rhs_alt(jsgf_rhs_t *rhs);
+
+SPHINXBASE_EXPORT
+gnode_t *jsgf_get_rhs_atom(jsgf_rhs_t *rhs);
+
+SPHINXBASE_EXPORT
+char *jsgf_get_atom_name(jsgf_atom_t *atom);
+
+SPHINXBASE_EXPORT
+void jsgf_set_rule_rhs(jsgf_rule_t *rule, jsgf_rhs_t *rhs);
+
+SPHINXBASE_EXPORT
+void jsgf_set_rhs_alt(jsgf_rhs_t *rhs, jsgf_rhs_t *alt);
+
+SPHINXBASE_EXPORT
+void jsgf_set_rhs_atom(jsgf_rhs_t *rhs, gnode_t* gn);
+
+SPHINXBASE_EXPORT
+void jsgf_set_atom_name(jsgf_atom_t *atom, char *name);
+
+SPHINXBASE_EXPORT
+int jsgf_is_atom_rule(jsgf_atom_t *atom);
 
 #ifdef __cplusplus
 }

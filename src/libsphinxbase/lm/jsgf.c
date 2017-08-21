@@ -970,3 +970,86 @@ jsgf_parse_string(const char *string, jsgf_t * parent)
 
     return jsgf;
 }
+
+jsgf_rhs_t *
+jsgf_get_rule_rhs(jsgf_rule_t *rule)
+{
+    if(!rule)
+        return NULL;
+
+    return rule->rhs;
+}
+
+jsgf_rhs_t *
+jsgf_get_rhs_alt(jsgf_rhs_t *rhs)
+{
+    if(!rhs)
+        return NULL;
+
+    return rhs->alt;
+}
+
+gnode_t *
+jsgf_get_rhs_atom(jsgf_rhs_t *rhs)
+{
+    if(!rhs)
+        return NULL;
+
+    return rhs->atoms;
+}
+
+char *
+jsgf_get_atom_name(jsgf_atom_t *atom)
+{
+    if(!atom)
+        return NULL;
+
+    return atom->name;
+}
+
+void
+jsgf_set_rule_rhs(jsgf_rule_t *rule, jsgf_rhs_t *rhs)
+{
+    if(rule)
+        rule->rhs = rhs;
+}
+
+void
+jsgf_set_rhs_alt(jsgf_rhs_t *rhs, jsgf_rhs_t *alt)
+{
+    if(rhs)
+        rhs->alt = alt;
+}
+
+void
+jsgf_set_rhs_atom(jsgf_rhs_t *rhs, gnode_t* gn)
+{
+    if(rhs)
+        rhs->atoms = gn;
+}
+
+void
+jsgf_set_atom_name(jsgf_atom_t *atom, char *name)
+{
+    if(atom)
+        atom->name = name;
+}
+
+int
+jsgf_is_atom_rule(jsgf_atom_t *atom)
+{
+    if(!atom)
+        return -1;
+
+    if(atom->name[0] == '<'){
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+jsgf_rhs_t *
+jsgf_rhs_new()
+{
+    return (jsgf_rhs_t *) ckd_calloc(1, sizeof(jsgf_rhs_t));
+}
