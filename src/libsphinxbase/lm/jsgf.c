@@ -62,6 +62,21 @@ static int expand_rule(jsgf_t * grammar, jsgf_rule_t * rule,
                        int rule_entry, int rule_exit);
 
 jsgf_atom_t *
+jsgf_atom_with_tag_new(char *name, float weight, char *tag)
+{
+    jsgf_atom_t *atom;
+
+    atom = ckd_calloc(1, sizeof(*atom));
+    atom->name = ckd_salloc(name);
+    atom->weight = weight;
+
+    glist_t tags = NULL;
+    tags = glist_add_ptr(tags,(void *)tag);
+    atom->tags = tags;
+    return atom;
+}
+
+jsgf_atom_t *
 jsgf_atom_new(char *name, float weight)
 {
     jsgf_atom_t *atom;
