@@ -1077,5 +1077,5 @@ jsgf_rule_clean(jsgf_rule_t *rule)
     if (--rule->refcnt > 0)
         return rule->refcnt;
     jsgf_rhs_free(rule->rhs);
-    return 1;
+    return 0;
 }
