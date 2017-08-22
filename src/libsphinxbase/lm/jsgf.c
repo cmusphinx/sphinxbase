@@ -69,9 +69,9 @@ jsgf_atom_with_tag_new(char *name, float weight, char *tag)
     atom = ckd_calloc(1, sizeof(*atom));
     atom->name = ckd_salloc(name);
     atom->weight = weight;
+    const char *tagC = ckd_salloc(tag);
 
-    glist_t tags = NULL;
-    tags = glist_add_ptr(tags,(void *)tag);
+    glist_t tags = glist_add_ptr(NULL,(void *)tagC);
     atom->tags = tags;
     return atom;
 }
@@ -84,6 +84,7 @@ jsgf_atom_new(char *name, float weight)
     atom = ckd_calloc(1, sizeof(*atom));
     atom->name = ckd_salloc(name);
     atom->weight = weight;
+    atom->tags = NULL;
     return atom;
 }
 
@@ -328,7 +329,6 @@ expand_rhs(jsgf_t * grammar, jsgf_rule_t * rule, jsgf_rhs_t * rhs,
     /* Iterate over atoms in rhs and generate links/nodes */
     for (gn = rhs->atoms; gn; gn = gnode_next(gn)) {
         jsgf_atom_t *atom = gnode_ptr(gn);
-
         if (jsgf_atom_is_rule(atom)) {
             jsgf_rule_t *subrule;
             char *fullname;
@@ -1069,7 +1069,7 @@ jsgf_rhs_new()
     return (jsgf_rhs_t *) ckd_calloc(1, sizeof(jsgf_rhs_t));
 }
 
-int 
+int
 jsgf_rule_clean(jsgf_rule_t *rule)
 {
     if (rule == NULL)
@@ -1079,3 +1079,4 @@ jsgf_rule_clean(jsgf_rule_t *rule)
     jsgf_rhs_free(rule->rhs);
     return 0;
 }
+
