@@ -267,6 +267,9 @@ void jsgf_set_atom_name(jsgf_atom_t *atom, char *name);
 SPHINXBASE_EXPORT
 int jsgf_is_atom_rule(jsgf_atom_t *atom);
 
+SPHINXBASE_EXPORT
+int jsgf_rule_clean(jsgf_rule_t *rule);
+
 #ifdef __cplusplus
 }
 #endif

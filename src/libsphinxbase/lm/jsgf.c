@@ -1068,3 +1068,14 @@ jsgf_rhs_new()
 {
     return (jsgf_rhs_t *) ckd_calloc(1, sizeof(jsgf_rhs_t));
 }
+
+int 
+jsgf_rule_clean(jsgf_rule_t *rule)
+{
+    if (rule == NULL)
+        return 0;
+    if (--rule->refcnt > 0)
+        return rule->refcnt;
+    jsgf_rhs_free(rule->rhs);
+    return 1;
+}
