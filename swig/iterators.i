@@ -127,6 +127,8 @@ typedef struct {} TYPE##Iterator;
   }
 #elif SWIGCSHARP
   bool MoveNext() {
+    if(!$self || !$self->ptr)
+        return false;
     $self->ptr = ##PREFIX##_next($self->ptr);
     if ($self->ptr) {
 	return true;
