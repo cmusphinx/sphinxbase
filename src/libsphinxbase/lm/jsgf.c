@@ -529,6 +529,9 @@ jsgf_build_fsg_internal(jsgf_t * grammar, jsgf_rule_t * rule,
     glist_t nulls;
     gnode_t *gn;
     int rule_entry, rule_exit;
+    
+    if (grammar == NULL || rule == NULL)
+	return NULL;
 
     /* Clear previous links */
     for (gn = grammar->links; gn; gn = gnode_next(gn)) {
