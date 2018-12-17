@@ -34,4 +34,4 @@
 # ====================================================================
 
 
-from sphinxbase import *
+from .sphinxbase import *
