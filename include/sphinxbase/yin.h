@@ -43,7 +43,7 @@
 #define __YIN_H__
 
 #ifdef __cplusplus
-extern "C"
+extern "C" {
 #endif
 #if 0
 } /* Fool Emacs. */
