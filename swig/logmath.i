@@ -48,4 +48,36 @@
     double exp(int prob) {
         return logmath_exp($self, prob);
     }
+
+    int log(double prob) {
+        return logmath_log($self, prob);
+    }
+
+    int add(int logb_p, int logb_q) {
+        return logmath_add($self, logb_p, logb_q);
+    }
+
+    int ln_to_log(double log_p) {
+        return logmath_ln_to_log($self, log_p);
+    }
+
+    double log_to_ln(int logb_p) {
+        return logmath_log_to_ln($self, logb_p);
+    }
+
+    int log10_to_log(double log_p) {
+        return logmath_log10_to_log($self, log_p);
+    }
+
+    double log_to_log10(int logb_p) {
+        return logmath_log_to_log10($self, logb_p);
+    }
+
+    float log10_to_log_float(double log_p) {
+        return logmath_log10_to_log_float($self, log_p);
+    }
+
+    double log_float_to_log10(float log_p) {
+        return logmath_log_float_to_log10($self, log_p);
+    }
 }
