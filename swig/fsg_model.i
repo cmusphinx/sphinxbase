@@ -55,6 +55,10 @@
         return fsg_model_word_id($self, word);
     }
 
+    const char *word_str(int wid) {
+        return fsg_model_word_str($self, wid);
+    }
+    
     int word_add(const char *word) {
         return fsg_model_word_add($self, word);
     }
@@ -79,7 +83,67 @@
         return fsg_model_add_alt($self, baseword, altword);
     }
 
+    // TODO: Figure out what to do about null_trans_closure, model_trans, arc iterators, etc
+
     void writefile(const char *path) {
         fsg_model_writefile($self, path);
+    }
+
+    void writefile_fsm(const char *path) {
+        fsg_model_writefile_fsm($self, path);
+    }
+
+    void writefile_symtab(const char *path) {
+        fsg_model_writefile_symtab($self, path);
+    }
+
+    // TODO: Figure out if we can support the FILE* versions of those functions
+
+    int get_final_state() {
+        return fsg_model_final_state($self);
+    }
+
+    void set_final_state(int state) {
+        fsg_model_final_state($self) = state;
+    }
+
+    int get_start_state() {
+        return fsg_model_start_state($self);
+    }
+
+    void set_start_state(int state) {
+        fsg_model_start_state($self) = state;
+    }
+
+    int log(double logp) {
+        return fsg_model_log($self, logp);
+    }
+
+    float get_lw() {
+        return fsg_model_lw($self);
+    }
+
+    char const *get_name() {
+        return fsg_model_name($self);
+    }
+
+    int get_n_word() {
+        return fsg_model_n_word($self);
+    }
+
+    bool has_sil() {
+        return fsg_model_has_sil($self);
+    }
+
+    bool has_alt() {
+        return fsg_model_has_alt($self);
+    }
+
+    bool is_filler(int wid) {
+        return fsg_model_is_filler($self, wid);
+    }
+
+    bool is_alt(int wid) {
+        return fsg_model_is_alt($self, wid);
     }
 }
