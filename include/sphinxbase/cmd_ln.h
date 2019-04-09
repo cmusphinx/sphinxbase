@@ -264,7 +264,7 @@ cmd_ln_t *cmd_ln_parse_file_r(cmd_ln_t *inout_cmdln, /**< In/Out: Previous comma
  * Access the generic type union for a command line argument.
  */
 SPHINXBASE_EXPORT
-anytype_t *cmd_ln_access_r(const cmd_ln_t *cmdln, char const *name);
+anytype_t *cmd_ln_access_r(cmd_ln_t const *cmdln, char const *name);
 
 /**
  * Retrieve a string from a command-line object.
@@ -281,7 +281,7 @@ anytype_t *cmd_ln_access_r(const cmd_ln_t *cmdln, char const *name);
  *         is unknown.
  */
 SPHINXBASE_EXPORT
-char const *cmd_ln_str_r(const cmd_ln_t *cmdln, char const *name);
+char const *cmd_ln_str_r(cmd_ln_t const *cmdln, char const *name);
 
 /**
  * Retrieve an array of strings from a command-line object.
@@ -298,7 +298,7 @@ char const *cmd_ln_str_r(const cmd_ln_t *cmdln, char const *name);
  *         is unknown.
  */
 SPHINXBASE_EXPORT
-char const **cmd_ln_str_list_r(const cmd_ln_t *cmdln, char const *name);
+char const **cmd_ln_str_list_r(cmd_ln_t const *cmdln, char const *name);
 
 /**
  * Retrieve an integer from a command-line object.
@@ -312,7 +312,7 @@ char const **cmd_ln_str_list_r(const cmd_ln_t *cmdln, char const *name);
  *         is unknown.
  */
 SPHINXBASE_EXPORT
-long cmd_ln_int_r(const cmd_ln_t *cmdln, char const *name);
+long cmd_ln_int_r(cmd_ln_t const *cmdln, char const *name);
 
 /**
  * Retrieve a floating-point number from a command-line object.
@@ -326,7 +326,7 @@ long cmd_ln_int_r(const cmd_ln_t *cmdln, char const *name);
  *         is unknown.
  */
 SPHINXBASE_EXPORT
-double cmd_ln_float_r(const cmd_ln_t *cmdln, char const *name);
+double cmd_ln_float_r(cmd_ln_t const *cmdln, char const *name);
 
 /**
  * Retrieve a boolean value from a command-line object.
@@ -399,7 +399,7 @@ void cmd_ln_set_float_r(cmd_ln_t *cmdln, char const *name, double fv);
  * was one of the arguments defined in the call to cmd_ln_parse_r().
  */
 SPHINXBASE_EXPORT
-int cmd_ln_exists_r(const cmd_ln_t *cmdln, char const *name);
+int cmd_ln_exists_r(cmd_ln_t const *cmdln, char const *name);
 
 /**
  * Print a help message listing the valid argument names, and the associated
@@ -410,7 +410,7 @@ int cmd_ln_exists_r(const cmd_ln_t *cmdln, char const *name);
  * @param defn array of argument name definitions.
  */
 SPHINXBASE_EXPORT
-void cmd_ln_print_help_r (const cmd_ln_t *cmdln, FILE *fp, const arg_t *defn);
+void cmd_ln_print_help_r (cmd_ln_t const *cmdln, FILE *fp, const arg_t *defn);
 
 /**
  * Print current configuration values and defaults.
@@ -420,7 +420,7 @@ void cmd_ln_print_help_r (const cmd_ln_t *cmdln, FILE *fp, const arg_t *defn);
  * @param defn array of argument name definitions.
  */
 SPHINXBASE_EXPORT
-void cmd_ln_print_values_r (const cmd_ln_t *cmdln, FILE *fp, const arg_t *defn);
+void cmd_ln_print_values_r (cmd_ln_t const *cmdln, FILE *fp, const arg_t *defn);
 
 /**
  * Non-reentrant version of cmd_ln_parse().

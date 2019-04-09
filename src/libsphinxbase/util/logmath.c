@@ -269,7 +269,7 @@ error_out:
 }
 
 int32
-logmath_write(const logmath_t *lmath, const char *file_name)
+logmath_write(logmath_t const *lmath, const char *file_name)
 {
     FILE *fp;
     long pos;
@@ -354,7 +354,7 @@ logmath_free(logmath_t *lmath)
 }
 
 int32
-logmath_get_table_shape(const logmath_t *lmath, uint32 *out_size,
+logmath_get_table_shape(logmath_t const *lmath, uint32 *out_size,
                         uint32 *out_width, uint32 *out_shift)
 {
     if (out_size) *out_size = lmath->t.table_size;
@@ -365,31 +365,31 @@ logmath_get_table_shape(const logmath_t *lmath, uint32 *out_size,
 }
 
 float64
-logmath_get_base(const logmath_t *lmath)
+logmath_get_base(logmath_t const *lmath)
 {
     return lmath->base;
 }
 
 int
-logmath_get_zero(const logmath_t *lmath)
+logmath_get_zero(logmath_t const *lmath)
 {
     return lmath->zero;
 }
 
 int
-logmath_get_width(const logmath_t *lmath)
+logmath_get_width(logmath_t const *lmath)
 {
     return lmath->t.width;
 }
 
 int
-logmath_get_shift(const logmath_t *lmath)
+logmath_get_shift(logmath_t const *lmath)
 {
     return lmath->t.shift;
 }
 
 int
-logmath_add(const logmath_t *lmath, int logb_x, int logb_y)
+logmath_add(logmath_t const *lmath, int logb_x, int logb_y)
 {
     logadd_t *t = LOGMATH_TABLE(lmath);
     int d, r;
@@ -436,7 +436,7 @@ logmath_add(const logmath_t *lmath, int logb_x, int logb_y)
 }
 
 int
-logmath_add_exact(const logmath_t *lmath, int logb_p, int logb_q)
+logmath_add_exact(logmath_t const *lmath, int logb_p, int logb_q)
 {
     return logmath_log(lmath,
                        logmath_exp(lmath, logb_p)
@@ -444,7 +444,7 @@ logmath_add_exact(const logmath_t *lmath, int logb_p, int logb_q)
 }
 
 int
-logmath_log(const logmath_t *lmath, float64 p)
+logmath_log(logmath_t const *lmath, float64 p)
 {
     if (p <= 0) {
         return lmath->zero;
@@ -453,31 +453,31 @@ logmath_log(const logmath_t *lmath, float64 p)
 }
 
 float64
-logmath_exp(const logmath_t *lmath, int logb_p)
+logmath_exp(logmath_t const *lmath, int logb_p)
 {
     return pow(lmath->base, (float64)(logb_p << lmath->t.shift));
 }
 
 int
-logmath_ln_to_log(const logmath_t *lmath, float64 log_p)
+logmath_ln_to_log(logmath_t const *lmath, float64 log_p)
 {
     return (int)(log_p * lmath->inv_log_of_base) >> lmath->t.shift;
 }
 
 float64
-logmath_log_to_ln(const logmath_t *lmath, int logb_p)
+logmath_log_to_ln(logmath_t const *lmath, int logb_p)
 {
     return (float64)(logb_p << lmath->t.shift) * lmath->log_of_base;
 }
 
 int
-logmath_log10_to_log(const logmath_t *lmath, float64 log_p)
+logmath_log10_to_log(logmath_t const *lmath, float64 log_p)
 {
     return (int)(log_p * lmath->inv_log10_of_base) >> lmath->t.shift;
 }
 
 float 
-logmath_log10_to_log_float(const logmath_t *lmath, float64 log_p)
+logmath_log10_to_log_float(logmath_t const *lmath, float64 log_p)
 {
     int i;
     float res = (float)(log_p * lmath->inv_log10_of_base);
@@ -487,13 +487,13 @@ logmath_log10_to_log_float(const logmath_t *lmath, float64 log_p)
 }
 
 float64
-logmath_log_to_log10(const logmath_t *lmath, int logb_p)
+logmath_log_to_log10(logmath_t const *lmath, int logb_p)
 {
     return (float64)(logb_p << lmath->t.shift) * lmath->log10_of_base;
 }
 
 float64
-logmath_log_float_to_log10(const logmath_t *lmath, float log_p)
+logmath_log_float_to_log10(logmath_t const *lmath, float log_p)
 {
     int i;
     for (i = 0; i < lmath->t.shift; i++) {
