@@ -132,38 +132,38 @@ logmath_t *logmath_read(const char *filename);
  * Write a log table to a file.
  */
 SPHINXBASE_EXPORT
-int32 logmath_write(logmath_t *lmath, const char *filename);
+int32 logmath_write(const logmath_t *lmath, const char *filename);
 
 /**
  * Get the log table size and dimensions.
  */
 SPHINXBASE_EXPORT
-int32 logmath_get_table_shape(logmath_t *lmath, uint32 *out_size,
+int32 logmath_get_table_shape(const logmath_t *lmath, uint32 *out_size,
                               uint32 *out_width, uint32 *out_shift);
 
 /**
  * Get the log base.
  */
 SPHINXBASE_EXPORT
-float64 logmath_get_base(logmath_t *lmath);
+float64 logmath_get_base(const logmath_t *lmath);
 
 /**
  * Get the smallest possible value represented in this base.
  */
 SPHINXBASE_EXPORT
-int logmath_get_zero(logmath_t *lmath);
+int logmath_get_zero(const logmath_t *lmath);
 
 /**
  * Get the width of the values in a log table.
  */
 SPHINXBASE_EXPORT
-int logmath_get_width(logmath_t *lmath);
+int logmath_get_width(const logmath_t *lmath);
 
 /**
  * Get the shift of the values in a log table.
  */
 SPHINXBASE_EXPORT
-int logmath_get_shift(logmath_t *lmath);
+int logmath_get_shift(const logmath_t *lmath);
 
 /**
  * Retain ownership of a log table.
@@ -185,61 +185,61 @@ int logmath_free(logmath_t *lmath);
  * Add two values in log space exactly and slowly (without using add table).
  */
 SPHINXBASE_EXPORT
-int logmath_add_exact(logmath_t *lmath, int logb_p, int logb_q);
+int logmath_add_exact(const logmath_t *lmath, int logb_p, int logb_q);
 
 /**
  * Add two values in log space (i.e. return log(exp(p)+exp(q)))
  */
 SPHINXBASE_EXPORT
-int logmath_add(logmath_t *lmath, int logb_p, int logb_q);
+int logmath_add(const logmath_t *lmath, int logb_p, int logb_q);
 
 /**
  * Convert linear floating point number to integer log in base B.
  */
 SPHINXBASE_EXPORT
-int logmath_log(logmath_t *lmath, float64 p);
+int logmath_log(const logmath_t *lmath, float64 p);
 
 /**
  * Convert integer log in base B to linear floating point.
  */
 SPHINXBASE_EXPORT
-float64 logmath_exp(logmath_t *lmath, int logb_p);
+float64 logmath_exp(const logmath_t *lmath, int logb_p);
 
 /**
  * Convert natural log (in floating point) to integer log in base B.
  */
 SPHINXBASE_EXPORT
-int logmath_ln_to_log(logmath_t *lmath, float64 log_p);
+int logmath_ln_to_log(const logmath_t *lmath, float64 log_p);
 
 /**
  * Convert integer log in base B to natural log (in floating point).
  */
 SPHINXBASE_EXPORT
-float64 logmath_log_to_ln(logmath_t *lmath, int logb_p);
+float64 logmath_log_to_ln(const logmath_t *lmath, int logb_p);
 
 /**
  * Convert base 10 log (in floating point) to integer log in base B.
  */
 SPHINXBASE_EXPORT
-int logmath_log10_to_log(logmath_t *lmath, float64 log_p);
+int logmath_log10_to_log(const logmath_t *lmath, float64 log_p);
 
 /**
  * Convert base 10 log (in floating point) to float log in base B.
  */
 SPHINXBASE_EXPORT
-float logmath_log10_to_log_float(logmath_t *lmath, float64 log_p);
+float logmath_log10_to_log_float(const logmath_t *lmath, float64 log_p);
 
 /**
  * Convert integer log in base B to base 10 log (in floating point).
  */
 SPHINXBASE_EXPORT
-float64 logmath_log_to_log10(logmath_t *lmath, int logb_p);
+float64 logmath_log_to_log10(const logmath_t *lmath, int logb_p);
 
 /**
  * Convert float log in base B to base 10 log.
  */
 SPHINXBASE_EXPORT
-float64 logmath_log_float_to_log10(logmath_t *lmath, float log_p);
+float64 logmath_log_float_to_log10(const logmath_t *lmath, float log_p);
 
 #ifdef __cplusplus
 }
