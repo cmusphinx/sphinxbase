@@ -299,7 +299,10 @@ class Doxy2SWIG:
             name = first['name'].firstChild.data
 
             for n in node.getElementsByTagName('param'):
-              arg_type = n.getElementsByTagName('type')[0]
+              elts = n.getElementsByTagName('type')
+              if len(elts) == 0:
+                  continue
+              arg_type = elts[0]
               ref = self.get_specific_nodes(arg_type, ('ref'))
               if 'ref' in ref:
                 type_name = ref['ref'].firstChild.data
