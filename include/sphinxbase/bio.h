@@ -241,6 +241,18 @@ int32 bio_fread_3d(void ****arr,
                    uint32 swap,
                    uint32 *chksum);
 
+int
+bio_fread_intv_3d(void ****arr,
+	       size_t e_sz,
+	       uint32 s,
+	       uint32 e,
+	       uint32 *d1,
+	       uint32 *d2,
+	       uint32 *d3,
+	       FILE *fp,
+	       uint32 swap,
+	       uint32 *chksum);
+
 /**
  * Read and verify checksum at the end of binary file.  Fails fatally if there is
  * a mismatch.
