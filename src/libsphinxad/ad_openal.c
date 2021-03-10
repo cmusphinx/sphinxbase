@@ -40,8 +40,8 @@
 
 #include "ad.h"
 
-#include <al.h>
-#include <alc.h>
+#include <OpenAL/al.h>
+#include <OpenAL/alc.h>
 
 struct ad_rec_s {
     ALCdevice * device;
