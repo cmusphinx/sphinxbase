@@ -85,7 +85,7 @@ struct jsgf_s {
 
     /* Scratch variables for FSG conversion. */
     int nstate;            /**< Number of generated states. */
-    glist_t links;	   /**< Generated FSG links. */
+    glist_t links;         /**< Generated FSG links. */
     glist_t rulestack;     /**< Stack of currently expanded rules. */
 };
 
@@ -99,10 +99,12 @@ struct jsgf_rule_s {
     int refcnt;      /**< Reference count. */
     char *name;      /**< Rule name (NULL for an alternation/grouping) */
     int is_public;   /**< Is this rule marked 'public'? */
+    int ck_recursive;/**< Has right-recursion been checked on this rule already? */
     jsgf_rhs_t *rhs; /**< Expansion */
 };
 
 struct jsgf_rhs_s {
+    int is_recursive;/**< Does this RHS recurse to its containing rule? */
     glist_t atoms;   /**< Sequence of items */
     jsgf_rhs_t *alt; /**< Linked list of alternates */
 };
