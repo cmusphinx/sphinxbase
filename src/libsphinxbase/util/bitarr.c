@@ -81,7 +81,7 @@ static uint64 read_off(bitarr_address_t address)
 
 uint64 bitarr_read_int57(bitarr_address_t address, uint8 length, uint64 mask)
 {
-    return (read_off(address) >> get_shift(address.offset & 7, length)) & mask;
+    return ((int)read_off(address) >> get_shift(address.offset & 7, length)) & (int)mask;
 }
 
 void bitarr_write_int57(bitarr_address_t address, uint8 length, uint64 value) 
@@ -93,7 +93,7 @@ void bitarr_write_int57(bitarr_address_t address, uint8 length, uint64 value)
     value64 |= (value << get_shift(address.offset & 7, length));
     memcpy(base_off, &value64, sizeof(value64));
 #else
-    *(uint64 *)((uint8 *)(address.base) + (address.offset >> 3)) |= (value << get_shift(address.offset & 7, length));
+    *(int *)((uint8 *)(address.base) + (address.offset >> 3)) |= ((int)value << get_shift(address.offset & 7, length));
 #endif
 }
 

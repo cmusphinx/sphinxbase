@@ -73,7 +73,7 @@
 # ifndef _WIN32_WCE
 #  include <time.h>
 # endif
-#elif defined(HAVE_UNISTD_H) /* I know this, this is Unix... */
+#else
 # include <unistd.h>
 # include <sys/time.h>
 # include <sys/resource.h>

@@ -75,7 +75,6 @@
 #include <string.h>
 #include <alsa/asoundlib.h>
 #include <errno.h>
-#include <config.h>
 #include <unistd.h>
 
 #include "prim_type.h"
