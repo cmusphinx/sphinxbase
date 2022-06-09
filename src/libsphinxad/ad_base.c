@@ -50,7 +50,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <config.h>
 
 #include "prim_type.h"
 #include "ad.h"

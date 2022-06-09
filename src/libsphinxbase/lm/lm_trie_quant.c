@@ -275,14 +275,8 @@ lm_trie_quant_mwrite(lm_trie_quant_t * quant, bitarr_address_t address,
                      int order_minus_2, float prob, float backoff)
 {
     bitarr_write_int57(address, quant->prob_bits + quant->bo_bits,
-                       (uint64) ((bins_encode
-                                  (&quant->tables[order_minus_2][0],
-                                   prob) << quant->
-                                  bo_bits) | bins_encode(&quant->
-                                                         tables
-                                                         [order_minus_2]
-                                                         [1],
-                                                         backoff)));
+                       (((int)bins_encode(&quant->tables[order_minus_2][0],prob) << quant->bo_bits)
+                                 | (int)bins_encode(&quant-> tables[order_minus_2][1], backoff)));
 }
 
 void

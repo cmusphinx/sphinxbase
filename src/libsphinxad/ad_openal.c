@@ -34,7 +34,6 @@
  * ====================================================================
  *
  */
-#include <config.h>
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -113,16 +112,9 @@ ad_read(ad_rec_t * r, int16 * buf, int32 max)
 }
 
 
-int32
-ad_close(ad_rec_t * r)
+int32 ad_close(ad_rec_t *r)
 {
-    ALCboolean isClosed;
+    ALCboolean isClosed = alcCaptureCloseDevice(r -> device);
 
-    isClosed = alcCaptureCloseDevice(r -> device);
-
-    if (isClosed) {
-        return 0;
-    } else {
-        return -1;
-    }
+    return isClosed ? 0 : -1;
 }
