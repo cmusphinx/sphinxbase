@@ -1,3 +1,11 @@
+DEPRECATED: Please depend on PocketSphinx instead
+=================================================
+
+SphinxBase has been integrated into PocketSphinx, so if you were linking against
+it or otherwise depending on it, please switch to use that instead as of the next
+release.  Thanks!  You  can find it at https://github.com/cmusphinx/pocketsphinx
+
+
 CMU Sphinx common libraries
 ===============================================================================
 
