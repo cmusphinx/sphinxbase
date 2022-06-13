@@ -58,6 +58,7 @@ extern int yyparse(void *scanner, jsgf_t * jsgf);
  * into Sphinx finite-state grammars.
  **/
 
+static void detect_recursion_rule(jsgf_t * grammar, jsgf_rule_t * rule);
 static int expand_rule(jsgf_t * grammar, jsgf_rule_t * rule,
                        int rule_entry, int rule_exit);
 
@@ -285,6 +286,100 @@ importname2rulename(char *importname)
 
 /**
  *
+ * Detect recursion; label each RHS as to whether it's right-recursive.
+ * Just a cut-down version of expand_rhs() and expand_rule().
+ */
+static void
+detect_recursion_rhs(jsgf_t * grammar, jsgf_rule_t * rule, jsgf_rhs_t * rhs)
+{
+    gnode_t *gn;
+
+    /* Iterate over atoms in rhs */
+    for (gn = rhs->atoms; gn; gn = gnode_next(gn)) {
+        jsgf_atom_t *atom = (jsgf_atom_t *) gnode_ptr(gn);
+
+        if (jsgf_atom_is_rule(atom)) {
+            jsgf_rule_t *subrule;
+            char *fullname;
+            int32 subrule_lookup_result;
+            gnode_t *subnode;
+            jsgf_rule_stack_t *rule_stack_entry = NULL;
+
+            if (0 == strcmp(atom->name, "<NULL>")) {
+                continue;
+            }
+            else if (0 == strcmp(atom->name, "<VOID>")) {
+                /* This entire RHS is unspeakable */
+                return;
+            }
+
+            fullname = jsgf_fullname_from_rule(rule, atom->name);
+            subrule_lookup_result = hash_table_lookup
+                (grammar->rules, fullname, (void **) &subrule);
+            ckd_free(fullname);
+            if (subrule_lookup_result == -1) {
+                E_ERROR("Undefined rule in RHS: %s\n", fullname);
+                return;
+            }
+
+            /* Look for this subrule in the stack of expanded rules */
+            for (subnode = grammar->rulestack; subnode;
+                 subnode = gnode_next(subnode)) {
+                rule_stack_entry =
+                    (jsgf_rule_stack_t *) gnode_ptr(subnode);
+                if (rule_stack_entry->rule == subrule)
+                    break;
+            }
+
+            if (subnode != NULL) {
+                /* Allow right-recursion only. */
+                if (gnode_next(gn) != NULL) {
+                    E_ERROR
+                        ("Only right-recursion is permitted (in %s.%s)\n",
+                         grammar->name, rule->name);
+                    return;
+                }
+
+                /* Remember this RHS is right-recursive. */
+                rhs->is_recursive = 1;
+            }
+
+            /* If right-recursion has already been checked on this rule,
+               there's no need to check it again. */
+            else if (!subrule->ck_recursive) {
+                /* Expand the subrule */
+                detect_recursion_rule(grammar, subrule);
+            }
+        }
+    }
+}
+
+static void
+detect_recursion_rule(jsgf_t * grammar, jsgf_rule_t * rule)
+{
+    jsgf_rule_stack_t *rule_stack_entry;
+    jsgf_rhs_t *rhs;
+
+    /* Push this rule onto the stack */
+    rule_stack_entry =
+        (jsgf_rule_stack_t *) ckd_calloc(1, sizeof(jsgf_rule_stack_t));
+    rule_stack_entry->rule = rule;
+    rule_stack_entry->entry = NO_NODE /* unused */;
+    grammar->rulestack = glist_add_ptr(grammar->rulestack,
+                                       rule_stack_entry);
+
+    rule->ck_recursive = 1;
+    for (rhs = rule->rhs; rhs; rhs = rhs->alt) {
+        detect_recursion_rhs(grammar, rule, rhs);
+    }
+
+    /* Pop this rule from the rule stack */
+    ckd_free(gnode_ptr(grammar->rulestack));
+    grammar->rulestack = gnode_free(grammar->rulestack, NULL);
+}
+
+/**
+ *
  * Expand a right-hand-side of a rule (i.e. a single alternate).
  *
  * @returns the FSG state at the end of this rule, NO_NODE if there's an
@@ -368,7 +463,7 @@ expand_rhs(jsgf_t * grammar, jsgf_rule_t * rule, jsgf_rhs_t * rhs,
 
                 /* Let our caller know that this rhs didn't reach an
                    end state. */
-                lastnode = RECURSIVE_NODE;
+                lastnode = -lastnode + RECURSIVE_NODE;
             }
             else {
                 /* If this is the last atom in this rhs, link its
@@ -415,6 +510,7 @@ expand_rule(jsgf_t * grammar, jsgf_rule_t * rule, int rule_entry,
             int rule_exit)
 {
     jsgf_rule_stack_t *rule_stack_entry;
+    int multiple_alternates;
     jsgf_rhs_t *rhs;
 
     /* Push this rule onto the stack */
@@ -425,18 +521,32 @@ expand_rule(jsgf_t * grammar, jsgf_rule_t * rule, int rule_entry,
     grammar->rulestack = glist_add_ptr(grammar->rulestack,
                                        rule_stack_entry);
 
+    /* Remember whether this rule has more than one alternate.
+       This determines whether a null-transition has to be added
+       in order to to separate right-recursive sub-rules from
+       its sibling alternates. */
+    multiple_alternates = (rule->rhs != NULL && rule->rhs->alt != NULL);
+
+    /* Deal with all non-right-recursive rules. (They will need
+       the exit-node generated here.) */
     for (rhs = rule->rhs; rhs; rhs = rhs->alt) {
         int lastnode;
+
+        /* If this rule is right-recursive, deal with it in the
+           next pass. */
+        if (rhs->is_recursive && multiple_alternates) {
+            continue;
+        }
 
         lastnode = expand_rhs(grammar, rule, rhs, rule_entry, rule_exit);
 
         if (lastnode == NO_NODE) {
             return NO_NODE;
         }
-        else if (lastnode == RECURSIVE_NODE) {
-            /* The rhs ended with right-recursion, i.e. a transition to
-               an earlier state. Nothing needs to happen at this level. */
-            ;
+        else if (lastnode <= RECURSIVE_NODE) {
+            /* Shouldn't happen in this pass. */
+            E_ERROR("Internal error");
+            return NO_NODE;
         }
         else if (rule_exit == NO_NODE) {
             /* If this rule doesn't have an exit state yet, use the exit
@@ -450,6 +560,37 @@ expand_rule(jsgf_t * grammar, jsgf_rule_t * rule, int rule_entry,
     /* If no exit-state was created, use the entry-state. */
     if (rule_exit == NO_NODE) {
         rule_exit = rule_entry;
+    }
+
+    /* Now deal with all the right-recursive rules. */
+    for (rhs = rule->rhs; rhs; rhs = rhs->alt) {
+        int this_rule_entry, lastnode;
+
+        /* If this rule is right-recursive, insert a null-transition to
+           give the right-recursion a unique destination, i.e. so that
+           it doesn't interfere with any of its sibling alternates. */
+        this_rule_entry = rule_entry;
+        if (!rhs->is_recursive || !multiple_alternates) {
+            continue;
+        }
+        jsgf_add_link(grammar, NULL,
+                      rule_entry, grammar->nstate);
+        this_rule_entry = grammar->nstate;
+        ++grammar->nstate;
+        rule_stack_entry->entry = this_rule_entry;
+
+        lastnode = expand_rhs(grammar, rule, rhs, this_rule_entry, rule_exit);
+
+        if (lastnode > RECURSIVE_NODE) {
+            /* Shouldn't happen in this pass. */
+            E_ERROR("Internal error");
+            return NO_NODE;
+        }
+
+        /* Allow the right-recursion to exit. */
+        lastnode = -lastnode + RECURSIVE_NODE;
+        jsgf_add_link(grammar, NULL,
+                      lastnode, rule_exit);
     }
 
     /* Pop this rule from the rule stack */
@@ -540,6 +681,9 @@ jsgf_build_fsg_internal(jsgf_t * grammar, jsgf_rule_t * rule,
     glist_free(grammar->links);
     grammar->links = NULL;
     grammar->nstate = 0;
+
+    /* Determine which rules are right-recursive. */
+    detect_recursion_rule(grammar, rule);
 
     /* Create the top-level entry state, and expand the
        top-level rule. */
