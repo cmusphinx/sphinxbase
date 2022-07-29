@@ -64,7 +64,7 @@
     }
 
     void trans_add(int src, int dst, int logp, int wid) {
-        fsg_model_trans_add($self, src, dst, logp, wid);
+        fsg_model_trans_add($self, src, dst, logp, wid, NULL);
     }
 
     int null_trans_add(int src, int dst, int logp) {
