@@ -99,7 +99,7 @@ struct cmd_ln_s {
 cmd_ln_t *global_cmdln;
 
 static void
-arg_dump_r(cmd_ln_t *, FILE *, arg_t const *, int32);
+arg_dump_r(cmd_ln_t const *, FILE *, arg_t const *, int32);
 
 static cmd_ln_t *
 parse_options(cmd_ln_t *, const arg_t *, int32, char* [], int32);
@@ -239,7 +239,7 @@ arg_resolve_env(const char *str)
 }
 
 static void
-arg_dump_r(cmd_ln_t *cmdln, FILE *fp, const arg_t * defn, int32 doc)
+arg_dump_r(cmd_ln_t const *cmdln, FILE *fp, const arg_t * defn, int32 doc)
 {
     arg_t const **pos;
     int32 i, n;
@@ -908,7 +908,7 @@ cmd_ln_parse_file(const arg_t * defn, const char *filename, int32 strict)
 }
 
 void
-cmd_ln_print_help_r(cmd_ln_t *cmdln, FILE *fp, arg_t const* defn)
+cmd_ln_print_help_r(cmd_ln_t const *cmdln, FILE *fp, arg_t const* defn)
 {
     if (defn == NULL)
         return;
@@ -917,7 +917,7 @@ cmd_ln_print_help_r(cmd_ln_t *cmdln, FILE *fp, arg_t const* defn)
 }
 
 void
-cmd_ln_print_values_r(cmd_ln_t *cmdln, FILE *fp, arg_t const* defn)
+cmd_ln_print_values_r(cmd_ln_t const *cmdln, FILE *fp, arg_t const* defn)
 {
     if (defn == NULL)
         return;
@@ -926,7 +926,7 @@ cmd_ln_print_values_r(cmd_ln_t *cmdln, FILE *fp, arg_t const* defn)
 }
 
 int
-cmd_ln_exists_r(cmd_ln_t *cmdln, const char *name)
+cmd_ln_exists_r(cmd_ln_t const *cmdln, const char *name)
 {
     void *val;
     if (cmdln == NULL)
@@ -935,7 +935,7 @@ cmd_ln_exists_r(cmd_ln_t *cmdln, const char *name)
 }
 
 anytype_t *
-cmd_ln_access_r(cmd_ln_t *cmdln, const char *name)
+cmd_ln_access_r(cmd_ln_t const *cmdln, const char *name)
 {
     void *val;
     if (hash_table_lookup(cmdln->ht, name, &val) < 0) {
@@ -946,7 +946,7 @@ cmd_ln_access_r(cmd_ln_t *cmdln, const char *name)
 }
 
 char const *
-cmd_ln_str_r(cmd_ln_t *cmdln, char const *name)
+cmd_ln_str_r(cmd_ln_t const *cmdln, char const *name)
 {
     anytype_t *val;
     val = cmd_ln_access_r(cmdln, name);
@@ -956,7 +956,7 @@ cmd_ln_str_r(cmd_ln_t *cmdln, char const *name)
 }
 
 char const **
-cmd_ln_str_list_r(cmd_ln_t *cmdln, char const *name)
+cmd_ln_str_list_r(cmd_ln_t const *cmdln, char const *name)
 {
     anytype_t *val;
     val = cmd_ln_access_r(cmdln, name);
@@ -966,7 +966,7 @@ cmd_ln_str_list_r(cmd_ln_t *cmdln, char const *name)
 }
 
 long
-cmd_ln_int_r(cmd_ln_t *cmdln, char const *name)
+cmd_ln_int_r(cmd_ln_t const *cmdln, char const *name)
 {
     anytype_t *val;
     val = cmd_ln_access_r(cmdln, name);
@@ -976,7 +976,7 @@ cmd_ln_int_r(cmd_ln_t *cmdln, char const *name)
 }
 
 double
-cmd_ln_float_r(cmd_ln_t *cmdln, char const *name)
+cmd_ln_float_r(cmd_ln_t const *cmdln, char const *name)
 {
     anytype_t *val;
     val = cmd_ln_access_r(cmdln, name);
